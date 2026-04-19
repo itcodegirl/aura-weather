@@ -21,7 +21,12 @@ function App() {
   if (loading) {
     return (
       <div className="app app--loading">
-        <div className="loader">
+        <div
+          className="loader"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading weather data"
+        >
           <div className="loader-spinner" />
           <p className="loader-text">Fetching atmosphere…</p>
         </div>

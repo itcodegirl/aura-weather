@@ -4,7 +4,6 @@ const ENDPOINTS = {
   weather: "https://api.open-meteo.com/v1/forecast",
   aqi: "https://air-quality-api.open-meteo.com/v1/air-quality",
   geocode: "https://geocoding-api.open-meteo.com/v1/search",
-  reverseGeocode: "https://geocoding-api.open-meteo.com/v1/reverse",
 };
 
 const TIMEOUT_MS = 10_000;
@@ -73,20 +72,3 @@ export async function geocodeCity(name) {
   return data.results || [];
 }
 
-/**
- * Converts coordinates back into a readable place name.
- * Non-critical — returns null on failure.
- */
-export async function reverseGeocode(lat, lon) {
-  try {
-    const res = await fetch(
-      `${ENDPOINTS.reverseGeocode}?latitude=${lat}&longitude=${lon}`,
-      { signal: AbortSignal.timeout(TIMEOUT_MS) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.results?.[0] || null;
-  } catch {
-    return null;
-  }
-}

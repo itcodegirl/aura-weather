@@ -46,7 +46,6 @@ button:focus-visible {
   min-height: 100vh;
   overflow: hidden;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-  background-attachment: scroll;
   transition: background 1.2s ease;
 }
 
@@ -64,7 +63,7 @@ button:focus-visible {
   height: 480px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.12);
-  filter: blur(48px);
+  filter: blur(32px);
   will-change: transform;
   pointer-events: none;
   animation: drift 8s ease-in-out infinite;
@@ -83,7 +82,7 @@ button:focus-visible {
 
 @media (max-width: 768px) {
   .ambient-blob {
-    filter: blur(24px);
+    filter: blur(18px);
   }
 }
 
@@ -171,7 +170,7 @@ button:focus-visible {
 .bento-hero {
   grid-column: span 4;
   grid-row: span 2;
-  min-height: 380px;
+  min-height: clamp(250px, 32vw, 380px);
 }
 
 .bento-aqi {
@@ -293,7 +292,7 @@ button:focus-visible {
   .bento-hero {
     grid-column: span 2;
     grid-row: auto;
-    min-height: 200px;
+    min-height: clamp(180px, 44vw, 240px);
   }
 
   .bento-aqi,

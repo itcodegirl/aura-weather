@@ -7,9 +7,10 @@ import RainCard from "./components/RainCard";
 import ForecastCard from "./components/ForecastCard";
 import StormWatch from "./components/StormWatch";
 import HourlyCard from "./components/HourlyCard";
+import CitySearch from "./components/CitySearch";
 
 function App() {
-  const { weather, location, loading, error } = useWeather();
+  const { weather, location, loading, error, loadWeather} = useWeather();
   const [unit, setUnit] = useState("F");
 
   const convertTemp = useCallback(
@@ -56,7 +57,14 @@ function App() {
             <p className="tagline">Atmospheric Intelligence</p>
           </div>
 
-          <div className="unit-toggle" role="group" aria-label="Temperature unit">
+          <div className="app-header-actions">
+            <CitySearch
+              onSelect={(city) =>
+                loadWeather(city.lat, city.lon, city.name, city.country)
+              }
+            />
+
+            <div className="unit-toggle" role="group" aria-label="Temperature unit">
             <button
               onClick={() => setUnit("F")}
               className={`unit-btn ${unit === "F" ? "is-active" : ""}`}
@@ -64,13 +72,14 @@ function App() {
             >
               °F
             </button>
-            <button
-              onClick={() => setUnit("C")}
-              className={`unit-btn ${unit === "C" ? "is-active" : ""}`}
-              aria-pressed={unit === "C"}
-            >
-              °C
-            </button>
+              <button
+                onClick={() => setUnit("C")}
+                className={`unit-btn ${unit === "C" ? "is-active" : ""}`}
+                aria-pressed={unit === "C"}
+              >
+                °C
+              </button>
+            </div>
           </div>
         </header>
 

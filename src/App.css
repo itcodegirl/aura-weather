@@ -35,7 +35,10 @@ button {
   cursor: pointer;
 }
 
-button:focus-visible {
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
@@ -57,6 +60,8 @@ button:focus-visible {
 }
 
 .skip-link:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
   transform: translateY(0);
 }
 

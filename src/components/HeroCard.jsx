@@ -42,8 +42,8 @@ export default function HeroCard({ weather, location, unit, convertTemp }) {
 
       <div className="hero-main">
         <div className="hero-icon">
-  <WeatherIcon code={current.weather_code} size={120} animated />
-</div>
+          <WeatherIcon code={current.weather_code} size={120} animated />
+        </div>
         <div className="hero-temp-block">
           <div className="hero-temp">
             {convertTemp(current.temperature_2m)}
@@ -51,7 +51,8 @@ export default function HeroCard({ weather, location, unit, convertTemp }) {
           </div>
           <div className="hero-condition">{info.label}</div>
           <div className="hero-feels">
-            Feels like {convertTemp(current.apparent_temperature)}{tempUnit}
+            Feels like {convertTemp(current.apparent_temperature)}
+            {tempUnit}
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ import HourlyCard from "./components/HourlyCard";
 import CitySearch from "./components/CitySearch";
 
 function App() {
-  const { weather, location, loading, error, loadWeather } = useWeather();
+  const { weather, location, loading, error, loadWeather, retryWeather } = useWeather();
   const [unit, setUnit] = useState("F");
 
   const convertTemp = useCallback(
@@ -72,6 +72,13 @@ function App() {
         <div className="error-card">
           <h1>Something went sideways</h1>
           <p>{error}</p>
+          <button
+            type="button"
+            className="error-retry"
+            onClick={retryWeather}
+          >
+            Try again
+          </button>
         </div>
       </div>
     );

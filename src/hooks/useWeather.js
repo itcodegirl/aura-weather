@@ -21,12 +21,14 @@ export function useWeather() {
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastRequest, setLastRequest] = useState(null);
 
   // Core fetch function — reusable for any lat/lon
   const loadWeather = useCallback(
     async (lat, lon, name, country) => {
       setLoading(true);
       setError(null);
+      setLastRequest({ lat, lon, name, country });
 
       try {
         const [weatherData, aqi] = await Promise.all([
@@ -46,6 +48,19 @@ export function useWeather() {
     },
     []
   );
+
+  const retryWeather = useCallback(() => {
+    const fallbackRequest = lastRequest
+      ? lastRequest
+      : DEFAULT_LOCATION;
+
+    loadWeather(
+      fallbackRequest.lat,
+      fallbackRequest.lon,
+      fallbackRequest.name,
+      fallbackRequest.country
+    );
+  }, [lastRequest, loadWeather]);
 
   // On mount: try geolocation, fall back to Chicago
   useEffect(() => {
@@ -93,5 +108,5 @@ export function useWeather() {
     return () => clearTimeout(fallbackTimer);
   }, [loadWeather]);
 
-  return { weather, location, loading, error, loadWeather };
+  return { weather, location, loading, error, loadWeather, retryWeather };
 }

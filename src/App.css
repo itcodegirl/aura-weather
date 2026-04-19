@@ -392,6 +392,29 @@ a:focus-visible,
   font-size: 14px;
 }
 
+.error-retry {
+  margin-top: 16px;
+  min-height: 44px;
+  min-width: 118px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+
+.error-retry:hover {
+  transform: translateY(-1px);
+}
+
+.error-retry:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .bento {

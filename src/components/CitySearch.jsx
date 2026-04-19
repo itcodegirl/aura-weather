@@ -156,7 +156,8 @@ export default function CitySearch({ onSelect }) {
   };
 
   const activeDescendant =
-    showDropdown && activeIndex >= 0 ? `city-search-option-${activeIndex}` : undefined;
+    showDropdown && activeIndex >= 0 ? `city-search-option-${activeIndex}` : "";
+  const resultsId = "city-search-results";
 
   return (
     <div className="city-search" ref={containerRef}>
@@ -173,7 +174,7 @@ export default function CitySearch({ onSelect }) {
           className="city-search-input"
           aria-label="Search for a city"
           aria-expanded={showDropdown}
-          aria-controls="city-search-results"
+          aria-controls={showDropdown ? resultsId : undefined}
           aria-autocomplete="list"
           aria-haspopup="listbox"
           role="combobox"
@@ -194,7 +195,7 @@ export default function CitySearch({ onSelect }) {
 
       {showDropdown && (
         <ul
-          id="city-search-results"
+          id={resultsId}
           className="city-search-dropdown"
           role="listbox"
           aria-label="City suggestions"
@@ -243,7 +244,7 @@ export default function CitySearch({ onSelect }) {
                   <div className="city-search-result-name">{city.name}</div>
                   <div className="city-search-result-meta">
                     {city.admin1 && <span>{city.admin1}</span>}
-                    {city.admin1 && city.country && <span> · </span>}
+                    {city.admin1 && city.country && <span>{" \u00B7 "}</span>}
                     {city.country && <span>{city.country}</span>}
                   </div>
                 </div>
@@ -254,4 +255,3 @@ export default function CitySearch({ onSelect }) {
     </div>
   );
 }
-

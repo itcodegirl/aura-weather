@@ -1,8 +1,15 @@
+import { useState } from "react";
 import "./App.css";
 import { useWeather } from "./hooks/useWeather";
+import { getWeather, gradientCss } from "./utils/weatherCodes";
+import HeroCard from "./components/HeroCard";
 
 function App() {
   const { weather, location, loading, error } = useWeather();
+  const [unit, setUnit] = useState("F");
+
+  const convertTemp = (f) =>
+    unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9);
 
   if (loading) {
     return (
@@ -26,40 +33,57 @@ function App() {
     );
   }
 
-  return (
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1 className="brand">Aura</h1>
-          <p className="tagline">Atmospheric Intelligence</p>
-        </div>
-        <div className="location-pill">
-          📍 {location.name}
-          {location.country ? `, ${location.country}` : ""}
-        </div>
-      </header>
+  const weatherInfo = getWeather(weather.current.weather_code);
+  const background = gradientCss(weatherInfo.gradient);
 
-      <main className="bento">
-        <section className="bento-hero">
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "64px", fontWeight: 200 }}>
-              {Math.round(weather.current.temperature_2m)}°F
-            </div>
-            <div style={{ opacity: 0.7, marginTop: "8px" }}>
-              Feels like {Math.round(weather.current.apparent_temperature)}°F
-            </div>
+  return (
+    <div className="app" style={{ background }}>
+      <div className="ambient-blob ambient-blob--tl" />
+      <div className="ambient-blob ambient-blob--br" />
+
+      <div className="app-inner">
+        <header className="app-header">
+          <div>
+            <h1 className="brand">Aura</h1>
+            <p className="tagline">Atmospheric Intelligence</p>
           </div>
-        </section>
-        <section className="bento-chart">Hourly chart</section>
-        <section className="bento-forecast">7-day forecast</section>
-        <section className="bento-aqi">
-          {weather.aqi !== null ? `AQI ${weather.aqi}` : "Air quality"}
-        </section>
-        <section className="bento-uv">
-          UV {weather.daily.uv_index_max[0]?.toFixed(1) || "—"}
-        </section>
-        <section className="bento-sun">Sun times</section>
-      </main>
+
+          <div className="unit-toggle" role="group" aria-label="Temperature unit">
+            <button
+              onClick={() => setUnit("F")}
+              className={`unit-btn ${unit === "F" ? "is-active" : ""}`}
+              aria-pressed={unit === "F"}
+            >
+              °F
+            </button>
+            <button
+              onClick={() => setUnit("C")}
+              className={`unit-btn ${unit === "C" ? "is-active" : ""}`}
+              aria-pressed={unit === "C"}
+            >
+              °C
+            </button>
+          </div>
+        </header>
+
+        <main className="bento">
+          <HeroCard
+            weather={weather}
+            location={location}
+            unit={unit}
+            convertTemp={convertTemp}
+          />
+          <section className="bento-chart">Hourly chart</section>
+          <section className="bento-forecast">7-day forecast</section>
+          <section className="bento-aqi">
+            {weather.aqi !== null ? `AQI ${weather.aqi}` : "Air quality"}
+          </section>
+          <section className="bento-uv">
+            UV {weather.daily.uv_index_max[0]?.toFixed(1) || "—"}
+          </section>
+          <section className="bento-sun">Sun times</section>
+        </main>
+      </div>
     </div>
   );
 }

@@ -18,7 +18,7 @@ function DayRow({ day, weekMin, weekMax, convertTemp }) {
   const endPct = ((day.temp_max - weekMin) / weekRange) * 100;
 
   return (
-    <div className="forecast-row" role="listitem">
+    <li className="forecast-row" role="listitem">
       <div className="forecast-day">{label}</div>
 
       <div className="forecast-icon" aria-label={info.label}>
@@ -55,7 +55,7 @@ function DayRow({ day, weekMin, weekMax, convertTemp }) {
         {high}
         {tempUnit}
       </div>
-    </div>
+    </li>
   );
 }
 
@@ -93,7 +93,7 @@ export default function ForecastCard({ weather, convertTemp }) {
         <span className="forecast-subtitle">Week ahead</span>
       </header>
 
-      <div className="forecast-list" role="list">
+      <ul className="forecast-list" role="list">
         {days.map((day) => (
           <DayRow
             key={day.date}
@@ -103,7 +103,7 @@ export default function ForecastCard({ weather, convertTemp }) {
             convertTemp={convertTemp}
           />
         ))}
-      </div>
+      </ul>
     </section>
   );
 }

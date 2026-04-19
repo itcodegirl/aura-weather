@@ -9,8 +9,6 @@ import {
   classifyWind,
 } from "../utils/meteorology";
 
-// ---------- Sub-modules ---------F-
-
 function StormRisk({ weather }) {
   const cape = weather.hourly.cape?.[0] || 0;
   const risk = classifyStormRisk(cape, weather.current.weather_code);
@@ -50,14 +48,19 @@ function PressureTrend({ weather }) {
   );
 
   const Icon =
-    trend.direction === "rising" ? TrendingUp :
-    trend.direction === "falling" ? TrendingDown : Minus;
+    trend.direction === "rising"
+      ? TrendingUp
+      : trend.direction === "falling"
+        ? TrendingDown
+        : Minus;
 
   const trendColor =
-    trend.direction === "rising" ? "#22c55e" :
-    trend.direction === "falling" ? "#f97316" : "#94a3b8";
+    trend.direction === "rising"
+      ? "#22c55e"
+      : trend.direction === "falling"
+        ? "#f97316"
+        : "#94a3b8";
 
-  // Build SVG sparkline path
   const max = Math.max(...trend.sparkline);
   const min = Math.min(...trend.sparkline);
   const range = max - min || 1;
@@ -93,11 +96,10 @@ function PressureTrend({ weather }) {
         />
       </svg>
       <div className="storm-detail">
-        <span className="storm-detail-label">
-          {Math.round(trend.current)} hPa
-        </span>
+        <span className="storm-detail-label">{Math.round(trend.current)} hPa</span>
         <span className="storm-detail-value" style={{ color: trendColor }}>
-          {trend.delta > 0 ? "+" : ""}{trend.delta.toFixed(1)} / 6h
+          {trend.delta > 0 ? "+" : ""}
+          {trend.delta.toFixed(1)} / 6h
         </span>
       </div>
     </div>
@@ -127,7 +129,7 @@ function WindIntelligence({ weather }) {
           <span className="wind-compass-label wind-compass-w">W</span>
           <div
             className="wind-compass-arrow"
-            style={{ transform:`rotate(${(wind_direction_10m || 0) + 180}deg)` }}
+            style={{ transform: `rotate(${(wind_direction_10m || 0) + 180}deg)` }}
           >
             ▲
           </div>
@@ -135,7 +137,9 @@ function WindIntelligence({ weather }) {
       </div>
 
       <div className="storm-detail">
-        <span className="storm-detail-label">{sustained} mph {direction}</span>
+        <span className="storm-detail-label">
+          {sustained} mph {direction}
+        </span>
         <span className="storm-detail-value">Gusts {gusts}</span>
       </div>
     </div>
@@ -159,22 +163,18 @@ function ComfortIndex({ weather, unit, convertTemp }) {
       </div>
       <div className="comfort-scale" aria-hidden="true">
         <div className="comfort-gradient" />
-        <div
-          className="comfort-marker"
-          style={{ left: `${comfort.position}%` }}
-        />
+        <div className="comfort-marker" style={{ left: `${comfort.position}%` }} />
       </div>
       <div className="storm-detail">
         <span className="storm-detail-label">Dewpoint</span>
         <span className="storm-detail-value">
-          {dewpointDisplay}{tempUnit}
+          {dewpointDisplay}
+          {tempUnit}
         </span>
       </div>
     </div>
   );
 }
-
-// ---------- Main panel ----------
 
 export default function StormWatch({ weather, unit, convertTemp }) {
   return (

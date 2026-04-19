@@ -142,8 +142,8 @@ button {
 .bento-aqi   { grid-column: span 1; }
 .bento-uv    { grid-column: span 1; }
 
-/* Placeholder cells (until fully built out) */
-.placeholder {
+/* metric-card cells (until fully built out) */
+.metric-card {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -152,14 +152,14 @@ button {
   padding: 24px;
 }
 
-.placeholder-label {
+.metric-label {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim);
 }
 
-.placeholder-value {
+.metric-value {
   font-size: 36px;
   font-weight: 300;
   letter-spacing: -0.02em;
@@ -966,7 +966,7 @@ button {
                                                           width: 100%;
                                                           }
 
-                                                          .city-search-input::placeholder {
+                                                          .city-search-input::metric-card {
                                                             color: var(--text-dim);
                                                             }
 

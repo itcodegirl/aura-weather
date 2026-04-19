@@ -1,11 +1,7 @@
 // src/hooks/useWeather.js
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  fetchWeather,
-  fetchAirQuality,
-  reverseGeocode,
-} from "../services/weatherApi";
+import { fetchWeather, fetchAirQuality } from "../services/weatherApi";
 
 // Chicago fallback — Aura's default when geolocation isn't available
 const DEFAULT_LOCATION = {
@@ -21,23 +17,35 @@ export function useWeather() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Core fetch function — reusable for any lat/lon
-  const loadWeather = useCallback(async (lat, lon, name, country) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [weatherData, aqi] = await Promise.all([
-        fetchWeather(lat, lon),
-        fetchAirQuality(lat, lon),
-      ]);
-      setWeather({ ...weatherData, aqi });
-      setLocation({ lat, lon, name, country });
-    } catch (err) {
-      setError(err.message || "Could not load weather");
-    } finally {
-      setLoading(false);
-    }
+  const getFallbackLocationName = useCallback((weatherData, lat, lon) => {
+    const timezoneCity = weatherData?.timezone?.split("/").at(-1)?.replace(/_/g, " ");
+    return timezoneCity || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
   }, []);
+
+  // Core fetch function — reusable for any lat/lon
+  const loadWeather = useCallback(
+    async (lat, lon, name, country) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [weatherData, aqi] = await Promise.all([
+          fetchWeather(lat, lon),
+          fetchAirQuality(lat, lon),
+        ]);
+
+        const resolvedName = name || getFallbackLocationName(weatherData, lat, lon);
+
+        setWeather({ ...weatherData, aqi });
+        setLocation({ lat, lon, name: resolvedName, country: country || "" });
+      } catch (err) {
+        setError(err.message || "Could not load weather");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getFallbackLocationName]
+  );
 
   // On mount: try geolocation, fall back to Chicago
   useEffect(() => {
@@ -64,16 +72,10 @@ export function useWeather() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         clearTimeout(fallbackTimer);
         const { latitude, longitude } = pos.coords;
-        const place = await reverseGeocode(latitude, longitude);
-        loadWeather(
-          latitude,
-          longitude,
-          place?.name || `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`,
-          place?.country || ""
-        );
+        loadWeather(latitude, longitude);
       },
       () => {
         clearTimeout(fallbackTimer);

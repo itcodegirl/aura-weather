@@ -9,7 +9,7 @@ import WeatherIcon from "./WeatherIcon";
  * Renders a single day row in the forecast.
  * Shows day name, icon, precip chance (if any), and temp range bar.
  */
-function DayRow({ day, minTemp, maxTemp, weekMin, weekMax, unit, convertTemp }) {
+function DayRow({ day, weekMin, weekMax, unit, convertTemp }) {
   const info = getWeather(day.weather_code);
   const label = formatDayLabel(day.date);
   const high = convertTemp(day.temp_max);

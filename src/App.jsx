@@ -10,7 +10,7 @@ import HourlyCard from "./components/HourlyCard";
 import CitySearch from "./components/CitySearch";
 
 function App() {
-  const { weather, location, loading, error, loadWeather} = useWeather();
+  const { weather, location, loading, error, loadWeather } = useWeather();
   const [unit, setUnit] = useState("F");
 
   const convertTemp = useCallback(
@@ -42,7 +42,6 @@ function App() {
 
   const weatherInfo = getWeather(weather.current.weather_code);
   const background = gradientCss(weatherInfo.gradient);
-
   const uvToday = weather.daily?.uv_index_max?.[0];
 
   return (
@@ -65,13 +64,13 @@ function App() {
             />
 
             <div className="unit-toggle" role="group" aria-label="Temperature unit">
-            <button
-              onClick={() => setUnit("F")}
-              className={`unit-btn ${unit === "F" ? "is-active" : ""}`}
-              aria-pressed={unit === "F"}
-            >
-              °F
-            </button>
+              <button
+                onClick={() => setUnit("F")}
+                className={`unit-btn ${unit === "F" ? "is-active" : ""}`}
+                aria-pressed={unit === "F"}
+              >
+                °F
+              </button>
               <button
                 onClick={() => setUnit("C")}
                 className={`unit-btn ${unit === "C" ? "is-active" : ""}`}
@@ -92,29 +91,26 @@ function App() {
           />
 
           <section className="bento-aqi metric-card">
-  <span className="metric-label">Air Quality</span>
-  <span className="metric-value">
-    {weather.aqi != null ? weather.aqi : "—"}
-  </span>
-</section>
+            <span className="metric-label">Air Quality</span>
+            <span className="metric-value">
+              {weather.aqi != null ? weather.aqi : "—"}
+            </span>
+          </section>
 
-<section className="bento-uv metric-card">
-  <span className="metric-label">UV Index</span>
-  <span className="metric-value">
-    {uvToday != null ? uvToday.toFixed(1) : "—"}
-  </span>
-</section>
+          <section className="bento-uv metric-card">
+            <span className="metric-label">UV Index</span>
+            <span className="metric-value">
+              {uvToday != null ? uvToday.toFixed(1) : "—"}
+            </span>
+          </section>
 
           <RainCard weather={weather} />
-
           <HourlyCard weather={weather} unit={unit} convertTemp={convertTemp} />
-
           <StormWatch
             weather={weather}
             unit={unit}
             convertTemp={convertTemp}
-            />
-
+          />
           <ForecastCard
             weather={weather}
             unit={unit}

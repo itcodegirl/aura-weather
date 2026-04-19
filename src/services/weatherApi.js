@@ -15,9 +15,9 @@ export async function fetchWeather(lat, lon) {
     longitude: lon,
     current:
       "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure",
-    hourly: "temperature_2m,weather_code,precipitation_probability",
+    hourly: "temperature_2m,weather_code,precipitation_probability,precipitation",
     daily:
-      "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max",
+      "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum",
     temperature_unit: "fahrenheit",
     wind_speed_unit: "mph",
     timezone: "auto",

@@ -3,6 +3,7 @@ import "./App.css";
 import { useWeather } from "./hooks/useWeather";
 import { getWeather, gradientCss } from "./utils/weatherCodes";
 import HeroCard from "./components/HeroCard";
+import RainCard from "./components/RainCard";
 
 function App() {
   const { weather, location, loading, error } = useWeather();
@@ -91,6 +92,9 @@ function App() {
               {uvToday != null ? uvToday.toFixed(1) : "—"}
             </span>
           </section>
+
+          <RainCard weather={weather} />
+          
         </main>
       </div>
     </div>

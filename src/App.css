@@ -127,6 +127,35 @@ button {
   gap: 16px;
 }
 
+
+/* Bento cell spans */
+.bento-hero  { grid-column: span 4; grid-row: span 2; min-height: 380px; }
+.bento-aqi   { grid-column: span 1; }
+.bento-uv    { grid-column: span 1; }
+
+/* Placeholder cells (until fully built out) */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.placeholder-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+}
+
+.placeholder-value {
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Remove hover on non-interactive cards */
 .bento > section {
   background: var(--bg-card);
   backdrop-filter: blur(var(--blur));
@@ -136,20 +165,7 @@ button {
   padding: 24px;
   min-height: 180px;
   box-shadow: var(--shadow);
-  transition: background 0.3s ease, transform 0.3s ease;
 }
-
-.bento > section:hover {
-  background: var(--bg-card-hover);
-}
-
-.bento-hero     { grid-column: span 4; grid-row: span 2; min-height: 380px; }
-.bento-chart    { grid-column: span 2; grid-row: span 2; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-.bento-forecast { grid-column: span 3; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-.bento-aqi      { grid-column: span 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-.bento-uv       { grid-column: span 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-.bento-sun      { grid-column: span 1; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-
 /* ---------- Hero card ---------- */
 .hero-card {
   display: flex;
@@ -298,12 +314,14 @@ button {
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .bento { grid-template-columns: repeat(2, 1fr); }
-  .bento-hero,
-  .bento-chart,
-  .bento-forecast {
+  .bento-hero {
     grid-column: span 2;
     grid-row: auto;
     min-height: 200px;
+  }
+  .bento-aqi,
+  .bento-uv {
+    grid-column: span 1;
   }
   .hero-temp { font-size: 72px; }
   .hero-icon { font-size: 72px; }

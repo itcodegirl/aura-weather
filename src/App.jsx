@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import "./App.css";
 import { useWeather } from "./hooks/useWeather";
 import { getWeather, gradientCss } from "./utils/weatherCodes";
@@ -8,8 +8,10 @@ function App() {
   const { weather, location, loading, error } = useWeather();
   const [unit, setUnit] = useState("F");
 
-  const convertTemp = (f) =>
-    unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9);
+  const convertTemp = useCallback(
+    (f) => (unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9)),
+    [unit]
+  );
 
   if (loading) {
     return (
@@ -35,6 +37,8 @@ function App() {
 
   const weatherInfo = getWeather(weather.current.weather_code);
   const background = gradientCss(weatherInfo.gradient);
+
+  const uvToday = weather.daily.uv_index_max[0];
 
   return (
     <div className="app" style={{ background }}>
@@ -73,15 +77,20 @@ function App() {
             unit={unit}
             convertTemp={convertTemp}
           />
-          <section className="bento-chart">Hourly chart</section>
-          <section className="bento-forecast">7-day forecast</section>
-          <section className="bento-aqi">
-            {weather.aqi !== null ? `AQI ${weather.aqi}` : "Air quality"}
+
+          <section className="bento-aqi placeholder">
+            <span className="placeholder-label">Air Quality</span>
+            <span className="placeholder-value">
+              {weather.aqi != null ? weather.aqi : "—"}
+            </span>
           </section>
-          <section className="bento-uv">
-            UV {weather.daily.uv_index_max[0]?.toFixed(1) || "—"}
+
+          <section className="bento-uv placeholder">
+            <span className="placeholder-label">UV Index</span>
+            <span className="placeholder-value">
+              {uvToday != null ? uvToday.toFixed(1) : "—"}
+            </span>
           </section>
-          <section className="bento-sun">Sun times</section>
         </main>
       </div>
     </div>

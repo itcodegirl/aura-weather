@@ -1,6 +1,6 @@
 // src/components/RainCard.jsx
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
 
@@ -60,8 +60,9 @@ function formatHour(date) {
 
 export default function RainCard({ weather }) {
   const [mode, setMode] = useState("chance");
-  const { hours, nextRain, peak, total, soFarToday, peakAmount } = analyzeRain(
-    weather.hourly
+  const { hours, nextRain, peak, total, soFarToday, peakAmount } = useMemo(
+    () => analyzeRain(weather.hourly),
+    [weather.hourly]
   );
 
   const isDry = peak.probability < 20 && total < 0.01;

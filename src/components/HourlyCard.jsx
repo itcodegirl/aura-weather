@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Area, AreaChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
@@ -47,7 +47,10 @@ function ChartTooltip({ active, payload, unit }) {
 export default function HourlyCard({ weather, unit, convertTemp }) {
   const chartBodyRef = useRef(null);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
-  const data = buildHourlyData(weather?.hourly, convertTemp);
+  const data = useMemo(
+    () => buildHourlyData(weather?.hourly, convertTemp),
+    [weather?.hourly, convertTemp]
+  );
 
   useEffect(() => {
     const element = chartBodyRef.current;

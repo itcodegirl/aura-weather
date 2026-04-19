@@ -42,7 +42,7 @@ button {
   min-height: 100vh;
   overflow: hidden;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-  background-attachment: fixed;
+  background-attachment: scroll;
   transition: background 1.2s ease;
 }
 
@@ -60,7 +60,8 @@ button {
   height: 480px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.12);
-  filter: blur(100px);
+  filter: blur(48px);
+  will-change: transform;
   pointer-events: none;
   animation: drift 8s ease-in-out infinite;
 }
@@ -74,6 +75,12 @@ button {
   right: -160px;
   bottom: -160px;
   animation-delay: 2s;
+}
+
+@media (max-width: 768px) {
+  .ambient-blob {
+    filter: blur(24px);
+  }
 }
 
 @keyframes drift {

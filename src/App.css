@@ -386,3 +386,48 @@ a:focus-visible,
     grid-column: span 1;
   }
 }
+
+@media (max-width: 400px) {
+  .app-inner {
+    padding: 12px;
+  }
+
+  .app-header {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .brand {
+    font-size: 24px;
+  }
+
+  .bento {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .bento > section,
+  .bento-hero,
+  .bento-aqi,
+  .bento-uv,
+  .bento-storm,
+  .bento-chart,
+  .bento-rain,
+  .storm-module,
+  .bento > .rain-card,
+  .bento > .forecast-card {
+    grid-column: auto;
+  }
+
+  .bento-hero,
+  .bento-storm,
+  .bento > section,
+  .forecast-card,
+  .rain-card {
+    min-height: 0;
+  }
+
+  .bento-hero {
+    min-height: clamp(190px, 50vw, 250px);
+  }
+}

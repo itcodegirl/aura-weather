@@ -1050,7 +1050,7 @@ button {
   width: 100%;
 }
 
-.city-search-input::metric-card {
+.city-search-input::placeholder {
   color: var(--text-dim);
 }
 

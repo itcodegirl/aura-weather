@@ -99,7 +99,7 @@ function HourlyCard({ weather, unit, convertTemp }) {
       </header>
 
       <div className="chart-body">
-        <ResponsiveContainer width="100%" aspect={2.6} minHeight={180}>
+        <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
             margin={{ top: 20, right: 16, left: 0, bottom: 0 }}

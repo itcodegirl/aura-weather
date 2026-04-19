@@ -57,6 +57,9 @@ function PressureTrend({ weather }) {
     weather.hourly.surface_pressure,
     weather.hourly.time
   );
+  const trendLabel = `Pressure trend chart: ${trend.interpretation}, current value ${Math.round(
+    trend.current
+  )} hPa, ${trend.delta >= 0 ? "+" : ""}${trend.delta.toFixed(1)} hPa over 6 hours.`;
 
   const Icon =
     trend.direction === "rising"
@@ -96,8 +99,10 @@ function PressureTrend({ weather }) {
         className="pressure-sparkline"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
-        aria-hidden="true"
+        role="img"
+        aria-label={trendLabel}
       >
+        <title>{trendLabel}</title>
         <polyline
           points={points}
           fill="none"

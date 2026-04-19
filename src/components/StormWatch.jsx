@@ -13,6 +13,9 @@ import "./StormWatch.css";
 function StormRisk({ weather }) {
   const cape = weather.hourly.cape?.[0] || 0;
   const risk = classifyStormRisk(cape, weather.current.weather_code);
+  const stormRiskSummary = `Storm risk: ${risk.level}; level ${
+    risk.score + 1
+  } of 5 based on current conditions.`;
 
   return (
     <div className="storm-module">
@@ -20,8 +23,15 @@ function StormRisk({ weather }) {
         <Zap size={14} />
         <span>Storm Risk</span>
       </div>
-      <div className="storm-level" style={{ color: risk.color }}>
+      <div
+        className="storm-level"
+        style={{ color: risk.color }}
+        aria-label={stormRiskSummary}
+      >
         {risk.level}
+      </div>
+      <div className="storm-risk-accessibility">
+        {stormRiskSummary}
       </div>
       <div className="storm-risk-meter" aria-hidden="true">
         {[0, 1, 2, 3, 4].map((i) => (

@@ -1,5 +1,6 @@
 // src/components/StormWatch.jsx
 
+import { memo } from "react";
 import { Zap, TrendingUp, TrendingDown, Minus, Wind, Droplets } from "lucide-react";
 import {
   classifyStormRisk,
@@ -197,7 +198,7 @@ function ComfortIndex({ weather, unit, convertTemp }) {
   );
 }
 
-export default function StormWatch({ weather, unit, convertTemp }) {
+function StormWatch({ weather, unit, convertTemp }) {
   return (
     <section className="bento-storm storm-watch">
       <header className="storm-header">
@@ -217,3 +218,5 @@ export default function StormWatch({ weather, unit, convertTemp }) {
     </section>
   );
 }
+
+export default memo(StormWatch);

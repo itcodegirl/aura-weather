@@ -11,19 +11,21 @@ const REVERSE_GEOCODE_BASE = "https://geocoding-api.open-meteo.com/v1/reverse";
  */
 export async function fetchWeather(lat, lon) {
   const params = new URLSearchParams({
-    latitude: lat,
-    longitude: lon,
-    current:
-      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure",
-    hourly: "temperature_2m,weather_code,precipitation_probability,precipitation",
-    daily:
-      "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum",
-    temperature_unit: "fahrenheit",
-    wind_speed_unit: "mph",
-    precipitation_unit: "inch",
-    timezone: "auto",
-    forecast_days: "7",
-  });
+  latitude: lat,
+  longitude: lon,
+  current:
+    "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,visibility",
+  hourly:
+    "temperature_2m,weather_code,precipitation_probability,precipitation,surface_pressure,cape,wind_gusts_10m",
+  daily:
+    "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum",
+  temperature_unit: "fahrenheit",
+  wind_speed_unit: "mph",
+  precipitation_unit: "inch",
+  timezone: "auto",
+  forecast_days: "7",
+  past_hours: "6",
+});
 
   const res = await fetch(`${WEATHER_BASE}?${params}`);
   if (!res.ok) throw new Error("Weather data unavailable");

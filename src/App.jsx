@@ -5,6 +5,7 @@ import { getWeather, gradientCss } from "./utils/weatherCodes";
 import HeroCard from "./components/HeroCard";
 import RainCard from "./components/RainCard";
 import ForecastCard from "./components/ForecastCard";
+import StormWatch from "./components/StormWatch";
 
 function App() {
   const { weather, location, loading, error } = useWeather();
@@ -95,6 +96,13 @@ function App() {
           </section>
 
           <RainCard weather={weather} />
+
+          <StormWatch
+            weather={weather}
+            unit={unit}
+            convertTemp={convertTemp}
+            />
+
           <ForecastCard
             weather={weather}
             unit={unit}

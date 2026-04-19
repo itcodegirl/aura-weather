@@ -56,10 +56,8 @@ function formatHour(date) {
 
 export default function RainCard({ weather }) {
   const [mode, setMode] = useState("chance");
-  const { hours, nextRain, peak, total, soFarToday, peakAmount } = useMemo(
-    () => analyzeRain(weather.hourly),
-    [weather.hourly]
-  );
+  const rainAnalysis = useMemo(() => analyzeRain(weather?.hourly), [weather?.hourly]);
+  const { hours, nextRain, peak, total, soFarToday, peakAmount } = rainAnalysis;
 
   const isDry = peak.probability < 20 && total < 0.01;
 

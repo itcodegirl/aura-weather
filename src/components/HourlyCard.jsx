@@ -50,10 +50,11 @@ function ChartTooltip({ active, payload, unit }) {
 export default function HourlyCard({ weather, unit, convertTemp }) {
   const chartBodyRef = useRef(null);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
-  const data = useMemo(
-    () => buildHourlyData(weather?.hourly, convertTemp),
-    [weather?.hourly, convertTemp]
-  );
+  const hourlyData = useMemo(() => buildHourlyData(weather?.hourly, convertTemp), [
+    weather?.hourly,
+    convertTemp,
+  ]);
+  const data = hourlyData;
 
   useEffect(() => {
     const element = chartBodyRef.current;

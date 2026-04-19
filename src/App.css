@@ -4,6 +4,7 @@
   --radius-sm: 16px;
   --border: 1px solid rgba(255, 255, 255, 0.22);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --card-backdrop-blur: 24px;
   --bg-card: rgba(255, 255, 255, 0.12);
   --bg-card-hover: rgba(255, 255, 255, 0.16);
   --text: #ffffff;
@@ -117,8 +118,18 @@ a:focus-visible,
     filter: blur(12px);
   }
 
-  .unit-toggle {
-    backdrop-filter: blur(4px);
+  :root {
+    --card-backdrop-blur: 4px;
+  }
+}
+
+@media (max-width: 500px) {
+  :root {
+    --card-backdrop-blur: 10px;
+  }
+
+  .bento {
+    gap: 12px;
   }
 }
 
@@ -168,7 +179,8 @@ a:focus-visible,
   gap: 4px;
   padding: 4px;
   background: var(--bg-card);
-  backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--card-backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
   border: var(--border);
   border-radius: 999px;
 }

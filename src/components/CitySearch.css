@@ -9,8 +9,8 @@
   align-items: center;
   padding: 0 12px;
   background: var(--bg-card);
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--card-backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
   border: var(--border);
   border-radius: 999px;
   transition:
@@ -86,14 +86,14 @@
   overflow: hidden;
   overflow-y: auto;
   background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(calc(var(--card-backdrop-blur) - 8px));
+  -webkit-backdrop-filter: blur(calc(var(--card-backdrop-blur) - 8px));
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 16px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (max-width: 500px) {
   .city-search-input-wrap,
   .city-search-dropdown {
     backdrop-filter: blur(4px);

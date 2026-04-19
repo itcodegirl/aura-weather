@@ -43,15 +43,17 @@
   min-width: 110px;
   padding: 10px 14px;
   background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(calc(var(--card-backdrop-blur) - 12px));
+  -webkit-backdrop-filter: blur(calc(var(--card-backdrop-blur) - 12px));
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (max-width: 500px) {
   .chart-tooltip {
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 }
 

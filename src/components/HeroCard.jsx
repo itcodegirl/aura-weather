@@ -20,9 +20,16 @@ export default function HeroCard({ weather, location, unit, convertTemp }) {
   const current = weather.current;
   const info = getWeather(current.weather_code);
   const tempUnit = unit === "F" ? "°F" : "°C";
+  const windSpeed =
+    unit === "F"
+      ? Math.round(current.wind_speed_10m)
+      : Math.round(current.wind_speed_10m * 1.60934);
+  const windUnit = unit === "F" ? "mph" : "km/h";
   const visibilityMiles = current.visibility / 1609.34;
   const visibilityLabel =
-    visibilityMiles >= 10 ? `${Math.round(visibilityMiles)} mi` : `${visibilityMiles.toFixed(1)} mi`;
+    visibilityMiles >= 10
+      ? `${Math.round(visibilityMiles)} mi`
+      : `${visibilityMiles.toFixed(1)} mi`;
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -64,7 +71,7 @@ export default function HeroCard({ weather, location, unit, convertTemp }) {
         <Stat
           icon={<Wind size={18} />}
           label="Wind"
-          value={`${Math.round(current.wind_speed_10m)} mph`}
+          value={`${windSpeed} ${windUnit}`}
         />
         <Stat
           icon={<Droplets size={18} />}

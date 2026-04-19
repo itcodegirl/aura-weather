@@ -106,12 +106,15 @@ function PressureTrend({ weather }) {
   );
 }
 
-function WindIntelligence({ weather }) {
+function WindIntelligence({ weather, unit }) {
   const { wind_speed_10m, wind_gusts_10m, wind_direction_10m } = weather.current;
-  const sustained = Math.round(wind_speed_10m);
-  const gusts = Math.round(wind_gusts_10m || wind_speed_10m);
+  const sustainedMph = Math.round(wind_speed_10m);
+  const gustsMph = Math.round(wind_gusts_10m || wind_speed_10m);
   const direction = windDirectionName(wind_direction_10m || 0);
-  const strength = classifyWind(sustained);
+  const strength = classifyWind(sustainedMph);
+  const sustained = unit === "F" ? sustainedMph : Math.round(sustainedMph * 1.60934);
+  const gusts = unit === "F" ? gustsMph : Math.round(gustsMph * 1.60934);
+  const windUnit = unit === "F" ? "mph" : "km/h";
 
   return (
     <div className="storm-module">
@@ -138,9 +141,9 @@ function WindIntelligence({ weather }) {
 
       <div className="storm-detail">
         <span className="storm-detail-label">
-          {sustained} mph {direction}
+          {sustained} {windUnit} {direction}
         </span>
-        <span className="storm-detail-value">Gusts {gusts}</span>
+        <span className="storm-detail-value">Gusts {gusts} {windUnit}</span>
       </div>
     </div>
   );
@@ -190,7 +193,7 @@ export default function StormWatch({ weather, unit, convertTemp }) {
       <div className="storm-grid">
         <StormRisk weather={weather} />
         <PressureTrend weather={weather} />
-        <WindIntelligence weather={weather} />
+        <WindIntelligence weather={weather} unit={unit} />
         <ComfortIndex weather={weather} unit={unit} convertTemp={convertTemp} />
       </div>
     </section>

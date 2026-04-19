@@ -1,0 +1,24 @@
+.weather-icon {
+  display: block;
+}
+
+.weather-icon--animated {
+  transform-origin: center;
+  animation: weather-icon-float 5s ease-in-out infinite;
+}
+
+@keyframes weather-icon-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-icon--animated {
+    animation: none;
+  }
+}

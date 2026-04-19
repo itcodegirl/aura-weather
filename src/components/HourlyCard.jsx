@@ -1,7 +1,10 @@
+// src/components/HourlyCard.jsx
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Area, AreaChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
+import "./HourlyCard.css";
 
 function buildHourlyData(hourly, convertTemp) {
   if (!hourly?.time?.length || !hourly?.temperature_2m?.length) {

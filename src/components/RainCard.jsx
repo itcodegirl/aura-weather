@@ -3,12 +3,8 @@
 import { useMemo, useState } from "react";
 import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
+import "./RainCard.css";
 
-/**
- * Analyzes hourly precipitation data for the next 24 hours.
- * Returns next rain window, peak hour, total expected inches,
- * and how much has already fallen today.
- */
 function analyzeRain(hourly) {
   if (!hourly?.time?.length || !hourly?.precipitation_probability?.length) {
     return {

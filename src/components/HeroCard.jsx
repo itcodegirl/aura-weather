@@ -3,6 +3,7 @@
 import { MapPin, Wind, Droplets, Gauge, Eye } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
 import WeatherIcon from "./WeatherIcon";
+import "./HeroCard.css";
 
 function Stat({ icon, label, value }) {
   return (

@@ -8,6 +8,7 @@ import {
   windDirectionName,
   classifyWind,
 } from "../utils/meteorology";
+import "./StormWatch.css";
 
 function StormRisk({ weather }) {
   const cape = weather.hourly.cape?.[0] || 0;

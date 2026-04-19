@@ -4,6 +4,7 @@ import { CalendarDays, Droplets } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
 import WeatherIcon from "./WeatherIcon";
+import "./ForecastCard.css";
 
 function DayRow({ day, weekMin, weekMax, convertTemp }) {
   const info = getWeather(day.weather_code);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { geocodeCity } from "../services/weatherApi";
+import "./CitySearch.css";
 
 export default function CitySearch({ onSelect }) {
   const [query, setQuery] = useState("");
@@ -13,36 +14,33 @@ export default function CitySearch({ onSelect }) {
 
   const containerRef = useRef(null);
   const inputRef = useRef(null);
-  const debounceRef = useRef(null);       // holds the setTimeout id
-  const requestIdRef = useRef(0);         // tracks latest request to discard stale responses
+  const debounceRef = useRef(null);
+  const requestIdRef = useRef(0);
 
-  // Cleanup any pending timer on unmount
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
         setOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Core search — called from the debounced input handler.
-  // `requestIdRef` tags each request so late responses are ignored.
   const runSearch = async (term) => {
     const currentRequest = ++requestIdRef.current;
     setLoading(true);
 
     try {
       const cities = await geocodeCity(term);
-      if (currentRequest !== requestIdRef.current) return; // stale — ignore
+      if (currentRequest !== requestIdRef.current) return;
       setResults(cities);
       setError(null);
     } catch {
@@ -54,18 +52,15 @@ export default function CitySearch({ onSelect }) {
     }
   };
 
-  // Handles every keystroke — sets state immediately, then debounces the fetch
-  const handleChange = (e) => {
-    const nextQuery = e.target.value;
+  const handleChange = (event) => {
+    const nextQuery = event.target.value;
     setQuery(nextQuery);
     setOpen(true);
 
-    // Cancel any pending search
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = nextQuery.trim();
     if (trimmed.length < 2) {
-      // Invalidate in-flight requests and reset
       requestIdRef.current++;
       setResults([]);
       setError(null);
@@ -73,7 +68,6 @@ export default function CitySearch({ onSelect }) {
       return;
     }
 
-    // Debounce — fire search 300ms after the user stops typing
     debounceRef.current = setTimeout(() => {
       runSearch(trimmed);
     }, 300);
@@ -92,18 +86,17 @@ export default function CitySearch({ onSelect }) {
     inputRef.current?.blur();
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
       setOpen(false);
       inputRef.current?.blur();
-    } else if (e.key === "Enter" && results.length > 0) {
-      e.preventDefault();
+    } else if (event.key === "Enter" && results.length > 0) {
+      event.preventDefault();
       handleSelect(results[0]);
     }
   };
 
   const handleClear = () => {
-    // Cancel any pending debounce + invalidate in-flight requests
     if (debounceRef.current) clearTimeout(debounceRef.current);
     requestIdRef.current++;
 

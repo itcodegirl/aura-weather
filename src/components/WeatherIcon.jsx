@@ -14,16 +14,13 @@ import {
   Snowflake,
   Tornado,
 } from "lucide-react";
+import "./WeatherIcon.css";
 
-/**
- * Maps WMO weather codes from Open-Meteo to Lucide icon components.
- * When we upgrade to Meteocons later, only this file changes.
- */
 const iconMap = {
-  0:  Sun,
-  1:  CloudSun,
-  2:  Cloud,
-  3:  Cloudy,
+  0: Sun,
+  1: CloudSun,
+  2: Cloud,
+  3: Cloudy,
   45: CloudFog,
   48: CloudFog,
   51: CloudDrizzle,
@@ -44,10 +41,10 @@ const iconMap = {
 };
 
 const iconColors = {
-  0:  "#fbbf24",
-  1:  "#fbbf24",
-  2:  "#f8fafc",
-  3:  "#cbd5e1",
+  0: "#fbbf24",
+  1: "#fbbf24",
+  2: "#f8fafc",
+  3: "#cbd5e1",
   45: "#cbd5e1",
   48: "#cbd5e1",
   51: "#7dd3fc",

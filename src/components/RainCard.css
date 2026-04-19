@@ -1,0 +1,158 @@
+.bento-rain {
+  display: flex;
+  flex-direction: column;
+  grid-column: span 2;
+  grid-row: span 1;
+  gap: 16px;
+  min-height: 260px;
+  padding: 20px;
+}
+
+.rain-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rain-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rain-mode-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.rain-mode-btn {
+  min-width: 32px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.rain-mode-btn.is-active {
+  background: #fff;
+  color: #0f172a;
+}
+
+.rain-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rain-primary-value {
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.rain-primary-label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.rain-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.rain-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.rain-stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.rain-stat-label {
+  margin-top: 2px;
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.rain-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.rain-empty-icon {
+  margin-bottom: 4px;
+  font-size: 36px;
+}
+
+.rain-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.rain-empty-sub {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.rain-timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 48px;
+  margin-top: auto;
+}
+
+.rain-bar {
+  flex: 1;
+  min-height: 2px;
+  background: linear-gradient(to top, #60a5fa, #93c5fd);
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.2s ease;
+}
+
+.rain-bar:hover {
+  opacity: 1 !important;
+  background: linear-gradient(to top, #3b82f6, #60a5fa);
+}
+
+.rain-timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 900px) {
+  .bento-rain {
+    grid-column: span 2;
+  }
+}

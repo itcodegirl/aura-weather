@@ -65,7 +65,7 @@ export default function HeroCard({ weather, location, unit, convertTemp }) {
         <Stat
           icon={<Droplets size={18} />}
           label="Humidity"
-          value={`${current.relative_humidity_2m}%`}
+          value={`${Math.round(current.relative_humidity_2m)}%`}
         />
         <Stat
           icon={<Gauge size={18} />}

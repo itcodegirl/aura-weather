@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
+
 /**
  * Analyzes hourly precipitation data for the next 24 hours.
  * Returns next rain window, peak hour, total expected inches,
  * and how much has already fallen today.
  */
 function analyzeRain(hourly) {
-  // Guard against empty/malformed data
   if (!hourly?.time?.length || !hourly?.precipitation_probability?.length) {
     return {
       hours: [],
@@ -24,7 +24,7 @@ function analyzeRain(hourly) {
   const now = new Date();
   const startIdx = hourly.time.findIndex((t) => new Date(t) >= now);
   const idx = startIdx === -1 ? 0 : startIdx;
-  
+
   const hours = hourly.time.slice(idx, idx + 24).map((t, i) => ({
     time: new Date(t),
     probability: hourly.precipitation_probability[idx + i] || 0,
@@ -59,7 +59,7 @@ function formatHour(date) {
 }
 
 export default function RainCard({ weather }) {
-  const [mode, setMode] = useState("chance"); // "chance" or "inches"
+  const [mode, setMode] = useState("chance");
   const { hours, nextRain, peak, total, soFarToday, peakAmount } = analyzeRain(
     weather.hourly
   );
@@ -93,8 +93,8 @@ export default function RainCard({ weather }) {
 
       {isDry ? (
         <div className="rain-empty">
-        <div className="rain-empty-icon">
-        <WeatherIcon code={0} size={44} />
+          <div className="rain-empty-icon">
+            <WeatherIcon code={0} size={44} />
           </div>
           <div className="rain-empty-title">No rain expected</div>
           <div className="rain-empty-sub">
@@ -118,14 +118,14 @@ export default function RainCard({ weather }) {
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value">{soFarToday.toFixed(2)}&Prime;</div>
+                <div className="rain-stat-value">{soFarToday.toFixed(2)}″</div>
                 <div className="rain-stat-label">So far today</div>
               </div>
             </div>
             <div className="rain-stat">
               <CloudRain size={14} />
               <div>
-                <div className="rain-stat-value">{total.toFixed(2)}&Prime;</div>
+                <div className="rain-stat-value">{total.toFixed(2)}″</div>
                 <div className="rain-stat-label">Next 24h total</div>
               </div>
             </div>
@@ -133,9 +133,7 @@ export default function RainCard({ weather }) {
               <Clock size={14} />
               <div>
                 <div className="rain-stat-value">{peak.probability}%</div>
-                <div className="rain-stat-label">
-                  Peak {formatHour(peak.time)}
-                </div>
+                <div className="rain-stat-label">Peak {formatHour(peak.time)}</div>
               </div>
             </div>
           </div>
@@ -156,15 +154,15 @@ export default function RainCard({ weather }) {
             mode === "chance"
               ? Math.max(h.probability, 3)
               : peakAmount > 0
-              ? Math.max((h.amount / peakAmount) * 100, 3)
-              : 3;
+                ? Math.max((h.amount / peakAmount) * 100, 3)
+                : 3;
 
           const opacity =
             mode === "chance"
               ? 0.25 + (h.probability / 100) * 0.75
               : peakAmount > 0
-              ? 0.25 + (h.amount / peakAmount) * 0.75
-              : 0.25;
+                ? 0.25 + (h.amount / peakAmount) * 0.75
+                : 0.25;
 
           const tooltip =
             mode === "chance"

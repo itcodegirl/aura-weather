@@ -189,7 +189,6 @@ export function useWeather(unit = "F", options = {}) {
       setLoading(true);
       setError(null);
       setLocationNotice(fallbackNotice || null);
-      setLastRequest({ lat: safeLat, lon: safeLon, name, country, unit: requestDataUnit });
       setClimateComparison(null);
 
       try {
@@ -221,7 +220,22 @@ export function useWeather(unit = "F", options = {}) {
 
         const resolvedName =
           name || getFallbackLocationName(weatherData, safeLat, safeLon);
+        const normalizedName = normalizeLocationName(
+          resolvedName,
+          DEFAULT_LOCATION.name
+        );
+        const normalizedCountry = normalizeLocationName(
+          country,
+          DEFAULT_LOCATION.country
+        );
         if (!isMountedRef.current) return;
+        setLastRequest({
+          lat: safeLat,
+          lon: safeLon,
+          name: normalizedName,
+          country: normalizedCountry,
+          unit: requestDataUnit,
+        });
         const currentTemperature = Number(weatherData?.current?.temperature_2m);
         const historicalTemperature = Number(
           historicalAverage?.averageTemperature
@@ -237,14 +251,14 @@ export function useWeather(unit = "F", options = {}) {
         setLocation({
           lat: safeLat,
           lon: safeLon,
-          name: normalizeLocationName(resolvedName, DEFAULT_LOCATION.name),
-          country: country || "",
+          name: normalizedName,
+          country: normalizedCountry,
         });
         persistLocation(
           safeLat,
           safeLon,
-          normalizeLocationName(resolvedName, DEFAULT_LOCATION.name),
-          country || ""
+          normalizedName,
+          normalizedCountry
         );
         if (!isMountedRef.current) return;
         setClimateComparison(

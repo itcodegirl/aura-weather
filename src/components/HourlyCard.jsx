@@ -108,12 +108,12 @@ function HourlyCard({
             <LineIcon size={16} />
             <span>Hourly Temperature</span>
           </div>
-          <span className="chart-subtitle">Next 24 hours</span>
+          <span className="chart-subtitle">Next 24h</span>
         </header>
 
       <div className="chart-body" style={{ display: "grid", placeItems: "center" }}>
           <p className="loader-text" role="status" aria-live="polite">
-            Hourly outlook unavailable.
+            Hourly temperature data is temporarily unavailable.
           </p>
         </div>
       </section>
@@ -146,7 +146,7 @@ function HourlyCard({
           <LineIcon size={16} />
           <span>Hourly Temperature</span>
         </div>
-        <span className="chart-subtitle">Next 24 hours</span>
+        <span className="chart-subtitle">Next 24h</span>
       </header>
 
       <div className="chart-body">

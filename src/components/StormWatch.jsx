@@ -132,12 +132,12 @@ function PressureTrend({ weather }) {
       </svg>
       <div className="storm-detail">
         <span className="storm-detail-label">
-          {hasCurrent ? `${Math.round(trend.current)} hPa` : "No data"}
+          {hasCurrent ? `${Math.round(trend.current)} hPa` : "Data unavailable"}
         </span>
         <span className="storm-detail-value" style={{ color: trendColor }}>
           {hasCurrent
             ? `${trend.delta > 0 ? "+" : ""}${trend.delta.toFixed(1)} / 6h`
-            : "Unavailable"}
+            : "N/A"}
         </span>
       </div>
     </div>
@@ -265,7 +265,7 @@ function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
           <Zap size={16} />
           <span>Storm Watch</span>
         </div>
-        <span className="storm-subtitle">Atmospheric conditions</span>
+        <span className="storm-subtitle">Atmospheric signals</span>
       </header>
 
       <div className="storm-snapshot" role="list" aria-label="Storm snapshot">
@@ -274,13 +274,13 @@ function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
           role="listitem"
           style={{ "--chip-accent": overviewRisk.color }}
         >
-          Risk: {overviewRisk.level}
+          Storm risk: {overviewRisk.level}
         </span>
         <span className="storm-snapshot-chip" role="listitem">
-          Pressure: {overviewPressure.interpretation}
+          Pressure trend: {overviewPressure.interpretation}
         </span>
         <span className="storm-snapshot-chip" role="listitem">
-          Wind: {overviewWind}
+          Wind profile: {overviewWind}
         </span>
       </div>
 

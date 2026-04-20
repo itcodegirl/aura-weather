@@ -27,8 +27,8 @@ function analyzeNowcast(minutely15) {
       startInMinutes: null,
       durationMinutes: 0,
       peakProbability: 0,
-      summary: "Nowcast unavailable.",
-      details: "Minute-by-minute precipitation details are not available.",
+      summary: "Nowcast data is unavailable.",
+      details: "15-minute precipitation data is temporarily unavailable.",
     };
   }
 
@@ -84,8 +84,8 @@ function analyzeNowcast(minutely15) {
       startInMinutes: null,
       durationMinutes: 0,
       peakProbability: 0,
-      summary: "No minute-by-minute data in range.",
-      details: "No nowcast points were available in the next two hours.",
+      summary: "No minute-by-minute points are available.",
+      details: "The next 2-hour nowcast window returned no valid data points.",
     };
   }
 
@@ -101,7 +101,7 @@ function analyzeNowcast(minutely15) {
       durationMinutes: 0,
       peakProbability,
       summary: "No rain expected in the next 2 hours.",
-      details: "Clear windows across the next 120 minutes.",
+      details: "Mostly dry across the next 120 minutes.",
     };
   }
 
@@ -142,7 +142,7 @@ function analyzeNowcast(minutely15) {
     peakProbability,
     averageProbability,
     summary,
-    details: `Peak chance ${Math.round(peakProbability)}% (${averageProbability}% avg).`,
+    details: `Peak chance ${Math.round(peakProbability)}% (${averageProbability}% average).`,
   };
 }
 
@@ -163,7 +163,7 @@ function NowcastCard({ weather, style }) {
       </p>
 
       <div className="nowcast-meta">
-        <span>{nowcast.hasData ? "Next 2 hours" : "Unavailable now"}</span>
+        <span>{nowcast.hasData ? "15-minute outlook" : "Nowcast offline"}</span>
         <span>{nowcast.details}</span>
       </div>
     </section>

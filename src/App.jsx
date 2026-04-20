@@ -290,7 +290,7 @@ function App() {
             animated={false}
             className="loader-weather-icon"
           />
-          <p className="loader-text">Fetching atmosphere{"\u2026"}</p>
+          <p className="loader-text">Loading live conditions{"\u2026"}</p>
         </div>
       </div>
     );
@@ -301,14 +301,14 @@ function App() {
       <div className="app app--error">
         <div className="error-card">
           <CloudOff size={42} className="error-card-icon" aria-hidden="true" />
-          <h1>Something went sideways</h1>
+          <h1>We couldn't load weather data</h1>
           <p>{error}</p>
           <button
             type="button"
             className="error-retry"
             onClick={retryWeather}
           >
-            Try again
+            Reload weather
           </button>
         </div>
       </div>
@@ -368,9 +368,9 @@ function App() {
               className="current-location-btn"
               onClick={() => loadCurrentLocation()}
               disabled={isLocatingCurrent}
-              aria-label="Use current location"
+              aria-label="Use my location"
             >
-              {isLocatingCurrent ? "Locating..." : "Current"}
+              {isLocatingCurrent ? "Finding..." : "My location"}
             </button>
             <div
               className="toggle-pill"

@@ -112,7 +112,7 @@ function CitySearch({ onSelect }, ref) {
         currentRequest === requestIdRef.current &&
         error?.name !== "AbortError"
       ) {
-        setError("Search failed");
+        setError("Couldn't fetch locations. Try again.");
         setResults([]);
       }
     } finally {
@@ -158,7 +158,7 @@ function CitySearch({ onSelect }, ref) {
 
     const coordinates = parseCoordinates(city?.latitude, city?.longitude);
     if (!coordinates) {
-      setError("Unable to select this city");
+      setError("This location is missing valid coordinates.");
       return;
     }
 
@@ -255,7 +255,7 @@ function CitySearch({ onSelect }, ref) {
           onChange={handleChange}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search city..."
+          placeholder="Search city or region..."
           className="city-search-input"
           aria-label="Search for a city"
           aria-expanded={showDropdown}
@@ -293,7 +293,7 @@ function CitySearch({ onSelect }, ref) {
               aria-atomic="true"
             >
               <Loader2 size={14} className="city-search-spinner" />
-              <span>Searching...</span>
+              <span>Searching locations...</span>
             </li>
           )}
 
@@ -312,7 +312,7 @@ function CitySearch({ onSelect }, ref) {
             results.length === 0 &&
             normalizedQuery.length >= MIN_SEARCH_QUERY_LENGTH && (
             <li className="city-search-state" role="status" aria-live="polite">
-              No cities found
+              No matching cities
             </li>
           )}
 

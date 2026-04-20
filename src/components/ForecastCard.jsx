@@ -123,10 +123,10 @@ function ForecastCard({ weather, convertTemp, style }) {
             <CalendarDays size={16} />
             <span>7-Day Forecast</span>
           </div>
-          <span className="forecast-subtitle">Week ahead</span>
+          <span className="forecast-subtitle">Upcoming week</span>
         </header>
         <p className="loader-text" role="status" aria-live="polite">
-          Forecast data unavailable.
+          7-day forecast is temporarily unavailable.
         </p>
       </section>
     );
@@ -148,7 +148,7 @@ function ForecastCard({ weather, convertTemp, style }) {
           <CalendarDays size={16} />
           <span>7-Day Forecast</span>
         </div>
-        <span className="forecast-subtitle">Week ahead</span>
+        <span className="forecast-subtitle">Upcoming week</span>
       </header>
 
       <ul className="forecast-list" role="list">

@@ -153,7 +153,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
       <header className="rain-header">
         <div className="rain-title">
           <CloudRain size={16} />
-          <span>Rain Forecast</span>
+          <span>Rain Outlook</span>
         </div>
         <div className="rain-mode-toggle" role="group" aria-label="Chart mode">
           <button
@@ -178,9 +178,9 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
           <div className="rain-empty-icon">
             <WeatherIcon code={0} size={44} />
           </div>
-          <div className="rain-empty-title">No rain expected</div>
+          <div className="rain-empty-title">No meaningful rain expected</div>
           <div className="rain-empty-sub">
-            Peak chance just {peak.probability}% at {formatHour(peak.time)}
+            Highest chance is {peak.probability}% around {formatHour(peak.time)}
           </div>
         </div>
       ) : (
@@ -191,8 +191,8 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
             </div>
             <div className="rain-primary-label">
               {nextRain
-                ? `Rain expected (${nextRain.probability}%)`
-                : `Peak ${peak.probability}% at ${formatHour(peak.time)}`}
+                ? `Rain likely (${nextRain.probability}% chance)`
+                : `Highest chance ${peak.probability}% around ${formatHour(peak.time)}`}
             </div>
           </div>
 
@@ -203,7 +203,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
                 <div className="rain-stat-value">
                   {formatPrecipitation(soFarToday, unit, dataUnit)}
                 </div>
-                <div className="rain-stat-label">So far today</div>
+                <div className="rain-stat-label">Observed today</div>
               </div>
             </div>
             <div className="rain-stat">
@@ -212,14 +212,14 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
                 <div className="rain-stat-value">
                   {formatPrecipitation(total, unit, dataUnit)}
                 </div>
-                <div className="rain-stat-label">Next 24h total</div>
+                <div className="rain-stat-label">Projected 24h total</div>
               </div>
             </div>
             <div className="rain-stat">
               <Clock size={14} />
               <div>
                 <div className="rain-stat-value">{peak.probability}%</div>
-                <div className="rain-stat-label">Peak {formatHour(peak.time)}</div>
+                <div className="rain-stat-label">Peak near {formatHour(peak.time)}</div>
               </div>
             </div>
           </div>

@@ -135,6 +135,12 @@ function formatClock(value) {
   if (!value) return "\u2014";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "\u2014";
+
+  const now = Date.now();
+  if (date.getTime() > now + 24 * 60 * 60 * 1000 * 10) {
+    return "\u2014";
+  }
+
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",

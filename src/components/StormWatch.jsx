@@ -152,7 +152,7 @@ function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
   const safeWindSpeed = Number(wind_speed_10m);
   const safeWindGusts = Number(wind_gusts_10m);
   const safeDirection = Number(wind_direction_10m);
-  const sustained = Number.isFinite(safeWindSpeed) ? Math.round(safeWindSpeed) : 0;
+  const sustained = Number.isFinite(safeWindSpeed) ? safeWindSpeed : 0;
 
   const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit, weatherDataUnit);
   const gustsDisplay = formatWindSpeed(

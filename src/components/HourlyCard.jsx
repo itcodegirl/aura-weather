@@ -104,10 +104,10 @@ function HourlyCard({
     return (
       <section className="bento-chart hourly-chart" style={style}>
         <header className="chart-header">
-          <div className="chart-title">
+          <h2 className="chart-title">
             <LineIcon size={16} />
             <span>Hourly Temperature</span>
-          </div>
+          </h2>
           <span className="chart-subtitle">Next 24h</span>
         </header>
 
@@ -140,14 +140,14 @@ function HourlyCard({
   const nowLabel = data[0]?.label;
 
   return (
-    <section className="bento-chart hourly-chart" style={style}>
-      <header className="chart-header">
-        <div className="chart-title">
-          <LineIcon size={16} />
-          <span>Hourly Temperature</span>
-        </div>
-        <span className="chart-subtitle">Next 24h</span>
-      </header>
+      <section className="bento-chart hourly-chart" style={style}>
+        <header className="chart-header">
+          <h2 className="chart-title">
+            <LineIcon size={16} />
+            <span>Hourly Temperature</span>
+          </h2>
+          <span className="chart-subtitle">Next 24h</span>
+        </header>
 
       <div className="chart-body">
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>

@@ -152,10 +152,10 @@ function NowcastCard({ weather, style }) {
   return (
     <section className="bento-nowcast nowcast-card" style={style}>
       <header className="nowcast-header">
-        <div className="nowcast-title">
+        <h2 className="nowcast-title">
           <CloudRain size={16} />
           <span>Nowcast</span>
-        </div>
+        </h2>
       </header>
 
       <p className="nowcast-summary" role="status" aria-live="polite">

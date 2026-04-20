@@ -29,10 +29,10 @@ function StormRisk({ weather }) {
 
   return (
     <div className="storm-module">
-      <div className="storm-module-header">
+      <h3 className="storm-module-header">
         <Zap size={14} />
         <span>Storm Risk</span>
-      </div>
+      </h3>
       <div
         className="storm-level"
         style={{ color: risk.color }}
@@ -106,10 +106,10 @@ function PressureTrend({ weather }) {
 
   return (
     <div className="storm-module">
-      <div className="storm-module-header">
+      <h3 className="storm-module-header">
         <Icon size={14} style={{ color: trendColor }} />
         <span>Pressure</span>
-      </div>
+      </h3>
       <div className="storm-level" style={{ color: trendColor }}>
         {trend.interpretation}
       </div>
@@ -166,10 +166,10 @@ function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
 
   return (
     <div className="storm-module">
-      <div className="storm-module-header">
+      <h3 className="storm-module-header">
         <Wind size={14} />
         <span>Wind</span>
-      </div>
+      </h3>
       <div className="storm-level">{strength}</div>
 
       <div className="wind-compass" aria-label={`Wind from ${direction}`}>
@@ -214,10 +214,10 @@ function ComfortIndex({ weather, unit, weatherDataUnit = unit, convertTemp }) {
 
   return (
     <div className="storm-module">
-      <div className="storm-module-header">
+      <h3 className="storm-module-header">
         <Droplets size={14} />
         <span>Comfort</span>
-      </div>
+      </h3>
       <div className="storm-level" style={{ color: comfort.color }}>
         {comfort.level}
       </div>
@@ -261,10 +261,10 @@ function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
   return (
     <section className="bento-storm storm-watch" style={style}>
       <header className="storm-header">
-        <div className="storm-title">
+        <h2 className="storm-title">
           <Zap size={16} />
           <span>Storm Watch</span>
-        </div>
+        </h2>
         <span className="storm-subtitle">Atmospheric signals</span>
       </header>
 

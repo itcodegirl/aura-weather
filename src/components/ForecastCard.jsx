@@ -119,10 +119,10 @@ function ForecastCard({ weather, convertTemp, style }) {
     return (
       <section className="bento-forecast forecast-card" style={style}>
         <header className="forecast-header">
-          <div className="forecast-title">
+          <h2 className="forecast-title">
             <CalendarDays size={16} />
             <span>7-Day Forecast</span>
-          </div>
+          </h2>
           <span className="forecast-subtitle">Upcoming week</span>
         </header>
         <p className="loader-text" role="status" aria-live="polite">
@@ -144,10 +144,10 @@ function ForecastCard({ weather, convertTemp, style }) {
   return (
     <section className="bento-forecast forecast-card" style={style}>
       <header className="forecast-header">
-        <div className="forecast-title">
+        <h2 className="forecast-title">
           <CalendarDays size={16} />
           <span>7-Day Forecast</span>
-        </div>
+        </h2>
         <span className="forecast-subtitle">Upcoming week</span>
       </header>
 

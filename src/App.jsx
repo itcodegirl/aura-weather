@@ -239,6 +239,12 @@ function App() {
     isLocatingCurrent,
   } = useWeather(unit, { climateEnabled: showClimateContext });
 
+  const hasWeatherData = Boolean(weather);
+  const showGlobalLoading = loading && !hasWeatherData;
+  const isBackgroundLoading = loading && hasWeatherData;
+  const showGlobalError = Boolean(error) && !hasWeatherData;
+  const showRefreshError = Boolean(error) && hasWeatherData;
+
   const convertTemp = useCallback(
     (value, sourceUnit = weatherDataUnit || "F") => {
       if (!Number.isFinite(Number(value))) return "\u2014";
@@ -275,7 +281,7 @@ function App() {
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
-  if (loading) {
+  if (showGlobalLoading) {
     return (
       <div className="app app--loading">
         <div
@@ -296,7 +302,7 @@ function App() {
     );
   }
 
-  if (error) {
+  if (showGlobalError) {
     return (
       <div className="app app--error">
         <div className="error-card">
@@ -328,7 +334,7 @@ function App() {
   const dayLengthLabel = formatDayLength(dayLengthMinutes);
 
   return (
-    <div className="app" style={{ background }}>
+      <div className="app" style={{ background }}>
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
@@ -419,6 +425,23 @@ function App() {
         {locationNotice && (
           <p className="location-notice" role="status" aria-live="polite">
             {locationNotice}
+          </p>
+        )}
+        {isBackgroundLoading && (
+          <p className="app-status app-status--loading" role="status" aria-live="polite">
+            Updating weather for your current settings…
+          </p>
+        )}
+        {showRefreshError && (
+          <p className="app-status app-status--error" role="alert">
+            Could not refresh weather right now. Showing last known data.
+            <button
+              type="button"
+              className="app-status-retry"
+              onClick={retryWeather}
+            >
+              Retry
+            </button>
           </p>
         )}
 

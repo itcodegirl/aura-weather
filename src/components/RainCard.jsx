@@ -151,10 +151,10 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
   return (
     <section className="bento-rain rain-card" style={style}>
       <header className="rain-header">
-        <div className="rain-title">
+        <h2 className="rain-title">
           <CloudRain size={16} />
           <span>Rain Outlook</span>
-        </div>
+        </h2>
         <div className="rain-mode-toggle" role="group" aria-label="Chart mode">
           <button
             onClick={() => setMode("chance")}

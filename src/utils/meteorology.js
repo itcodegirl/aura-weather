@@ -13,12 +13,16 @@ import { toFahrenheit, WIND_SPEED_CONVERSION } from "./weatherUnits";
  *   >2500   Severe — tornado-favorable conditions
  */
 export function classifyStormRisk(cape, weatherCode) {
-  const isStormCode = [95, 96, 99].includes(weatherCode);
+  const capeValue = Number(cape);
+  const normalizedCape = Number.isFinite(capeValue) ? capeValue : 0;
+  const codeValue = Number(weatherCode);
+  const normalizedCode = Number.isFinite(codeValue) ? Math.trunc(codeValue) : Number.NaN;
+  const isStormCode = [95, 96, 99].includes(normalizedCode);
 
-  if (isStormCode || cape >= 2500) return { level: "Severe", color: "#dc2626", score: 4 };
-  if (cape >= 1500) return { level: "High", color: "#f97316", score: 3 };
-  if (cape >= 500) return { level: "Moderate", color: "#eab308", score: 2 };
-  if (cape >= 100) return { level: "Low", color: "#22c55e", score: 1 };
+  if (isStormCode || normalizedCape >= 2500) return { level: "Severe", color: "#dc2626", score: 4 };
+  if (normalizedCape >= 1500) return { level: "High", color: "#f97316", score: 3 };
+  if (normalizedCape >= 500) return { level: "Moderate", color: "#eab308", score: 2 };
+  if (normalizedCape >= 100) return { level: "Low", color: "#22c55e", score: 1 };
   return { level: "Minimal", color: "#38bdf8", score: 0 };
 }
 

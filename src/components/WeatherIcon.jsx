@@ -66,11 +66,12 @@ const iconColors = {
 
 export default function WeatherIcon({ code, size = 24, className = "", animated = false }) {
   const weatherCode = Number(code);
-  const normalizedCode = Number.isFinite(weatherCode) ? weatherCode : 0;
-  const iconKey = normalizedCode.toString();
+  const normalizedCode = Number.isFinite(weatherCode) ? Math.trunc(weatherCode) : 0;
+  const iconSize = Number.isFinite(Number(size)) && Number(size) > 0 ? Number(size) : 24;
+  const safeClassName = typeof className === "string" ? className : "";
 
-  const Icon = iconMap[iconKey] || iconMap[0];
-  const color = iconColors[iconKey] || iconColors[0];
+  const Icon = iconMap[normalizedCode] || iconMap[0];
+  const color = iconColors[normalizedCode] || iconColors[0];
   const isSunny = normalizedCode === 0 || normalizedCode === 1;
   const isCloudy = [2, 3, 45, 48].includes(normalizedCode);
   const animatedVariant = isSunny
@@ -81,8 +82,8 @@ export default function WeatherIcon({ code, size = 24, className = "", animated 
 
   return (
     <Icon
-      size={size}
-      className={`weather-icon ${animated ? `weather-icon--animated ${animatedVariant}` : ""} ${className}`}
+      size={iconSize}
+      className={`weather-icon ${animated ? `weather-icon--animated ${animatedVariant}` : ""} ${safeClassName}`}
       style={{ color }}
       strokeWidth={1.8}
       aria-hidden="true"

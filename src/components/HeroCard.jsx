@@ -43,19 +43,35 @@ function HeroCard({
   }
 
   const current = weather.current;
+  const safeLocation = location && typeof location === "object" ? location : {};
+  const safeLocationName = typeof safeLocation.name === "string" && safeLocation.name.trim()
+    ? safeLocation.name.trim()
+    : "Current location";
+  const safeLocationCountry = typeof safeLocation.country === "string" && safeLocation.country.trim()
+    ? safeLocation.country.trim()
+    : "";
   const info = getWeather(current.weather_code);
   const toDisplayTemp = (value) =>
     Number.isFinite(Number(value)) ? convertTemp(Number(value)) : "\u2014";
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
   const windDisplay = formatWindSpeed(current.wind_speed_10m, unit, weatherDataUnit);
   const dewPoint = toDisplayTemp(current.dew_point_2m);
-  const hasClimateComparison = climateComparison &&
-    Number.isFinite(climateComparison.difference);
-  const climateDeltaRaw = Number.isFinite(climateComparison?.difference)
-    ? climateComparison.difference
+  const safeClimateComparison =
+    climateComparison && typeof climateComparison === "object"
+      ? climateComparison
+      : null;
+  const climateDifference = Number(safeClimateComparison?.difference);
+  const hasClimateComparison = Number.isFinite(climateDifference);
+  const climateDeltaRaw = hasClimateComparison
+    ? climateDifference
     : null;
   const climateDelta = hasClimateComparison
-    ? convertTemp(Math.abs(Number(climateDeltaRaw)), climateComparison?.differenceUnit || "F")
+    ? convertTemp(
+        Math.abs(climateDeltaRaw),
+        typeof safeClimateComparison?.differenceUnit === "string"
+          ? safeClimateComparison.differenceUnit
+          : "F"
+      )
     : 0;
   let climateDirection = "";
   if (hasClimateComparison) {
@@ -64,10 +80,16 @@ function HeroCard({
     else climateDirection = "about the same";
   }
   const climateSource = hasClimateComparison
-    ? `${climateComparison.sampleYears || 30}-year`
+    ? `${Number.isFinite(Number(safeClimateComparison?.sampleYears))
+        ? Number(safeClimateComparison.sampleYears)
+        : 30}-year`
     : "";
-  const climateDate = climateComparison?.referenceDateLabel;
-  const climateLocation = location?.name || "this location";
+  const climateDate =
+    typeof safeClimateComparison?.referenceDateLabel === "string" &&
+    safeClimateComparison.referenceDateLabel.trim()
+      ? safeClimateComparison.referenceDateLabel.trim()
+      : "today";
+  const climateLocation = safeLocationName || "this location";
   const climateMessage = hasClimateComparison
     ? climateDirection === "about the same"
       ? `Today is about the same as the ${climateSource} average for ${climateDate} in ${climateLocation}, from the Open-Meteo historical archive.`
@@ -86,8 +108,8 @@ function HeroCard({
         <div className="hero-location">
           <MapPin size={14} />
           <span>
-            {location.name || "Current location"}
-            {location.country ? `, ${location.country}` : ""}
+            {safeLocationName}
+            {safeLocationCountry ? `, ${safeLocationCountry}` : ""}
           </span>
         </div>
         <p className="hero-date">{today}</p>

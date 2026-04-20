@@ -145,7 +145,7 @@ function PressureTrend({ weather }) {
 }
 
 function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
-  const current = weather?.current || {};
+  const current = weather?.current && typeof weather.current === "object" ? weather.current : {};
   const wind_speed_10m = current.wind_speed_10m;
   const wind_gusts_10m = current.wind_gusts_10m;
   const wind_direction_10m = current.wind_direction_10m;
@@ -153,14 +153,15 @@ function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
   const safeWindGusts = Number(wind_gusts_10m);
   const safeDirection = Number(wind_direction_10m);
   const sustained = Number.isFinite(safeWindSpeed) ? safeWindSpeed : 0;
+  const directionDegrees = Number.isFinite(safeDirection) ? safeDirection : 0;
 
   const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit, weatherDataUnit);
   const gustsDisplay = formatWindSpeed(
-    Number.isFinite(safeWindGusts) ? safeWindGusts : safeWindSpeed,
+    Number.isFinite(safeWindGusts) ? safeWindGusts : sustained,
     unit,
     weatherDataUnit
   );
-  const direction = windDirectionName(Number.isFinite(safeDirection) ? safeDirection : 0);
+  const direction = windDirectionName(directionDegrees);
   const strength = classifyWind(sustained, weatherDataUnit);
 
   return (
@@ -181,7 +182,7 @@ function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
             className="wind-compass-arrow"
             aria-hidden="true"
             style={{
-              transform: `translate(-50%, -50%) rotate(${(safeDirection || 0) + 180}deg)`,
+              transform: `translate(-50%, -50%) rotate(${directionDegrees + 180}deg)`,
             }}
           >
             <ArrowUp size={16} strokeWidth={2.3} />

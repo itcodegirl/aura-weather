@@ -80,16 +80,16 @@ function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
 }
 
 function ForecastCard({ weather, convertTemp, style }) {
-  const daily = weather?.daily || {};
-  const times = Array.isArray(daily.time) ? daily.time : [];
-  const weatherCodes = Array.isArray(daily.weather_code) ? daily.weather_code : [];
-  const maxTemps = Array.isArray(daily.temperature_2m_max)
+  const daily = weather?.daily && typeof weather.daily === "object" ? weather.daily : null;
+  const times = Array.isArray(daily?.time) ? daily.time : [];
+  const weatherCodes = Array.isArray(daily?.weather_code) ? daily.weather_code : [];
+  const maxTemps = Array.isArray(daily?.temperature_2m_max)
     ? daily.temperature_2m_max
     : [];
-  const minTemps = Array.isArray(daily.temperature_2m_min)
+  const minTemps = Array.isArray(daily?.temperature_2m_min)
     ? daily.temperature_2m_min
     : [];
-  const precipProbabilities = Array.isArray(daily.precipitation_probability_max)
+  const precipProbabilities = Array.isArray(daily?.precipitation_probability_max)
     ? daily.precipitation_probability_max
     : [];
 
@@ -99,7 +99,7 @@ function ForecastCard({ weather, convertTemp, style }) {
   const days = times
     .map((date, index) => ({
       date,
-      weather_code: toFiniteNumber(weatherCodes[index], 0) || 0,
+      weather_code: toFiniteNumber(weatherCodes[index], 0),
       temp_max: toFiniteNumber(maxTemps[index]),
       temp_min: toFiniteNumber(minTemps[index]),
       precipitation_probability_max: clampPercent(

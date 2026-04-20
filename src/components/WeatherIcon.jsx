@@ -67,11 +67,18 @@ const iconColors = {
 export default function WeatherIcon({ code, size = 24, className = "", animated = false }) {
   const Icon = iconMap[code] || Sun;
   const color = iconColors[code] || "#fbbf24";
+  const isSunny = code === 0 || code === 1;
+  const isCloudy = [2, 3, 45, 48].includes(code);
+  const animatedVariant = isSunny
+    ? "weather-icon--sun"
+    : isCloudy
+      ? "weather-icon--cloud"
+      : "";
 
   return (
     <Icon
       size={size}
-      className={`weather-icon ${animated ? "weather-icon--animated" : ""} ${className}`}
+      className={`weather-icon ${animated ? `weather-icon--animated ${animatedVariant}` : ""} ${className}`}
       style={{ color }}
       strokeWidth={1.8}
       aria-hidden="true"

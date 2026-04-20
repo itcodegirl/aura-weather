@@ -4,7 +4,18 @@
 
 .weather-icon--animated {
   transform-origin: center;
-  animation: weather-icon-float 5s ease-in-out infinite;
+  will-change: transform;
+  animation: weather-icon-float 7s ease-in-out infinite;
+}
+
+.weather-icon--animated.weather-icon--sun {
+  animation:
+    weather-icon-float 6s ease-in-out infinite,
+    weather-icon-pulse 3.5s ease-in-out infinite;
+}
+
+.weather-icon--animated.weather-icon--cloud {
+  animation: weather-icon-cloud-drift 9s ease-in-out infinite;
 }
 
 @keyframes weather-icon-float {
@@ -14,6 +25,28 @@
   }
   50% {
     transform: translateY(-6px) scale(1.02);
+  }
+}
+
+@keyframes weather-icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.98;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes weather-icon-cloud-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
   }
 }
 

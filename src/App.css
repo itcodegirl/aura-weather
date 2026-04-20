@@ -104,6 +104,10 @@ a:focus-visible,
   transition: opacity 0.2s ease;
 }
 
+.city-search-input::placeholder {
+  color: var(--text-dim);
+}
+
 .app-inner {
   position: relative;
   z-index: 1;

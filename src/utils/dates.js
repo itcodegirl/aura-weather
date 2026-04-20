@@ -5,7 +5,16 @@
  * instead of UTC midnight, which avoids day shifts in US timezones.
  */
 export function parseLocalDate(isoDate) {
-  return new Date(`${isoDate}T00:00:00`);
+  if (typeof isoDate !== "string" || !isoDate.trim()) {
+    return null;
+  }
+
+  const date = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
 }
 
 /**
@@ -14,6 +23,10 @@ export function parseLocalDate(isoDate) {
  */
 export function formatDayLabel(isoDate) {
   const date = parseLocalDate(isoDate);
+  if (!date) {
+    return "\u2014";
+  }
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -32,7 +45,12 @@ export function formatDayLabel(isoDate) {
  * Short date like "Apr 18"
  */
 export function formatShortDate(isoDate) {
-  return parseLocalDate(isoDate).toLocaleDateString("en-US", {
+  const date = parseLocalDate(isoDate);
+  if (!date) {
+    return "\u2014";
+  }
+
+  return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });

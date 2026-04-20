@@ -473,7 +473,12 @@ function App() {
             ) : null}
           </section>
 
-          <RainCard weather={weather} unit={unit} style={CARD_STYLE_VARIABLES[4]} />
+          <RainCard
+            weather={weather}
+            unit={unit}
+            dataUnit={weatherDataUnit}
+            style={CARD_STYLE_VARIABLES[4]}
+          />
           <NowcastCard weather={weather} style={CARD_STYLE_VARIABLES[5]} />
           <HourlyCard
             weather={weather}

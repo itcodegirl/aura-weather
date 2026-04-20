@@ -76,23 +76,32 @@ function CitySearch({ onSelect }, ref) {
 
     try {
       const cities = await geocodeCity(term, { signal: controller.signal });
-      if (!isMountedRef.current) return;
-      if (currentRequest !== requestIdRef.current) return;
-      setResults(cities);
-      setError(null);
-    } catch (error) {
-      if (!isMountedRef.current) return;
-      if (currentRequest !== requestIdRef.current) return;
-      if (error?.name === "AbortError") return;
-      setError("Search failed");
-      setResults([]);
-    } finally {
-      if (!isMountedRef.current) return;
-      if (currentRequest !== requestIdRef.current) return;
-      if (geocodeRequestRef.current === controller) {
-        geocodeRequestRef.current = null;
+      if (
+        isMountedRef.current &&
+        currentRequest === requestIdRef.current
+      ) {
+        setResults(cities);
+        setError(null);
       }
-      setLoading(false);
+    } catch (error) {
+      if (
+        isMountedRef.current &&
+        currentRequest === requestIdRef.current &&
+        error?.name !== "AbortError"
+      ) {
+        setError("Search failed");
+        setResults([]);
+      }
+    } finally {
+      if (
+        isMountedRef.current &&
+        currentRequest === requestIdRef.current
+      ) {
+        if (geocodeRequestRef.current === controller) {
+          geocodeRequestRef.current = null;
+        }
+        setLoading(false);
+      }
     }
   };
 

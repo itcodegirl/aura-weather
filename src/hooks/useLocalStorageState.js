@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 function readStorageValue(key, defaultValue) {
   try {
+    if (typeof window === "undefined" || !window.localStorage) return defaultValue;
     const stored = window.localStorage.getItem(key);
     return stored === null ? defaultValue : stored;
   } catch {
@@ -30,14 +31,22 @@ export function useLocalStorageState(
   const [value, setValue] = useState(() => {
     const stored = readStorageValue(key, null);
     if (stored === null) return defaultValue;
-    const parsed = deserialize(stored);
-    return parsed === null ? defaultValue : parsed;
+
+    try {
+      const parsed = deserialize(stored);
+      return parsed == null ? defaultValue : parsed;
+    } catch {
+      return defaultValue;
+    }
   });
 
   useEffect(() => {
-    writeStorageValue(key, serialize(value));
+    try {
+      writeStorageValue(key, serialize(value));
+    } catch {
+      // localStorage may be unavailable or serialization may fail.
+    }
   }, [key, value, serialize]);
 
   return [value, setValue];
 }
-

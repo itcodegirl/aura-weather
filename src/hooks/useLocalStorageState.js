@@ -12,6 +12,7 @@ function readStorageValue(key, defaultValue) {
 
 function writeStorageValue(key, value) {
   try {
+    if (typeof window === "undefined" || !window.localStorage) return;
     window.localStorage.setItem(key, value);
   } catch {
     // localStorage may be unavailable in restricted contexts.
@@ -33,7 +34,10 @@ export function useLocalStorageState(
     if (stored === null) return defaultValue;
 
     try {
-      const parsed = deserialize(stored);
+      const deserializeFn = typeof deserialize === "function"
+        ? deserialize
+        : (rawValue) => rawValue;
+      const parsed = deserializeFn(stored);
       return parsed == null ? defaultValue : parsed;
     } catch {
       return defaultValue;
@@ -42,7 +46,10 @@ export function useLocalStorageState(
 
   useEffect(() => {
     try {
-      writeStorageValue(key, serialize(value));
+      const serializeFn = typeof serialize === "function"
+        ? serialize
+        : (rawValue) => String(rawValue);
+      writeStorageValue(key, serializeFn(value));
     } catch {
       // localStorage may be unavailable or serialization may fail.
     }

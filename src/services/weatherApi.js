@@ -14,6 +14,7 @@ const TIMEOUT_MS = 10_000;
 const DEFAULT_TEMPERATURE_UNIT = "fahrenheit";
 const DEFAULT_WIND_SPEED_UNIT = "mph";
 const DEFAULT_PRECIPITATION_UNIT = "inch";
+const DEFAULT_TIMEZONE = "UTC";
 
 function getSignal(signal) {
   if (signal) return signal;
@@ -21,6 +22,14 @@ function getSignal(signal) {
     return AbortSignal.timeout(TIMEOUT_MS);
   }
   return undefined;
+}
+
+function normalizeTimeZone(value, fallback = DEFAULT_TIMEZONE) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  return trimmed || fallback;
 }
 
 async function fetchJson(url, options = {}) {
@@ -42,7 +51,7 @@ async function fetchJson(url, options = {}) {
 
 function getDateInTimeZone(timeZone) {
   const now = new Date();
-  const zone = timeZone || "UTC";
+  const zone = normalizeTimeZone(timeZone);
   let year;
   let month;
   let day;
@@ -167,7 +176,7 @@ export async function fetchHistoricalTemperatureAverage(
     end_date: end,
     daily: "temperature_2m_mean,temperature_2m_min,temperature_2m_max",
     temperature_unit: temperatureUnit,
-    timezone: timezone || "UTC",
+    timezone: normalizeTimeZone(timezone),
   });
 
   const data = await fetchJson(`${ENDPOINTS.archive}?${params}`, { signal });

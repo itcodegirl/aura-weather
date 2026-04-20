@@ -341,9 +341,14 @@ function App() {
           <div className="app-header-actions">
             <CitySearch
               ref={citySearchRef}
-              onSelect={(city) =>
-                loadWeather(city.lat, city.lon, city.name, city.country)
-              }
+              onSelect={(city) => {
+                const lat = Number(city?.lat);
+                const lon = Number(city?.lon);
+                if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                  return;
+                }
+                loadWeather(lat, lon, city.name, city.country);
+              }}
             />
             <button
               type="button"

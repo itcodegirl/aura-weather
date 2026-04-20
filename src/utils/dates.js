@@ -9,7 +9,12 @@ export function parseLocalDate(isoDate) {
     return null;
   }
 
-  const date = new Date(`${isoDate}T00:00:00`);
+  const normalized = isoDate.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return null;
+  }
+
+  const date = new Date(`${normalized}T00:00:00`);
   if (Number.isNaN(date.getTime())) {
     return null;
   }

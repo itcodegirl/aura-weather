@@ -32,8 +32,16 @@ function analyzeNowcast(minutely15) {
     };
   }
 
-  const { time, precipitation_probability = [], precipitation = [], weather_code = [] } =
-    minutely15;
+  const { time } = minutely15;
+  const precipitationProbabilitySeries = Array.isArray(minutely15?.precipitation_probability)
+    ? minutely15.precipitation_probability
+    : [];
+  const precipitationSeries = Array.isArray(minutely15?.precipitation)
+    ? minutely15.precipitation
+    : [];
+  const weatherCodeSeries = Array.isArray(minutely15?.weather_code)
+    ? minutely15.weather_code
+    : [];
 
   const now = new Date();
   const nowMs = now.getTime();
@@ -54,9 +62,9 @@ function analyzeNowcast(minutely15) {
       }
 
       const idx = normalizedStartIdx + i;
-      const probability = clampProbability(toFiniteNumber(precipitation_probability[idx], 0));
-      const rainAmount = Math.max(toFiniteNumber(precipitation[idx], 0), 0);
-      const code = Number(weather_code[idx] || 0);
+      const probability = clampProbability(toFiniteNumber(precipitationProbabilitySeries[idx], 0));
+      const rainAmount = Math.max(toFiniteNumber(precipitationSeries[idx], 0), 0);
+      const code = toFiniteNumber(weatherCodeSeries[idx], 0);
       const isWet =
         probability >= 25 ||
         rainAmount > 0 ||

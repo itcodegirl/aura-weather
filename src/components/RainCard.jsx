@@ -35,7 +35,11 @@ function analyzeRain(hourly) {
     : [];
 
   const now = new Date();
-  const startIdx = hourlyTimes.findIndex((t) => new Date(t) >= now);
+  const nowMs = now.getTime();
+  const startIdx = hourlyTimes.findIndex((t) => {
+    const timestamp = new Date(t).getTime();
+    return Number.isFinite(timestamp) && timestamp >= nowMs;
+  });
   const idx = startIdx === -1 ? 0 : startIdx;
 
   const hours = hourlyTimes
@@ -44,8 +48,8 @@ function analyzeRain(hourly) {
       const timestamp = new Date(timeString);
       if (!Number.isFinite(timestamp.getTime())) return null;
 
-      const probability = Number(hourlyProbabilities[idx + i] || 0);
-      const amount = Number(hourlyAmounts[idx + i] || 0);
+      const probability = Number(hourlyProbabilities[idx + i]);
+      const amount = Number(hourlyAmounts[idx + i]);
 
       return {
         time: timestamp,
@@ -79,11 +83,15 @@ function analyzeRain(hourly) {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStartIdx = hourly.time.findIndex((t) => new Date(t) >= today);
+  const todayMs = today.getTime();
+  const todayStartIdx = hourly.time.findIndex((t) => {
+    const timestamp = new Date(t).getTime();
+    return Number.isFinite(timestamp) && timestamp >= todayMs;
+  });
   let soFarToday = 0;
   if (todayStartIdx !== -1) {
     for (let i = todayStartIdx; i < idx; i += 1) {
-      const amount = Number(hourlyAmounts[i] || 0);
+      const amount = Number(hourlyAmounts[i]);
       soFarToday += Number.isFinite(amount) ? amount : 0;
     }
   }
@@ -94,7 +102,7 @@ function analyzeRain(hourly) {
     const start = Math.max(0, idx - hoursBack);
     let sum = 0;
     for (let i = start; i < idx; i += 1) {
-      const amount = Number(hourlyAmounts[i] || 0);
+      const amount = Number(hourlyAmounts[i]);
       if (Number.isFinite(amount)) {
         sum += amount;
       }

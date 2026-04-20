@@ -35,7 +35,11 @@ function HeroCard({
   const hasClimateComparison =
     climateComparison && Number.isFinite(climateComparison.differenceF);
   const climateDelta = hasClimateComparison
-    ? Math.abs(convertTemp(Math.abs(climateComparison.differenceF)))
+    ? Math.round(
+        unit === "C"
+          ? Math.abs(climateComparison.differenceF) * (5 / 9)
+          : Math.abs(climateComparison.differenceF)
+      )
     : 0;
   let climateDirection = "";
   if (hasClimateComparison) {

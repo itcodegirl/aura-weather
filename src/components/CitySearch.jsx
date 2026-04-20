@@ -5,6 +5,9 @@ import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { geocodeCity } from "../services/weatherApi";
 import "./CitySearch.css";
 
+const SEARCH_DEBOUNCE_MS = 300;
+const MIN_SEARCH_QUERY_LENGTH = 2;
+
 function CitySearch({ onSelect }, ref) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -89,7 +92,7 @@ function CitySearch({ onSelect }, ref) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = nextQuery.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < MIN_SEARCH_QUERY_LENGTH) {
       requestIdRef.current++;
       abortGeocodeRequest();
       setResults([]);
@@ -100,7 +103,7 @@ function CitySearch({ onSelect }, ref) {
 
     debounceRef.current = setTimeout(() => {
       runSearch(trimmed);
-    }, 300);
+    }, SEARCH_DEBOUNCE_MS);
   };
 
   const handleSelect = (city) => {

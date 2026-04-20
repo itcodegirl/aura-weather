@@ -6,6 +6,7 @@ const ENDPOINTS = {
   aqi: "https://air-quality-api.open-meteo.com/v1/air-quality",
   geocode: "https://geocoding-api.open-meteo.com/v1/search",
 };
+const GEOCODE_RESULTS_LIMIT = 5;
 
 const TIMEOUT_MS = 10_000;
 
@@ -215,7 +216,7 @@ export async function fetchAirQuality(lat, lon, options = {}) {
  */
 export async function geocodeCity(name, options = {}) {
   const data = await fetchJson(
-    `${ENDPOINTS.geocode}?name=${encodeURIComponent(name)}&count=5`,
+    `${ENDPOINTS.geocode}?name=${encodeURIComponent(name)}&count=${GEOCODE_RESULTS_LIMIT}`,
     { signal: options.signal }
   );
   return data.results || [];

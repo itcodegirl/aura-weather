@@ -156,17 +156,18 @@ export function useWeather(unit = "F", options = {}) {
             : null
         );
       } catch (error) {
-        if (requestId !== requestIdRef.current) {
-          return;
+        if (
+          requestId === requestIdRef.current &&
+          isMountedRef.current &&
+          error?.name !== "AbortError"
+        ) {
+          setError(error.message || "Could not load weather");
         }
-
-        if (!isMountedRef.current) return;
-        if (error?.name === "AbortError") return;
-        setError(error.message || "Could not load weather");
       } finally {
-        if (!isMountedRef.current) return;
         if (requestId === requestIdRef.current) {
-          setLoading(false);
+          if (isMountedRef.current) {
+            setLoading(false);
+          }
           if (inFlightRequestRef.current === controller) {
             inFlightRequestRef.current = null;
           }

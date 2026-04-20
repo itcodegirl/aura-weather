@@ -111,7 +111,7 @@ export async function fetchWeather(lat, lon, unit = "F", options = {}) {
     minutely_15:
       "weather_code,precipitation_probability,precipitation",
     temperature_unit: "fahrenheit",
-    wind_speed_unit: unit === "C" ? "kmh" : "mph",
+    wind_speed_unit: "mph",
     precipitation_unit: "inch",
     timezone: "auto",
     forecast_days: "7",

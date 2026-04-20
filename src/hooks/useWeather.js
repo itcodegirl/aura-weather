@@ -104,6 +104,7 @@ export function useWeather(unit = "F", options = {}) {
       inFlightRequestRef.current = controller;
       lastRequestedSignatureRef.current = signature;
 
+      if (!isMountedRef.current) return;
       setLoading(true);
       setError(null);
       setLocationNotice(fallbackNotice || null);
@@ -131,6 +132,7 @@ export function useWeather(unit = "F", options = {}) {
 
         const resolvedName =
           name || getFallbackLocationName(weatherData, lat, lon);
+        if (!isMountedRef.current) return;
         const currentTemperature = Number(weatherData?.current?.temperature_2m);
         const climateDelta =
           Number.isFinite(currentTemperature) &&
@@ -147,6 +149,7 @@ export function useWeather(unit = "F", options = {}) {
           country: country || "",
         });
         persistLocation(lat, lon, resolvedName, country || "");
+        if (!isMountedRef.current) return;
         setClimateComparison(
           historicalAverage && Number.isFinite(climateDelta)
             ? { ...historicalAverage, differenceF: climateDelta }
@@ -157,9 +160,11 @@ export function useWeather(unit = "F", options = {}) {
           return;
         }
 
+        if (!isMountedRef.current) return;
         if (error?.name === "AbortError") return;
         setError(error.message || "Could not load weather");
       } finally {
+        if (!isMountedRef.current) return;
         if (requestId === requestIdRef.current) {
           setLoading(false);
           if (inFlightRequestRef.current === controller) {

@@ -1,6 +1,12 @@
 // src/components/CitySearch.jsx
 
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { geocodeCity } from "../services/weatherApi";
 import "./CitySearch.css";
@@ -21,6 +27,7 @@ function CitySearch({ onSelect }, ref) {
   const debounceRef = useRef(null);
   const requestIdRef = useRef(0);
   const geocodeRequestRef = useRef(null);
+  const isMountedRef = useRef(true);
 
   const abortGeocodeRequest = () => {
     if (!geocodeRequestRef.current) return;
@@ -30,6 +37,7 @@ function CitySearch({ onSelect }, ref) {
 
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       abortGeocodeRequest();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
@@ -57,24 +65,29 @@ function CitySearch({ onSelect }, ref) {
   }, [showDropdown, results]);
 
   const runSearch = async (term) => {
+    if (!isMountedRef.current) return;
     abortGeocodeRequest();
 
     const currentRequest = ++requestIdRef.current;
+    if (!isMountedRef.current) return;
     setLoading(true);
     const controller = new AbortController();
     geocodeRequestRef.current = controller;
 
     try {
       const cities = await geocodeCity(term, { signal: controller.signal });
+      if (!isMountedRef.current) return;
       if (currentRequest !== requestIdRef.current) return;
       setResults(cities);
       setError(null);
     } catch (error) {
+      if (!isMountedRef.current) return;
       if (currentRequest !== requestIdRef.current) return;
       if (error?.name === "AbortError") return;
       setError("Search failed");
       setResults([]);
     } finally {
+      if (!isMountedRef.current) return;
       if (currentRequest !== requestIdRef.current) return;
       if (geocodeRequestRef.current === controller) {
         geocodeRequestRef.current = null;

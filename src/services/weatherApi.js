@@ -171,10 +171,21 @@ export async function fetchHistoricalTemperatureAverage(
   });
 
   const data = await fetchJson(`${ENDPOINTS.archive}?${params}`, { signal });
-  const times = data?.daily?.time;
+  const daily = data?.daily;
+  const times = daily?.time;
   if (!Array.isArray(times) || !times.length) {
     return null;
   }
+
+  const meanSeries = Array.isArray(daily?.temperature_2m_mean)
+    ? daily.temperature_2m_mean
+    : [];
+  const minSeries = Array.isArray(daily?.temperature_2m_min)
+    ? daily.temperature_2m_min
+    : [];
+  const maxSeries = Array.isArray(daily?.temperature_2m_max)
+    ? daily.temperature_2m_max
+    : [];
 
   const targetSuffix = `-${month}-${day}`;
   let total = 0;
@@ -183,9 +194,9 @@ export async function fetchHistoricalTemperatureAverage(
   for (let i = 0; i < times.length; i += 1) {
     if (!times[i]?.endsWith(targetSuffix)) continue;
 
-    const mean = toNumber(Number(data.daily.temperature_2m_mean?.[i]));
-    const min = toNumber(Number(data.daily.temperature_2m_min?.[i]));
-    const max = toNumber(Number(data.daily.temperature_2m_max?.[i]));
+    const mean = toNumber(Number(meanSeries[i]));
+    const min = toNumber(Number(minSeries[i]));
+    const max = toNumber(Number(maxSeries[i]));
 
     let sample = mean;
     if (!Number.isFinite(sample) && Number.isFinite(min) && Number.isFinite(max)) {
@@ -223,7 +234,8 @@ export async function fetchAirQuality(lat, lon, options = {}) {
       `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=european_aqi`,
       { signal: options.signal }
     );
-    return data.current?.european_aqi ?? null;
+    const aqi = Number(data?.current?.european_aqi);
+    return Number.isFinite(aqi) ? aqi : null;
   } catch {
     return null;
   }
@@ -242,6 +254,6 @@ export async function geocodeCity(name, options = {}) {
     `${ENDPOINTS.geocode}?name=${encodeURIComponent(query)}&count=${GEOCODE_RESULTS_LIMIT}`,
     { signal: options.signal }
   );
-  return data.results || [];
+  return Array.isArray(data?.results) ? data.results : [];
 }
 

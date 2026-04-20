@@ -35,6 +35,27 @@ function normalizeLocationName(value, fallback = "") {
   return trimmed || fallback;
 }
 
+function getErrorMessage(error, fallback) {
+  if (typeof error === "string") {
+    const trimmed = error.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+
+  if (error && typeof error === "object") {
+    const maybeMessage = error.message;
+    if (typeof maybeMessage === "string") {
+      const trimmed = maybeMessage.trim();
+      if (trimmed) {
+        return trimmed;
+      }
+    }
+  }
+
+  return fallback;
+}
+
 function hasValidLastLocationTimestamp(saved) {
   if (!saved?.updatedAt) {
     return false;
@@ -285,7 +306,7 @@ export function useWeather(unit = "F", options = {}) {
           isMountedRef.current &&
           error?.name !== "AbortError"
         ) {
-          setError(error.message || "Could not load weather");
+          setError(getErrorMessage(error, "Could not load weather"));
         }
       } finally {
         if (requestId === requestIdRef.current) {

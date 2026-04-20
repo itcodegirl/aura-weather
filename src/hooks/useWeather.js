@@ -250,8 +250,6 @@ export function useWeather(unit = "F", options = {}) {
   }, [lastRequest, scheduleWeatherLoad, unit]);
 
   useEffect(() => {
-    isMountedRef.current = true;
-
     const persisted = getPersistedLocation();
     if (persisted) {
       scheduleWeatherLoad(
@@ -310,11 +308,18 @@ export function useWeather(unit = "F", options = {}) {
     );
 
     return () => {
-      isMountedRef.current = false;
       clearTimeout(fallbackTimer);
       abortInFlightRequest();
     };
   }, [unit, scheduleWeatherLoad, abortInFlightRequest]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const hasLocation = location !== null;
   const locationLat = location?.lat;

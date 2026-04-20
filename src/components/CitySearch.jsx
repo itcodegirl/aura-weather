@@ -17,9 +17,17 @@ function CitySearch({ onSelect }, ref) {
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
   const requestIdRef = useRef(0);
+  const geocodeRequestRef = useRef(null);
+
+  const abortGeocodeRequest = () => {
+    if (!geocodeRequestRef.current) return;
+    geocodeRequestRef.current.abort();
+    geocodeRequestRef.current = null;
+  };
 
   useEffect(() => {
     return () => {
+      abortGeocodeRequest();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, []);
@@ -46,20 +54,29 @@ function CitySearch({ onSelect }, ref) {
   }, [showDropdown, results]);
 
   const runSearch = async (term) => {
+    abortGeocodeRequest();
+
     const currentRequest = ++requestIdRef.current;
     setLoading(true);
+    const controller = new AbortController();
+    geocodeRequestRef.current = controller;
 
     try {
-      const cities = await geocodeCity(term);
+      const cities = await geocodeCity(term, { signal: controller.signal });
       if (currentRequest !== requestIdRef.current) return;
       setResults(cities);
       setError(null);
-    } catch {
+    } catch (error) {
       if (currentRequest !== requestIdRef.current) return;
+      if (error?.name === "AbortError") return;
       setError("Search failed");
       setResults([]);
     } finally {
-      if (currentRequest === requestIdRef.current) setLoading(false);
+      if (currentRequest !== requestIdRef.current) return;
+      if (geocodeRequestRef.current === controller) {
+        geocodeRequestRef.current = null;
+      }
+      setLoading(false);
     }
   };
 
@@ -74,6 +91,7 @@ function CitySearch({ onSelect }, ref) {
     const trimmed = nextQuery.trim();
     if (trimmed.length < 2) {
       requestIdRef.current++;
+      abortGeocodeRequest();
       setResults([]);
       setError(null);
       setLoading(false);
@@ -145,6 +163,7 @@ function CitySearch({ onSelect }, ref) {
 
   const handleClear = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    abortGeocodeRequest();
     requestIdRef.current++;
 
     setQuery("");

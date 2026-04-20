@@ -54,6 +54,8 @@ function HeroCard({
   const toDisplayTemp = (value) =>
     Number.isFinite(Number(value)) ? convertTemp(Number(value)) : "\u2014";
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
+  const todayHigh = toDisplayTemp(weather?.daily?.temperature_2m_max?.[0]);
+  const todayLow = toDisplayTemp(weather?.daily?.temperature_2m_min?.[0]);
   const windDisplay = formatWindSpeed(current.wind_speed_10m, unit, weatherDataUnit);
   const dewPoint = toDisplayTemp(current.dew_point_2m);
   const safeClimateComparison =
@@ -105,24 +107,44 @@ function HeroCard({
   return (
     <section className="bento-hero hero-card" style={style}>
       <header className="hero-meta">
-        <div className="hero-location">
-          <MapPin size={14} />
-          <span>
-            {safeLocationName}
-            {safeLocationCountry ? `, ${safeLocationCountry}` : ""}
-          </span>
+        <div className="hero-location-block">
+          <div className="hero-location">
+            <MapPin size={14} />
+            <span>
+              {safeLocationName}
+              {safeLocationCountry ? `, ${safeLocationCountry}` : ""}
+            </span>
+          </div>
+          <p className="hero-date">{today}</p>
         </div>
-        <p className="hero-date">{today}</p>
+        <div className="hero-high-low" aria-label="Today's high and low temperatures">
+          <div className="hero-high-low-item">
+            <span className="hero-high-low-label">High</span>
+            <span className="hero-high-low-value">
+              {todayHigh}
+              {tempUnit}
+            </span>
+          </div>
+          <div className="hero-high-low-item">
+            <span className="hero-high-low-label">Low</span>
+            <span className="hero-high-low-value">
+              {todayLow}
+              {tempUnit}
+            </span>
+          </div>
+        </div>
       </header>
 
       <div className="hero-main">
-        <div className="hero-icon">
-          <WeatherIcon code={current.weather_code} size={120} animated />
-        </div>
         <div className="hero-temp-block">
-          <div className="hero-temp">
-            {toDisplayTemp(current.temperature_2m)}
-            <span className="hero-temp-unit">{tempUnit}</span>
+          <div className="hero-temp-row">
+            <div className="hero-temp">
+              {toDisplayTemp(current.temperature_2m)}
+              <span className="hero-temp-unit">{tempUnit}</span>
+            </div>
+            <div className="hero-icon">
+              <WeatherIcon code={current.weather_code} size={124} animated />
+            </div>
           </div>
           <div className="hero-condition">{info.label}</div>
           <div className="hero-feels">
@@ -144,20 +166,20 @@ function HeroCard({
         <Stat
           icon={<Droplets size={18} />}
           label="Humidity"
-          value={`${
+          value={
             Number.isFinite(Number(current.relative_humidity_2m))
               ? `${Math.round(current.relative_humidity_2m)}%`
               : "\u2014"
-          }`}
+          }
         />
         <Stat
           icon={<Gauge size={18} />}
           label="Pressure"
-          value={`${
+          value={
             Number.isFinite(Number(current.surface_pressure))
               ? `${Math.round(current.surface_pressure)} hPa`
               : "\u2014"
-          }`}
+          }
         />
         <Stat
           icon={<Thermometer size={18} />}

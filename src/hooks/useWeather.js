@@ -29,6 +29,20 @@ const LOCATION_FALLBACK_DELAY_MS = GEOLOCATION_TIMEOUT_MS + 1000;
 const DEFAULT_DATA_UNIT = "F";
 const LAST_LOCATION_TTL_DAYS = 30;
 
+function scheduleTask(callback) {
+  if (typeof callback !== "function") return;
+  if (typeof queueMicrotask === "function") {
+    queueMicrotask(callback);
+    return;
+  }
+
+  Promise.resolve()
+    .then(callback)
+    .catch(() => {
+      // Keep async scheduling failures from leaking as unhandled rejections.
+    });
+}
+
 function normalizeLocationName(value, fallback = "") {
   if (typeof value !== "string") return fallback;
   const trimmed = value.trim();
@@ -187,7 +201,10 @@ export function useWeather(unit = "F", options = {}) {
       if (!isMountedRef.current) return;
 
       const coordinates = parseCoordinates(lat, lon);
-      const { fallbackNotice } = loadOptions;
+      const {
+        fallbackNotice,
+        skipIfSignatureMatches = false,
+      } = loadOptions;
       if (!coordinates) {
         setError("Invalid location coordinates");
         setLoading(false);
@@ -201,6 +218,12 @@ export function useWeather(unit = "F", options = {}) {
       const requestCountry = normalizeLocationName(country);
       const requestId = requestIdRef.current + 1;
       const signature = `${safeLat},${safeLon},${requestDataUnit},${climateEnabled ? 1 : 0}`;
+      if (
+        skipIfSignatureMatches &&
+        signature === lastRequestedSignatureRef.current
+      ) {
+        return;
+      }
 
       requestIdRef.current = requestId;
       abortInFlightRequest();
@@ -346,7 +369,7 @@ export function useWeather(unit = "F", options = {}) {
 
   const scheduleWeatherLoadAsync = useCallback(
     (lat, lon, name, country, requestUnit = unit, options = {}) => {
-      queueMicrotask(() => {
+      scheduleTask(() => {
         scheduleWeatherLoad(lat, lon, name, country, requestUnit, options);
       });
     },
@@ -485,7 +508,10 @@ export function useWeather(unit = "F", options = {}) {
         normalizeLocationName(persisted.name, DEFAULT_LOCATION.name),
         normalizeLocationName(persisted.country, DEFAULT_LOCATION.country),
         unit,
-        { fallbackNotice: SAVED_LOCATION_NOTICE }
+        {
+          fallbackNotice: SAVED_LOCATION_NOTICE,
+          skipIfSignatureMatches: true,
+        }
       );
     } else {
       const fallbackTimer = setTimeout(() => {
@@ -495,17 +521,27 @@ export function useWeather(unit = "F", options = {}) {
           DEFAULT_LOCATION.name,
           DEFAULT_LOCATION.country,
           unit,
-          { fallbackNotice: LOCATION_FALLBACK_NOTICE }
+          {
+            fallbackNotice: LOCATION_FALLBACK_NOTICE,
+            skipIfSignatureMatches: true,
+          }
         );
       }, LOCATION_FALLBACK_DELAY_MS);
 
-      queueMicrotask(() => {
+      scheduleTask(() => {
         requestCurrentPositionWithFallback({
           requestUnit: unit,
           fallbackNotice: LOCATION_FALLBACK_NOTICE,
           onSuccess: ({ latitude, longitude }) => {
             clearTimeout(fallbackTimer);
-            scheduleWeatherLoadAsync(latitude, longitude);
+            scheduleWeatherLoadAsync(
+              latitude,
+              longitude,
+              undefined,
+              undefined,
+              unit,
+              { skipIfSignatureMatches: true }
+            );
           },
           onFallback: () => {
             clearTimeout(fallbackTimer);
@@ -542,7 +578,8 @@ export function useWeather(unit = "F", options = {}) {
           locationLon,
           locationName,
           locationCountry,
-          unit
+          unit,
+          { skipIfSignatureMatches: true }
         );
       }
     }

@@ -17,11 +17,25 @@ const DEFAULT_PRECIPITATION_UNIT = "inch";
 const DEFAULT_TIMEZONE = "UTC";
 
 function getSignal(signal) {
-  if (signal) return signal;
-  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
-    return AbortSignal.timeout(TIMEOUT_MS);
+  const hasAbortSignal = typeof AbortSignal !== "undefined";
+  const timeoutSignal =
+    hasAbortSignal && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(TIMEOUT_MS)
+      : undefined;
+
+  if (!signal) {
+    return timeoutSignal;
   }
-  return undefined;
+
+  if (
+    timeoutSignal &&
+    hasAbortSignal &&
+    typeof AbortSignal.any === "function"
+  ) {
+    return AbortSignal.any([signal, timeoutSignal]);
+  }
+
+  return signal;
 }
 
 function normalizeTimeZone(value, fallback = DEFAULT_TIMEZONE) {
@@ -30,29 +44,6 @@ function normalizeTimeZone(value, fallback = DEFAULT_TIMEZONE) {
   }
   const trimmed = value.trim();
   return trimmed || fallback;
-}
-
-function parseIsoDateParts(value) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const parts = value.split("-");
-  if (parts.length !== 3) {
-    return null;
-  }
-
-  const year = Number(parts[0]);
-  const month = parts[1];
-  const day = parts[2];
-  if (!Number.isFinite(year)) {
-    return null;
-  }
-  if (!/^\d{2}$/.test(month) || !/^\d{2}$/.test(day)) {
-    return null;
-  }
-
-  return { year, month, day };
 }
 
 function getUtcDateParts(now) {
@@ -64,6 +55,34 @@ function getUtcDateParts(now) {
     month,
     day,
     monthDay: `${year}-${month}-${day}`,
+  };
+}
+
+function getDatePartsInTimeZone(now, timeZone) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(now);
+  const yearPart = parts.find((part) => part.type === "year")?.value;
+  const monthPart = parts.find((part) => part.type === "month")?.value;
+  const dayPart = parts.find((part) => part.type === "day")?.value;
+  const year = Number(yearPart);
+
+  if (!Number.isFinite(year)) {
+    return null;
+  }
+  if (!/^\d{2}$/.test(monthPart ?? "") || !/^\d{2}$/.test(dayPart ?? "")) {
+    return null;
+  }
+
+  return {
+    year,
+    month: monthPart,
+    day: dayPart,
+    monthDay: `${year}-${monthPart}-${dayPart}`,
   };
 }
 
@@ -94,14 +113,7 @@ function getDateInTimeZone(timeZone) {
   let monthLabel;
 
   try {
-    const formatDate = new Intl.DateTimeFormat("en-CA", {
-      timeZone: zone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    monthDay = formatDate.format(now);
-    const parsed = parseIsoDateParts(monthDay);
+    const parsed = getDatePartsInTimeZone(now, zone);
     if (!parsed) {
       throw new Error("Invalid timezone date format");
     }
@@ -114,23 +126,17 @@ function getDateInTimeZone(timeZone) {
       day: "numeric",
     }).format(now);
   } catch {
-    const fallback = new Intl.DateTimeFormat("en-CA", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      timeZone: DEFAULT_TIMEZONE,
-    }).format(now);
     const fallbackLabel = new Intl.DateTimeFormat("en-US", {
       month: "long",
       day: "numeric",
       timeZone: DEFAULT_TIMEZONE,
     }).format(now);
-    const parsedFallback = parseIsoDateParts(fallback);
+    const parsedFallback = getDatePartsInTimeZone(now, DEFAULT_TIMEZONE);
     if (parsedFallback) {
       year = parsedFallback.year;
       month = parsedFallback.month;
       day = parsedFallback.day;
-      monthDay = fallback;
+      monthDay = parsedFallback.monthDay;
       monthLabel = fallbackLabel;
     } else {
       const utcParts = getUtcDateParts(now);
@@ -152,8 +158,8 @@ function getDateInTimeZone(timeZone) {
 }
 
 function toNumber(value) {
-  if (!Number.isFinite(value)) return null;
-  return Number(value);
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
 }
 
 /**

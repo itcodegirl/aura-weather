@@ -94,6 +94,8 @@ export function useWeather(unit = "F", options = {}) {
 
   const loadWeather = useCallback(
     async (lat, lon, name, country, requestUnit = unit, options = {}) => {
+      if (!isMountedRef.current) return;
+
       const { fallbackNotice } = options;
       const requestId = requestIdRef.current + 1;
       const signature = `${lat},${lon},${requestUnit},${climateEnabled ? 1 : 0}`;

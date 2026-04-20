@@ -54,9 +54,11 @@ function buildHourlyData(hourly, convertTemp) {
 }
 
 function ChartTooltip({ active, payload, unit }) {
-  if (!active || !payload?.length) return null;
+  if (!active || !Array.isArray(payload) || payload.length === 0) return null;
 
-  const data = payload[0].payload;
+  const data = payload[0]?.payload;
+  if (!data) return null;
+
   const info = getWeather(data.code);
   const tempText = Number.isFinite(data?.temp)
     ? `${data.temp}\u00B0${unit}`

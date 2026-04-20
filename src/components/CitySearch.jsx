@@ -88,15 +88,19 @@ function CitySearch({ onSelect }, ref) {
     const controller = new AbortController();
     geocodeRequestRef.current = controller;
 
-    try {
-      const cities = await geocodeCity(term, { signal: controller.signal });
-      if (
-        isMountedRef.current &&
-        currentRequest === requestIdRef.current
-      ) {
-        setResults(Array.isArray(cities) ? cities : []);
-        setError(null);
-      }
+      try {
+        const cities = await geocodeCity(term, { signal: controller.signal });
+        if (
+          isMountedRef.current &&
+          currentRequest === requestIdRef.current
+        ) {
+          setResults(
+            Array.isArray(cities)
+              ? cities.filter((city) => city && typeof city === "object")
+              : []
+          );
+          setError(null);
+        }
     } catch (error) {
       if (
         isMountedRef.current &&
@@ -305,31 +309,36 @@ function CitySearch({ onSelect }, ref) {
           )}
 
           {!loading &&
-            results.map((city, index) => (
-              <li
-                key={getCityKey(city, index)}
-                id={`city-search-option-${index}`}
-                role="option"
-                aria-selected={index === activeIndexSafe}
-                tabIndex={-1}
-                className={`city-search-result${index === activeIndexSafe ? " is-active" : ""}`}
-                onMouseMove={() => setActiveIndex(index)}
-                onMouseDown={(event) => {
-                  event.preventDefault();
-                  handleSelect(city);
-                }}
-              >
-                <MapPin size={14} className="city-search-result-icon" />
-                <div className="city-search-result-text">
-                  <div className="city-search-result-name">{city.name}</div>
-                  <div className="city-search-result-meta">
-                    {city.admin1 && <span>{city.admin1}</span>}
-                    {city.admin1 && city.country && <span>{" \u00B7 "}</span>}
-                    {city.country && <span>{city.country}</span>}
+            results.map((city, index) => {
+              const name = typeof city?.name === "string" ? city.name : "Unnamed location";
+              const admin1 = typeof city?.admin1 === "string" ? city.admin1 : "";
+              const country = typeof city?.country === "string" ? city.country : "";
+              const meta = [admin1, country].filter(Boolean).join(" \u00B7 ");
+
+              return (
+                <li
+                  key={getCityKey(city, index)}
+                  id={`city-search-option-${index}`}
+                  role="option"
+                  aria-selected={index === activeIndexSafe}
+                  tabIndex={-1}
+                  className={`city-search-result${index === activeIndexSafe ? " is-active" : ""}`}
+                  onMouseMove={() => setActiveIndex(index)}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    handleSelect(city);
+                  }}
+                >
+                  <MapPin size={14} className="city-search-result-icon" />
+                  <div className="city-search-result-text">
+                    <div className="city-search-result-name">{name}</div>
+                    <div className="city-search-result-meta">
+                      {meta && <span>{meta}</span>}
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
         </ul>
       )}
     </div>

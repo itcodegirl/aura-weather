@@ -9,6 +9,7 @@ const DEFAULT_LOCATION = {
   name: "Chicago",
   country: "United States",
 };
+const LOCATION_FALLBACK_NOTICE = "Location not available \u2014 showing Chicago";
 
 function getFallbackLocationName(weatherData, lat, lon) {
   const timezoneCity = weatherData?.timezone?.split("/").at(-1)?.replace(/_/g, " ");
@@ -21,11 +22,22 @@ export function useWeather(unit = "F") {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRequest, setLastRequest] = useState(null);
+  const [locationNotice, setLocationNotice] = useState(null);
 
   const loadWeather = useCallback(
-    async (lat, lon, name, country, requestUnit = unit) => {
+    async (
+      lat,
+      lon,
+      name,
+      country,
+      requestUnit = unit,
+      options = {}
+    ) => {
+      const { fallbackNotice } = options;
+
       setLoading(true);
       setError(null);
+      setLocationNotice(fallbackNotice || null);
       setLastRequest({ lat, lon, name, country, unit: requestUnit });
 
       try {
@@ -73,7 +85,8 @@ export function useWeather(unit = "F") {
         DEFAULT_LOCATION.lon,
         DEFAULT_LOCATION.name,
         DEFAULT_LOCATION.country,
-        unit
+        unit,
+        { fallbackNotice: LOCATION_FALLBACK_NOTICE }
       );
     }, 6000);
 
@@ -84,7 +97,8 @@ export function useWeather(unit = "F") {
         DEFAULT_LOCATION.lon,
         DEFAULT_LOCATION.name,
         DEFAULT_LOCATION.country,
-        unit
+        unit,
+        { fallbackNotice: LOCATION_FALLBACK_NOTICE }
       );
       return;
     }
@@ -102,7 +116,8 @@ export function useWeather(unit = "F") {
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
           DEFAULT_LOCATION.country,
-          unit
+          unit,
+          { fallbackNotice: LOCATION_FALLBACK_NOTICE }
         );
       },
       { timeout: 5000 }
@@ -130,5 +145,13 @@ export function useWeather(unit = "F") {
     loadWeather,
   ]);
 
-  return { weather, location, loading, error, loadWeather, retryWeather };
+  return {
+    weather,
+    location,
+    loading,
+    error,
+    locationNotice,
+    loadWeather,
+    retryWeather,
+  };
 }

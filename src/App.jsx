@@ -11,7 +11,15 @@ import CitySearch from "./components/CitySearch";
 
 function App() {
   const [unit, setUnit] = useState("F");
-  const { weather, location, loading, error, loadWeather, retryWeather } = useWeather(unit);
+  const {
+    weather,
+    location,
+    loading,
+    error,
+    locationNotice,
+    loadWeather,
+    retryWeather,
+  } = useWeather(unit);
 
   const convertTemp = useCallback(
     (f) => (unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9)),
@@ -131,6 +139,12 @@ function App() {
             </div>
           </div>
         </header>
+
+        {locationNotice && (
+          <p className="location-notice" role="status" aria-live="polite">
+            {locationNotice}
+          </p>
+        )}
 
         <main className="bento" id="main-content">
           <HeroCard

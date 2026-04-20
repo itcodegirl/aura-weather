@@ -438,6 +438,20 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
+.location-notice {
+  margin: 0 0 16px;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.32);
+  border: var(--border);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
   .bento {

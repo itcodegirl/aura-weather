@@ -10,6 +10,7 @@ import {
   getApiTemperatureUnit,
   getApiWindSpeedUnit,
   getApiPrecipUnit,
+  normalizeTemperatureUnit,
   parseCoordinates,
 } from "../utils/weatherUnits";
 
@@ -26,10 +27,6 @@ const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const GEOLOCATION_TIMEOUT_MS = 5000;
 const LOCATION_FALLBACK_DELAY_MS = 6000;
 const DEFAULT_DATA_UNIT = "F";
-
-function normalizeUnit(value) {
-  return value === "C" ? "C" : "F";
-}
 
 function getPersistedLocation() {
   try {
@@ -119,7 +116,7 @@ export function useWeather(unit = "F", options = {}) {
 
   const loadWeather = useCallback(
     async (lat, lon, name, country, requestUnit = unit, loadOptions = {}) => {
-    if (!isMountedRef.current) return;
+      if (!isMountedRef.current) return;
 
       const coordinates = parseCoordinates(lat, lon);
       const { fallbackNotice } = loadOptions;
@@ -130,7 +127,7 @@ export function useWeather(unit = "F", options = {}) {
       }
       const { latitude: safeLat, longitude: safeLon } = coordinates;
 
-      const requestDataUnit = normalizeUnit(requestUnit);
+      const requestDataUnit = normalizeTemperatureUnit(requestUnit);
       const apiTemperatureUnit = getApiTemperatureUnit(requestDataUnit);
       const requestId = requestIdRef.current + 1;
       const signature = `${safeLat},${safeLon},${requestDataUnit},${climateEnabled ? 1 : 0}`;
@@ -248,7 +245,7 @@ export function useWeather(unit = "F", options = {}) {
 
   const loadCurrentLocation = useCallback(
     (options = {}) => {
-      const requestUnit = normalizeUnit(options.unit || unit);
+      const requestUnit = normalizeTemperatureUnit(options.unit || unit);
       const fallbackNotice = options.fallbackNotice || LOCATION_FALLBACK_NOTICE;
 
       if (!navigator.geolocation) {
@@ -298,7 +295,7 @@ export function useWeather(unit = "F", options = {}) {
 
   const retryWeather = useCallback(() => {
     const fallbackRequest = lastRequest || DEFAULT_LOCATION;
-    const retryUnit = normalizeUnit(fallbackRequest.unit || unit);
+    const retryUnit = normalizeTemperatureUnit(fallbackRequest.unit || unit);
 
     scheduleWeatherLoad(
       fallbackRequest.lat,

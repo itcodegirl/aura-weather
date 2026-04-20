@@ -7,7 +7,12 @@ import { formatPrecipitation, getPrecipUnitLabel } from "../utils/weatherUnits";
 import "./RainCard.css";
 
 function analyzeRain(hourly) {
-  if (!Array.isArray(hourly?.time) || !hourly.time.length) {
+  if (
+    !Array.isArray(hourly?.time) ||
+    !Array.isArray(hourly?.precipitation_probability) ||
+    !Array.isArray(hourly?.precipitation) ||
+    hourly.time.length === 0
+  ) {
     return {
       hours: [],
       nextRain: null,
@@ -36,15 +41,19 @@ function analyzeRain(hourly) {
   const hours = hourlyTimes
     .slice(idx, idx + 24)
     .map((timeString, i) => {
+      const timestamp = new Date(timeString);
+      if (!Number.isFinite(timestamp.getTime())) return null;
+
       const probability = Number(hourlyProbabilities[idx + i] || 0);
       const amount = Number(hourlyAmounts[idx + i] || 0);
 
       return {
-        time: new Date(timeString),
+        time: timestamp,
         probability: Number.isFinite(probability) ? probability : 0,
         amount: Number.isFinite(amount) ? amount : 0,
       };
     })
+    .filter(Boolean)
     .filter((entry) => Number.isFinite(entry.time.getTime()));
 
   if (!hours.length) {

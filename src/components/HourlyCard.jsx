@@ -15,7 +15,12 @@ import { getWeather } from "../utils/weatherCodes";
 import "./HourlyCard.css";
 
 function buildHourlyData(hourly, convertTemp) {
-  if (!hourly?.time?.length || !hourly?.temperature_2m?.length) {
+  if (
+    !Array.isArray(hourly?.time) ||
+    !Array.isArray(hourly.temperature_2m) ||
+    hourly.time.length === 0 ||
+    hourly.temperature_2m.length === 0
+  ) {
     return [];
   }
 
@@ -23,22 +28,29 @@ function buildHourlyData(hourly, convertTemp) {
   const startIdx = hourly.time.findIndex((t) => new Date(t) >= now);
   const idx = startIdx === -1 ? 0 : startIdx;
 
-  return hourly.time.slice(idx, idx + 24).map((t, i) => {
-    const date = new Date(t);
-    const rawTemp = hourly.temperature_2m[idx + i];
-    const baseTemp = Number(rawTemp);
-    const convertedTemp = Number.isFinite(baseTemp) ? Number(convertTemp(baseTemp)) : Number.NaN;
+  return hourly.time
+    .slice(idx, idx + 24)
+    .map((t, i) => {
+      const timestamp = new Date(t);
+      if (!Number.isFinite(timestamp.getTime())) return null;
 
-    return {
-      time: date,
-      label: date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        hour12: true,
-      }),
-      temp: Number.isFinite(convertedTemp) ? convertedTemp : null,
-      code: hourly.weather_code?.[idx + i] ?? 0,
-    };
-  });
+      const rawTemp = hourly.temperature_2m[idx + i];
+      const baseTemp = Number(rawTemp);
+      const convertedTemp = Number.isFinite(baseTemp)
+        ? Number(convertTemp(baseTemp))
+        : Number.NaN;
+
+      return {
+        time: timestamp,
+        label: timestamp.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          hour12: true,
+        }),
+        temp: Number.isFinite(convertedTemp) ? convertedTemp : null,
+        code: hourly.weather_code?.[idx + i] ?? 0,
+      };
+    })
+    .filter(Boolean);
 }
 
 function ChartTooltip({ active, payload, unit }) {

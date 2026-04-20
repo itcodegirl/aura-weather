@@ -17,7 +17,10 @@ function clampProbability(value) {
 }
 
 function analyzeNowcast(minutely15) {
-  if (!minutely15?.time?.length || minutely15.time.length === 0) {
+  if (
+    !Array.isArray(minutely15?.time) ||
+    minutely15.time.length === 0
+  ) {
     return {
       hasData: false,
       hasRain: false,
@@ -45,7 +48,11 @@ function analyzeNowcast(minutely15) {
 
   const rows = time
     .slice(normalizedStartIdx, normalizedStartIdx + NOWCAST_WINDOW_SIZE)
-    .map((_, i) => {
+    .map((timeValue, i) => {
+      if (timeValue && !Number.isFinite(new Date(timeValue).getTime())) {
+        return null;
+      }
+
       const idx = normalizedStartIdx + i;
       const probability = clampProbability(toFiniteNumber(precipitation_probability[idx], 0));
       const rainAmount = Math.max(toFiniteNumber(precipitation[idx], 0), 0);
@@ -59,7 +66,8 @@ function analyzeNowcast(minutely15) {
         rainAmount,
         isWet,
       };
-    });
+    })
+    .filter(Boolean);
 
   if (rows.length === 0) {
     return {

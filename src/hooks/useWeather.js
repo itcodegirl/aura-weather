@@ -383,6 +383,16 @@ export function useWeather(unit = "F", options = {}) {
 
   useEffect(() => {
     const persisted = getPersistedLocation();
+    if (persisted) {
+      scheduleWeatherLoadAsync(
+        persisted.lat,
+        persisted.lon,
+        persisted.name || DEFAULT_LOCATION.name,
+        persisted.country || DEFAULT_LOCATION.country,
+        unit,
+        { fallbackNotice: SAVED_LOCATION_NOTICE }
+      );
+    } else {
       const fallbackTimer = setTimeout(() => {
         scheduleWeatherLoadAsync(
           DEFAULT_LOCATION.lat,
@@ -394,20 +404,8 @@ export function useWeather(unit = "F", options = {}) {
         );
       }, LOCATION_FALLBACK_DELAY_MS);
 
-      queueMicrotask(() => {
-        requestCurrentPositionWithFallback({
-          requestUnit: unit,
-          fallbackNotice: LOCATION_FALLBACK_NOTICE,
-          onSuccess: ({ coords }) => {
-            clearTimeout(fallbackTimer);
-            scheduleWeatherLoadAsync(coords.latitude, coords.longitude);
-          },
-          onFallback: () => {
-            clearTimeout(fallbackTimer);
-            loadDefaultLocation(unit, LOCATION_FALLBACK_NOTICE);
-          },
-        });
-      });
+      requestCurrentPositionWithFallback({
+        requestUnit: unit,
         fallbackNotice: LOCATION_FALLBACK_NOTICE,
         onSuccess: ({ latitude, longitude }) => {
           clearTimeout(fallbackTimer);

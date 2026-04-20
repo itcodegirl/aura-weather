@@ -249,13 +249,13 @@ export function useWeather(unit = "F", options = {}) {
         }
 
         const resolvedName =
-          name || getFallbackLocationName(weatherData, safeLat, safeLon);
+          requestName || getFallbackLocationName(weatherData, safeLat, safeLon);
         const normalizedName = normalizeLocationName(
           resolvedName,
           DEFAULT_LOCATION.name
         );
         const normalizedCountry = normalizeLocationName(
-          country,
+          requestCountry,
           DEFAULT_LOCATION.country
         );
         if (!isMountedRef.current) return;
@@ -452,8 +452,8 @@ export function useWeather(unit = "F", options = {}) {
     scheduleWeatherLoad(
       fallbackRequest.lat,
       fallbackRequest.lon,
-      fallbackRequest.name || DEFAULT_LOCATION.name,
-      fallbackRequest.country || DEFAULT_LOCATION.country,
+      normalizeLocationName(fallbackRequest.name, DEFAULT_LOCATION.name),
+      normalizeLocationName(fallbackRequest.country, DEFAULT_LOCATION.country),
       retryUnit
     );
   }, [lastRequest, scheduleWeatherLoad, unit]);
@@ -464,8 +464,8 @@ export function useWeather(unit = "F", options = {}) {
       scheduleWeatherLoadAsync(
         persisted.lat,
         persisted.lon,
-        persisted.name || DEFAULT_LOCATION.name,
-        persisted.country || DEFAULT_LOCATION.country,
+        normalizeLocationName(persisted.name, DEFAULT_LOCATION.name),
+        normalizeLocationName(persisted.country, DEFAULT_LOCATION.country),
         unit,
         { fallbackNotice: SAVED_LOCATION_NOTICE }
       );

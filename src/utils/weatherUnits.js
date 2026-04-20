@@ -73,15 +73,17 @@ export function validateCoordinates(lat, lon) {
 }
 
 export function toFahrenheit(value, sourceUnit = "F") {
-  if (!Number.isFinite(value)) return value;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return Number.NaN;
   const normalizedSource = normalizeBool(sourceUnit);
-  return normalizedSource === "C" ? (value * 9) / 5 + 32 : value;
+  return normalizedSource === "C" ? (numeric * 9) / 5 + 32 : numeric;
 }
 
 export function toCelsius(value, sourceUnit = "F") {
-  if (!Number.isFinite(value)) return value;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return Number.NaN;
   const normalizedSource = normalizeBool(sourceUnit);
-  return normalizedSource === "F" ? ((value - 32) * 5) / 9 : value;
+  return normalizedSource === "F" ? ((numeric - 32) * 5) / 9 : numeric;
 }
 
 export function formatWindSpeed(speed, targetUnit, sourceUnit = "F") {

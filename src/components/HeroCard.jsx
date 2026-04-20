@@ -23,6 +23,7 @@ function HeroCard({
   weather,
   location,
   unit,
+  weatherDataUnit = unit,
   convertTemp,
   climateComparison,
   style,
@@ -46,7 +47,7 @@ function HeroCard({
   const toDisplayTemp = (value) =>
     Number.isFinite(Number(value)) ? convertTemp(Number(value)) : "\u2014";
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
-  const windDisplay = formatWindSpeed(current.wind_speed_10m, unit);
+  const windDisplay = formatWindSpeed(current.wind_speed_10m, unit, weatherDataUnit);
   const dewPoint = toDisplayTemp(current.dew_point_2m);
   const hasClimateComparison = climateComparison
     && (Number.isFinite(climateComparison.difference) ||

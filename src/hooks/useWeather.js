@@ -29,6 +29,14 @@ function getApiTemperatureUnit(unit) {
   return unit === "C" ? "celsius" : "fahrenheit";
 }
 
+function getApiWindSpeedUnit(unit) {
+  return unit === "C" ? "kmh" : "mph";
+}
+
+function getApiPrecipUnit(unit) {
+  return unit === "C" ? "mm" : "inch";
+}
+
 function getPersistedLocation() {
   try {
     if (typeof window === "undefined" || !window.localStorage) return null;
@@ -148,6 +156,8 @@ export function useWeather(unit = "F", options = {}) {
           fetchWeather(lat, lon, {
             signal: controller.signal,
             temperatureUnit: apiTemperatureUnit,
+            windSpeedUnit: getApiWindSpeedUnit(requestDataUnit),
+            precipitationUnit: getApiPrecipUnit(requestDataUnit),
           }),
           fetchAirQuality(lat, lon, { signal: controller.signal }),
         ]);

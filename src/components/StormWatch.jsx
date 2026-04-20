@@ -144,7 +144,7 @@ function PressureTrend({ weather }) {
   );
 }
 
-function WindIntelligence({ weather, unit }) {
+function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
   const current = weather?.current || {};
   const wind_speed_10m = current.wind_speed_10m;
   const wind_gusts_10m = current.wind_gusts_10m;
@@ -154,10 +154,11 @@ function WindIntelligence({ weather, unit }) {
   const safeDirection = Number(wind_direction_10m);
   const sustained = Number.isFinite(safeWindSpeed) ? Math.round(safeWindSpeed) : 0;
 
-  const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit);
+  const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit, weatherDataUnit);
   const gustsDisplay = formatWindSpeed(
     Number.isFinite(safeWindGusts) ? safeWindGusts : safeWindSpeed,
-    unit
+    unit,
+    weatherDataUnit
   );
   const direction = windDirectionName(Number.isFinite(safeDirection) ? safeDirection : 0);
   const strength = classifyWind(sustained, unit);
@@ -205,7 +206,10 @@ function ComfortIndex({ weather, unit, convertTemp }) {
     ? convertTemp(safeDewpoint)
     : "\u2014";
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
-  const comfort = classifyComfort(Number.isFinite(safeDewpoint) ? safeDewpoint : 50); // thresholds always in \u00B0F
+  const comfort = classifyComfort(
+    Number.isFinite(safeDewpoint) ? safeDewpoint : 50,
+    unit
+  );
 
   return (
     <div className="storm-module">
@@ -236,7 +240,7 @@ const MemoizedPressureTrend = memo(PressureTrend);
 const MemoizedWindIntelligence = memo(WindIntelligence);
 const MemoizedComfortIndex = memo(ComfortIndex);
 
-function StormWatch({ weather, unit, convertTemp, style }) {
+function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
   return (
     <section className="bento-storm storm-watch" style={style}>
       <header className="storm-header">
@@ -250,7 +254,11 @@ function StormWatch({ weather, unit, convertTemp, style }) {
       <div className="storm-grid">
         <MemoizedStormRisk weather={weather} />
         <MemoizedPressureTrend weather={weather} />
-        <MemoizedWindIntelligence weather={weather} unit={unit} />
+        <MemoizedWindIntelligence
+          weather={weather}
+          unit={unit}
+          weatherDataUnit={weatherDataUnit}
+        />
         <MemoizedComfortIndex
           weather={weather}
           unit={unit}

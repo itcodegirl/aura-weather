@@ -10,6 +10,8 @@ const GEOCODE_RESULTS_LIMIT = 5;
 
 const TIMEOUT_MS = 10_000;
 const DEFAULT_TEMPERATURE_UNIT = "fahrenheit";
+const DEFAULT_WIND_SPEED_UNIT = "mph";
+const DEFAULT_PRECIPITATION_UNIT = "inch";
 
 function getSignal(signal) {
   if (signal) return signal;
@@ -100,7 +102,12 @@ function toF(value) {
  * from Open-Meteo. No API key required.
  */
 export async function fetchWeather(lat, lon, options = {}) {
-  const { signal, temperatureUnit = DEFAULT_TEMPERATURE_UNIT } = options;
+  const {
+    signal,
+    temperatureUnit = DEFAULT_TEMPERATURE_UNIT,
+    windSpeedUnit = DEFAULT_WIND_SPEED_UNIT,
+    precipitationUnit = DEFAULT_PRECIPITATION_UNIT,
+  } = options;
   const params = new URLSearchParams({
     latitude: lat,
     longitude: lon,
@@ -113,8 +120,8 @@ export async function fetchWeather(lat, lon, options = {}) {
     minutely_15:
       "weather_code,precipitation_probability,precipitation",
     temperature_unit: temperatureUnit,
-    wind_speed_unit: "mph",
-    precipitation_unit: "inch",
+    wind_speed_unit: windSpeedUnit,
+    precipitation_unit: precipitationUnit,
     timezone: "auto",
     forecast_days: "7",
     past_hours: "48",

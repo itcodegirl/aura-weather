@@ -409,6 +409,7 @@ function App() {
             weather={weather}
             location={location}
             unit={unit}
+            weatherDataUnit={weatherDataUnit}
             convertTemp={convertTemp}
             climateComparison={showClimateContext ? climateComparison : null}
             style={CARD_STYLE_VARIABLES[0]}
@@ -472,7 +473,7 @@ function App() {
             ) : null}
           </section>
 
-          <RainCard weather={weather} style={CARD_STYLE_VARIABLES[4]} />
+          <RainCard weather={weather} unit={unit} style={CARD_STYLE_VARIABLES[4]} />
           <NowcastCard weather={weather} style={CARD_STYLE_VARIABLES[5]} />
           <HourlyCard
             weather={weather}
@@ -485,6 +486,7 @@ function App() {
           <StormWatch
             weather={weather}
             unit={unit}
+            weatherDataUnit={weatherDataUnit}
             convertTemp={convertTemp}
             style={CARD_STYLE_VARIABLES[7]}
           />

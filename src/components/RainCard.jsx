@@ -5,6 +5,15 @@ import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
 import "./RainCard.css";
 
+const PRECIP_UNIT_LABEL = {
+  F: "in",
+  C: "mm",
+};
+
+function toDisplayPrecip(value, unit) {
+  return `${Number(value).toFixed(2)} ${PRECIP_UNIT_LABEL[unit === "C" ? "C" : "F"]}`;
+}
+
 function analyzeRain(hourly) {
   if (!Array.isArray(hourly?.time) || !hourly.time.length) {
     return {
@@ -113,7 +122,7 @@ function formatHour(date) {
   return date.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
 }
 
-function RainCard({ weather, style }) {
+function RainCard({ weather, unit = "F", style }) {
   const [mode, setMode] = useState("chance");
   const rainAnalysis = useMemo(() => analyzeRain(weather?.hourly), [weather?.hourly]);
   const {
@@ -150,7 +159,7 @@ function RainCard({ weather, style }) {
             className={`rain-mode-btn ${mode === "inches" ? "is-active" : ""}`}
             aria-pressed={mode === "inches"}
           >
-            in
+            {unit === "C" ? "mm" : "in"}
           </button>
         </div>
       </header>
@@ -182,14 +191,14 @@ function RainCard({ weather, style }) {
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value">{soFarToday.toFixed(2)} in</div>
+                <div className="rain-stat-value">{toDisplayPrecip(soFarToday, unit)}</div>
                 <div className="rain-stat-label">So far today</div>
               </div>
             </div>
             <div className="rain-stat">
               <CloudRain size={14} />
               <div>
-                <div className="rain-stat-value">{total.toFixed(2)} in</div>
+                <div className="rain-stat-value">{toDisplayPrecip(total, unit)}</div>
                 <div className="rain-stat-label">Next 24h total</div>
               </div>
             </div>
@@ -207,21 +216,21 @@ function RainCard({ weather, style }) {
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value">{past12h.toFixed(2)} in</div>
+                <div className="rain-stat-value">{toDisplayPrecip(past12h, unit)}</div>
                 <div className="rain-stat-label">Past 12h</div>
               </div>
             </div>
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value">{past24h.toFixed(2)} in</div>
+                <div className="rain-stat-value">{toDisplayPrecip(past24h, unit)}</div>
                 <div className="rain-stat-label">Past 24h</div>
               </div>
             </div>
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value">{past48h.toFixed(2)} in</div>
+                <div className="rain-stat-value">{toDisplayPrecip(past48h, unit)}</div>
                 <div className="rain-stat-label">Past 48h</div>
               </div>
             </div>
@@ -235,7 +244,7 @@ function RainCard({ weather, style }) {
         aria-label={
           mode === "chance"
             ? "Hourly precipitation chance over the next 24 hours"
-            : "Hourly precipitation amount in inches over the next 24 hours"
+            : `Hourly precipitation amount in ${unit === "C" ? "millimeters" : "inches"} over the next 24 hours`
         }
       >
         {hours.map((h, i) => {
@@ -256,7 +265,7 @@ function RainCard({ weather, style }) {
           const tooltip =
             mode === "chance"
               ? `${formatHour(h.time)} \u2014 ${h.probability}%`
-              : `${formatHour(h.time)} \u2014 ${h.amount.toFixed(2)} in`;
+              : `${formatHour(h.time)} \u2014 ${toDisplayPrecip(h.amount, unit)}`;
 
           return (
             <div

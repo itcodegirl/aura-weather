@@ -1,5 +1,7 @@
 // src/utils/meteorology.js
 
+import { toFahrenheit } from "./weatherUnits";
+
 /**
  * Classify storm risk using CAPE (Convective Available Potential Energy).
  * CAPE is the key metric meteorologists use to assess atmospheric instability.
@@ -102,12 +104,6 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime) {
  *   70-75  Oppressive
  *   >75  Miserable (tropical)
  */
-function toFahrenheit(dewpoint, unit) {
-  if (!Number.isFinite(dewpoint)) return dewpoint;
-  const normalizedUnit = unit === "C" ? "C" : "F";
-  return normalizedUnit === "C" ? (dewpoint * 9) / 5 + 32 : dewpoint;
-}
-
 export function classifyComfort(dewpoint, unit = "F") {
   const thresholdValue = toFahrenheit(dewpoint, unit);
   if (!Number.isFinite(thresholdValue)) {

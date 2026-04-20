@@ -6,6 +6,13 @@ import {
   fetchAirQuality,
   fetchHistoricalTemperatureAverage,
 } from "../services/weatherApi";
+import {
+  getApiTemperatureUnit,
+  getApiWindSpeedUnit,
+  getApiPrecipUnit,
+  normalizeLatitude,
+  normalizeLongitude,
+} from "../utils/weatherUnits";
 
 const DEFAULT_LOCATION = {
   lat: 41.8781,
@@ -20,21 +27,13 @@ const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const GEOLOCATION_TIMEOUT_MS = 5000;
 const LOCATION_FALLBACK_DELAY_MS = 6000;
 const DEFAULT_DATA_UNIT = "F";
+const MIN_LATITUDE = -90;
+const MAX_LATITUDE = 90;
+const MIN_LONGITUDE = -180;
+const MAX_LONGITUDE = 180;
 
 function normalizeUnit(value) {
   return value === "C" ? "C" : "F";
-}
-
-function getApiTemperatureUnit(unit) {
-  return unit === "C" ? "celsius" : "fahrenheit";
-}
-
-function getApiWindSpeedUnit(unit) {
-  return unit === "C" ? "kmh" : "mph";
-}
-
-function getApiPrecipUnit(unit) {
-  return unit === "C" ? "mm" : "inch";
 }
 
 function getPersistedLocation() {
@@ -86,6 +85,30 @@ function persistLocation(lat, lon, name, country) {
   }
 }
 
+function parseLatitude(lat) {
+  const numeric = normalizeLatitude(lat);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+
+  if (numeric < MIN_LATITUDE || numeric > MAX_LATITUDE) {
+    return null;
+  }
+  return numeric;
+}
+
+function parseLongitude(lon) {
+  const numeric = normalizeLongitude(lon);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+
+  if (numeric < MIN_LONGITUDE || numeric > MAX_LONGITUDE) {
+    return null;
+  }
+  return numeric;
+}
+
 function getFallbackLocationName(weatherData, lat, lon) {
   const timezoneCity = weatherData?.timezone
     ?.split("/")
@@ -132,11 +155,19 @@ export function useWeather(unit = "F", options = {}) {
     async (lat, lon, name, country, requestUnit = unit, loadOptions = {}) => {
       if (!isMountedRef.current) return;
 
+      const safeLat = parseLatitude(lat);
+      const safeLon = parseLongitude(lon);
       const { fallbackNotice } = loadOptions;
+      if (!Number.isFinite(safeLat) || !Number.isFinite(safeLon)) {
+        setError("Invalid location coordinates");
+        setLoading(false);
+        return;
+      }
+
       const requestDataUnit = normalizeUnit(requestUnit);
       const apiTemperatureUnit = getApiTemperatureUnit(requestDataUnit);
       const requestId = requestIdRef.current + 1;
-      const signature = `${lat},${lon},${requestDataUnit},${climateEnabled ? 1 : 0}`;
+      const signature = `${safeLat},${safeLon},${requestDataUnit},${climateEnabled ? 1 : 0}`;
 
       requestIdRef.current = requestId;
       abortInFlightRequest();
@@ -148,24 +179,24 @@ export function useWeather(unit = "F", options = {}) {
       setLoading(true);
       setError(null);
       setLocationNotice(fallbackNotice || null);
-      setLastRequest({ lat, lon, name, country, unit: requestDataUnit });
+      setLastRequest({ lat: safeLat, lon: safeLon, name, country, unit: requestDataUnit });
       setClimateComparison(null);
 
       try {
         const [weatherData, aqi] = await Promise.all([
-          fetchWeather(lat, lon, {
+          fetchWeather(safeLat, safeLon, {
             signal: controller.signal,
             temperatureUnit: apiTemperatureUnit,
             windSpeedUnit: getApiWindSpeedUnit(requestDataUnit),
             precipitationUnit: getApiPrecipUnit(requestDataUnit),
           }),
-          fetchAirQuality(lat, lon, { signal: controller.signal }),
+          fetchAirQuality(safeLat, safeLon, { signal: controller.signal }),
         ]);
 
         const historicalAverage = climateEnabled
           ? await fetchHistoricalTemperatureAverage(
-              lat,
-              lon,
+              safeLat,
+              safeLon,
               weatherData?.timezone,
               {
                 signal: controller.signal,
@@ -179,7 +210,7 @@ export function useWeather(unit = "F", options = {}) {
         }
 
         const resolvedName =
-          name || getFallbackLocationName(weatherData, lat, lon);
+          name || getFallbackLocationName(weatherData, safeLat, safeLon);
         if (!isMountedRef.current) return;
         const currentTemperature = Number(weatherData?.current?.temperature_2m);
         const historicalTemperature = Number(
@@ -194,12 +225,12 @@ export function useWeather(unit = "F", options = {}) {
         setWeatherDataUnit(requestDataUnit);
         setWeather({ ...weatherData, aqi });
         setLocation({
-          lat,
-          lon,
+          lat: safeLat,
+          lon: safeLon,
           name: resolvedName,
           country: country || "",
         });
-        persistLocation(lat, lon, resolvedName, country || "");
+        persistLocation(safeLat, safeLon, resolvedName, country || "");
         if (!isMountedRef.current) return;
         setClimateComparison(
           historicalAverage && Number.isFinite(climateDelta)

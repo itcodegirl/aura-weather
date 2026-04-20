@@ -3,34 +3,8 @@
 import { memo, useMemo, useState } from "react";
 import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
+import { formatPrecipitation, getPrecipUnitLabel } from "../utils/weatherUnits";
 import "./RainCard.css";
-
-const PRECIP_UNIT_LABEL = {
-  F: "in",
-  C: "mm",
-};
-
-const MM_PER_INCH = 25.4;
-
-function normalizePrecipUnit(unit) {
-  return unit === "C" ? "C" : "F";
-}
-
-function toDisplayPrecip(value, targetUnit, sourceUnit = "F") {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return "\u2014";
-  }
-
-  const normalizedSource = normalizePrecipUnit(sourceUnit);
-  const normalizedTarget = normalizePrecipUnit(targetUnit);
-  const valueInInches =
-    normalizedSource === "C" ? numeric / MM_PER_INCH : numeric;
-  const displayValue =
-    normalizedTarget === "C" ? valueInInches * MM_PER_INCH : valueInInches;
-
-  return `${displayValue.toFixed(2)} ${PRECIP_UNIT_LABEL[normalizedTarget]}`;
-}
 
 function analyzeRain(hourly) {
   if (!Array.isArray(hourly?.time) || !hourly.time.length) {
@@ -210,7 +184,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
               <Droplets size={14} />
               <div>
                 <div className="rain-stat-value">
-                  {toDisplayPrecip(soFarToday, unit, dataUnit)}
+                  {formatPrecipitation(soFarToday, unit, dataUnit)}
                 </div>
                 <div className="rain-stat-label">So far today</div>
               </div>
@@ -219,7 +193,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
               <CloudRain size={14} />
               <div>
                 <div className="rain-stat-value">
-                  {toDisplayPrecip(total, unit, dataUnit)}
+                  {formatPrecipitation(total, unit, dataUnit)}
                 </div>
                 <div className="rain-stat-label">Next 24h total</div>
               </div>
@@ -239,7 +213,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
               <Droplets size={14} />
               <div>
                 <div className="rain-stat-value">
-                  {toDisplayPrecip(past12h, unit, dataUnit)}
+                  {formatPrecipitation(past12h, unit, dataUnit)}
                 </div>
                 <div className="rain-stat-label">Past 12h</div>
               </div>
@@ -248,7 +222,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
               <Droplets size={14} />
               <div>
                 <div className="rain-stat-value">
-                  {toDisplayPrecip(past24h, unit, dataUnit)}
+                  {formatPrecipitation(past24h, unit, dataUnit)}
                 </div>
                 <div className="rain-stat-label">Past 24h</div>
               </div>
@@ -257,7 +231,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
               <Droplets size={14} />
               <div>
                 <div className="rain-stat-value">
-                  {toDisplayPrecip(past48h, unit, dataUnit)}
+                  {formatPrecipitation(past48h, unit, dataUnit)}
                 </div>
                 <div className="rain-stat-label">Past 48h</div>
               </div>
@@ -271,8 +245,8 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
         role="img"
         aria-label={
           mode === "chance"
-            ? "Hourly precipitation chance over the next 24 hours"
-            : `Hourly precipitation amount in ${unit === "C" ? "millimeters" : "inches"} over the next 24 hours`
+        ? "Hourly precipitation chance over the next 24 hours"
+            : `Hourly precipitation amount in ${getPrecipUnitLabel(unit)} over the next 24 hours`
         }
       >
         {hours.map((h, i) => {
@@ -293,7 +267,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
           const tooltip =
             mode === "chance"
               ? `${formatHour(h.time)} \u2014 ${h.probability}%`
-              : `${formatHour(h.time)} \u2014 ${toDisplayPrecip(h.amount, unit, dataUnit)}`;
+            : `${formatHour(h.time)} \u2014 ${formatPrecipitation(h.amount, unit, dataUnit)}`;
 
           return (
             <div

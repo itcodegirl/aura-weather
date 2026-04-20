@@ -12,6 +12,10 @@ const TIMEOUT_MS = 10_000;
 const DEFAULT_TEMPERATURE_UNIT = "fahrenheit";
 const DEFAULT_WIND_SPEED_UNIT = "mph";
 const DEFAULT_PRECIPITATION_UNIT = "inch";
+const MIN_LATITUDE = -90;
+const MAX_LATITUDE = 90;
+const MIN_LONGITUDE = -180;
+const MAX_LONGITUDE = 180;
 
 function getSignal(signal) {
   if (signal) return signal;
@@ -19,6 +23,33 @@ function getSignal(signal) {
     return AbortSignal.timeout(TIMEOUT_MS);
   }
   return undefined;
+}
+
+function normalizeLatitudeCoordinate(lat) {
+  const numeric = Number(lat);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return numeric >= MIN_LATITUDE && numeric <= MAX_LATITUDE ? numeric : null;
+}
+
+function normalizeLongitudeCoordinate(lon) {
+  const numeric = Number(lon);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return numeric >= MIN_LONGITUDE && numeric <= MAX_LONGITUDE ? numeric : null;
+}
+
+function validateCoordinates(lat, lon) {
+  const latitude = normalizeLatitudeCoordinate(lat);
+  const longitude = normalizeLongitudeCoordinate(lon);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    throw new Error("Invalid coordinates");
+  }
+
+  return { latitude, longitude };
 }
 
 async function fetchJson(url, options = {}) {
@@ -102,6 +133,7 @@ function toNumber(value) {
  * from Open-Meteo. No API key required.
  */
 export async function fetchWeather(lat, lon, options = {}) {
+  const coordinates = validateCoordinates(lat, lon);
   const {
     signal,
     temperatureUnit = DEFAULT_TEMPERATURE_UNIT,
@@ -109,8 +141,8 @@ export async function fetchWeather(lat, lon, options = {}) {
     precipitationUnit = DEFAULT_PRECIPITATION_UNIT,
   } = options;
   const params = new URLSearchParams({
-    latitude: lat,
-    longitude: lon,
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
     current:
       "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,visibility",
     hourly:
@@ -140,6 +172,7 @@ export async function fetchHistoricalTemperatureAverage(
   timezone,
   options = {}
 ) {
+  const coordinates = validateCoordinates(lat, lon);
   const { signal, temperatureUnit = DEFAULT_TEMPERATURE_UNIT } = options;
   const { year, month, day, monthDayLabel } = getDateInTimeZone(timezone);
   const startYear = year - 30;
@@ -153,8 +186,8 @@ export async function fetchHistoricalTemperatureAverage(
   const end = `${endYear}-${month}-${day}`;
 
   const params = new URLSearchParams({
-    latitude: lat,
-    longitude: lon,
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
     start_date: start,
     end_date: end,
     daily: "temperature_2m_mean,temperature_2m_min,temperature_2m_max",
@@ -209,9 +242,10 @@ export async function fetchHistoricalTemperatureAverage(
  * Non-critical: returns null on failure instead of throwing.
  */
 export async function fetchAirQuality(lat, lon, options = {}) {
+  const coordinates = validateCoordinates(lat, lon);
   try {
     const data = await fetchJson(
-      `${ENDPOINTS.aqi}?latitude=${lat}&longitude=${lon}&current=european_aqi`,
+      `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=european_aqi`,
       { signal: options.signal }
     );
     return data.current?.european_aqi ?? null;

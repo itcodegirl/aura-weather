@@ -8,7 +8,8 @@
     "dev:safe": "vite --host 127.0.0.1 --port 5173 --strictPort false",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test"
   },
   "dependencies": {
     "lucide-react": "^1.8.0",

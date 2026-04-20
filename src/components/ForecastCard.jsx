@@ -88,6 +88,23 @@ function ForecastCard({ weather, convertTemp }) {
   const weekMin = Math.min(...days.map((d) => d.temp_min));
   const weekMax = Math.max(...days.map((d) => d.temp_max));
 
+  if (!days.length) {
+    return (
+      <section className="bento-forecast forecast-card">
+        <header className="forecast-header">
+          <div className="forecast-title">
+            <CalendarDays size={16} />
+            <span>7-Day Forecast</span>
+          </div>
+          <span className="forecast-subtitle">Week ahead</span>
+        </header>
+        <p className="loader-text" role="status" aria-live="polite">
+          Forecast data unavailable.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="bento-forecast forecast-card">
       <header className="forecast-header">

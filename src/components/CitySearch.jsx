@@ -213,13 +213,17 @@ export default function CitySearch({ onSelect }) {
           )}
 
           {!loading && error && (
-            <li className="city-search-state city-search-state--error" role="status">
+            <li
+              className="city-search-state city-search-state--error"
+              role="status"
+              aria-live="polite"
+            >
               {error}
             </li>
           )}
 
           {!loading && !error && results.length === 0 && query.length >= 2 && (
-            <li className="city-search-state" role="status">
+            <li className="city-search-state" role="status" aria-live="polite">
               No cities found
             </li>
           )}

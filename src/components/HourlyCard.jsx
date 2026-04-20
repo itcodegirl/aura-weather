@@ -75,8 +75,10 @@ function HourlyCard({ weather, unit, convertTemp }) {
           <span className="chart-subtitle">Next 24 hours</span>
         </header>
 
-        <div className="chart-body" style={{ display: "grid", placeItems: "center" }}>
-          <p className="loader-text">Hourly outlook unavailable.</p>
+      <div className="chart-body" style={{ display: "grid", placeItems: "center" }}>
+          <p className="loader-text" role="status" aria-live="polite">
+            Hourly outlook unavailable.
+          </p>
         </div>
       </section>
     );

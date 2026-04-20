@@ -32,6 +32,41 @@ function normalizeTimeZone(value, fallback = DEFAULT_TIMEZONE) {
   return trimmed || fallback;
 }
 
+function parseIsoDateParts(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const parts = value.split("-");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const year = Number(parts[0]);
+  const month = parts[1];
+  const day = parts[2];
+  if (!Number.isFinite(year)) {
+    return null;
+  }
+  if (!/^\d{2}$/.test(month) || !/^\d{2}$/.test(day)) {
+    return null;
+  }
+
+  return { year, month, day };
+}
+
+function getUtcDateParts(now) {
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(now.getUTCDate()).padStart(2, "0");
+  return {
+    year,
+    month,
+    day,
+    monthDay: `${year}-${month}-${day}`,
+  };
+}
+
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
     ...options,
@@ -66,11 +101,13 @@ function getDateInTimeZone(timeZone) {
       day: "2-digit",
     });
     monthDay = formatDate.format(now);
-    const parts = monthDay.split("-");
-
-    year = Number(parts[0]);
-    month = parts[1];
-    day = parts[2];
+    const parsed = parseIsoDateParts(monthDay);
+    if (!parsed) {
+      throw new Error("Invalid timezone date format");
+    }
+    year = parsed.year;
+    month = parsed.month;
+    day = parsed.day;
     monthLabel = new Intl.DateTimeFormat("en-US", {
       timeZone: zone,
       month: "long",
@@ -81,25 +118,32 @@ function getDateInTimeZone(timeZone) {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      timeZone: "UTC",
+      timeZone: DEFAULT_TIMEZONE,
     }).format(now);
     const fallbackLabel = new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
       month: "long",
       day: "numeric",
-      timeZone: "UTC",
+      timeZone: DEFAULT_TIMEZONE,
     }).format(now);
-    const fallbackParts = fallback.split("-");
-
-    year = Number(fallbackParts[0]);
-    month = fallbackParts[1];
-    day = fallbackParts[2];
-    monthLabel = fallbackLabel.replace(/,?\s\d{4}$/, "");
-    monthDay = fallback;
+    const parsedFallback = parseIsoDateParts(fallback);
+    if (parsedFallback) {
+      year = parsedFallback.year;
+      month = parsedFallback.month;
+      day = parsedFallback.day;
+      monthDay = fallback;
+      monthLabel = fallbackLabel;
+    } else {
+      const utcParts = getUtcDateParts(now);
+      year = utcParts.year;
+      month = utcParts.month;
+      day = utcParts.day;
+      monthDay = utcParts.monthDay;
+      monthLabel = fallbackLabel;
+    }
   }
 
   return {
-    year: Number(year),
+    year,
     month,
     day,
     monthDay,

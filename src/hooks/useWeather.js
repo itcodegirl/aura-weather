@@ -354,13 +354,18 @@ export function useWeather(unit = "F", options = {}) {
   );
 
   const requestCurrentPositionWithFallback = useCallback(
-    ({
-      requestUnit = unit,
-      fallbackNotice = LOCATION_FALLBACK_NOTICE,
-      onSuccess,
-      onFallback,
-      trackCurrentLookup = false,
-    }) => {
+    (requestOptions = {}) => {
+      const normalizedOptions =
+        requestOptions && typeof requestOptions === "object"
+          ? requestOptions
+          : {};
+      const {
+        requestUnit = unit,
+        fallbackNotice = LOCATION_FALLBACK_NOTICE,
+        onSuccess,
+        onFallback,
+        trackCurrentLookup = false,
+      } = normalizedOptions;
       const normalizedRequestUnit = normalizeTemperatureUnit(requestUnit);
       const finishLookup = () => {
         if (!trackCurrentLookup || !isMountedRef.current) {
@@ -369,8 +374,11 @@ export function useWeather(unit = "F", options = {}) {
         setIsLocatingCurrent(false);
       };
       const finalizeLookup = (handler, ...args) => {
-        handler?.(...args);
-        finishLookup();
+        try {
+          handler?.(...args);
+        } finally {
+          finishLookup();
+        }
       };
 
       if (!hasGeolocationSupport()) {
@@ -413,8 +421,10 @@ export function useWeather(unit = "F", options = {}) {
 
   const loadCurrentLocation = useCallback(
     (options = {}) => {
-      const requestUnit = normalizeTemperatureUnit(options.unit ?? unit);
-      const fallbackNotice = options.fallbackNotice ?? LOCATION_FALLBACK_NOTICE;
+      const normalizedOptions =
+        options && typeof options === "object" ? options : {};
+      const requestUnit = normalizeTemperatureUnit(normalizedOptions.unit ?? unit);
+      const fallbackNotice = normalizedOptions.fallbackNotice ?? LOCATION_FALLBACK_NOTICE;
       const applyFallback = () => loadDefaultLocation(requestUnit, fallbackNotice);
 
       requestCurrentPositionWithFallback({

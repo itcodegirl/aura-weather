@@ -40,7 +40,7 @@
 
 .hero-temp {
   font-family: var(--font-display);
-  font-size: 96px;
+  font-size: var(--hero-temp-size);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -50,7 +50,7 @@
   font-family: var(--font-display);
   margin-left: 4px;
   color: var(--text-muted);
-  font-size: 28px;
+  font-size: var(--hero-unit-size);
   font-weight: 700;
 }
 
@@ -64,6 +64,18 @@
   margin-top: 4px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.hero-insight {
+  margin-top: 10px;
+  max-width: 540px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(226, 232, 240, 0.95);
+  background: rgba(15, 23, 42, 0.32);
+  border: var(--border);
 }
 
 .hero-stats {
@@ -104,32 +116,3 @@
   font-weight: 600;
 }
 
-@media (max-width: 900px) {
-  .hero-temp {
-    font-size: 62px;
-  }
-
-  .hero-icon {
-    font-size: 72px;
-  }
-
-  .hero-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 500px) {
-  .hero-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .hero-temp {
-    font-size: 58px;
-  }
-
-  .hero-temp-unit {
-    font-size: 24px;
-  }
-}

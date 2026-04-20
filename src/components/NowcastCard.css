@@ -41,14 +41,3 @@
   letter-spacing: 0.08em;
 }
 
-@media (max-width: 900px) {
-  .bento-nowcast {
-    grid-column: span 1;
-    min-height: 130px;
-    padding: 16px;
-  }
-
-  .nowcast-summary {
-    font-size: 16px;
-  }
-}

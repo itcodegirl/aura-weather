@@ -61,8 +61,8 @@ function HourlyCard({
   weather,
   unit,
   convertTemp,
-  chartTopColor = "#fbbf24",
-  chartBottomColor = "#fbbf24",
+  chartTopColor,
+  chartBottomColor,
   style,
 }) {
   const hourlyData = useMemo(() => buildHourlyData(weather?.hourly, convertTemp), [
@@ -70,6 +70,14 @@ function HourlyCard({
     convertTemp,
   ]);
   const data = hourlyData;
+  const palette = useMemo(() => {
+    const hourlyCodes = data.map((entry) => entry.code).filter((value) => Number.isFinite(value));
+    const primaryCode = hourlyCodes[0] ?? weather?.current?.weather_code ?? 0;
+    return getWeather(primaryCode).gradient || ["#fbbf24", "#f59e0b", "#fbbf24"];
+  }, [data, weather?.current?.weather_code]);
+
+  const topColor = chartTopColor || palette[0];
+  const bottomColor = chartBottomColor || palette[2] || palette[1];
 
   if (!data.length) {
     return (
@@ -115,10 +123,10 @@ function HourlyCard({
           >
             <defs>
               <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={chartTopColor} stopOpacity={0.7} />
+                <stop offset="0%" stopColor={topColor} stopOpacity={0.7} />
                 <stop
                   offset="100%"
-                  stopColor={chartBottomColor}
+                  stopColor={bottomColor}
                   stopOpacity={0}
                 />
               </linearGradient>
@@ -168,14 +176,14 @@ function HourlyCard({
             <Area
               type="monotone"
               dataKey="temp"
-              stroke={chartTopColor}
+              stroke={topColor}
               strokeWidth={2.5}
               fill="url(#tempGradient)"
               dot={false}
               activeDot={{
                 r: 5,
                 fill: "#fff",
-                stroke: chartTopColor,
+                stroke: topColor,
                 strokeWidth: 2,
               }}
             />

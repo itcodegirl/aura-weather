@@ -101,8 +101,61 @@ function formatDayLength(totalMinutes) {
   return `${hours}h ${String(minutes).padStart(2, "0")}m`;
 }
 
+function MetricDensityBar({ value, max, statusColor }) {
+  const safeValue = Number.isFinite(Number(value))
+    ? Math.max(0, Math.min(Number(value), max))
+    : 0;
+  const progress = max > 0 ? (safeValue / max) * 100 : 0;
+
+  return (
+    <div className="metric-density" aria-label={`${safeValue} of ${max}`}>
+      <div className="metric-density-track" aria-hidden="true">
+        <span
+          className="metric-density-fill"
+          style={{ width: `${progress}%`, backgroundColor: statusColor }}
+        />
+        <span
+          className="metric-density-marker"
+          style={{
+            left: `calc(${progress}% - 5px)`,
+            borderColor: statusColor,
+          }}
+        />
+      </div>
+      <div className="metric-density-scale">
+        <span>0</span>
+        <span>{max}</span>
+      </div>
+    </div>
+  );
+}
+
+const CLIMATE_CONTEXT_KEY = "aura-weather-climate-context";
+const UNIT_PREFERENCE_KEY = "aura-weather-unit-preference";
+
 function App() {
-  const [unit, setUnit] = useState("F");
+  const [unit, setUnit] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(UNIT_PREFERENCE_KEY);
+      if (stored === "F" || stored === "C") {
+        return stored;
+      }
+    } catch (error) {
+      // localStorage may be unavailable in restricted contexts.
+    }
+
+    return "F";
+  });
+  const [showClimateContext, setShowClimateContext] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(CLIMATE_CONTEXT_KEY);
+      if (stored === "off") return false;
+      if (stored === "on") return true;
+    } catch (error) {
+      // localStorage may be unavailable in restricted contexts.
+    }
+    return true;
+  });
   const citySearchRef = useRef(null);
   const {
     weather,
@@ -111,8 +164,11 @@ function App() {
     error,
     locationNotice,
     loadWeather,
+    loadCurrentLocation,
     retryWeather,
-  } = useWeather(unit);
+    climateComparison,
+    isLocatingCurrent,
+  } = useWeather(unit, { climateEnabled: showClimateContext });
 
   const convertTemp = useCallback(
     (f) => (unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9)),
@@ -174,6 +230,25 @@ function App() {
 
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        CLIMATE_CONTEXT_KEY,
+        showClimateContext ? "on" : "off"
+      );
+    } catch (error) {
+      // localStorage may be unavailable in restricted contexts.
+    }
+  }, [showClimateContext]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(UNIT_PREFERENCE_KEY, unit);
+    } catch (error) {
+      // localStorage may be unavailable in restricted contexts.
+    }
+  }, [unit]);
 
   if (loading) {
     return (
@@ -258,6 +333,39 @@ function App() {
                 loadWeather(city.lat, city.lon, city.name, city.country)
               }
             />
+            <button
+              type="button"
+              className="current-location-btn"
+              onClick={() => loadCurrentLocation()}
+              disabled={isLocatingCurrent}
+              aria-label="Use current location"
+            >
+              {isLocatingCurrent ? "Locating..." : "Current"}
+            </button>
+            <div
+              className="toggle-pill"
+              role="group"
+              aria-label="Climate context settings"
+            >
+              <button
+                type="button"
+                className={`toggle-pill-btn ${showClimateContext ? "is-active" : ""}`}
+                onClick={() => setShowClimateContext(true)}
+                aria-pressed={showClimateContext}
+                aria-label="Enable climate context"
+              >
+                On
+              </button>
+              <button
+                type="button"
+                className={`toggle-pill-btn ${!showClimateContext ? "is-active" : ""}`}
+                onClick={() => setShowClimateContext(false)}
+                aria-pressed={!showClimateContext}
+                aria-label="Disable climate context"
+              >
+                Off
+              </button>
+            </div>
 
             <div className="unit-toggle" role="group" aria-label="Temperature unit">
               <button
@@ -290,10 +398,14 @@ function App() {
             location={location}
             unit={unit}
             convertTemp={convertTemp}
+            climateComparison={showClimateContext ? climateComparison : null}
             style={{ "--i": 0 }}
           />
 
-          <section className="bento-aqi metric-card" style={{ "--i": 1 }}>
+          <section
+            className="bento-aqi metric-card metric-card--meter"
+            style={{ "--i": 1 }}
+          >
             <span className="metric-label">Air Quality</span>
             <ArcGauge
               value={weather.aqi}
@@ -308,9 +420,17 @@ function App() {
                 <span>{aqiStatus.label}</span>
               </span>
             )}
+            <MetricDensityBar
+              value={weather.aqi}
+              max={300}
+              statusColor={aqiStatus.color}
+            />
           </section>
 
-          <section className="bento-uv metric-card" style={{ "--i": 2 }}>
+          <section
+            className="bento-uv metric-card metric-card--meter"
+            style={{ "--i": 2 }}
+          >
             <span className="metric-label">UV Index</span>
             <ArcGauge
               value={uvToday}
@@ -325,6 +445,11 @@ function App() {
                 <span>{uvStatus.label}</span>
               </span>
             )}
+            <MetricDensityBar
+              value={uvToday}
+              max={11}
+              statusColor={uvStatus.color}
+            />
           </section>
 
           <section className="bento-sunlight metric-card" style={{ "--i": 3 }}>
@@ -342,7 +467,7 @@ function App() {
             unit={unit}
             convertTemp={convertTemp}
             chartTopColor={weatherInfo?.gradient?.[0]}
-            chartBottomColor={weatherInfo?.gradient?.[1]}
+            chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
             style={{ "--i": 6 }}
           />
           <StormWatch

@@ -1,7 +1,11 @@
 // src/hooks/useWeather.js
 
 import { useState, useEffect, useCallback } from "react";
-import { fetchWeather, fetchAirQuality } from "../services/weatherApi";
+import {
+  fetchWeather,
+  fetchAirQuality,
+  fetchHistoricalTemperatureAverage,
+} from "../services/weatherApi";
 
 const DEFAULT_LOCATION = {
   lat: 41.8781,
@@ -11,6 +15,46 @@ const DEFAULT_LOCATION = {
 };
 const LOCATION_FALLBACK_NOTICE =
   "Location not available \u2014 showing Chicago";
+const LAST_LOCATION_KEY = "aura-weather-last-location";
+const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
+
+function getPersistedLocation() {
+  try {
+    const saved = window.localStorage.getItem(LAST_LOCATION_KEY);
+    if (!saved) return null;
+
+    const parsed = JSON.parse(saved);
+    const lat = Number(parsed?.lat);
+    const lon = Number(parsed?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+    return {
+      lat,
+      lon,
+      name: typeof parsed?.name === "string" ? parsed.name : "",
+      country: typeof parsed?.country === "string" ? parsed.country : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function persistLocation(lat, lon, name, country) {
+  try {
+    window.localStorage.setItem(
+      LAST_LOCATION_KEY,
+      JSON.stringify({
+        lat,
+        lon,
+        name: name || "",
+        country: country || "",
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  } catch {
+    // localStorage may be unavailable in restricted contexts.
+  }
+}
 
 function getFallbackLocationName(weatherData, lat, lon) {
   const timezoneCity = weatherData?.timezone
@@ -20,13 +64,17 @@ function getFallbackLocationName(weatherData, lat, lon) {
   return timezoneCity || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
 }
 
-export function useWeather(unit = "F") {
+export function useWeather(unit = "F", options = {}) {
+  const { climateEnabled = true } = options;
+
   const [weather, setWeather] = useState(null);
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRequest, setLastRequest] = useState(null);
   const [locationNotice, setLocationNotice] = useState(null);
+  const [climateComparison, setClimateComparison] = useState(null);
+  const [isLocatingCurrent, setIsLocatingCurrent] = useState(false);
 
   const loadWeather = useCallback(
     async (lat, lon, name, country, requestUnit = unit, options = {}) => {
@@ -36,6 +84,7 @@ export function useWeather(unit = "F") {
       setError(null);
       setLocationNotice(fallbackNotice || null);
       setLastRequest({ lat, lon, name, country, unit: requestUnit });
+      setClimateComparison(null);
 
       try {
         const [weatherData, aqi] = await Promise.all([
@@ -45,6 +94,20 @@ export function useWeather(unit = "F") {
 
         const resolvedName =
           name || getFallbackLocationName(weatherData, lat, lon);
+        const historicalAverage = climateEnabled
+          ? await fetchHistoricalTemperatureAverage(
+              lat,
+              lon,
+              weatherData?.timezone
+            )
+          : null;
+        const currentTemperature = Number(weatherData?.current?.temperature_2m);
+        const climateDelta =
+          Number.isFinite(currentTemperature) &&
+          historicalAverage &&
+          Number.isFinite(historicalAverage.averageTemperatureF)
+            ? currentTemperature - historicalAverage.averageTemperatureF
+            : null;
 
         setWeather({ ...weatherData, aqi });
         setLocation({
@@ -53,13 +116,19 @@ export function useWeather(unit = "F") {
           name: resolvedName,
           country: country || "",
         });
+        persistLocation(lat, lon, resolvedName, country || "");
+        setClimateComparison(
+          historicalAverage && Number.isFinite(climateDelta)
+            ? { ...historicalAverage, differenceF: climateDelta }
+            : null
+        );
       } catch (err) {
         setError(err.message || "Could not load weather");
       } finally {
         setLoading(false);
       }
     },
-    [unit]
+    [unit, climateEnabled]
   );
 
   const scheduleWeatherLoad = useCallback(
@@ -69,6 +138,54 @@ export function useWeather(unit = "F") {
       });
     },
     [loadWeather, unit]
+  );
+
+  const loadCurrentLocation = useCallback(
+    (options = {}) => {
+      const requestUnit = options.unit || unit;
+      const fallbackNotice = options.fallbackNotice || LOCATION_FALLBACK_NOTICE;
+
+      if (!navigator.geolocation) {
+        setIsLocatingCurrent(false);
+        scheduleWeatherLoad(
+          DEFAULT_LOCATION.lat,
+          DEFAULT_LOCATION.lon,
+          DEFAULT_LOCATION.name,
+          DEFAULT_LOCATION.country,
+          requestUnit,
+          { fallbackNotice }
+        );
+        return;
+      }
+
+      setIsLocatingCurrent(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          scheduleWeatherLoad(
+            latitude,
+            longitude,
+            undefined,
+            undefined,
+            requestUnit
+          );
+          setIsLocatingCurrent(false);
+        },
+        () => {
+          setIsLocatingCurrent(false);
+          scheduleWeatherLoad(
+            DEFAULT_LOCATION.lat,
+            DEFAULT_LOCATION.lon,
+            DEFAULT_LOCATION.name,
+            DEFAULT_LOCATION.country,
+            requestUnit,
+            { fallbackNotice }
+          );
+        },
+        { timeout: 5000 }
+      );
+    },
+    [scheduleWeatherLoad, unit]
   );
 
   const retryWeather = useCallback(() => {
@@ -84,6 +201,19 @@ export function useWeather(unit = "F") {
   }, [lastRequest, loadWeather, unit]);
 
   useEffect(() => {
+    const persisted = getPersistedLocation();
+    if (persisted) {
+      scheduleWeatherLoad(
+        persisted.lat,
+        persisted.lon,
+        persisted.name || DEFAULT_LOCATION.name,
+        persisted.country || DEFAULT_LOCATION.country,
+        unit,
+        { fallbackNotice: SAVED_LOCATION_NOTICE }
+      );
+      return;
+    }
+
     const fallbackTimer = setTimeout(() => {
       scheduleWeatherLoad(
         DEFAULT_LOCATION.lat,
@@ -149,6 +279,7 @@ export function useWeather(unit = "F") {
     );
   }, [
     unit,
+    climateEnabled,
     hasLocation,
     locationLat,
     locationLon,
@@ -164,6 +295,9 @@ export function useWeather(unit = "F") {
     error,
     locationNotice,
     loadWeather,
+    loadCurrentLocation,
     retryWeather,
+    climateComparison,
+    isLocatingCurrent,
   };
 }

@@ -19,12 +19,40 @@ function Stat({ icon, label, value }) {
   );
 }
 
-function HeroCard({ weather, location, unit, convertTemp, style }) {
+function HeroCard({
+  weather,
+  location,
+  unit,
+  convertTemp,
+  climateComparison,
+  style,
+}) {
   const current = weather.current;
   const info = getWeather(current.weather_code);
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
   const windDisplay = formatWindSpeed(current.wind_speed_10m, unit);
   const dewPoint = convertTemp(current.dew_point_2m);
+  const hasClimateComparison =
+    climateComparison && Number.isFinite(climateComparison.differenceF);
+  const climateDelta = hasClimateComparison
+    ? Math.abs(convertTemp(Math.abs(climateComparison.differenceF)))
+    : 0;
+  let climateDirection = "";
+  if (hasClimateComparison) {
+    if (climateComparison.differenceF > 0) climateDirection = "warmer";
+    else if (climateComparison.differenceF < 0) climateDirection = "colder";
+    else climateDirection = "about the same";
+  }
+  const climateSource = hasClimateComparison
+    ? `${climateComparison.sampleYears || 30}-year`
+    : "";
+  const climateDate = climateComparison?.referenceDateLabel;
+  const climateLocation = location?.name || "this location";
+  const climateMessage = hasClimateComparison
+    ? climateDirection === "about the same"
+      ? `Today is about the same as the ${climateSource} average for ${climateDate} in ${climateLocation}, from the Open-Meteo historical archive.`
+      : `Today is ${climateDelta}${tempUnit} ${climateDirection} than the ${climateSource} average for ${climateDate} in ${climateLocation}, from the Open-Meteo historical archive.`
+    : "";
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -54,12 +82,15 @@ function HeroCard({ weather, location, unit, convertTemp, style }) {
             {convertTemp(current.temperature_2m)}
             <span className="hero-temp-unit">{tempUnit}</span>
           </div>
-          <div className="hero-condition">{info.label}</div>
-          <div className="hero-feels">
-            Feels like {convertTemp(current.apparent_temperature)}
-            {tempUnit}
-          </div>
+        <div className="hero-condition">{info.label}</div>
+        <div className="hero-feels">
+          Feels like {convertTemp(current.apparent_temperature)}
+          {tempUnit}
         </div>
+        {hasClimateComparison && (
+          <p className="hero-insight">{climateMessage}</p>
+        )}
+      </div>
       </div>
 
       <div className="hero-stats">

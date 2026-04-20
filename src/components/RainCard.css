@@ -173,8 +173,3 @@
   letter-spacing: 0.08em;
 }
 
-@media (max-width: 900px) {
-  .bento-rain {
-    grid-column: span 2;
-  }
-}

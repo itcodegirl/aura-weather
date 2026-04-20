@@ -93,7 +93,7 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
-@media (prefers-reduced-motion: reduce), (max-width: 500px) {
+@media (prefers-reduced-motion: reduce) {
   .city-search-input-wrap,
   .city-search-dropdown {
     backdrop-filter: blur(4px);
@@ -169,12 +169,4 @@
   margin-top: 1px;
   color: var(--text-dim);
   font-size: 11px;
-}
-
-@media (max-width: 700px) {
-  .city-search {
-    order: -1;
-    width: 100%;
-    flex-basis: 100%;
-  }
 }

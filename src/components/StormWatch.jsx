@@ -1,7 +1,15 @@
 // src/components/StormWatch.jsx
 
 import { memo } from "react";
-import { Zap, TrendingUp, TrendingDown, Minus, Wind, Droplets } from "lucide-react";
+import {
+  Zap,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Wind,
+  Droplets,
+  ArrowUp,
+} from "lucide-react";
 import {
   classifyStormRisk,
   calculatePressureTrend,
@@ -147,73 +155,15 @@ function WindIntelligence({ weather, unit }) {
           <span className="wind-compass-label wind-compass-e">E</span>
           <span className="wind-compass-label wind-compass-s">S</span>
           <span className="wind-compass-label wind-compass-w">W</span>
-          <svg
+          <span
             className="wind-compass-arrow"
-            viewBox="0 0 72 72"
             aria-hidden="true"
             style={{
               transform: `translate(-50%, -50%) rotate(${(wind_direction_10m || 0) + 180}deg)`,
             }}
           >
-            <g transform="translate(36 36)">
-              <path d="M0 -31 L6 -20 L0 -10 L-6 -20 Z" fill="#ffffff" />
-              <path
-                d="M0 -10 L13 4 L0 14 L-13 4 Z"
-                fill="rgba(255,255,255,0.46)"
-              />
-              <path
-                d="M0 -20 L0 14"
-                stroke="rgba(255,255,255,0.72)"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-              <line
-                x1="-1"
-                y1="16"
-                x2="1"
-                y2="32"
-                stroke="rgba(255,255,255,0.18)"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <line
-                x1="-4"
-                y1="20"
-                x2="0"
-                y2="32"
-                stroke="rgba(255,255,255,0.12)"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <line
-                x1="4"
-                y1="20"
-                x2="0"
-                y2="32"
-                stroke="rgba(255,255,255,0.12)"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-              <line
-                x1="-2"
-                y1="32"
-                x2="2"
-                y2="32"
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <line
-                x1="-2"
-                y1="29"
-                x2="2"
-                y2="29"
-                stroke="rgba(255,255,255,0.13)"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </g>
-          </svg>
+            <ArrowUp size={16} strokeWidth={2.3} />
+          </span>
         </div>
       </div>
 

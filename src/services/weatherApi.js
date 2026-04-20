@@ -2,11 +2,73 @@
 
 const ENDPOINTS = {
   weather: "https://api.open-meteo.com/v1/forecast",
+  archive: "https://archive-api.open-meteo.com/v1/archive",
   aqi: "https://air-quality-api.open-meteo.com/v1/air-quality",
   geocode: "https://geocoding-api.open-meteo.com/v1/search",
 };
 
 const TIMEOUT_MS = 10_000;
+
+function getDateInTimeZone(timeZone) {
+  const now = new Date();
+  const zone = timeZone || "UTC";
+  let year;
+  let month;
+  let day;
+  let monthLabel;
+
+  try {
+    const formatDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: zone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const monthDay = formatDate.format(now);
+    const parts = monthDay.split("-");
+
+    year = Number(parts[0]);
+    month = parts[1];
+    day = parts[2];
+    monthLabel = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      month: "long",
+      day: "numeric",
+    }).format(now);
+  } catch {
+    const fallback = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "UTC",
+    }).format(now);
+    const fallbackLabel = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(now);
+    const fallbackParts = fallback.split("-");
+
+    year = Number(fallbackParts[0]);
+    month = fallbackParts[1];
+    day = fallbackParts[2];
+    monthLabel = fallbackLabel.replace(/,?\s\d{4}$/, "");
+  }
+
+  return {
+    year: Number(year),
+    month,
+    day,
+    monthDay,
+    monthDayLabel: monthLabel,
+  };
+}
+
+function toF(value) {
+  if (!Number.isFinite(value)) return null;
+  return Number(value);
+}
 
 /**
  * Fetches current weather, hourly forecast, and 7-day daily forecast
@@ -39,6 +101,78 @@ export async function fetchWeather(lat, lon, unit = "F") {
     throw new Error(`Weather data unavailable (${res.status})`);
   }
   return res.json();
+}
+
+/**
+ * Fetches today's temperature average for the same calendar day over
+ * the last 30 years using Open-Meteo historical archive API.
+ */
+export async function fetchHistoricalTemperatureAverage(lat, lon, timezone) {
+  const { year, month, day, monthDayLabel } = getDateInTimeZone(timezone);
+  const startYear = year - 30;
+  const endYear = year - 1;
+
+  if (startYear >= endYear) {
+    return null;
+  }
+
+  const start = `${startYear}-${month}-${day}`;
+  const end = `${endYear}-${month}-${day}`;
+
+  const params = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    start_date: start,
+    end_date: end,
+    daily: "temperature_2m_mean,temperature_2m_min,temperature_2m_max",
+    temperature_unit: "fahrenheit",
+    timezone: timezone || "UTC",
+  });
+
+  const res = await fetch(`${ENDPOINTS.archive}?${params}`, {
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!res.ok) {
+    return null;
+  }
+
+  const data = await res.json();
+  const times = data?.daily?.time;
+  if (!Array.isArray(times) || !times.length) {
+    return null;
+  }
+
+  const targetSuffix = `-${month}-${day}`;
+  let total = 0;
+  let sampleCount = 0;
+
+  for (let i = 0; i < times.length; i += 1) {
+    if (!times[i]?.endsWith(targetSuffix)) continue;
+
+    const mean = toF(Number(data.daily.temperature_2m_mean?.[i]));
+    const min = toF(Number(data.daily.temperature_2m_min?.[i]));
+    const max = toF(Number(data.daily.temperature_2m_max?.[i]));
+
+    let sample = mean;
+    if (!Number.isFinite(sample) && Number.isFinite(min) && Number.isFinite(max)) {
+      sample = (min + max) / 2;
+    }
+    if (!Number.isFinite(sample)) continue;
+
+    total += sample;
+    sampleCount += 1;
+  }
+
+  if (sampleCount === 0) {
+    return null;
+  }
+
+  return {
+    averageTemperatureF: Number((total / sampleCount).toFixed(1)),
+    sampleYears: sampleCount,
+    referenceDateLabel: monthDayLabel,
+    timeRange: `${startYear}-${endYear}`,
+  };
 }
 
 /**

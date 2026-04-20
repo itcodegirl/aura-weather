@@ -163,13 +163,16 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 24px;
-  height: 24px;
-  display: block;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform-origin: center;
   transition: transform 0.6s ease;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  overflow: visible;
+  pointer-events: none;
+  color: #ffffff;
 }
 
 .comfort-scale {
@@ -205,23 +208,3 @@
   transition: left 0.4s ease;
 }
 
-@media (max-width: 900px) {
-  .bento-storm {
-    grid-column: span 2;
-  }
-
-  .storm-grid {
-    grid-template-columns: repeat(2, 1fr);
-    align-items: start;
-  }
-
-  .storm-module {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 500px) {
-  .storm-grid {
-    grid-template-columns: 1fr;
-  }
-}

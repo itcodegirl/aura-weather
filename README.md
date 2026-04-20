@@ -2,13 +2,9 @@
 
 A sophisticated weather dashboard with a bento-grid layout, weather-reactive gradients, and real-time atmospheric data. Built with React, Vite, and plain CSS.
 
-**[🔗 Live Demo](https://your-deploy-url-here.com)** · **[📸 Screenshots](#screenshots)**
-
-
+**[Live demo](https://your-deploy-url-here.com)** · **[Screenshots](#screenshots)**
 
 ![Aura screenshot metric-card](./public/screenshot.png)
-
-
 
 ---
 
@@ -46,6 +42,7 @@ The goal: a weather app that *feels like a product*, not a tutorial clone.
 ## Architecture
 
 The codebase separates concerns cleanly:
+
 src/
 ├── components/      # Presentation components
 ├── hooks/           # Custom React hooks (data logic)
@@ -63,12 +60,13 @@ The `weatherApi.js` service layer contains zero React — it's pure data fetchin
 ```bash
 npm install
 npm run dev
+```
 
 Roadmap
-[ ] Storm Watch panel (CAPE, pressure trend, wind compass, dewpoint comfort)
-[ ] Rain intelligence card with 24h precipitation timeline
-[ ] Minute-by-minute nowcast (15-min resolution)
-[ ] NWS severe weather alerts (US)
-[ ] Live precipitation radar via RainViewer API
-[ ] Historical climate comparison
-[ ] Saved cities + quick-switch
+- [ ] Storm Watch panel (CAPE, pressure trend, wind compass, dewpoint comfort)
+- [ ] Rain intelligence card with 24h precipitation timeline
+- [ ] Minute-by-minute nowcast (15-min resolution)
+- [ ] NWS severe weather alerts (US)
+- [ ] Live precipitation radar via RainViewer API
+- [ ] Historical climate comparison
+- [ ] Saved cities + quick-switch

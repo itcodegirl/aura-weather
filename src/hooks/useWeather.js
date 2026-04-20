@@ -290,7 +290,7 @@ export function useWeather(unit = "F", options = {}) {
     );
 
     return () => clearTimeout(fallbackTimer);
-  }, [loadWeather, unit, scheduleWeatherLoad]);
+  }, [unit, scheduleWeatherLoad]);
 
   const hasLocation = location !== null;
   const locationLat = location?.lat;

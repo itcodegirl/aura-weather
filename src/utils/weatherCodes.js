@@ -29,9 +29,19 @@ export const weatherCodes = {
 };
 
 export function getWeather(code) {
-  return weatherCodes[code] || weatherCodes[0];
+  const numericCode = Number(code);
+  if (!Number.isFinite(numericCode)) {
+    return weatherCodes[0];
+  }
+
+  const normalizedCode = Math.trunc(numericCode);
+  return weatherCodes[normalizedCode] || weatherCodes[0];
 }
 
 export function gradientCss(gradient) {
+  if (!Array.isArray(gradient) || gradient.length < 3) {
+    return "linear-gradient(135deg, #fb923c 0%, #ec4899 50%, #6366f1 100%)";
+  }
+
   return `linear-gradient(135deg, ${gradient[0]} 0%, ${gradient[1]} 50%, ${gradient[2]} 100%)`;
 }

@@ -187,7 +187,7 @@ export function useWeather(unit = "F", options = {}) {
 
       if (!navigator.geolocation) {
         setIsLocatingCurrent(false);
-        loadWeather(
+        scheduleWeatherLoad(
           DEFAULT_LOCATION.lat,
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
@@ -203,7 +203,7 @@ export function useWeather(unit = "F", options = {}) {
         (pos) => {
           if (!isMountedRef.current) return;
           const { latitude, longitude } = pos.coords;
-          loadWeather(
+          scheduleWeatherLoad(
             latitude,
             longitude,
             undefined,
@@ -215,7 +215,7 @@ export function useWeather(unit = "F", options = {}) {
         () => {
           if (!isMountedRef.current) return;
           setIsLocatingCurrent(false);
-          loadWeather(
+          scheduleWeatherLoad(
             DEFAULT_LOCATION.lat,
             DEFAULT_LOCATION.lon,
             DEFAULT_LOCATION.name,
@@ -227,7 +227,7 @@ export function useWeather(unit = "F", options = {}) {
         { timeout: GEOLOCATION_TIMEOUT_MS }
       );
     },
-    [loadWeather, unit]
+    [scheduleWeatherLoad, unit]
   );
 
   const retryWeather = useCallback(() => {
@@ -299,8 +299,8 @@ export function useWeather(unit = "F", options = {}) {
           { fallbackNotice: LOCATION_FALLBACK_NOTICE }
         );
       },
-        { timeout: GEOLOCATION_TIMEOUT_MS }
-      );
+      { timeout: GEOLOCATION_TIMEOUT_MS }
+    );
 
     return () => {
       isMountedRef.current = false;

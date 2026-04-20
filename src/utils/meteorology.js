@@ -1,6 +1,6 @@
 // src/utils/meteorology.js
 
-import { toFahrenheit } from "./weatherUnits";
+import { toFahrenheit, WIND_SPEED_CONVERSION } from "./weatherUnits";
 
 /**
  * Classify storm risk using CAPE (Convective Available Potential Energy).
@@ -136,11 +136,9 @@ export function windDirectionName(degrees) {
 /**
  * Classify wind strength (simplified Beaufort scale).
  */
-const MPH_TO_KMH = 1.60934;
-
 function toMph(speed, unit) {
   if (unit === "C") {
-    return speed / MPH_TO_KMH;
+    return speed / WIND_SPEED_CONVERSION;
   }
   return speed;
 }

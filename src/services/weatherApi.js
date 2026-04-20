@@ -1,5 +1,7 @@
 // src/services/weatherApi.js
 
+import { validateCoordinates } from "../utils/weatherUnits";
+
 const ENDPOINTS = {
   weather: "https://api.open-meteo.com/v1/forecast",
   archive: "https://archive-api.open-meteo.com/v1/archive",
@@ -12,10 +14,6 @@ const TIMEOUT_MS = 10_000;
 const DEFAULT_TEMPERATURE_UNIT = "fahrenheit";
 const DEFAULT_WIND_SPEED_UNIT = "mph";
 const DEFAULT_PRECIPITATION_UNIT = "inch";
-const MIN_LATITUDE = -90;
-const MAX_LATITUDE = 90;
-const MIN_LONGITUDE = -180;
-const MAX_LONGITUDE = 180;
 
 function getSignal(signal) {
   if (signal) return signal;
@@ -23,33 +21,6 @@ function getSignal(signal) {
     return AbortSignal.timeout(TIMEOUT_MS);
   }
   return undefined;
-}
-
-function normalizeLatitudeCoordinate(lat) {
-  const numeric = Number(lat);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-  return numeric >= MIN_LATITUDE && numeric <= MAX_LATITUDE ? numeric : null;
-}
-
-function normalizeLongitudeCoordinate(lon) {
-  const numeric = Number(lon);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-  return numeric >= MIN_LONGITUDE && numeric <= MAX_LONGITUDE ? numeric : null;
-}
-
-function validateCoordinates(lat, lon) {
-  const latitude = normalizeLatitudeCoordinate(lat);
-  const longitude = normalizeLongitudeCoordinate(lon);
-
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    throw new Error("Invalid coordinates");
-  }
-
-  return { latitude, longitude };
 }
 
 async function fetchJson(url, options = {}) {

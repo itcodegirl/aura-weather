@@ -9,6 +9,8 @@ import {
   formatPrecipitation,
   normalizeLatitude,
   normalizeLongitude,
+  parseCoordinates,
+  validateCoordinates,
   toFahrenheit,
 } from "./weatherUnits.js";
 
@@ -41,6 +43,23 @@ describe("weatherUnits", () => {
     assert.equal(normalizeLongitude(-87.63), -87.63);
     assert.equal(normalizeLatitude("invalid"), null);
     assert.equal(normalizeLongitude(undefined), null);
+    assert.equal(normalizeLatitude(95), null);
+    assert.equal(normalizeLongitude(200), null);
+  });
+
+  test("parses and validates coordinate pairs", () => {
+    assert.deepEqual(parseCoordinates(41.88, -87.63), {
+      latitude: 41.88,
+      longitude: -87.63,
+    });
+    assert.equal(parseCoordinates("invalid", -87.63), null);
+    assert.equal(parseCoordinates(41.88, 181), null);
+    assert.throws(() => validateCoordinates(95, -87.63), /Invalid coordinates/);
+    assert.throws(() => validateCoordinates(41.88, 181), /Invalid coordinates/);
+    assert.deepEqual(validateCoordinates("41.88", "-87.63"), {
+      latitude: 41.88,
+      longitude: -87.63,
+    });
   });
 
   test("supports dewpoint conversion to Fahrenheit", () => {

@@ -1,5 +1,9 @@
 export const WIND_SPEED_CONVERSION = 1.60934;
 export const MM_PER_INCH = 25.4;
+export const MIN_LATITUDE = -90;
+export const MAX_LATITUDE = 90;
+export const MIN_LONGITUDE = -180;
+export const MAX_LONGITUDE = 180;
 
 const PRECIP_LABEL_BY_UNIT = {
   F: "in",
@@ -8,6 +12,17 @@ const PRECIP_LABEL_BY_UNIT = {
 
 function normalizeBool(value) {
   return value === "C" ? "C" : "F";
+}
+
+function normalizeCoordinate(value, min, max) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  if (numeric < min || numeric > max) {
+    return null;
+  }
+  return numeric;
 }
 
 export function normalizeTemperatureUnit(value) {
@@ -31,13 +46,30 @@ export function getPrecipUnitLabel(unit) {
 }
 
 export function normalizeLatitude(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
+  return normalizeCoordinate(value, MIN_LATITUDE, MAX_LATITUDE);
 }
 
 export function normalizeLongitude(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
+  return normalizeCoordinate(value, MIN_LONGITUDE, MAX_LONGITUDE);
+}
+
+export function parseCoordinates(lat, lon) {
+  const latitude = normalizeLatitude(lat);
+  const longitude = normalizeLongitude(lon);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  return { latitude, longitude };
+}
+
+export function validateCoordinates(lat, lon) {
+  const parsed = parseCoordinates(lat, lon);
+  if (!parsed) {
+    throw new Error("Invalid coordinates");
+  }
+  return parsed;
 }
 
 export function toFahrenheit(value, sourceUnit = "F") {

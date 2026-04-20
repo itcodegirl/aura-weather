@@ -10,8 +10,7 @@ import {
   getApiTemperatureUnit,
   getApiWindSpeedUnit,
   getApiPrecipUnit,
-  normalizeLatitude,
-  normalizeLongitude,
+  parseCoordinates,
 } from "../utils/weatherUnits";
 
 const DEFAULT_LOCATION = {
@@ -27,10 +26,6 @@ const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const GEOLOCATION_TIMEOUT_MS = 5000;
 const LOCATION_FALLBACK_DELAY_MS = 6000;
 const DEFAULT_DATA_UNIT = "F";
-const MIN_LATITUDE = -90;
-const MAX_LATITUDE = 90;
-const MIN_LONGITUDE = -180;
-const MAX_LONGITUDE = 180;
 
 function normalizeUnit(value) {
   return value === "C" ? "C" : "F";
@@ -43,20 +38,14 @@ function getPersistedLocation() {
     if (!saved) return null;
 
     const parsed = JSON.parse(saved);
-    const lat = Number(parsed?.lat);
-    const lon = Number(parsed?.lon);
-    if (
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lon) ||
-      Math.abs(lat) > 90 ||
-      Math.abs(lon) > 180
-    ) {
+    const coordinates = parseCoordinates(parsed?.lat, parsed?.lon);
+    if (!coordinates) {
       return null;
     }
 
     return {
-      lat,
-      lon,
+      lat: coordinates.latitude,
+      lon: coordinates.longitude,
       name: typeof parsed?.name === "string" ? parsed.name : "",
       country: typeof parsed?.country === "string" ? parsed.country : "",
     };
@@ -66,15 +55,16 @@ function getPersistedLocation() {
 }
 
 function persistLocation(lat, lon, name, country) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+  const coordinates = parseCoordinates(lat, lon);
+  if (!coordinates) return;
+
   try {
     if (typeof window === "undefined" || !window.localStorage) return;
     window.localStorage.setItem(
       LAST_LOCATION_KEY,
       JSON.stringify({
-        lat,
-        lon,
+        lat: coordinates.latitude,
+        lon: coordinates.longitude,
         name: name || "",
         country: country || "",
         updatedAt: new Date().toISOString(),
@@ -83,30 +73,6 @@ function persistLocation(lat, lon, name, country) {
   } catch {
     // localStorage may be unavailable in restricted contexts.
   }
-}
-
-function parseLatitude(lat) {
-  const numeric = normalizeLatitude(lat);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-
-  if (numeric < MIN_LATITUDE || numeric > MAX_LATITUDE) {
-    return null;
-  }
-  return numeric;
-}
-
-function parseLongitude(lon) {
-  const numeric = normalizeLongitude(lon);
-  if (!Number.isFinite(numeric)) {
-    return null;
-  }
-
-  if (numeric < MIN_LONGITUDE || numeric > MAX_LONGITUDE) {
-    return null;
-  }
-  return numeric;
 }
 
 function getFallbackLocationName(weatherData, lat, lon) {
@@ -153,16 +119,16 @@ export function useWeather(unit = "F", options = {}) {
 
   const loadWeather = useCallback(
     async (lat, lon, name, country, requestUnit = unit, loadOptions = {}) => {
-      if (!isMountedRef.current) return;
+    if (!isMountedRef.current) return;
 
-      const safeLat = parseLatitude(lat);
-      const safeLon = parseLongitude(lon);
+      const coordinates = parseCoordinates(lat, lon);
       const { fallbackNotice } = loadOptions;
-      if (!Number.isFinite(safeLat) || !Number.isFinite(safeLon)) {
+      if (!coordinates) {
         setError("Invalid location coordinates");
         setLoading(false);
         return;
       }
+      const { latitude: safeLat, longitude: safeLon } = coordinates;
 
       const requestDataUnit = normalizeUnit(requestUnit);
       const apiTemperatureUnit = getApiTemperatureUnit(requestDataUnit);

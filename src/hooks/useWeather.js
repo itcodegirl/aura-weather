@@ -37,7 +37,7 @@ function normalizeLocationName(value, fallback = "") {
 
 function hasValidLastLocationTimestamp(saved) {
   if (!saved?.updatedAt) {
-    return true;
+    return false;
   }
   const savedTime = Date.parse(saved.updatedAt);
   if (!Number.isFinite(savedTime)) {
@@ -80,8 +80,8 @@ function getPersistedLocation() {
     return {
       lat: coordinates.latitude,
       lon: coordinates.longitude,
-      name: typeof parsed?.name === "string" ? parsed.name : "",
-      country: typeof parsed?.country === "string" ? parsed.country : "",
+      name: normalizeLocationName(parsed?.name, DEFAULT_LOCATION.name),
+      country: normalizeLocationName(parsed?.country, DEFAULT_LOCATION.country),
     };
   } catch {
     try {

@@ -80,6 +80,7 @@ export function useWeather(unit = "F", options = {}) {
   const [isLocatingCurrent, setIsLocatingCurrent] = useState(false);
   const requestIdRef = useRef(0);
   const inFlightRequestRef = useRef(null);
+  const lastRequestedSignatureRef = useRef("");
 
   const abortInFlightRequest = useCallback(() => {
     if (!inFlightRequestRef.current) return;
@@ -91,11 +92,13 @@ export function useWeather(unit = "F", options = {}) {
     async (lat, lon, name, country, requestUnit = unit, options = {}) => {
       const { fallbackNotice } = options;
       const requestId = requestIdRef.current + 1;
+      const signature = `${lat},${lon},${requestUnit},${climateEnabled ? 1 : 0}`;
 
       requestIdRef.current = requestId;
       abortInFlightRequest();
       const controller = new AbortController();
       inFlightRequestRef.current = controller;
+      lastRequestedSignatureRef.current = signature;
 
       setLoading(true);
       setError(null);
@@ -164,13 +167,6 @@ export function useWeather(unit = "F", options = {}) {
     [unit, climateEnabled, abortInFlightRequest]
   );
 
-  const scheduleWeatherLoad = useCallback(
-    (lat, lon, name, country, requestUnit = unit, options = {}) => {
-      loadWeather(lat, lon, name, country, requestUnit, options);
-    },
-    [loadWeather, unit]
-  );
-
   const loadCurrentLocation = useCallback(
     (options = {}) => {
       const requestUnit = options.unit || unit;
@@ -178,7 +174,7 @@ export function useWeather(unit = "F", options = {}) {
 
       if (!navigator.geolocation) {
         setIsLocatingCurrent(false);
-        scheduleWeatherLoad(
+        loadWeather(
           DEFAULT_LOCATION.lat,
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
@@ -193,7 +189,7 @@ export function useWeather(unit = "F", options = {}) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          scheduleWeatherLoad(
+          loadWeather(
             latitude,
             longitude,
             undefined,
@@ -204,7 +200,7 @@ export function useWeather(unit = "F", options = {}) {
         },
         () => {
           setIsLocatingCurrent(false);
-          scheduleWeatherLoad(
+          loadWeather(
             DEFAULT_LOCATION.lat,
             DEFAULT_LOCATION.lon,
             DEFAULT_LOCATION.name,
@@ -234,7 +230,7 @@ export function useWeather(unit = "F", options = {}) {
   useEffect(() => {
     const persisted = getPersistedLocation();
     if (persisted) {
-      scheduleWeatherLoad(
+      loadWeather(
         persisted.lat,
         persisted.lon,
         persisted.name || DEFAULT_LOCATION.name,
@@ -258,7 +254,7 @@ export function useWeather(unit = "F", options = {}) {
 
     if (!navigator.geolocation) {
       clearTimeout(fallbackTimer);
-      scheduleWeatherLoad(
+      loadWeather(
         DEFAULT_LOCATION.lat,
         DEFAULT_LOCATION.lon,
         DEFAULT_LOCATION.name,
@@ -273,11 +269,11 @@ export function useWeather(unit = "F", options = {}) {
       (pos) => {
         clearTimeout(fallbackTimer);
         const { latitude, longitude } = pos.coords;
-        scheduleWeatherLoad(latitude, longitude, undefined, undefined, unit);
+        loadWeather(latitude, longitude, undefined, undefined, unit);
       },
       () => {
         clearTimeout(fallbackTimer);
-        scheduleWeatherLoad(
+        loadWeather(
           DEFAULT_LOCATION.lat,
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
@@ -290,7 +286,7 @@ export function useWeather(unit = "F", options = {}) {
     );
 
     return () => clearTimeout(fallbackTimer);
-  }, [unit, scheduleWeatherLoad]);
+  }, [unit, loadWeather]);
 
   const hasLocation = location !== null;
   const locationLat = location?.lat;
@@ -301,23 +297,19 @@ export function useWeather(unit = "F", options = {}) {
   useEffect(() => {
     if (!hasLocation) return;
 
-    scheduleWeatherLoad(
+    const nextSignature = `${locationLat},${locationLon},${unit},${climateEnabled ? 1 : 0}`;
+    if (nextSignature === lastRequestedSignatureRef.current) {
+      return;
+    }
+
+    loadWeather(
       locationLat,
       locationLon,
       locationName,
       locationCountry,
       unit
     );
-  }, [
-    unit,
-    climateEnabled,
-    hasLocation,
-    locationLat,
-    locationLon,
-    locationName,
-    locationCountry,
-    scheduleWeatherLoad,
-  ]);
+  }, [unit, climateEnabled, hasLocation, locationLat, locationLon, locationName, locationCountry, loadWeather]);
 
   useEffect(() => {
     return () => {

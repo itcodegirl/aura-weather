@@ -25,7 +25,7 @@ const LOCATION_FALLBACK_NOTICE =
 const LAST_LOCATION_KEY = "aura-weather-last-location";
 const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const GEOLOCATION_TIMEOUT_MS = 5000;
-const LOCATION_FALLBACK_DELAY_MS = 6000;
+const LOCATION_FALLBACK_DELAY_MS = GEOLOCATION_TIMEOUT_MS + 1000;
 const DEFAULT_DATA_UNIT = "F";
 
 function hasGeolocationSupport() {

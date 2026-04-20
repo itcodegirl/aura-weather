@@ -392,14 +392,21 @@ export function useWeather(unit = "F", options = {}) {
 
   const loadCurrentLocation = useCallback(
     (options = {}) => {
-      const requestUnit = options.unit || unit;
+      const requestUnit = normalizeTemperatureUnit(options.unit || unit);
       const fallbackNotice = options.fallbackNotice || LOCATION_FALLBACK_NOTICE;
 
       requestCurrentPositionWithFallback({
         requestUnit,
         fallbackNotice,
         trackCurrentLookup: true,
-        onSuccess: ({ latitude, longitude }, normalizedRequestUnit) => {
+        onSuccess: (position, normalizedRequestUnit) => {
+          const latitude = Number(position?.latitude);
+          const longitude = Number(position?.longitude);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            onFallback(normalizedRequestUnit, fallbackNotice);
+            return;
+          }
+
           scheduleWeatherLoad(
             latitude,
             longitude,

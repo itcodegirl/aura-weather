@@ -25,6 +25,9 @@ function buildHourlyData(hourly, convertTemp) {
 
   return hourly.time.slice(idx, idx + 24).map((t, i) => {
     const date = new Date(t);
+    const rawTemp = hourly.temperature_2m[idx + i];
+    const baseTemp = Number(rawTemp);
+    const convertedTemp = Number.isFinite(baseTemp) ? Number(convertTemp(baseTemp)) : Number.NaN;
 
     return {
       time: date,
@@ -32,7 +35,7 @@ function buildHourlyData(hourly, convertTemp) {
         hour: "numeric",
         hour12: true,
       }),
-      temp: convertTemp(hourly.temperature_2m[idx + i]),
+      temp: Number.isFinite(convertedTemp) ? convertedTemp : null,
       code: hourly.weather_code?.[idx + i] ?? 0,
     };
   });
@@ -43,15 +46,14 @@ function ChartTooltip({ active, payload, unit }) {
 
   const data = payload[0].payload;
   const info = getWeather(data.code);
+  const tempText = Number.isFinite(data?.temp)
+    ? `${data.temp}\u00B0${unit}`
+    : "\u2014";
 
   return (
     <div className="chart-tooltip">
       <div className="chart-tooltip-time">{data.label}</div>
-      <div className="chart-tooltip-temp">
-        {data.temp}
-        {"\u00B0"}
-        {unit}
-      </div>
+      <div className="chart-tooltip-temp">{tempText}</div>
       <div className="chart-tooltip-condition">{info.label}</div>
     </div>
   );
@@ -101,9 +103,22 @@ function HourlyCard({
   }
 
   const xTicks = data.filter((_, i) => i % 3 === 0).map((d) => d.label);
-  const temps = data.map((d) => d.temp);
-  const minTemp = Math.floor(Math.min(...temps) - 2);
-  const maxTemp = Math.ceil(Math.max(...temps) + 2);
+  const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
+  const currentTemp = Number.isFinite(Number(weather?.current?.temperature_2m))
+    ? Number(convertTemp(weather.current.temperature_2m))
+    : Number.NaN;
+  const safeMinTemp = temps.length
+    ? Math.min(...temps)
+    : Number.isFinite(currentTemp)
+    ? currentTemp
+    : 0;
+  const safeMaxTemp = temps.length
+    ? Math.max(...temps)
+    : Number.isFinite(currentTemp)
+    ? currentTemp
+    : 0;
+  const minTemp = Math.floor(safeMinTemp - 2);
+  const maxTemp = Math.ceil(safeMaxTemp + 2);
   const nowLabel = data[0]?.label;
 
   return (

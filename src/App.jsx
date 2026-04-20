@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { CloudOff } from "lucide-react";
 import "./App.css";
 import { useWeather } from "./hooks/useWeather";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { getWeather, gradientCss } from "./utils/weatherCodes";
 import HeroCard from "./components/HeroCard";
 import RainCard from "./components/RainCard";
@@ -81,6 +82,55 @@ const CARD_STYLE_VARIABLES = [
   { "--i": 8 },
 ];
 
+const DEFAULT_UNIT = "F";
+const CLIMATE_CONTEXT_DEFAULT = true;
+
+function getAqiStatus(aqi) {
+  if (aqi === null || aqi === undefined) {
+    return { label: "", color: "rgba(148, 163, 184, 0.92)" };
+  }
+  if (aqi <= 50) {
+    return { label: "Good", color: "#22c55e" };
+  }
+  if (aqi <= 100) {
+    return { label: "Moderate", color: "#eab308" };
+  }
+  return { label: "Unhealthy", color: "#ef4444" };
+}
+
+function getUvStatus(uv) {
+  if (uv === null || uv === undefined) {
+    return { label: "", color: "rgba(148, 163, 184, 0.92)" };
+  }
+  if (uv <= 2) {
+    return { label: "Low", color: "#22c55e" };
+  }
+  if (uv <= 5) {
+    return { label: "Moderate", color: "#eab308" };
+  }
+  if (uv <= 7) {
+    return { label: "High", color: "#f97316" };
+  }
+  if (uv <= 10) {
+    return { label: "Very High", color: "#f43f5e" };
+  }
+  return { label: "Extreme", color: "#7f1d1d" };
+}
+
+function deserializeUnitPreference(storedUnit) {
+  return storedUnit === "F" || storedUnit === "C" ? storedUnit : DEFAULT_UNIT;
+}
+
+function deserializeClimatePreference(storedValue) {
+  if (storedValue === "off") return false;
+  if (storedValue === "on") return true;
+  return CLIMATE_CONTEXT_DEFAULT;
+}
+
+function serializeClimatePreference(showClimateContext) {
+  return showClimateContext ? "on" : "off";
+}
+
 function formatClock(value) {
   if (!value) return "—";
   const date = new Date(value);
@@ -146,28 +196,21 @@ const CLIMATE_CONTEXT_KEY = "aura-weather-climate-context";
 const UNIT_PREFERENCE_KEY = "aura-weather-unit-preference";
 
 function App() {
-  const [unit, setUnit] = useState(() => {
-    try {
-      const stored = window.localStorage.getItem(UNIT_PREFERENCE_KEY);
-      if (stored === "F" || stored === "C") {
-        return stored;
-      }
-    } catch {
-      // localStorage may be unavailable in restricted contexts.
+  const [unit, setUnit] = useLocalStorageState(
+    UNIT_PREFERENCE_KEY,
+    DEFAULT_UNIT,
+    {
+      deserialize: deserializeUnitPreference,
     }
-
-    return "F";
-  });
-  const [showClimateContext, setShowClimateContext] = useState(() => {
-    try {
-      const stored = window.localStorage.getItem(CLIMATE_CONTEXT_KEY);
-      if (stored === "off") return false;
-      if (stored === "on") return true;
-    } catch {
-      // localStorage may be unavailable in restricted contexts.
+  );
+  const [showClimateContext, setShowClimateContext] = useLocalStorageState(
+    CLIMATE_CONTEXT_KEY,
+    CLIMATE_CONTEXT_DEFAULT,
+    {
+      deserialize: deserializeClimatePreference,
+      serialize: serializeClimatePreference,
     }
-    return true;
-  });
+  );
   const citySearchRef = useRef(null);
   const {
     weather,
@@ -186,38 +229,6 @@ function App() {
     (f) => (unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9)),
     [unit]
   );
-
-  const getAqiStatus = (aqi) => {
-    if (aqi === null || aqi === undefined) {
-      return { label: "", color: "rgba(148, 163, 184, 0.92)" };
-    }
-    if (aqi <= 50) {
-      return { label: "Good", color: "#22c55e" };
-    }
-    if (aqi <= 100) {
-      return { label: "Moderate", color: "#eab308" };
-    }
-    return { label: "Unhealthy", color: "#ef4444" };
-  };
-
-  const getUvStatus = (uv) => {
-    if (uv === null || uv === undefined) {
-      return { label: "", color: "rgba(148, 163, 184, 0.92)" };
-    }
-    if (uv <= 2) {
-      return { label: "Low", color: "#22c55e" };
-    }
-    if (uv <= 5) {
-      return { label: "Moderate", color: "#eab308" };
-    }
-    if (uv <= 7) {
-      return { label: "High", color: "#f97316" };
-    }
-    if (uv <= 10) {
-      return { label: "Very High", color: "#f43f5e" };
-    }
-    return { label: "Extreme", color: "#7f1d1d" };
-  };
 
   useEffect(() => {
     const handleShortcut = (event) => {
@@ -242,25 +253,6 @@ function App() {
 
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        CLIMATE_CONTEXT_KEY,
-        showClimateContext ? "on" : "off"
-      );
-    } catch {
-      // localStorage may be unavailable in restricted contexts.
-    }
-  }, [showClimateContext]);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(UNIT_PREFERENCE_KEY, unit);
-    } catch {
-      // localStorage may be unavailable in restricted contexts.
-    }
-  }, [unit]);
 
   if (loading) {
     return (

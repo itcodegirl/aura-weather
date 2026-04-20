@@ -6,6 +6,16 @@ const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 
 const NOWCAST_STEP_MINUTES = 15;
 const NOWCAST_WINDOW_SIZE = 8; // next 2 hours with 15-min resolution
 
+function toFiniteNumber(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function clampProbability(value) {
+  const clamped = Math.max(0, Math.min(100, Math.round(value)));
+  return Number.isFinite(clamped) ? clamped : 0;
+}
+
 function analyzeNowcast(minutely15) {
   if (!minutely15?.time?.length || minutely15.time.length === 0) {
     return {
@@ -30,8 +40,8 @@ function analyzeNowcast(minutely15) {
     .slice(normalizedStartIdx, normalizedStartIdx + NOWCAST_WINDOW_SIZE)
     .map((timestamp, i) => {
       const idx = normalizedStartIdx + i;
-      const probability = Number(precipitation_probability[idx] || 0);
-      const rainAmount = Number(precipitation[idx] || 0);
+      const probability = clampProbability(toFiniteNumber(precipitation_probability[idx], 0));
+      const rainAmount = Math.max(toFiniteNumber(precipitation[idx], 0), 0);
       const code = Number(weather_code[idx] || 0);
       const isWet =
         probability >= 25 ||
@@ -79,7 +89,9 @@ function analyzeNowcast(minutely15) {
   }
 
   const windowRows = rows.slice(firstWetIndex, endWetIndex + 1);
-  const peakProbability = Math.max(...windowRows.map((row) => row.probability), 0);
+  const peakProbability = clampProbability(
+    Math.max(...windowRows.map((row) => row.probability), 0)
+  );
   const startInMinutes = Math.max(firstWetIndex * NOWCAST_STEP_MINUTES, 0);
   const durationMinutes = Math.max(windowRows.length * NOWCAST_STEP_MINUTES, NOWCAST_STEP_MINUTES);
   const intensity =

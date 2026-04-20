@@ -189,12 +189,19 @@ export function useWeather(unit = "F", options = {}) {
 
   const scheduleWeatherLoad = useCallback(
     (lat, lon, name, country, requestUnit = unit, options = {}) => {
-      Promise.resolve().then(() => {
-        if (!isMountedRef.current) return;
-        loadWeather(lat, lon, name, country, requestUnit, options);
-      });
+      if (!isMountedRef.current) return;
+      loadWeather(lat, lon, name, country, requestUnit, options);
     },
     [loadWeather, unit]
+  );
+
+  const scheduleWeatherLoadAsync = useCallback(
+    (lat, lon, name, country, requestUnit = unit, options = {}) => {
+      return window.setTimeout(() => {
+        scheduleWeatherLoad(lat, lon, name, country, requestUnit, options);
+      }, 0);
+    },
+    [scheduleWeatherLoad, unit]
   );
 
   const loadCurrentLocation = useCallback(
@@ -262,7 +269,7 @@ export function useWeather(unit = "F", options = {}) {
   useEffect(() => {
     const persisted = getPersistedLocation();
     if (persisted) {
-      scheduleWeatherLoad(
+      scheduleWeatherLoadAsync(
         persisted.lat,
         persisted.lon,
         persisted.name || DEFAULT_LOCATION.name,
@@ -270,42 +277,9 @@ export function useWeather(unit = "F", options = {}) {
         unit,
         { fallbackNotice: SAVED_LOCATION_NOTICE }
       );
-      return;
-    }
-
-    const fallbackTimer = setTimeout(() => {
-      scheduleWeatherLoad(
-        DEFAULT_LOCATION.lat,
-        DEFAULT_LOCATION.lon,
-        DEFAULT_LOCATION.name,
-        DEFAULT_LOCATION.country,
-        unit,
-        { fallbackNotice: LOCATION_FALLBACK_NOTICE }
-      );
-    }, LOCATION_FALLBACK_DELAY_MS);
-
-    if (!navigator.geolocation) {
-      clearTimeout(fallbackTimer);
-      scheduleWeatherLoad(
-        DEFAULT_LOCATION.lat,
-        DEFAULT_LOCATION.lon,
-        DEFAULT_LOCATION.name,
-        DEFAULT_LOCATION.country,
-        unit,
-        { fallbackNotice: LOCATION_FALLBACK_NOTICE }
-      );
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        clearTimeout(fallbackTimer);
-        const { latitude, longitude } = pos.coords;
-        scheduleWeatherLoad(latitude, longitude, undefined, undefined, unit);
-      },
-      () => {
-        clearTimeout(fallbackTimer);
-        scheduleWeatherLoad(
+    } else {
+      const fallbackTimer = setTimeout(() => {
+        scheduleWeatherLoadAsync(
           DEFAULT_LOCATION.lat,
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
@@ -313,15 +287,50 @@ export function useWeather(unit = "F", options = {}) {
           unit,
           { fallbackNotice: LOCATION_FALLBACK_NOTICE }
         );
-      },
-      { timeout: GEOLOCATION_TIMEOUT_MS }
-    );
+      }, LOCATION_FALLBACK_DELAY_MS);
 
-    return () => {
-      clearTimeout(fallbackTimer);
-      abortInFlightRequest();
-    };
-  }, [unit, scheduleWeatherLoad, abortInFlightRequest]);
+      if (!navigator.geolocation) {
+        clearTimeout(fallbackTimer);
+        scheduleWeatherLoadAsync(
+          DEFAULT_LOCATION.lat,
+          DEFAULT_LOCATION.lon,
+          DEFAULT_LOCATION.name,
+          DEFAULT_LOCATION.country,
+          unit,
+          { fallbackNotice: LOCATION_FALLBACK_NOTICE }
+        );
+        return () => {
+          clearTimeout(fallbackTimer);
+          abortInFlightRequest();
+        };
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          clearTimeout(fallbackTimer);
+          const { latitude, longitude } = pos.coords;
+          scheduleWeatherLoadAsync(latitude, longitude, undefined, undefined, unit);
+        },
+        () => {
+          clearTimeout(fallbackTimer);
+          scheduleWeatherLoadAsync(
+            DEFAULT_LOCATION.lat,
+            DEFAULT_LOCATION.lon,
+            DEFAULT_LOCATION.name,
+            DEFAULT_LOCATION.country,
+            unit,
+            { fallbackNotice: LOCATION_FALLBACK_NOTICE }
+          );
+        },
+        { timeout: GEOLOCATION_TIMEOUT_MS }
+      );
+
+      return () => {
+        clearTimeout(fallbackTimer);
+        abortInFlightRequest();
+      };
+    }
+  }, [unit, scheduleWeatherLoadAsync, abortInFlightRequest]);
 
   const hasLocation = location !== null;
   const locationLat = location?.lat;
@@ -330,20 +339,18 @@ export function useWeather(unit = "F", options = {}) {
   const locationCountry = location?.country;
 
   useEffect(() => {
-    if (!hasLocation) return;
-
-    const nextSignature = `${locationLat},${locationLon},${unit},${climateEnabled ? 1 : 0}`;
-    if (nextSignature === lastRequestedSignatureRef.current) {
-      return;
+    if (hasLocation) {
+      const nextSignature = `${locationLat},${locationLon},${unit},${climateEnabled ? 1 : 0}`;
+      if (nextSignature !== lastRequestedSignatureRef.current) {
+        scheduleWeatherLoadAsync(
+          locationLat,
+          locationLon,
+          locationName,
+          locationCountry,
+          unit
+        );
+      }
     }
-
-    scheduleWeatherLoad(
-      locationLat,
-      locationLon,
-      locationName,
-      locationCountry,
-      unit
-    );
   }, [
     unit,
     climateEnabled,
@@ -352,7 +359,7 @@ export function useWeather(unit = "F", options = {}) {
     locationLon,
     locationName,
     locationCountry,
-    scheduleWeatherLoad,
+    scheduleWeatherLoadAsync,
   ]);
 
   useEffect(() => {

@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { CalendarDays, Droplets } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
-import { formatDayLabel } from "../utils/dates";
+import { formatDayLabel, parseLocalDate } from "../utils/dates";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
 
@@ -11,8 +11,14 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function parseForecastDate(isoDate) {
-  return new Date(`${isoDate}T00:00:00`);
+function toFiniteNumber(value, fallback = NaN) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function clampPercent(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
 function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
@@ -93,14 +99,16 @@ function ForecastCard({ weather, convertTemp, style }) {
   const days = times
     .map((date, index) => ({
       date,
-      weather_code: Number(weatherCodes[index] || 0),
-      temp_max: Number(maxTemps[index]),
-      temp_min: Number(minTemps[index]),
-      precipitation_probability_max: Number(precipProbabilities[index] || 0),
+      weather_code: toFiniteNumber(weatherCodes[index], 0) || 0,
+      temp_max: toFiniteNumber(maxTemps[index]),
+      temp_min: toFiniteNumber(minTemps[index]),
+      precipitation_probability_max: clampPercent(
+        toFiniteNumber(precipProbabilities[index], 0)
+      ),
     }))
     .filter((day) => Number.isFinite(day.temp_max) || Number.isFinite(day.temp_min))
     .filter((day) => {
-      const dayDate = parseForecastDate(day.date);
+      const dayDate = parseLocalDate(day.date);
       if (Number.isNaN(dayDate.getTime())) return false;
       dayDate.setHours(0, 0, 0, 0);
       return dayDate >= today;

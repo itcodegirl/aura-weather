@@ -224,34 +224,25 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
             </div>
           </div>
 
-          <div className="rain-history-heading">Precipitation history</div>
-          <div className="rain-stats rain-history-grid">
-            <div className="rain-stat">
-              <Droplets size={14} />
-              <div>
-                <div className="rain-stat-value">
-                  {formatPrecipitation(past12h, unit, dataUnit)}
-                </div>
-                <div className="rain-stat-label">Past 12h</div>
-              </div>
+          <div className="rain-history-heading">Recent totals</div>
+          <div className="rain-history-pills" role="list" aria-label="Recent precipitation totals">
+            <div className="rain-history-pill" role="listitem">
+              <span className="rain-history-pill-label">12h</span>
+              <span className="rain-history-pill-value">
+                {formatPrecipitation(past12h, unit, dataUnit)}
+              </span>
             </div>
-            <div className="rain-stat">
-              <Droplets size={14} />
-              <div>
-                <div className="rain-stat-value">
-                  {formatPrecipitation(past24h, unit, dataUnit)}
-                </div>
-                <div className="rain-stat-label">Past 24h</div>
-              </div>
+            <div className="rain-history-pill" role="listitem">
+              <span className="rain-history-pill-label">24h</span>
+              <span className="rain-history-pill-value">
+                {formatPrecipitation(past24h, unit, dataUnit)}
+              </span>
             </div>
-            <div className="rain-stat">
-              <Droplets size={14} />
-              <div>
-                <div className="rain-stat-value">
-                  {formatPrecipitation(past48h, unit, dataUnit)}
-                </div>
-                <div className="rain-stat-label">Past 48h</div>
-              </div>
+            <div className="rain-history-pill" role="listitem">
+              <span className="rain-history-pill-label">48h</span>
+              <span className="rain-history-pill-value">
+                {formatPrecipitation(past48h, unit, dataUnit)}
+              </span>
             </div>
           </div>
         </>

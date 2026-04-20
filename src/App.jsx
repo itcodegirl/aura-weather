@@ -82,6 +82,13 @@ const CARD_STYLE_VARIABLES = [
   { "--i": 8 },
 ];
 
+const GROUP_LABEL_STYLE_VARIABLES = [
+  { "--group-i": 0 },
+  { "--group-i": 1 },
+  { "--group-i": 2 },
+  { "--group-i": 3 },
+];
+
 const DEFAULT_UNIT = "F";
 const CLIMATE_CONTEXT_DEFAULT = true;
 
@@ -416,6 +423,9 @@ function App() {
         )}
 
         <main className="bento" id="main-content">
+          <p className="bento-group-label" style={GROUP_LABEL_STYLE_VARIABLES[0]}>
+            Current Conditions
+          </p>
           <HeroCard
             weather={weather}
             location={location}
@@ -484,6 +494,9 @@ function App() {
             ) : null}
           </section>
 
+          <p className="bento-group-label" style={GROUP_LABEL_STYLE_VARIABLES[1]}>
+            Near-Term Outlook
+          </p>
           <RainCard
             weather={weather}
             unit={unit}
@@ -499,6 +512,9 @@ function App() {
             chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
             style={CARD_STYLE_VARIABLES[6]}
           />
+          <p className="bento-group-label" style={GROUP_LABEL_STYLE_VARIABLES[2]}>
+            Risk Signals
+          </p>
           <StormWatch
             weather={weather}
             unit={unit}
@@ -506,6 +522,9 @@ function App() {
             convertTemp={convertTemp}
             style={CARD_STYLE_VARIABLES[7]}
           />
+          <p className="bento-group-label" style={GROUP_LABEL_STYLE_VARIABLES[3]}>
+            Week Ahead
+          </p>
           <ForecastCard
             weather={weather}
             unit={unit}

@@ -242,6 +242,22 @@ const MemoizedWindIntelligence = memo(WindIntelligence);
 const MemoizedComfortIndex = memo(ComfortIndex);
 
 function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
+  const overviewCape = Number(weather?.hourly?.cape?.[0]);
+  const safeOverviewCape = Number.isFinite(overviewCape) ? overviewCape : 0;
+  const overviewRisk = classifyStormRisk(
+    safeOverviewCape,
+    weather?.current?.weather_code ?? 0
+  );
+  const overviewPressure = calculatePressureTrend(
+    weather?.hourly?.surface_pressure,
+    weather?.hourly?.time
+  );
+  const overviewWindSpeed = Number(weather?.current?.wind_speed_10m);
+  const overviewWind = classifyWind(
+    Number.isFinite(overviewWindSpeed) ? overviewWindSpeed : 0,
+    weatherDataUnit || unit
+  );
+
   return (
     <section className="bento-storm storm-watch" style={style}>
       <header className="storm-header">
@@ -251,6 +267,22 @@ function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
         </div>
         <span className="storm-subtitle">Atmospheric conditions</span>
       </header>
+
+      <div className="storm-snapshot" role="list" aria-label="Storm snapshot">
+        <span
+          className="storm-snapshot-chip"
+          role="listitem"
+          style={{ "--chip-accent": overviewRisk.color }}
+        >
+          Risk: {overviewRisk.level}
+        </span>
+        <span className="storm-snapshot-chip" role="listitem">
+          Pressure: {overviewPressure.interpretation}
+        </span>
+        <span className="storm-snapshot-chip" role="listitem">
+          Wind: {overviewWind}
+        </span>
+      </div>
 
       <div className="storm-grid">
         <MemoizedStormRisk weather={weather} />

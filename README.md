@@ -1,72 +1,89 @@
-# Aura — Atmospheric Intelligence
+# Aura - Atmospheric Intelligence
 
-A sophisticated weather dashboard with a bento-grid layout, weather-reactive gradients, and real-time atmospheric data. Built with React, Vite, and plain CSS.
+Aura is a modern weather dashboard focused on real atmospheric signal quality, not just headline temperature.
+It combines live weather data, adaptive visual treatment, and a portfolio-ready interface system.
 
-**[Live demo](https://your-deploy-url-here.com)** · **[Screenshots](#screenshots)**
+## Live
 
-![Aura screenshot metric-card](./public/screenshot.png)
+- Demo: `https://your-deploy-url-here.com`
+- Social preview image: [`public/og-image.png`](./public/og-image.png)
 
----
+## What Makes It Portfolio-Ready
 
-## Why Aura
+- Clear product framing: current conditions, near-term outlook, risk signals, and week-ahead planning.
+- Consistent design system: shared tokens for spacing, typography, surfaces, elevation, and motion.
+- Polished interactions: meaningful card transitions, grouped section reveals, keyboard-first controls, and reduced-motion fallbacks.
+- Accessibility attention: semantic regions, ARIA usage, skip link, visible focus states, and stronger high-contrast mode support.
 
-Most weather apps show the same five data points in the same static layout. Aura is built for people who actually read weather data — hourly precipitation probability, pressure trends, dewpoint comfort, and storm intelligence, all presented in a modern bento-grid interface that shifts gradients based on current conditions.
+## Core Features
 
-The goal: a weather app that *feels like a product*, not a tutorial clone.
+- Real-time weather, air quality, and geocoding via Open-Meteo.
+- Unit switching between Fahrenheit and Celsius.
+- City search with keyboard navigation and async request cancellation.
+- Current-location lookup with graceful status handling.
+- Hero conditions card with climate comparison context.
+- Hourly temperature chart, nowcast, rain intelligence, storm watch, and 7-day forecast.
 
----
+## Design Upgrade Summary
 
-## Features
+### Phase 1 - Foundation
 
-- **Reactive gradient backgrounds** that shift based on live weather conditions (clear, cloudy, rainy, stormy)
-- **Bento-grid dashboard** with hero card, hourly chart, 7-day forecast, and specialized weather panels
-- **Real atmospheric data** via Open-Meteo's free public API — no API key required
-- **Geolocation auto-detect** with graceful fallback
-- **Unit toggle** between °F and °C
-- **Accessible by default** — semantic HTML, ARIA labels, keyboard navigation
-- **Responsive** — bento grid adapts from desktop to mobile
+- Reworked visual tokens and typography system.
+- Unified card language across major components.
+- Improved visual hierarchy and responsive rhythm.
 
----
+### Phase 2 - Information Architecture
+
+- Added explicit dashboard section group labels.
+- Reduced dense rain history content into compact summary pills.
+- Added a storm snapshot strip for fast scanning.
+
+### Phase 3 - Polish
+
+- Added motion refinements for section labels and focus-within card emphasis.
+- Added reduced-motion and touch-hover safeguards.
+- Added high-contrast support tuning.
+- Improved metadata and sharing polish in `index.html`.
 
 ## Tech Stack
 
-- **React 19** with hooks and custom hook architecture
-- **Vite 8** for fast development and optimized builds
-- **Plain CSS** with design tokens, CSS Grid, and glassmorphism
-- **Open-Meteo API** for weather, air quality, and geocoding
-- **Recharts** for data visualization
-- **Lucide React** for icons
+- React 19
+- Vite 6
+- Recharts
+- Lucide React
+- Plain CSS (token-driven)
+- Open-Meteo APIs
 
----
+## Project Structure
 
-## Architecture
-
-The codebase separates concerns cleanly:
-
+```text
 src/
-├── components/      # Presentation components
-├── hooks/           # Custom React hooks (data logic)
-├── services/        # API layer (pure functions, no React)
-├── utils/           # Domain utilities (weather codes, meteorology)
-├── App.jsx          # Root component
-└── App.css          # Styles with design tokens
+  components/      # Visual cards and UI controls
+  hooks/           # Custom hooks for state and data orchestration
+  services/        # API access layer
+  utils/           # Weather/domain utility logic
+  App.jsx          # Dashboard composition
+  App.css          # Global design system and layout
+```
 
-The `weatherApi.js` service layer contains zero React — it's pure data fetching, fully portable. The `useWeather` hook handles all state and side effects. Components stay focused on presentation.
-
----
-
-## Running locally
+## Getting Started
 
 ```bash
 npm install
 npm run dev
 ```
 
-Roadmap
-- [ ] Storm Watch panel (CAPE, pressure trend, wind compass, dewpoint comfort)
-- [ ] Rain intelligence card with 24h precipitation timeline
-- [ ] Minute-by-minute nowcast (15-min resolution)
-- [ ] NWS severe weather alerts (US)
-- [ ] Live precipitation radar via RainViewer API
-- [ ] Historical climate comparison
-- [ ] Saved cities + quick-switch
+## Quality Checks
+
+```bash
+npm run lint
+npm run build
+npm test
+```
+
+## Roadmap
+
+- NWS severe weather alerts (US)
+- Saved cities and quick switching
+- Visual regression snapshots for UI QA
+- Optional radar overlay exploration

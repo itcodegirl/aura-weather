@@ -42,6 +42,7 @@ function getPersistedLocation() {
 }
 
 function persistLocation(lat, lon, name, country) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
   try {
     window.localStorage.setItem(
       LAST_LOCATION_KEY,
@@ -233,14 +234,14 @@ export function useWeather(unit = "F", options = {}) {
   const retryWeather = useCallback(() => {
     const fallbackRequest = lastRequest || DEFAULT_LOCATION;
 
-    loadWeather(
+    scheduleWeatherLoad(
       fallbackRequest.lat,
       fallbackRequest.lon,
       fallbackRequest.name,
       fallbackRequest.country,
       fallbackRequest.unit || unit
     );
-  }, [lastRequest, loadWeather, unit]);
+  }, [lastRequest, scheduleWeatherLoad, unit]);
 
   useEffect(() => {
     isMountedRef.current = true;

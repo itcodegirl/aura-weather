@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchWeather, fetchAirQuality } from "../services/weatherApi";
 
-// Chicago fallback — Aura's default when geolocation isn't available
 const DEFAULT_LOCATION = {
   lat: 41.8781,
   lon: -87.6298,
@@ -16,37 +15,41 @@ function getFallbackLocationName(weatherData, lat, lon) {
   return timezoneCity || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
 }
 
-export function useWeather() {
+export function useWeather(unit = "F") {
   const [weather, setWeather] = useState(null);
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRequest, setLastRequest] = useState(null);
 
-  // Core fetch function — reusable for any lat/lon
   const loadWeather = useCallback(
-    async (lat, lon, name, country) => {
+    async (lat, lon, name, country, requestUnit = unit) => {
       setLoading(true);
       setError(null);
-      setLastRequest({ lat, lon, name, country });
+      setLastRequest({ lat, lon, name, country, unit: requestUnit });
 
       try {
         const [weatherData, aqi] = await Promise.all([
-          fetchWeather(lat, lon),
+          fetchWeather(lat, lon, requestUnit),
           fetchAirQuality(lat, lon),
         ]);
 
         const resolvedName = name || getFallbackLocationName(weatherData, lat, lon);
 
         setWeather({ ...weatherData, aqi });
-        setLocation({ lat, lon, name: resolvedName, country: country || "" });
+        setLocation({
+          lat,
+          lon,
+          name: resolvedName,
+          country: country || "",
+        });
       } catch (err) {
         setError(err.message || "Could not load weather");
       } finally {
         setLoading(false);
       }
     },
-    []
+    [unit]
   );
 
   const retryWeather = useCallback(() => {
@@ -58,30 +61,30 @@ export function useWeather() {
       fallbackRequest.lat,
       fallbackRequest.lon,
       fallbackRequest.name,
-      fallbackRequest.country
+      fallbackRequest.country,
+      fallbackRequest.unit || unit
     );
-  }, [lastRequest, loadWeather]);
+  }, [lastRequest, loadWeather, unit]);
 
-  // On mount: try geolocation, fall back to Chicago
   useEffect(() => {
-    // Hard safety net — if geolocation hangs silently, fall back after 6s
     const fallbackTimer = setTimeout(() => {
       loadWeather(
         DEFAULT_LOCATION.lat,
         DEFAULT_LOCATION.lon,
         DEFAULT_LOCATION.name,
-        DEFAULT_LOCATION.country
+        DEFAULT_LOCATION.country,
+        unit
       );
     }, 6000);
 
     if (!navigator.geolocation) {
       clearTimeout(fallbackTimer);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- idiomatic mount-time data fetch; no user event to respond to
       loadWeather(
         DEFAULT_LOCATION.lat,
         DEFAULT_LOCATION.lon,
         DEFAULT_LOCATION.name,
-        DEFAULT_LOCATION.country
+        DEFAULT_LOCATION.country,
+        unit
       );
       return;
     }
@@ -90,23 +93,42 @@ export function useWeather() {
       (pos) => {
         clearTimeout(fallbackTimer);
         const { latitude, longitude } = pos.coords;
-        loadWeather(latitude, longitude);
+        loadWeather(latitude, longitude, undefined, undefined, unit);
       },
       () => {
         clearTimeout(fallbackTimer);
-        // User denied geolocation — use fallback
         loadWeather(
           DEFAULT_LOCATION.lat,
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
-          DEFAULT_LOCATION.country
+          DEFAULT_LOCATION.country,
+          unit
         );
       },
       { timeout: 5000 }
     );
 
     return () => clearTimeout(fallbackTimer);
-  }, [loadWeather]);
+  }, [loadWeather, unit]);
+
+  useEffect(() => {
+    if (!location) return;
+
+    loadWeather(
+      location.lat,
+      location.lon,
+      location.name,
+      location.country,
+      unit
+    );
+  }, [
+    unit,
+    location?.lat,
+    location?.lon,
+    location?.name,
+    location?.country,
+    loadWeather,
+  ]);
 
   return { weather, location, loading, error, loadWeather, retryWeather };
 }

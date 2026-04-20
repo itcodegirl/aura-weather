@@ -9,6 +9,7 @@ import {
   windDirectionName,
   classifyWind,
 } from "../utils/meteorology";
+import { formatWindSpeed } from "../utils/windUnits";
 import "./StormWatch.css";
 
 function StormRisk({ weather }) {
@@ -127,13 +128,12 @@ function PressureTrend({ weather }) {
 
 function WindIntelligence({ weather, unit }) {
   const { wind_speed_10m, wind_gusts_10m, wind_direction_10m } = weather.current;
-  const sustainedMph = Math.round(wind_speed_10m);
-  const gustsMph = Math.round(wind_gusts_10m || wind_speed_10m);
+  const sustained = Math.round(wind_speed_10m);
+
+  const sustainedDisplay = formatWindSpeed(wind_speed_10m, unit);
+  const gustsDisplay = formatWindSpeed(wind_gusts_10m || wind_speed_10m, unit);
   const direction = windDirectionName(wind_direction_10m || 0);
-  const strength = classifyWind(sustainedMph);
-  const sustained = unit === "F" ? sustainedMph : Math.round(sustainedMph * 1.60934);
-  const gusts = unit === "F" ? gustsMph : Math.round(gustsMph * 1.60934);
-  const windUnit = unit === "F" ? "mph" : "km/h";
+  const strength = classifyWind(sustained, unit);
 
   return (
     <div className="storm-module">
@@ -160,9 +160,9 @@ function WindIntelligence({ weather, unit }) {
 
       <div className="storm-detail">
         <span className="storm-detail-label">
-          {sustained} {windUnit} {direction}
+          {sustainedDisplay} {direction}
         </span>
-        <span className="storm-detail-value">Gusts {gusts} {windUnit}</span>
+        <span className="storm-detail-value">Gusts {gustsDisplay}</span>
       </div>
     </div>
   );

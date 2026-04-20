@@ -3,6 +3,7 @@
 import { memo } from "react";
 import { MapPin, Wind, Droplets, Gauge, Thermometer } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
+import { formatWindSpeed } from "../utils/windUnits";
 import WeatherIcon from "./WeatherIcon";
 import "./HeroCard.css";
 
@@ -21,12 +22,8 @@ function Stat({ icon, label, value }) {
 function HeroCard({ weather, location, unit, convertTemp }) {
   const current = weather.current;
   const info = getWeather(current.weather_code);
-  const tempUnit = unit === "F" ? "°F" : "°C";
-  const windSpeed =
-    unit === "F"
-      ? Math.round(current.wind_speed_10m)
-      : Math.round(current.wind_speed_10m * 1.60934);
-  const windUnit = unit === "F" ? "mph" : "km/h";
+  const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
+  const windDisplay = formatWindSpeed(current.wind_speed_10m, unit);
   const dewPoint = convertTemp(current.dew_point_2m);
 
   const today = new Date().toLocaleDateString("en-US", {
@@ -69,7 +66,7 @@ function HeroCard({ weather, location, unit, convertTemp }) {
         <Stat
           icon={<Wind size={18} />}
           label="Wind"
-          value={`${windSpeed} ${windUnit}`}
+          value={windDisplay}
         />
         <Stat
           icon={<Droplets size={18} />}

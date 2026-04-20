@@ -10,8 +10,8 @@ import HourlyCard from "./components/HourlyCard";
 import CitySearch from "./components/CitySearch";
 
 function App() {
-  const { weather, location, loading, error, loadWeather, retryWeather } = useWeather();
   const [unit, setUnit] = useState("F");
+  const { weather, location, loading, error, loadWeather, retryWeather } = useWeather(unit);
 
   const convertTemp = useCallback(
     (f) => (unit === "F" ? Math.round(f) : Math.round(((f - 32) * 5) / 9)),

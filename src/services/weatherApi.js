@@ -12,7 +12,7 @@ const TIMEOUT_MS = 10_000;
  * Fetches current weather, hourly forecast, and 7-day daily forecast
  * from Open-Meteo. No API key required.
  */
-export async function fetchWeather(lat, lon) {
+export async function fetchWeather(lat, lon, unit = "F") {
   const params = new URLSearchParams({
     latitude: lat,
     longitude: lon,
@@ -23,7 +23,7 @@ export async function fetchWeather(lat, lon) {
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum",
     temperature_unit: "fahrenheit",
-    wind_speed_unit: "mph",
+    wind_speed_unit: unit === "C" ? "kmh" : "mph",
     precipitation_unit: "inch",
     timezone: "auto",
     forecast_days: "7",

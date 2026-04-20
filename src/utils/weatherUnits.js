@@ -11,7 +11,19 @@ const PRECIP_LABEL_BY_UNIT = {
 };
 
 function normalizeBool(value) {
-  return value === "C" ? "C" : "F";
+  if (typeof value !== "string") {
+    return "F";
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "C" || normalized === "CELSIUS") {
+    return "C";
+  }
+  if (normalized === "F" || normalized === "FAHRENHEIT") {
+    return "F";
+  }
+
+  return "F";
 }
 
 function normalizeCoordinate(value, min, max) {
@@ -91,11 +103,14 @@ export function formatWindSpeed(speed, targetUnit, sourceUnit = "F") {
   if (!Number.isFinite(numeric)) {
     return "\u2014";
   }
+  const nonNegativeSpeed = Math.max(numeric, 0);
 
   const sourceNormalized = normalizeBool(sourceUnit);
   const targetNormalized = normalizeBool(targetUnit);
   const speedInMph =
-    sourceNormalized === "F" ? numeric : numeric / WIND_SPEED_CONVERSION;
+    sourceNormalized === "F"
+      ? nonNegativeSpeed
+      : nonNegativeSpeed / WIND_SPEED_CONVERSION;
   const converted =
     targetNormalized === "C"
       ? Math.round(speedInMph * WIND_SPEED_CONVERSION)
@@ -109,11 +124,14 @@ export function formatPrecipitation(value, targetUnit, sourceUnit = "F") {
   if (!Number.isFinite(numeric)) {
     return "\u2014";
   }
+  const nonNegativeValue = Math.max(numeric, 0);
 
   const sourceNormalized = normalizeBool(sourceUnit);
   const targetNormalized = normalizeBool(targetUnit);
   const valueInInches =
-    sourceNormalized === "C" ? numeric / MM_PER_INCH : numeric;
+    sourceNormalized === "C"
+      ? nonNegativeValue / MM_PER_INCH
+      : nonNegativeValue;
   const displayValue =
     targetNormalized === "C" ? valueInInches * MM_PER_INCH : valueInInches;
 

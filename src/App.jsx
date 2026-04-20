@@ -203,7 +203,6 @@ function App() {
             weather={weather}
             unit={unit}
             convertTemp={convertTemp}
-            style={{ "--i": 6 }}
           />
         </main>
       </div>
@@ -212,3 +211,4 @@ function App() {
 }
 
 export default App;
+

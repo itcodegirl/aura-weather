@@ -326,10 +326,9 @@ a:focus-visible,
   grid-column: span 3;
   grid-row: auto;
   min-height: clamp(210px, 24vw, 300px);
-  animation-name: hero-landing;
-  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
-  animation-duration: 500ms;
-  animation-fill-mode: forwards;
+  animation:
+    hero-landing 500ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
 }
 
 .bento-aqi {

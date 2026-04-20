@@ -28,6 +28,16 @@ const GEOLOCATION_TIMEOUT_MS = 5000;
 const LOCATION_FALLBACK_DELAY_MS = 6000;
 const DEFAULT_DATA_UNIT = "F";
 
+function hasGeolocationSupport() {
+  return (
+    typeof navigator !== "undefined" &&
+    navigator &&
+    typeof navigator.geolocation !== "undefined" &&
+    navigator.geolocation !== null &&
+    typeof navigator.geolocation.getCurrentPosition === "function"
+  );
+}
+
 function getPersistedLocation() {
   try {
     if (typeof window === "undefined" || !window.localStorage) return null;
@@ -248,7 +258,7 @@ export function useWeather(unit = "F", options = {}) {
       const requestUnit = normalizeTemperatureUnit(options.unit || unit);
       const fallbackNotice = options.fallbackNotice || LOCATION_FALLBACK_NOTICE;
 
-      if (!navigator.geolocation) {
+      if (!hasGeolocationSupport()) {
         setIsLocatingCurrent(false);
         scheduleWeatherLoad(
           DEFAULT_LOCATION.lat,
@@ -329,7 +339,7 @@ export function useWeather(unit = "F", options = {}) {
         );
       }, LOCATION_FALLBACK_DELAY_MS);
 
-      if (!navigator.geolocation) {
+      if (!hasGeolocationSupport()) {
         clearTimeout(fallbackTimer);
         scheduleWeatherLoadAsync(
           DEFAULT_LOCATION.lat,

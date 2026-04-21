@@ -158,6 +158,7 @@ function toNumber(value) {
 /**
  * Fetches current weather, hourly forecast, and 7-day daily forecast
  * from Open-Meteo. No API key required.
+ * @returns {Promise<import("./types.js").AppWeatherModel>}
  */
 export async function fetchWeather(lat, lon, options = {}) {
   const coordinates = validateCoordinates(lat, lon);

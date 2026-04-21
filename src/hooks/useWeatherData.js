@@ -3,7 +3,7 @@ import {
   fetchWeather,
   fetchAirQuality,
   fetchHistoricalTemperatureAverage,
-} from "../api/openMeteo";
+} from "../api";
 import {
   getApiTemperatureUnit,
   getApiWindSpeedUnit,

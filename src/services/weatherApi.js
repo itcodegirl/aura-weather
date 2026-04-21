@@ -6,6 +6,6 @@ export {
   fetchHistoricalTemperatureAverage,
   fetchAirQuality,
   geocodeCity,
-} from "../api/openMeteo.js";
+} from "../api/index.js";
 
-export { normalizeTimeZone, normalizeWeatherResponse } from "../api/transforms.js";
+export { normalizeTimeZone, normalizeWeatherResponse } from "../api/index.js";

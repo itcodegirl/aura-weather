@@ -1,3 +1,5 @@
+import { createEmptyWeatherModel } from "./types.js";
+
 const DEFAULT_TIMEZONE = "UTC";
 
 export function normalizeTimeZone(value, fallback = DEFAULT_TIMEZONE) {
@@ -20,8 +22,10 @@ function asArray(value) {
 /**
  * Maps Open-Meteo payload into a stable app-domain weather model.
  * @param {any} raw
+ * @returns {import("./types.js").AppWeatherModel}
  */
 export function normalizeWeatherResponse(raw) {
+  const model = createEmptyWeatherModel();
   const safe = raw && typeof raw === "object" ? raw : {};
   const current = safe.current && typeof safe.current === "object" ? safe.current : {};
   const hourly = safe.hourly && typeof safe.hourly === "object" ? safe.hourly : {};
@@ -32,12 +36,15 @@ export function normalizeWeatherResponse(raw) {
       : {};
 
   return {
+    ...model,
     meta: {
+      ...model.meta,
       latitude: toNumber(safe.latitude),
       longitude: toNumber(safe.longitude),
       timezone: normalizeTimeZone(safe.timezone),
     },
     current: {
+      ...model.current,
       temperature: toNumber(current.temperature_2m),
       humidity: toNumber(current.relative_humidity_2m),
       feelsLike: toNumber(current.apparent_temperature),
@@ -51,6 +58,7 @@ export function normalizeWeatherResponse(raw) {
       visibility: toNumber(current.visibility),
     },
     hourly: {
+      ...model.hourly,
       time: asArray(hourly.time),
       temperature: asArray(hourly.temperature_2m),
       conditionCode: asArray(hourly.weather_code),
@@ -61,6 +69,7 @@ export function normalizeWeatherResponse(raw) {
       windGust: asArray(hourly.wind_gusts_10m),
     },
     daily: {
+      ...model.daily,
       time: asArray(daily.time),
       conditionCode: asArray(daily.weather_code),
       temperatureMax: asArray(daily.temperature_2m_max),
@@ -72,6 +81,7 @@ export function normalizeWeatherResponse(raw) {
       rainAmountTotal: asArray(daily.precipitation_sum),
     },
     nowcast: {
+      ...model.nowcast,
       time: asArray(minutely.time),
       conditionCode: asArray(minutely.weather_code),
       rainChance: asArray(minutely.precipitation_probability),
@@ -79,4 +89,3 @@ export function normalizeWeatherResponse(raw) {
     },
   };
 }
-

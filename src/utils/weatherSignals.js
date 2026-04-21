@@ -1,2 +1,1 @@
-export { getAqiStatus, getUvStatus } from "../domain/aqi.js";
-
+export { getAqiStatus, getUvStatus } from "./meteorology.js";

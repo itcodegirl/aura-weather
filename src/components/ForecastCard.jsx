@@ -3,7 +3,7 @@
 import { CalendarDays, Droplets } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
-import { convertTemperature } from "../utils/weatherUnits";
+import { convertTemp } from "../utils/temperature";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
 
@@ -36,7 +36,7 @@ function getDaySignal(day, weekMin, weekMax) {
 }
 
 function toDisplayTemp(value, unit, weatherDataUnit) {
-  const converted = convertTemperature(value, unit, weatherDataUnit);
+  const converted = convertTemp(value, unit, weatherDataUnit);
   return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
 }
 

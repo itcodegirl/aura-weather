@@ -17,7 +17,7 @@ import {
   windDirectionName,
   classifyWind,
 } from "../domain";
-import { convertTemperature } from "../utils/weatherUnits";
+import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
 import { DetailMetricStat } from "./ui";
 import "./StormWatch.css";
@@ -219,7 +219,7 @@ function WindIntelligence({
 function ComfortIndex({ weather, unit, weatherDataUnit = unit }) {
   const dewpoint = weather?.current?.dewPoint;
   const safeDewpoint = Number(dewpoint);
-  const dewpointConverted = convertTemperature(safeDewpoint, unit, weatherDataUnit);
+  const dewpointConverted = convertTemp(safeDewpoint, unit, weatherDataUnit);
   const dewpointDisplay = Number.isFinite(dewpointConverted)
     ? Math.round(dewpointConverted)
     : "\u2014";

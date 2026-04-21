@@ -12,7 +12,7 @@ import {
   Sun,
 } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
-import { convertTemperature } from "../utils/weatherUnits";
+import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
 import WeatherIcon from "./WeatherIcon";
 import { IconMetricStat } from "./ui";
@@ -81,7 +81,7 @@ function HeroCard({
     : "";
   const info = getWeather(current.conditionCode);
   const toDisplayTemp = (value, sourceUnit = weatherDataUnit) => {
-    const converted = convertTemperature(value, unit, sourceUnit);
+    const converted = convertTemp(value, unit, sourceUnit);
     return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
   };
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";

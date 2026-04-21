@@ -13,11 +13,11 @@ import {
 } from "recharts";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
-import { convertTemperature } from "../utils/weatherUnits";
+import { convertTemp } from "../utils/temperature";
 import "./HourlyCard.css";
 
 function toDisplayTemperature(value, unit, sourceUnit) {
-  const converted = convertTemperature(value, unit, sourceUnit);
+  const converted = convertTemp(value, unit, sourceUnit);
   return Number.isFinite(converted) ? Math.round(converted) : Number.NaN;
 }
 

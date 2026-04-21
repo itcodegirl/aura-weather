@@ -27,6 +27,8 @@ function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
   const high = Number.isFinite(day.temp_max) ? convertTemp(day.temp_max) : "\u2014";
   const low = Number.isFinite(day.temp_min) ? convertTemp(day.temp_min) : "\u2014";
   const tempUnit = "\u00B0";
+  const rainChance = day.precipitation_probability_max;
+  const hasNotableRainChance = rainChance >= 20;
 
   const weekRange = weekMax - weekMin || 1;
   const startPct = Number.isFinite(day.temp_min)
@@ -38,29 +40,37 @@ function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
 
   return (
     <li className="forecast-row" role="listitem">
-      <div className="forecast-day">{label}</div>
+      <div className="forecast-day-wrap">
+        <div className="forecast-day">{label}</div>
+        <div className="forecast-condition">{info.label}</div>
+      </div>
 
       <div className="forecast-icon" aria-label={info.label}>
         <WeatherIcon code={day.weather_code} size={22} />
       </div>
 
-      <div className="forecast-precip">
-        {day.precipitation_probability_max >= 20 ? (
-          <>
-            <Droplets size={11} />
-            <span>{day.precipitation_probability_max}%</span>
-          </>
-        ) : (
-          <span className="forecast-precip-empty">{`\u2014`}</span>
-        )}
+      <div
+        className="forecast-temps"
+        aria-label={`High ${high}${tempUnit}, low ${low}${tempUnit}`}
+      >
+        <div className="forecast-temp forecast-temp--high">
+          <span className="forecast-temp-label">High</span>
+          <span className="forecast-temp-value">
+            {high}
+            {tempUnit}
+          </span>
+        </div>
+        <span className="forecast-temp-divider" aria-hidden="true" />
+        <div className="forecast-temp forecast-temp--low">
+          <span className="forecast-temp-label">Low</span>
+          <span className="forecast-temp-value">
+            {low}
+            {tempUnit}
+          </span>
+        </div>
       </div>
 
-      <div className="forecast-low">
-        {low}
-        {tempUnit}
-      </div>
-
-      <div className="forecast-range">
+      <div className="forecast-range" aria-hidden="true">
         <div
           className="forecast-range-bar"
           style={{
@@ -71,9 +81,15 @@ function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
         />
       </div>
 
-      <div className="forecast-high">
-        {high}
-        {tempUnit}
+      <div className="forecast-precip">
+        {hasNotableRainChance ? (
+          <>
+            <Droplets size={11} />
+            <span className="forecast-precip-value">{rainChance}%</span>
+          </>
+        ) : (
+          <span className="forecast-precip-empty">Low</span>
+        )}
       </div>
     </li>
   );

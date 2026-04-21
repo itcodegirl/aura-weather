@@ -990,20 +990,6 @@ a:focus-visible,
   }
 }
 
-@media (max-width: 620px) {
-  .forecast-row {
-    grid-template-columns: 58px 24px 44px 30px 1fr 30px;
-    gap: 8px;
-    padding: 9px 8px;
-  }
-
-  .forecast-day,
-  .forecast-low,
-  .forecast-high {
-    font-size: 12px;
-  }
-}
-
 @media (max-width: 560px) {
   :root {
     --card-backdrop-blur: 10px;

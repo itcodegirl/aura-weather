@@ -3,11 +3,11 @@ import "./App.css";
 import { useWeather } from "./hooks/useWeather";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { getWeather, gradientCss } from "./domain/weatherCodes";
-import HeaderControls from "./components/HeaderControls";
 import {
   AppShell,
   AppLoadingState,
   AppErrorState,
+  AppHeader,
   StatusStack,
   WeatherDashboard,
 } from "./components/layout";
@@ -143,30 +143,16 @@ function App() {
 
   return (
     <AppShell background={background}>
-      <header className="app-header">
-        <div className="brand-wrap">
-          <img
-            src="/atmosphere-ring.svg"
-            alt="Atmospheric icon"
-            className="brand-mark"
-            width="28"
-            height="28"
-            loading="lazy"
-          />
-          <h1 className="brand">Aura</h1>
-          <p className="tagline">Atmospheric Intelligence</p>
-        </div>
-        <HeaderControls
-          citySearchRef={citySearchRef}
-          loadWeather={loadWeather}
-          loadCurrentLocation={loadCurrentLocation}
-          isLocatingCurrent={isLocatingCurrent}
-          showClimateContext={showClimateContext}
-          setShowClimateContext={setShowClimateContext}
-          unit={unit}
-          setUnit={setUnit}
-        />
-      </header>
+      <AppHeader
+        citySearchRef={citySearchRef}
+        loadWeather={loadWeather}
+        loadCurrentLocation={loadCurrentLocation}
+        isLocatingCurrent={isLocatingCurrent}
+        showClimateContext={showClimateContext}
+        setShowClimateContext={setShowClimateContext}
+        unit={unit}
+        setUnit={setUnit}
+      />
 
       <StatusStack
         locationNotice={locationNotice}

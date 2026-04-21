@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { memo, Suspense } from "react";
 import HeroCard from "../HeroCard";
 import RainCard from "../RainCard";
 import ForecastCard from "../ForecastCard";
@@ -42,7 +42,7 @@ function CardFallback({ className, style, title }) {
   );
 }
 
-export default function WeatherDashboard({
+function WeatherDashboard({
   weather,
   location,
   unit,
@@ -156,3 +156,18 @@ export default function WeatherDashboard({
     </main>
   );
 }
+
+function areWeatherDashboardPropsEqual(prevProps, nextProps) {
+  return (
+    prevProps.weather === nextProps.weather &&
+    prevProps.location === nextProps.location &&
+    prevProps.unit === nextProps.unit &&
+    prevProps.weatherDataUnit === nextProps.weatherDataUnit &&
+    prevProps.climateComparison === nextProps.climateComparison &&
+    prevProps.showClimateContext === nextProps.showClimateContext &&
+    prevProps.isBackgroundLoading === nextProps.isBackgroundLoading &&
+    prevProps.weatherInfo === nextProps.weatherInfo
+  );
+}
+
+export default memo(WeatherDashboard, areWeatherDashboardPropsEqual);

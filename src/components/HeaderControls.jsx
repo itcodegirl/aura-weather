@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import CitySearch from "./CitySearch";
 
-export default function HeaderControls({
+function HeaderControls({
   citySearchRef,
   loadWeather,
   loadCurrentLocation,
@@ -213,3 +213,5 @@ export default function HeaderControls({
     </div>
   );
 }
+
+export default memo(HeaderControls);

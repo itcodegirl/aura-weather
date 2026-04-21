@@ -1,6 +1,7 @@
+import { memo } from "react";
 import HeaderControls from "../HeaderControls";
 
-export default function AppHeader({
+function AppHeader({
   citySearchRef,
   loadWeather,
   loadCurrentLocation,
@@ -37,3 +38,5 @@ export default function AppHeader({
     </header>
   );
 }
+
+export default memo(AppHeader);

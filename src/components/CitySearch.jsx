@@ -1,6 +1,12 @@
 // src/components/CitySearch.jsx
 
-import { useId, forwardRef, useImperativeHandle, useCallback } from "react";
+import {
+  useId,
+  forwardRef,
+  useImperativeHandle,
+  useCallback,
+  memo,
+} from "react";
 import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { useCitySearch } from "../hooks/useCitySearch";
 import "./CitySearch.css";
@@ -195,4 +201,4 @@ function CitySearch({ onSelect }, ref) {
   );
 }
 
-export default forwardRef(CitySearch);
+export default memo(forwardRef(CitySearch));

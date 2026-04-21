@@ -56,28 +56,51 @@ function CitySearch({ onSelect }, ref) {
   }, [setOpen]);
 
   const handleRowMouseEnter = useCallback(
-    (index) => {
-      setActiveIndex(index);
+    (event) => {
+      const nextIndex = Number(event.currentTarget?.dataset?.index);
+      if (!Number.isFinite(nextIndex) || nextIndex < 0) {
+        return;
+      }
+      setActiveIndex(nextIndex);
     },
     [setActiveIndex]
   );
 
-  const handleRowMouseDown = useCallback(
-    (city) => (event) => {
+  const getCityByIndex = useCallback(
+    (nextIndex) => {
+      if (!Number.isInteger(nextIndex) || nextIndex < 0 || nextIndex >= results.length) {
+        return undefined;
+      }
+      return results[nextIndex];
+    },
+    [results]
+  );
+
+  const handleRowSelect = useCallback(
+    (event) => {
       event.preventDefault();
+      const selectedIndex = Number(event.currentTarget?.dataset?.index);
+      if (!Number.isFinite(selectedIndex) || selectedIndex < 0) {
+        return;
+      }
+
+      const city = getCityByIndex(selectedIndex);
+      if (!city) return;
+
       handleSelect(city);
     },
-    [handleSelect]
+    [handleSelect, getCityByIndex]
   );
 
   const handleRowKeyDown = useCallback(
-    (city) => (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        handleSelect(city);
+    (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
       }
+
+      handleRowSelect(event);
     },
-    [handleSelect]
+    [handleRowSelect]
   );
 
   useImperativeHandle(ref, () => ({
@@ -175,14 +198,15 @@ function CitySearch({ onSelect }, ref) {
                     type="button"
                     id={`${optionIdPrefix}-${index}`}
                     className={`city-search-result${index === activeIndexSafe ? " is-active" : ""}`}
+                    data-index={index}
                     aria-label={optionLabel}
                     aria-selected={index === activeIndexSafe}
                     role="option"
                     tabIndex={index === activeIndexSafe ? 0 : -1}
-                    onMouseEnter={() => handleRowMouseEnter(index)}
-                    onMouseDown={handleRowMouseDown(city)}
-                    onClick={() => handleSelect(city)}
-                    onKeyDown={handleRowKeyDown(city)}
+                    onMouseEnter={handleRowMouseEnter}
+                    onMouseDown={handleRowSelect}
+                    onClick={handleRowSelect}
+                    onKeyDown={handleRowKeyDown}
                   >
                     <MapPin size={14} className="city-search-result-icon" />
                     <div className="city-search-result-text">

@@ -114,6 +114,7 @@ function HourlyCard({
   style,
 }) {
   const currentWeatherCode = weather?.current?.conditionCode;
+  const currentTemperature = weather?.current?.temperature;
   const chartId = useId();
   const chartTitleId = `${chartId}-title`;
   const chartSummaryId = `${chartId}-summary`;
@@ -133,6 +134,33 @@ function HourlyCard({
   const topColor = chartTopColor || palette[0];
   const bottomColor = chartBottomColor || palette[2] || palette[1];
   const chartSummary = useMemo(() => getHourlySummary(data, unit), [data, unit]);
+
+  const chartMetrics = useMemo(() => {
+    const xTicks = data.filter((_, i) => i % 3 === 0).map((d) => d.label);
+    const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
+    const currentTemp = Number.isFinite(Number(currentTemperature))
+      ? toDisplayTemperature(currentTemperature, unit)
+      : Number.NaN;
+
+    const safeMinTemp = temps.length
+      ? Math.min(...temps)
+      : Number.isFinite(currentTemp)
+        ? currentTemp
+        : 0;
+    const safeMaxTemp = temps.length
+      ? Math.max(...temps)
+      : Number.isFinite(currentTemp)
+        ? currentTemp
+        : 0;
+
+    return { xTicks, currentTemp, safeMinTemp, safeMaxTemp };
+  }, [data, unit, currentTemperature]);
+
+  const chartLede = useMemo(() => {
+    return Number.isFinite(chartMetrics.currentTemp)
+      ? `Now ${chartMetrics.currentTemp}\u00B0${unit} \u00B7 Low ${Math.round(chartMetrics.safeMinTemp)}\u00B0 \u00B7 High ${Math.round(chartMetrics.safeMaxTemp)}\u00B0`
+      : `Range ${Math.round(chartMetrics.safeMinTemp)}\u00B0 to ${Math.round(chartMetrics.safeMaxTemp)}\u00B0`;
+  }, [chartMetrics, unit]);
 
   if (!data.length) {
     return (
@@ -162,27 +190,9 @@ function HourlyCard({
     );
   }
 
-  const xTicks = data.filter((_, i) => i % 3 === 0).map((d) => d.label);
-  const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
-  const currentTemp = Number.isFinite(Number(weather?.current?.temperature))
-    ? toDisplayTemperature(weather.current.temperature, unit)
-    : Number.NaN;
-  const safeMinTemp = temps.length
-    ? Math.min(...temps)
-    : Number.isFinite(currentTemp)
-    ? currentTemp
-    : 0;
-  const safeMaxTemp = temps.length
-    ? Math.max(...temps)
-    : Number.isFinite(currentTemp)
-    ? currentTemp
-    : 0;
-  const minTemp = Math.floor(safeMinTemp - 2);
-  const maxTemp = Math.ceil(safeMaxTemp + 2);
+  const minTemp = Math.floor(chartMetrics.safeMinTemp - 2);
+  const maxTemp = Math.ceil(chartMetrics.safeMaxTemp + 2);
   const nowLabel = data[0]?.label;
-  const chartLede = Number.isFinite(currentTemp)
-    ? `Now ${currentTemp}\u00B0${unit} \u00B7 Low ${Math.round(safeMinTemp)}\u00B0 \u00B7 High ${Math.round(safeMaxTemp)}\u00B0`
-    : `Range ${Math.round(safeMinTemp)}\u00B0 to ${Math.round(safeMaxTemp)}\u00B0`;
 
   return (
     <section
@@ -231,7 +241,7 @@ function HourlyCard({
 
             <XAxis
               dataKey="label"
-              ticks={xTicks}
+              ticks={chartMetrics.xTicks}
               interval={0}
               stroke="rgba(214,232,255,0.2)"
               tick={{ fontSize: 11, fill: "rgba(226,239,255,0.72)" }}

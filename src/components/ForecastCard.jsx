@@ -82,10 +82,6 @@ function buildForecastDays(weatherDaily) {
     .slice(0, 7);
 }
 
-function buildForecastSummary(days, weekMin, weekMax, unit) {
-  return buildWeekSummary(days, weekMin, weekMax, unit);
-}
-
 function getForecastRangeGradient(weekMin, weekMax) {
   const rangeGradientStart = weekMin <= 40 ? "#60a5fa" : "#f59e0b";
   const rangeGradientEnd =
@@ -222,7 +218,7 @@ function ForecastCard({ weather, unit, style }) {
     [weekMin, weekMax]
   );
   const weekSummary = useMemo(
-    () => buildForecastSummary(days, weekMin, weekMax, unit),
+    () => buildWeekSummary(days, weekMin, weekMax, unit),
     [days, weekMin, weekMax, unit]
   );
 

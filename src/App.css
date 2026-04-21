@@ -441,7 +441,8 @@ a:focus-visible,
 .unit-toggle,
 .toggle-pill,
 .current-location-btn,
-.settings-toggle {
+.settings-toggle,
+.header-secondary-action {
   background: rgba(8, 17, 38, 0.56);
   border: 1px solid rgba(198, 218, 255, 0.24);
   box-shadow: inset 0 1px 0 rgba(226, 238, 255, 0.08);
@@ -456,7 +457,8 @@ a:focus-visible,
 
 .unit-btn,
 .toggle-pill-btn,
-.current-location-btn {
+.current-location-btn,
+.header-secondary-action {
   min-height: var(--header-control-height);
   min-width: 44px;
   border-radius: 11px;
@@ -481,6 +483,15 @@ a:focus-visible,
   border-radius: 14px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+.header-secondary-action {
+  min-width: 122px;
+  padding: 0 14px;
+  border-radius: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
 }
 
 .unit-btn {
@@ -518,7 +529,8 @@ a:focus-visible,
 .current-location-btn:hover,
 .unit-btn:hover,
 .toggle-pill-btn:hover,
-.settings-toggle:hover {
+.settings-toggle:hover,
+.header-secondary-action:hover {
   color: #f8fbff;
   transform: translateY(-1px);
   border-color: rgba(174, 227, 255, 0.44);
@@ -531,6 +543,7 @@ a:focus-visible,
 .unit-btn:focus-visible,
 .toggle-pill-btn:focus-visible,
 .settings-toggle:focus-visible,
+.header-secondary-action:focus-visible,
 .error-retry:focus-visible,
 .app-status-retry:focus-visible {
   border-color: rgba(130, 228, 255, 0.66);
@@ -543,7 +556,8 @@ a:focus-visible,
 .current-location-btn:active,
 .unit-btn:active,
 .toggle-pill-btn:active,
-.settings-toggle:active {
+.settings-toggle:active,
+.header-secondary-action:active {
   transform: scale(var(--press-scale));
 }
 
@@ -1105,6 +1119,10 @@ a:focus-visible,
     justify-content: space-between;
   }
 
+  .app-header-secondary .header-secondary-action {
+    width: 100%;
+  }
+
   .app-header-secondary .toggle-pill-btn,
   .app-header-secondary .unit-btn {
     flex: 1 1 0;
@@ -1177,7 +1195,8 @@ a:focus-visible,
   .current-location-btn,
   .toggle-pill-btn,
   .settings-toggle,
-  .unit-btn {
+  .unit-btn,
+  .header-secondary-action {
     min-height: 40px;
   }
 
@@ -1267,7 +1286,8 @@ a:focus-visible,
   .current-location-btn:hover,
   .unit-btn:hover,
   .toggle-pill-btn:hover,
-  .settings-toggle:hover {
+  .settings-toggle:hover,
+  .header-secondary-action:hover {
     transform: none;
   }
 }
@@ -1315,6 +1335,7 @@ a:focus-visible,
   .unit-btn:hover,
   .toggle-pill-btn:hover,
   .settings-toggle:hover,
+  .header-secondary-action:hover,
   .error-retry:hover,
   .app-status-retry:hover {
     transform: none;

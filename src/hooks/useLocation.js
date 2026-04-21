@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { parseCoordinates } from "../utils/weatherUnits";
+import { parseCoordinates } from "../utils/weatherUnits.js";
 
 export const DEFAULT_LOCATION = {
   lat: 41.8781,
@@ -99,6 +99,15 @@ export function persistLocation(lat, lon, name, country) {
         updatedAt: new Date().toISOString(),
       })
     );
+  } catch {
+    // localStorage may be unavailable in restricted contexts.
+  }
+}
+
+export function clearPersistedLocation() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    window.localStorage.removeItem(LAST_LOCATION_KEY);
   } catch {
     // localStorage may be unavailable in restricted contexts.
   }

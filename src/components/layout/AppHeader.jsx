@@ -5,6 +5,7 @@ function AppHeader({
   citySearchRef,
   loadWeather,
   loadCurrentLocation,
+  clearSavedLocation,
   isLocatingCurrent,
   showClimateContext,
   setShowClimateContext,
@@ -28,6 +29,7 @@ function AppHeader({
         citySearchRef={citySearchRef}
         loadWeather={loadWeather}
         loadCurrentLocation={loadCurrentLocation}
+        clearSavedLocation={clearSavedLocation}
         isLocatingCurrent={isLocatingCurrent}
         showClimateContext={showClimateContext}
         setShowClimateContext={setShowClimateContext}

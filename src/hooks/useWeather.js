@@ -3,6 +3,7 @@ import { parseCoordinates } from "../utils/weatherUnits";
 import {
   useLocation,
   persistLocation,
+  clearPersistedLocation,
   normalizeLocationName,
 } from "./useLocation";
 import { useWeatherData } from "./useWeatherData";
@@ -110,6 +111,12 @@ export function useWeather(unit = "F", options = {}) {
     [applyLocation]
   );
 
+  const clearSavedLocation = useCallback(() => {
+    clearPersistedLocation();
+    setLocationNotice("Saved location removed for future sessions.");
+    locationNoticeRef.current = "Saved location removed for future sessions.";
+  }, []);
+
   return {
     weather,
     location,
@@ -121,5 +128,6 @@ export function useWeather(unit = "F", options = {}) {
     retryWeather,
     climateComparison,
     isLocatingCurrent,
+    clearSavedLocation,
   };
 }

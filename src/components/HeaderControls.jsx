@@ -5,6 +5,7 @@ function HeaderControls({
   citySearchRef,
   loadWeather,
   loadCurrentLocation,
+  clearSavedLocation,
   isLocatingCurrent,
   showClimateContext,
   setShowClimateContext,
@@ -39,6 +40,13 @@ function HeaderControls({
   const handleToggleSettings = useCallback(() => {
     setShowMobileSettings((current) => !current);
   }, []);
+
+  const handleClearSavedLocation = useCallback(() => {
+    if (typeof clearSavedLocation === "function") {
+      clearSavedLocation();
+    }
+    closeMobileSettings();
+  }, [clearSavedLocation, closeMobileSettings]);
 
   const handleSetClimateContext = useCallback(
     (nextValue) => {
@@ -222,6 +230,15 @@ function HeaderControls({
             {"\u00B0C"}
           </button>
         </div>
+
+        <button
+          type="button"
+          className="header-secondary-action glass"
+          onClick={handleClearSavedLocation}
+          aria-label="Clear saved location preference"
+        >
+          Forget Saved
+        </button>
       </div>
     </div>
   );

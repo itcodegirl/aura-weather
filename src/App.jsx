@@ -17,6 +17,7 @@ function App() {
     locationNotice,
     loadWeather,
     loadCurrentLocation,
+    clearSavedLocation,
     retryWeather,
     climateComparison,
     isLocatingCurrent,
@@ -47,6 +48,7 @@ function App() {
         citySearchRef={citySearchRef}
         loadWeather={loadWeather}
         loadCurrentLocation={loadCurrentLocation}
+        clearSavedLocation={clearSavedLocation}
         isLocatingCurrent={isLocatingCurrent}
         showClimateContext={showClimateContext}
         setShowClimateContext={setShowClimateContext}

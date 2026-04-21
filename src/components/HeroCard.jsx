@@ -52,7 +52,6 @@ function HeroCard({
   weather,
   location,
   unit,
-  weatherDataUnit = unit,
   climateComparison,
   style,
 }) {
@@ -79,8 +78,8 @@ function HeroCard({
     ? safeLocation.country.trim()
     : "";
   const info = getWeather(current.conditionCode);
-  const toDisplayTemp = (value, sourceUnit = weatherDataUnit) => {
-    const converted = convertTemp(value, unit, sourceUnit);
+  const toDisplayTemp = (value) => {
+    const converted = convertTemp(value, unit);
     return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
   };
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
@@ -102,14 +101,7 @@ function HeroCard({
   const climateDeltaRaw = hasClimateComparison
     ? climateDifference
     : null;
-  const climateDelta = hasClimateComparison
-    ? toDisplayTemp(
-        Math.abs(climateDeltaRaw),
-        typeof safeClimateComparison?.differenceUnit === "string"
-          ? safeClimateComparison.differenceUnit
-          : "F"
-      )
-    : 0;
+  const climateDelta = hasClimateComparison ? toDisplayTemp(Math.abs(climateDeltaRaw)) : 0;
   let climateDirection = "";
   if (hasClimateComparison) {
     if (climateDeltaRaw > 0) climateDirection = "warmer";

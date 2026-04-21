@@ -70,7 +70,6 @@ export default function WeatherDashboard({
         weather={weather}
         location={location}
         unit={unit}
-        weatherDataUnit={weatherDataUnit}
         climateComparison={showClimateContext ? climateComparison : null}
         style={CARD_STYLE_VARIABLES[0]}
       />
@@ -113,7 +112,6 @@ export default function WeatherDashboard({
         <HourlyPanel
           weather={weather}
           unit={unit}
-          weatherDataUnit={weatherDataUnit}
           chartTopColor={weatherInfo?.gradient?.[0]}
           chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
           style={CARD_STYLE_VARIABLES[5]}
@@ -139,7 +137,6 @@ export default function WeatherDashboard({
         <StormWatchPanel
           weather={weather}
           unit={unit}
-          weatherDataUnit={weatherDataUnit}
           style={CARD_STYLE_VARIABLES[6]}
         />
       </Suspense>
@@ -154,7 +151,6 @@ export default function WeatherDashboard({
       <ForecastCard
         weather={weather}
         unit={unit}
-        weatherDataUnit={weatherDataUnit}
         style={CARD_STYLE_VARIABLES[7]}
       />
     </main>

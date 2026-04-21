@@ -5,7 +5,6 @@ import {
   fetchHistoricalTemperatureAverage,
 } from "../api";
 import {
-  getApiTemperatureUnit,
   getApiWindSpeedUnit,
   getApiPrecipUnit,
   normalizeTemperatureUnit,
@@ -91,7 +90,7 @@ export function useWeatherData(location, unit = "F", options = {}) {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
-    const apiTemperatureUnit = getApiTemperatureUnit(requestUnit);
+    const apiTemperatureUnit = "fahrenheit";
     const requestWindSpeedUnit = getApiWindSpeedUnit();
 
     abortInFlightRequest();

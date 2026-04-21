@@ -17,12 +17,12 @@ import { convertTemp } from "../utils/temperature";
 import { CardHeader } from "./ui";
 import "./HourlyCard.css";
 
-function toDisplayTemperature(value, unit, sourceUnit) {
-  const converted = convertTemp(value, unit, sourceUnit);
+function toDisplayTemperature(value, unit) {
+  const converted = convertTemp(value, unit);
   return Number.isFinite(converted) ? Math.round(converted) : Number.NaN;
 }
 
-function buildHourlyData(hourly, unit, sourceUnit) {
+function buildHourlyData(hourly, unit) {
   if (
     !Array.isArray(hourly?.time) ||
     !Array.isArray(hourly.temperature) ||
@@ -49,7 +49,7 @@ function buildHourlyData(hourly, unit, sourceUnit) {
       const rawTemp = hourly.temperature[idx + i];
       const baseTemp = Number(rawTemp);
       const convertedTemp = Number.isFinite(baseTemp)
-        ? toDisplayTemperature(baseTemp, unit, sourceUnit)
+        ? toDisplayTemperature(baseTemp, unit)
         : Number.NaN;
 
       return {
@@ -109,7 +109,6 @@ function getHourlySummary(data, unit) {
 function HourlyCard({
   weather,
   unit,
-  weatherDataUnit = unit,
   chartTopColor,
   chartBottomColor,
   style,
@@ -119,10 +118,9 @@ function HourlyCard({
   const chartTitleId = `${chartId}-title`;
   const chartSummaryId = `${chartId}-summary`;
   const chartGradientId = `${chartId}-temp-gradient`.replace(/:/g, "");
-  const data = useMemo(() => buildHourlyData(weather?.hourly, unit, weatherDataUnit), [
+  const data = useMemo(() => buildHourlyData(weather?.hourly, unit), [
     weather?.hourly,
     unit,
-    weatherDataUnit,
   ]);
   const palette = useMemo(() => {
     const hourlyCodes = data
@@ -167,7 +165,7 @@ function HourlyCard({
   const xTicks = data.filter((_, i) => i % 3 === 0).map((d) => d.label);
   const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
   const currentTemp = Number.isFinite(Number(weather?.current?.temperature))
-    ? toDisplayTemperature(weather.current.temperature, unit, weatherDataUnit)
+    ? toDisplayTemperature(weather.current.temperature, unit)
     : Number.NaN;
   const safeMinTemp = temps.length
     ? Math.min(...temps)
@@ -187,8 +185,8 @@ function HourlyCard({
     : `Range ${Math.round(safeMinTemp)}\u00B0 to ${Math.round(safeMaxTemp)}\u00B0`;
 
   return (
-      <section
-        className="bento-chart hourly-chart glass"
+    <section
+      className="bento-chart hourly-chart glass"
       style={style}
       aria-labelledby={chartTitleId}
       aria-describedby={chartSummaryId}

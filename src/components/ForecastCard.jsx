@@ -36,12 +36,12 @@ function getDaySignal(day, weekMin, weekMax) {
   return { label: "Steady", tone: "steady" };
 }
 
-function toDisplayTemp(value, unit, weatherDataUnit) {
-  const converted = convertTemp(value, unit, weatherDataUnit);
+function toDisplayTemp(value, unit) {
+  const converted = convertTemp(value, unit);
   return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
 }
 
-function buildWeekSummary(days, weekMin, weekMax, unit, weatherDataUnit) {
+function buildWeekSummary(days, weekMin, weekMax, unit) {
   const firstMax = days[0]?.temperatureMax;
   const lastMax = days[days.length - 1]?.temperatureMax;
   const delta =
@@ -57,19 +57,19 @@ function buildWeekSummary(days, weekMin, weekMax, unit, weatherDataUnit) {
     wettestDay.rainChanceMax >= 25
       ? `${formatDayLabel(wettestDay.date)} peaks at ${wettestDay.rainChanceMax}% rain chance`
       : "Rain chances stay mostly low";
-  const weekRangeText = `${toDisplayTemp(weekMin, unit, weatherDataUnit)}\u00B0 to ${toDisplayTemp(weekMax, unit, weatherDataUnit)}\u00B0`;
+  const weekRangeText = `${toDisplayTemp(weekMin, unit)}\u00B0 to ${toDisplayTemp(weekMax, unit)}\u00B0`;
 
   return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
 }
 
-function DayRow({ day, weekMin, weekMax, unit, weatherDataUnit, rangeGradient }) {
+function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
   const info = getWeather(day.conditionCode);
   const label = formatDayLabel(day.date);
   const high = Number.isFinite(day.temperatureMax)
-    ? toDisplayTemp(day.temperatureMax, unit, weatherDataUnit)
+    ? toDisplayTemp(day.temperatureMax, unit)
     : "\u2014";
   const low = Number.isFinite(day.temperatureMin)
-    ? toDisplayTemp(day.temperatureMin, unit, weatherDataUnit)
+    ? toDisplayTemp(day.temperatureMin, unit)
     : "\u2014";
   const tempUnit = "\u00B0";
   const rainChance = day.rainChanceMax;
@@ -146,7 +146,7 @@ function DayRow({ day, weekMin, weekMax, unit, weatherDataUnit, rangeGradient })
   );
 }
 
-function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
+function ForecastCard({ weather, unit, style }) {
   const daily = weather?.daily && typeof weather.daily === "object" ? weather.daily : null;
   const times = Array.isArray(daily?.time) ? daily.time : [];
   const weatherCodes = Array.isArray(daily?.conditionCode) ? daily.conditionCode : [];
@@ -214,7 +214,7 @@ function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
   const rangeGradientEnd =
     weekMax >= 95 ? "#ef4444" : weekMax >= 82 ? "#f97316" : "#fbbf24";
   const rangeGradient = `linear-gradient(to right, ${rangeGradientStart}, ${rangeGradientEnd})`;
-  const weekSummary = buildWeekSummary(days, weekMin, weekMax, unit, weatherDataUnit);
+  const weekSummary = buildWeekSummary(days, weekMin, weekMax, unit);
 
   return (
     <section className="bento-forecast forecast-card glass" style={style}>
@@ -239,7 +239,6 @@ function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
             weekMin={weekMin}
             weekMax={weekMax}
             unit={unit}
-            weatherDataUnit={weatherDataUnit}
             rangeGradient={rangeGradient}
           />
         ))}

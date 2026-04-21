@@ -168,7 +168,6 @@ function PressureTrend({ weather }) {
 function WindIntelligence({
   weather,
   unit,
-  weatherDataUnit = unit,
 }) {
   const current = weather?.current && typeof weather.current === "object" ? weather.current : {};
   const safeWindSpeed = Number(current.windSpeed);
@@ -183,7 +182,7 @@ function WindIntelligence({
     unit
   );
   const direction = windDirectionName(directionDegrees);
-  const strength = classifyWind(sustained, weatherDataUnit);
+  const strength = classifyWind(sustained, "F");
 
   return (
     <div className="storm-module">
@@ -228,17 +227,17 @@ function WindIntelligence({
   );
 }
 
-function ComfortIndex({ weather, unit, weatherDataUnit = unit }) {
+function ComfortIndex({ weather, unit }) {
   const dewpoint = weather?.current?.dewPoint;
   const safeDewpoint = Number(dewpoint);
-  const dewpointConverted = convertTemp(safeDewpoint, unit, weatherDataUnit);
+  const dewpointConverted = convertTemp(safeDewpoint, unit);
   const dewpointDisplay = Number.isFinite(dewpointConverted)
     ? Math.round(dewpointConverted)
     : "\u2014";
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
   const comfort = classifyComfort(
     safeDewpoint,
-    weatherDataUnit
+    "F"
   );
 
   return (
@@ -279,7 +278,6 @@ const MemoizedComfortIndex = memo(ComfortIndex);
 function StormWatch({
   weather,
   unit,
-  weatherDataUnit,
   style,
 }) {
   const stormRiskSummaryId = useId();
@@ -296,7 +294,7 @@ function StormWatch({
   const overviewWindSpeed = Number(weather?.current?.windSpeed);
   const overviewWind = classifyWind(
     Number.isFinite(overviewWindSpeed) ? overviewWindSpeed : 0,
-    weatherDataUnit || unit
+    "F"
   );
 
   return (
@@ -339,12 +337,10 @@ function StormWatch({
         <MemoizedWindIntelligence
           weather={weather}
           unit={unit}
-          weatherDataUnit={weatherDataUnit}
         />
         <MemoizedComfortIndex
           weather={weather}
           unit={unit}
-          weatherDataUnit={weatherDataUnit}
         />
       </div>
     </section>

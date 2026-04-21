@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { parseCoordinates } from "../utils/weatherUnits";
 import {
   useLocation,
@@ -25,6 +25,16 @@ export function useWeather(unit = "F", options = {}) {
   const { climateEnabled = true } = options;
   const [location, setLocation] = useState(null);
   const [locationNotice, setLocationNotice] = useState(null);
+  const locationRef = useRef(location);
+  const locationNoticeRef = useRef(locationNotice);
+
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
+
+  useEffect(() => {
+    locationNoticeRef.current = locationNotice;
+  }, [locationNotice]);
 
   const persistLocationPayload = useCallback((nextLocation) => {
     persistLocation(
@@ -37,23 +47,29 @@ export function useWeather(unit = "F", options = {}) {
 
   const applyLocation = useCallback(
     (nextLocation, notice = null) => {
-      setLocation((current) => {
-        const hasSameLocation =
-          current &&
-          current.lat === nextLocation.lat &&
-          current.lon === nextLocation.lon &&
-          current.name === nextLocation.name &&
-          current.country === nextLocation.country;
+      const currentLocation = locationRef.current;
+      const hasSameLocation =
+        currentLocation &&
+        currentLocation.lat === nextLocation.lat &&
+        currentLocation.lon === nextLocation.lon &&
+        currentLocation.name === nextLocation.name &&
+        currentLocation.country === nextLocation.country;
+      const hasSameNotice = locationNoticeRef.current === notice;
 
-        if (hasSameLocation) {
-          return current;
-        }
+      if (hasSameLocation && hasSameNotice) {
+        return;
+      }
 
-        return nextLocation;
-      });
+      if (!hasSameLocation) {
+        setLocation(nextLocation);
+        locationRef.current = nextLocation;
+        persistLocationPayload(nextLocation);
+      }
 
-      setLocationNotice(notice);
-      persistLocationPayload(nextLocation);
+      if (!hasSameNotice) {
+        setLocationNotice(notice);
+        locationNoticeRef.current = notice;
+      }
     },
     [persistLocationPayload]
   );

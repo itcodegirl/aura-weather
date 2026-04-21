@@ -169,7 +169,6 @@ function WindIntelligence({
   weather,
   unit,
   weatherDataUnit = unit,
-  weatherWindSpeedUnit = "mph",
 }) {
   const current = weather?.current && typeof weather.current === "object" ? weather.current : {};
   const safeWindSpeed = Number(current.windSpeed);
@@ -178,15 +177,10 @@ function WindIntelligence({
   const sustained = Number.isFinite(safeWindSpeed) ? safeWindSpeed : 0;
   const directionDegrees = Number.isFinite(safeDirection) ? safeDirection : 0;
 
-  const sustainedDisplay = formatWindSpeed(
-    safeWindSpeed,
-    unit,
-    weatherWindSpeedUnit
-  );
+  const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit);
   const gustsDisplay = formatWindSpeed(
     Number.isFinite(safeWindGusts) ? safeWindGusts : sustained,
-    unit,
-    weatherWindSpeedUnit
+    unit
   );
   const direction = windDirectionName(directionDegrees);
   const strength = classifyWind(sustained, weatherDataUnit);
@@ -286,7 +280,6 @@ function StormWatch({
   weather,
   unit,
   weatherDataUnit,
-  weatherWindSpeedUnit,
   style,
 }) {
   const stormRiskSummaryId = useId();
@@ -347,7 +340,6 @@ function StormWatch({
           weather={weather}
           unit={unit}
           weatherDataUnit={weatherDataUnit}
-          weatherWindSpeedUnit={weatherWindSpeedUnit}
         />
         <MemoizedComfortIndex
           weather={weather}

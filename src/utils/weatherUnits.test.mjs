@@ -19,20 +19,15 @@ describe("weatherUnits", () => {
   test("converts display units to API units", () => {
     assert.equal(getApiTemperatureUnit("C"), "celsius");
     assert.equal(getApiTemperatureUnit("F"), "fahrenheit");
-    assert.equal(getApiWindSpeedUnit("C"), "mph");
-    assert.equal(getApiWindSpeedUnit("F"), "mph");
+    assert.equal(getApiWindSpeedUnit(), "mph");
     assert.equal(getApiPrecipUnit("C"), "mm");
     assert.equal(getApiPrecipUnit("F"), "inch");
   });
 
-  test("formats wind speed while preserving source units", () => {
-    assert.equal(formatWindSpeed(10, "F", "F"), "10 mph");
-    assert.equal(formatWindSpeed(10, "C", "F"), "16 km/h");
-    assert.equal(formatWindSpeed(16.0934, "F", "C"), "10 mph");
-    assert.equal(formatWindSpeed(20, "C", "kmh"), "20 km/h");
-    assert.equal(formatWindSpeed(20, "F", "kmh"), "12 mph");
-    assert.equal(formatWindSpeed(20, "C", "mph"), "32 km/h");
-    assert.equal(formatWindSpeed(20, "C", "celsius"), "20 km/h");
+  test("formats wind speed assuming API returns mph", () => {
+    assert.equal(formatWindSpeed(10, "F"), "10 mph");
+    assert.equal(formatWindSpeed(10, "C"), "16 km/h");
+    assert.equal(formatWindSpeed(20, "C"), "32 km/h");
     assert.equal(formatWindSpeed("not-a-number", "C"), "\u2014");
   });
 

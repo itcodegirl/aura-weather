@@ -2,55 +2,17 @@ import { normalizeTemperatureUnit } from "./temperature.js";
 
 export const WIND_SPEED_CONVERSION = 1.60934;
 
-function normalizeWindSpeedSourceUnit(value, fallback = "mph") {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-
-  const normalized = value.trim().toLowerCase().replace(/[\s/_-]/g, "");
-
-  if (
-    normalized === "c" ||
-    normalized === "celsius" ||
-    normalized === "kmh" ||
-    normalized === "kmph" ||
-    normalized === "kmhour" ||
-    normalized === "kilometersperhour" ||
-    normalized === "kilometresperhour"
-  ) {
-    return "kmh";
-  }
-
-  if (
-    normalized === "f" ||
-    normalized === "fahrenheit" ||
-    normalized === "mph" ||
-    normalized === "mileperhour" ||
-    normalized === "milesperhour"
-  ) {
-    return "mph";
-  }
-
-  return fallback;
-}
-
-export function formatWindSpeed(speed, targetUnit, sourceUnit = "F") {
+export function formatWindSpeed(speed, targetUnit) {
   const numeric = Number(speed);
   if (!Number.isFinite(numeric)) {
     return "\u2014";
   }
   const nonNegativeSpeed = Math.max(numeric, 0);
 
-  const sourceNormalized = normalizeWindSpeedSourceUnit(sourceUnit);
   const targetNormalized = normalizeTemperatureUnit(targetUnit);
-  const speedInMph =
-    sourceNormalized === "mph"
-      ? nonNegativeSpeed
-      : nonNegativeSpeed / WIND_SPEED_CONVERSION;
-  const converted =
-    targetNormalized === "C"
-      ? Math.round(speedInMph * WIND_SPEED_CONVERSION)
-      : Math.round(speedInMph);
+  const converted = targetNormalized === "C"
+    ? Math.round(nonNegativeSpeed * WIND_SPEED_CONVERSION)
+    : Math.round(nonNegativeSpeed);
 
   return `${converted} ${targetNormalized === "C" ? "km/h" : "mph"}`;
 }

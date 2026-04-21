@@ -47,7 +47,6 @@ export default function WeatherDashboard({
   location,
   unit,
   weatherDataUnit,
-  weatherWindSpeedUnit,
   climateComparison,
   showClimateContext,
   isBackgroundLoading,
@@ -72,7 +71,6 @@ export default function WeatherDashboard({
         location={location}
         unit={unit}
         weatherDataUnit={weatherDataUnit}
-        weatherWindSpeedUnit={weatherWindSpeedUnit}
         climateComparison={showClimateContext ? climateComparison : null}
         style={CARD_STYLE_VARIABLES[0]}
       />
@@ -142,7 +140,6 @@ export default function WeatherDashboard({
           weather={weather}
           unit={unit}
           weatherDataUnit={weatherDataUnit}
-          weatherWindSpeedUnit={weatherWindSpeedUnit}
           style={CARD_STYLE_VARIABLES[6]}
         />
       </Suspense>

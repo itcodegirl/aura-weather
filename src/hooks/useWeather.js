@@ -61,7 +61,6 @@ export function useWeather(unit = "F", options = {}) {
   const {
     weather,
     weatherDataUnit,
-    weatherWindSpeedUnit,
     loading,
     error,
     climateComparison,
@@ -96,7 +95,6 @@ export function useWeather(unit = "F", options = {}) {
   return {
     weather,
     weatherDataUnit,
-    weatherWindSpeedUnit,
     location,
     loading,
     error,

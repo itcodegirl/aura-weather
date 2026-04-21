@@ -13,7 +13,6 @@ function App() {
   const {
     weather,
     weatherDataUnit,
-    weatherWindSpeedUnit,
     location,
     error,
     locationNotice,
@@ -68,7 +67,6 @@ function App() {
         location={location}
         unit={unit}
         weatherDataUnit={weatherDataUnit}
-        weatherWindSpeedUnit={weatherWindSpeedUnit}
         climateComparison={climateComparison}
         showClimateContext={showClimateContext}
         isBackgroundLoading={isBackgroundLoading}

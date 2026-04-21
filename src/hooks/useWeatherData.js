@@ -13,7 +13,6 @@ import {
 } from "../utils/weatherUnits";
 
 const DEFAULT_DATA_UNIT = "F";
-const DEFAULT_WIND_DATA_UNIT = "mph";
 
 function getErrorMessage(error, fallback) {
   if (typeof error === "string") {
@@ -50,9 +49,6 @@ export function useWeatherData(location, unit = "F", options = {}) {
 
   const [weather, setWeather] = useState(null);
   const [weatherDataUnit, setWeatherDataUnit] = useState(DEFAULT_DATA_UNIT);
-  const [weatherWindSpeedUnit, setWeatherWindSpeedUnit] = useState(
-    DEFAULT_WIND_DATA_UNIT
-  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [climateComparison, setClimateComparison] = useState(null);
@@ -145,7 +141,6 @@ export function useWeatherData(location, unit = "F", options = {}) {
         );
 
         setWeatherDataUnit(requestUnit);
-        setWeatherWindSpeedUnit(requestWindSpeedUnit);
         setWeather({ ...weatherData, aqi });
 
         setClimateComparison(
@@ -202,7 +197,6 @@ export function useWeatherData(location, unit = "F", options = {}) {
   return {
     weather,
     weatherDataUnit,
-    weatherWindSpeedUnit,
     loading,
     error,
     climateComparison,

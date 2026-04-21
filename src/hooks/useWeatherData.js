@@ -65,7 +65,7 @@ function getFallbackLocationName(weatherData, lat, lon) {
 export function useWeatherData(unit = "F", options = {}) {
   const {
     climateEnabled = true,
-    onLocationNotice,
+    location = null,
     onLocationResolved,
   } = options;
 
@@ -83,6 +83,10 @@ export function useWeatherData(unit = "F", options = {}) {
   const lastRequestedSignatureRef = useRef("");
   const isMountedRef = useRef(false);
   const activeUnitRef = useRef(normalizeTemperatureUnit(unit));
+  const locationLat = location?.lat;
+  const locationLon = location?.lon;
+  const locationName = location?.name;
+  const locationCountry = location?.country;
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -107,7 +111,7 @@ export function useWeatherData(unit = "F", options = {}) {
       if (!isMountedRef.current) return;
 
       const coordinates = parseCoordinates(lat, lon);
-      const { fallbackNotice, skipIfSignatureMatches = false } = loadOptions;
+      const { skipIfSignatureMatches = false } = loadOptions;
       if (!coordinates) {
         setError("Invalid location coordinates");
         setLoading(false);
@@ -140,7 +144,6 @@ export function useWeatherData(unit = "F", options = {}) {
       if (!isMountedRef.current) return;
       setLoading(true);
       setError(null);
-      onLocationNotice?.(fallbackNotice ?? null);
       lastRequestRef.current = {
         lat: safeLat,
         lon: safeLon,
@@ -243,7 +246,7 @@ export function useWeatherData(unit = "F", options = {}) {
         }
       }
     },
-    [climateEnabled, abortInFlightRequest, onLocationNotice, onLocationResolved]
+    [climateEnabled, abortInFlightRequest, onLocationResolved]
   );
 
   const scheduleWeatherLoad = useCallback(
@@ -290,6 +293,34 @@ export function useWeatherData(unit = "F", options = {}) {
       retryUnit
     );
   }, [scheduleWeatherLoad]);
+
+  useEffect(() => {
+    if (typeof locationLat === "undefined" || typeof locationLon === "undefined") {
+      return;
+    }
+
+    const coordinates = parseCoordinates(locationLat, locationLon);
+    if (!coordinates) {
+      return;
+    }
+
+    scheduleWeatherLoadAsync(
+      coordinates.latitude,
+      coordinates.longitude,
+      normalizeLocationName(locationName),
+      normalizeLocationName(locationCountry),
+      unit,
+      { skipIfSignatureMatches: true }
+    );
+  }, [
+    locationLat,
+    locationLon,
+    locationName,
+    locationCountry,
+    unit,
+    climateEnabled,
+    scheduleWeatherLoadAsync,
+  ]);
 
   useEffect(() => {
     return () => {

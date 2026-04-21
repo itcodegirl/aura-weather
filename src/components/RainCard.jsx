@@ -1,6 +1,6 @@
 // src/components/RainCard.jsx
 
-import { memo, useMemo, useState } from "react";
+import { memo, useId, useMemo, useState } from "react";
 import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
 import { useRainAnalysis } from "../hooks/useRainAnalysis";
@@ -28,6 +28,9 @@ function getRainTimelineSummary(hours, nextRain, peak, total, unit, dataUnit) {
 }
 
 function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
+  const timelineId = useId();
+  const timelineSummaryId = `${timelineId}-summary`;
+  const timelineDetailsId = `${timelineId}-details`;
   const [mode, setMode] = useState("chance");
   const rainAnalysis = useRainAnalysis(weather?.hourly);
   const {
@@ -58,6 +61,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
     past24hLabel,
     past48hLabel,
     timelineBars,
+    timelineAccessibleText,
   } = useMemo(() => {
     const safePeakProbability = Number.isFinite(Number(peak?.probability))
       ? Math.round(Number(peak.probability))
@@ -115,6 +119,9 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
         tooltip,
       };
     });
+    const accessibleText = bars.length
+      ? bars.map((bar) => bar.tooltip).join(". ")
+      : "Hourly precipitation timeline is temporarily unavailable.";
 
     return {
       isDry: safePeakProbability < 20 && total < 0.01,
@@ -129,6 +136,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
       past24hLabel: formatPrecipitation(past24h, unit, dataUnit),
       past48hLabel: formatPrecipitation(past48h, unit, dataUnit),
       timelineBars: bars,
+      timelineAccessibleText: accessibleText,
     };
   }, [
     peak,
@@ -263,6 +271,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
           ? "Hourly precipitation chance over the next 24 hours"
               : `Hourly precipitation amount in ${getPrecipUnitLabel(unit)} over the next 24 hours`
           }
+          aria-describedby={`${timelineSummaryId} ${timelineDetailsId}`}
         >
           {timelineBars.map((bar) => (
             <div
@@ -270,10 +279,12 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
               className="rain-bar"
               style={{ height: `${bar.heightPct}%`, opacity: bar.opacity }}
               title={bar.tooltip}
+              aria-hidden="true"
             />
           ))}
         </div>
-        <p className="rain-timeline-summary">{timelineSummary}</p>
+        <p id={timelineSummaryId} className="rain-timeline-summary">{timelineSummary}</p>
+        <p id={timelineDetailsId} className="sr-only">{timelineAccessibleText}</p>
 
         <div className="rain-timeline-labels">
           <span>Now</span>

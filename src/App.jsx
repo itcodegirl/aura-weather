@@ -12,7 +12,6 @@ import {
 function App() {
   const {
     weather,
-    weatherDataUnit,
     location,
     error,
     locationNotice,
@@ -66,7 +65,7 @@ function App() {
         weather={weather}
         location={location}
         unit={unit}
-        weatherDataUnit={weatherDataUnit}
+        weatherDataUnit={unit}
         climateComparison={climateComparison}
         showClimateContext={showClimateContext}
         isBackgroundLoading={isBackgroundLoading}

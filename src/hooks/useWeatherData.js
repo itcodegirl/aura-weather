@@ -11,7 +11,6 @@ import {
   parseCoordinates,
 } from "../utils/weatherUnits";
 
-const DEFAULT_DATA_UNIT = "F";
 
 function getErrorMessage(error, fallback) {
   if (typeof error === "string") {
@@ -45,9 +44,9 @@ export function useWeatherData(location, unit = "F", options = {}) {
   const { climateEnabled = true } = options;
   const locationLat = location?.lat;
   const locationLon = location?.lon;
+  const weatherDataUnit = normalizeTemperatureUnit(unit);
 
   const [weather, setWeather] = useState(null);
-  const [weatherDataUnit, setWeatherDataUnit] = useState(DEFAULT_DATA_UNIT);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [climateComparison, setClimateComparison] = useState(null);
@@ -139,7 +138,6 @@ export function useWeatherData(location, unit = "F", options = {}) {
           historicalTemperature
         );
 
-        setWeatherDataUnit(requestUnit);
         setWeather({ ...weatherData, aqi });
 
         setClimateComparison(

@@ -1,6 +1,5 @@
-// src/components/ForecastCard.jsx
-
 import { CalendarDays, Droplets } from "lucide-react";
+import { memo, useMemo } from "react";
 import { getWeather } from "../domain/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
 import { convertTemp } from "../utils/temperature";
@@ -41,25 +40,57 @@ function toDisplayTemp(value, unit) {
   return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
 }
 
-function buildWeekSummary(days, weekMin, weekMax, unit) {
-  const firstMax = days[0]?.temperatureMax;
-  const lastMax = days[days.length - 1]?.temperatureMax;
-  const delta =
-    Number.isFinite(firstMax) && Number.isFinite(lastMax) ? lastMax - firstMax : 0;
-  const trendText =
-    delta >= 3 ? "Warming trend" : delta <= -3 ? "Cooling trend" : "Stable week";
-  const wettestDay = days.reduce((highest, day) =>
-    day.rainChanceMax > highest.rainChanceMax
-      ? day
-      : highest
-  );
-  const wettestLabel =
-    wettestDay.rainChanceMax >= 25
-      ? `${formatDayLabel(wettestDay.date)} peaks at ${wettestDay.rainChanceMax}% rain chance`
-      : "Rain chances stay mostly low";
-  const weekRangeText = `${toDisplayTemp(weekMin, unit)}\u00B0 to ${toDisplayTemp(weekMax, unit)}\u00B0`;
+function buildForecastDays(weatherDaily) {
+  if (!weatherDaily || typeof weatherDaily !== "object") {
+    return [];
+  }
 
-  return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
+  const times = Array.isArray(weatherDaily.time) ? weatherDaily.time : [];
+  const weatherCodes = Array.isArray(weatherDaily.conditionCode)
+    ? weatherDaily.conditionCode
+    : [];
+  const maxTemps = Array.isArray(weatherDaily.temperatureMax)
+    ? weatherDaily.temperatureMax
+    : [];
+  const minTemps = Array.isArray(weatherDaily.temperatureMin)
+    ? weatherDaily.temperatureMin
+    : [];
+  const precipProbabilities = Array.isArray(weatherDaily.rainChanceMax)
+    ? weatherDaily.rainChanceMax
+    : [];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return times
+    .map((date, index) => ({
+      date,
+      conditionCode: toFiniteNumber(weatherCodes[index], 0),
+      temperatureMax: toFiniteNumber(maxTemps[index]),
+      temperatureMin: toFiniteNumber(minTemps[index]),
+      rainChanceMax: clampPercent(
+        toFiniteNumber(precipProbabilities[index], 0)
+      ),
+    }))
+    .filter((day) => Number.isFinite(day.temperatureMax) || Number.isFinite(day.temperatureMin))
+    .filter((day) => {
+      const dayDate = parseLocalDate(day.date);
+      if (!dayDate || Number.isNaN(dayDate.getTime())) return false;
+      dayDate.setHours(0, 0, 0, 0);
+      return dayDate >= today;
+    })
+    .slice(0, 7);
+}
+
+function buildForecastSummary(days, weekMin, weekMax, unit) {
+  return buildWeekSummary(days, weekMin, weekMax, unit);
+}
+
+function getForecastRangeGradient(weekMin, weekMax) {
+  const rangeGradientStart = weekMin <= 40 ? "#60a5fa" : "#f59e0b";
+  const rangeGradientEnd =
+    weekMax >= 95 ? "#ef4444" : weekMax >= 82 ? "#f97316" : "#fbbf24";
+  return `linear-gradient(to right, ${rangeGradientStart}, ${rangeGradientEnd})`;
 }
 
 function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
@@ -146,41 +177,54 @@ function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
   );
 }
 
+function buildWeekSummary(days, weekMin, weekMax, unit) {
+  const firstMax = days[0]?.temperatureMax;
+  const lastMax = days[days.length - 1]?.temperatureMax;
+  const delta =
+    Number.isFinite(firstMax) && Number.isFinite(lastMax) ? lastMax - firstMax : 0;
+  const trendText =
+    delta >= 3 ? "Warming trend" : delta <= -3 ? "Cooling trend" : "Stable week";
+  const wettestDay = days.reduce((highest, day) =>
+    day.rainChanceMax > highest.rainChanceMax
+      ? day
+      : highest
+  );
+  const wettestLabel =
+    wettestDay.rainChanceMax >= 25
+      ? `${formatDayLabel(wettestDay.date)} peaks at ${wettestDay.rainChanceMax}% rain chance`
+      : "Rain chances stay mostly low";
+  const weekRangeText = `${toDisplayTemp(weekMin, unit)}\u00B0 to ${toDisplayTemp(weekMax, unit)}\u00B0`;
+
+  return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
+}
+
 function ForecastCard({ weather, unit, style }) {
-  const daily = weather?.daily && typeof weather.daily === "object" ? weather.daily : null;
-  const times = Array.isArray(daily?.time) ? daily.time : [];
-  const weatherCodes = Array.isArray(daily?.conditionCode) ? daily.conditionCode : [];
-  const maxTemps = Array.isArray(daily?.temperatureMax)
-    ? daily.temperatureMax
-    : [];
-  const minTemps = Array.isArray(daily?.temperatureMin)
-    ? daily.temperatureMin
-    : [];
-  const precipProbabilities = Array.isArray(daily?.rainChanceMax)
-    ? daily.rainChanceMax
-    : [];
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const days = times
-    .map((date, index) => ({
-      date,
-      conditionCode: toFiniteNumber(weatherCodes[index], 0),
-      temperatureMax: toFiniteNumber(maxTemps[index]),
-      temperatureMin: toFiniteNumber(minTemps[index]),
-      rainChanceMax: clampPercent(
-        toFiniteNumber(precipProbabilities[index], 0)
-      ),
-    }))
-    .filter((day) => Number.isFinite(day.temperatureMax) || Number.isFinite(day.temperatureMin))
-    .filter((day) => {
-      const dayDate = parseLocalDate(day.date);
-      if (!dayDate || Number.isNaN(dayDate.getTime())) return false;
-      dayDate.setHours(0, 0, 0, 0);
-      return dayDate >= today;
-    })
-    .slice(0, 7);
+  const days = useMemo(
+    () => buildForecastDays(weather?.daily),
+    [weather?.daily]
+  );
+  const { weekMin, weekMax } = useMemo(() => {
+    const validWeekMins = days
+      .map((day) => day.temperatureMin)
+      .filter((value) => Number.isFinite(value));
+    const validWeekMaxs = days
+      .map((day) => day.temperatureMax)
+      .filter((value) => Number.isFinite(value));
+    const nextWeekMin = validWeekMins.length ? Math.min(...validWeekMins) : 0;
+    const nextWeekMax = validWeekMaxs.length ? Math.max(...validWeekMaxs) : nextWeekMin;
+    return {
+      weekMin: nextWeekMin,
+      weekMax: nextWeekMax,
+    };
+  }, [days]);
+  const rangeGradient = useMemo(
+    () => getForecastRangeGradient(weekMin, weekMax),
+    [weekMin, weekMax]
+  );
+  const weekSummary = useMemo(
+    () => buildForecastSummary(days, weekMin, weekMax, unit),
+    [days, weekMin, weekMax, unit]
+  );
 
   if (!days.length) {
     return (
@@ -202,20 +246,6 @@ function ForecastCard({ weather, unit, style }) {
     );
   }
 
-  const validWeekMins = days
-    .map((day) => day.temperatureMin)
-    .filter((value) => Number.isFinite(value));
-  const validWeekMaxs = days
-    .map((day) => day.temperatureMax)
-    .filter((value) => Number.isFinite(value));
-  const weekMin = validWeekMins.length ? Math.min(...validWeekMins) : 0;
-  const weekMax = validWeekMaxs.length ? Math.max(...validWeekMaxs) : weekMin;
-  const rangeGradientStart = weekMin <= 40 ? "#60a5fa" : "#f59e0b";
-  const rangeGradientEnd =
-    weekMax >= 95 ? "#ef4444" : weekMax >= 82 ? "#f97316" : "#fbbf24";
-  const rangeGradient = `linear-gradient(to right, ${rangeGradientStart}, ${rangeGradientEnd})`;
-  const weekSummary = buildWeekSummary(days, weekMin, weekMax, unit);
-
   return (
     <section className="bento-forecast forecast-card glass" style={style}>
       <CardHeader
@@ -233,7 +263,7 @@ function ForecastCard({ weather, unit, style }) {
 
       <ul className="forecast-list" role="list">
         {days.map((day) => (
-          <DayRow
+          <MemoizedDayRow
             key={day.date}
             day={day}
             weekMin={weekMin}
@@ -246,5 +276,19 @@ function ForecastCard({ weather, unit, style }) {
     </section>
   );
 }
+
+const MemoizedDayRow = memo(
+  DayRow,
+  (prevProps, nextProps) =>
+    prevProps.unit === nextProps.unit &&
+    prevProps.weekMin === nextProps.weekMin &&
+    prevProps.weekMax === nextProps.weekMax &&
+    prevProps.rangeGradient === nextProps.rangeGradient &&
+    prevProps.day.date === nextProps.day.date &&
+    prevProps.day.conditionCode === nextProps.day.conditionCode &&
+    prevProps.day.temperatureMax === nextProps.day.temperatureMax &&
+    prevProps.day.temperatureMin === nextProps.day.temperatureMin &&
+    prevProps.day.rainChanceMax === nextProps.day.rainChanceMax
+);
 
 export default ForecastCard;

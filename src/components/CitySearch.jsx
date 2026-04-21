@@ -1,6 +1,6 @@
 // src/components/CitySearch.jsx
 
-import { useId, forwardRef, useImperativeHandle } from "react";
+import { useId, forwardRef, useImperativeHandle, useCallback } from "react";
 import { Search, MapPin, X, Loader2 } from "lucide-react";
 import { useCitySearch } from "../hooks/useCitySearch";
 import "./CitySearch.css";
@@ -45,6 +45,35 @@ function CitySearch({ onSelect }, ref) {
       ? `${optionIdPrefix}-${activeIndexSafe}`
       : undefined;
 
+  const handleInputFocus = useCallback(() => {
+    setOpen(true);
+  }, [setOpen]);
+
+  const handleRowMouseEnter = useCallback(
+    (index) => {
+      setActiveIndex(index);
+    },
+    [setActiveIndex]
+  );
+
+  const handleRowMouseDown = useCallback(
+    (city) => (event) => {
+      event.preventDefault();
+      handleSelect(city);
+    },
+    [handleSelect]
+  );
+
+  const handleRowKeyDown = useCallback(
+    (city) => (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleSelect(city);
+      }
+    },
+    [handleSelect]
+  );
+
   useImperativeHandle(ref, () => ({
     focus: () => {
       inputRef.current?.focus();
@@ -60,7 +89,7 @@ function CitySearch({ onSelect }, ref) {
           type="text"
           value={query}
           onChange={handleChange}
-          onFocus={() => setOpen(true)}
+          onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
           placeholder="Search city or region..."
           className="city-search-input"
@@ -144,18 +173,10 @@ function CitySearch({ onSelect }, ref) {
                     aria-selected={index === activeIndexSafe}
                     role="option"
                     tabIndex={index === activeIndexSafe ? 0 : -1}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      handleSelect(city);
-                    }}
+                    onMouseEnter={() => handleRowMouseEnter(index)}
+                    onMouseDown={handleRowMouseDown(city)}
                     onClick={() => handleSelect(city)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        handleSelect(city);
-                      }
-                    }}
+                    onKeyDown={handleRowKeyDown(city)}
                   >
                     <MapPin size={14} className="city-search-result-icon" />
                     <div className="city-search-result-text">

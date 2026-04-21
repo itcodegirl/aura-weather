@@ -47,12 +47,28 @@ export default function HeaderControls({
     [setShowClimateContext]
   );
 
+  const handleEnableClimateContext = useCallback(() => {
+    handleSetClimateContext(true);
+  }, [handleSetClimateContext]);
+
+  const handleDisableClimateContext = useCallback(() => {
+    handleSetClimateContext(false);
+  }, [handleSetClimateContext]);
+
   const handleSetUnit = useCallback(
     (nextUnit) => {
       setUnit(nextUnit);
     },
     [setUnit]
   );
+
+  const handleSetUnitF = useCallback(() => {
+    handleSetUnit("F");
+  }, [handleSetUnit]);
+
+  const handleSetUnitC = useCallback(() => {
+    handleSetUnit("C");
+  }, [handleSetUnit]);
 
   const handleDesktopChange = useCallback((event) => {
     if (event.matches) {
@@ -160,7 +176,7 @@ export default function HeaderControls({
           <button
             type="button"
             className={`toggle-pill-btn ${showClimateContext ? "is-active" : ""}`}
-            onClick={() => handleSetClimateContext(true)}
+            onClick={handleEnableClimateContext}
             aria-pressed={showClimateContext}
             aria-label="Enable climate context"
           >
@@ -169,7 +185,7 @@ export default function HeaderControls({
           <button
             type="button"
             className={`toggle-pill-btn ${!showClimateContext ? "is-active" : ""}`}
-            onClick={() => handleSetClimateContext(false)}
+            onClick={handleDisableClimateContext}
             aria-pressed={!showClimateContext}
             aria-label="Disable climate context"
           >
@@ -179,14 +195,14 @@ export default function HeaderControls({
 
         <div className="unit-toggle glass" role="group" aria-label="Temperature unit">
           <button
-            onClick={() => handleSetUnit("F")}
+            onClick={handleSetUnitF}
             className={`unit-btn ${unit === "F" ? "is-active" : ""}`}
             aria-pressed={unit === "F"}
           >
             {"\u00B0F"}
           </button>
           <button
-            onClick={() => handleSetUnit("C")}
+            onClick={handleSetUnitC}
             className={`unit-btn ${unit === "C" ? "is-active" : ""}`}
             aria-pressed={unit === "C"}
           >

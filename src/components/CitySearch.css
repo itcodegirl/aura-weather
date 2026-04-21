@@ -2,7 +2,7 @@
   position: relative;
   flex: 1 1 460px;
   width: min(100%, 620px);
-  min-width: 260px;
+  min-width: 240px;
 }
 
 .city-search-input-wrap {
@@ -184,7 +184,7 @@
   font-weight: 700;
 }
 
-  .city-search-result-meta {
+.city-search-result-meta {
   margin-top: 1px;
   color: var(--text-dim);
   font-size: 13px;

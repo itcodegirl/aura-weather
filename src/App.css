@@ -28,6 +28,9 @@
   --bg-card-hover: rgba(16, 30, 64, 0.48);
   --panel: rgba(9, 17, 36, 0.66);
   --panel-soft: rgba(10, 20, 44, 0.52);
+  --subcard-bg: rgba(8, 17, 36, 0.44);
+  --subcard-border: 1px solid rgba(184, 208, 248, 0.16);
+  --subcard-shadow: inset 0 1px 0 rgba(228, 241, 255, 0.08);
 
   --accent: #6ee7ff;
   --accent-strong: #22d3ee;
@@ -1044,7 +1047,6 @@ a:focus-visible,
     grid-column: span 1;
   }
 
-  .bento-chart,
   .bento-rain {
     grid-column: span 2;
   }
@@ -1060,15 +1062,11 @@ a:focus-visible,
 
   .bento-nowcast {
     grid-column: span 1;
-    min-height: 132px;
+    min-height: 160px;
   }
 
   .hero-temp {
     font-size: 68px;
-  }
-
-  .hero-icon {
-    font-size: 74px;
   }
 
   .hero-stats {

@@ -3,7 +3,6 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 18px;
-  padding: var(--card-padding);
 }
 
 .hero-meta {
@@ -156,8 +155,9 @@
   gap: 12px;
   padding: 12px;
   border-radius: var(--radius-sm);
-  background: rgba(8, 17, 36, 0.4);
-  border: 1px solid rgba(190, 210, 248, 0.15);
+  background: var(--subcard-bg);
+  border: var(--subcard-border);
+  box-shadow: var(--subcard-shadow);
 }
 
 .stat-icon {

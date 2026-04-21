@@ -159,7 +159,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 7px 10px;
-  border-radius: 13px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(186, 210, 250, 0.2);
   background: rgba(8, 17, 36, 0.48);
   box-shadow: inset 0 1px 0 rgba(230, 239, 255, 0.08);
@@ -313,11 +313,6 @@
 }
 
 @media (max-width: 540px) {
-  .forecast-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .forecast-title {
     font-size: 17px;
   }

@@ -76,12 +76,19 @@
   border-radius: var(--radius-pill);
   background: rgba(8, 17, 37, 0.62);
   border: 1px solid rgba(180, 206, 251, 0.18);
+  transition: border-color 0.16s ease, box-shadow 0.2s ease;
+}
+
+.rain-mode-toggle:focus-within {
+  border-color: rgba(130, 228, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(64, 196, 255, 0.16);
 }
 
 .rain-mode-btn {
   width: 42px;
   height: 40px;
   border-radius: var(--radius-pill);
+  border: 1px solid transparent;
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 700;
@@ -102,8 +109,24 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
+.rain-mode-btn[aria-pressed="true"] {
+  color: #061026;
+  background: linear-gradient(145deg, #f8fbff, #dbe9ff);
+  box-shadow:
+    0 6px 14px rgba(4, 12, 28, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
 .rain-mode-btn:hover {
   transform: translateY(-1px);
+}
+
+.rain-mode-btn:focus-visible {
+  border-color: rgba(114, 224, 255, 0.8);
+  box-shadow:
+    0 0 0 2px rgba(64, 196, 255, 0.22),
+    0 6px 14px rgba(4, 12, 28, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 .rain-mode-btn:active {

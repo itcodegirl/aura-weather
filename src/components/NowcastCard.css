@@ -31,7 +31,10 @@
 }
 
 .nowcast-risk-badge {
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
+  min-height: 22px;
   padding: 4px 9px;
   border-radius: var(--radius-pill);
   border: 1px solid;
@@ -123,6 +126,7 @@
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .nowcast-meta {

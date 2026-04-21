@@ -31,7 +31,10 @@
 }
 
 .rain-risk-badge {
+  display: inline-flex;
+  align-items: center;
   width: fit-content;
+  min-height: 22px;
   padding: 4px 9px;
   border-radius: var(--radius-pill);
   border: 1px solid;
@@ -130,6 +133,7 @@
   font-weight: 650;
   line-height: 1.02;
   letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 .rain-primary-label {
@@ -159,6 +163,7 @@
 .rain-stat-value {
   font-size: 15px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .rain-stat-label {
@@ -204,6 +209,7 @@
   color: #eef5ff;
   font-size: 13px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .rain-empty {

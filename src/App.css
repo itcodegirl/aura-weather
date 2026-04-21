@@ -719,6 +719,7 @@ a:focus-visible,
   font-size: 36px;
   font-weight: 650;
   color: #f8fbff;
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-sunline {
@@ -757,6 +758,7 @@ a:focus-visible,
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-sun-length {
@@ -766,6 +768,7 @@ a:focus-visible,
   font-size: 15px;
   font-weight: 650;
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .metric-pill {

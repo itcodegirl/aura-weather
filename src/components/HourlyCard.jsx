@@ -112,11 +112,10 @@ function HourlyCard({
   const chartTitleId = `${chartId}-title`;
   const chartSummaryId = `${chartId}-summary`;
   const chartGradientId = `${chartId}-temp-gradient`.replace(/:/g, "");
-  const hourlyData = useMemo(() => buildHourlyData(weather?.hourly, convertTemp), [
+  const data = useMemo(() => buildHourlyData(weather?.hourly, convertTemp), [
     weather?.hourly,
     convertTemp,
   ]);
-  const data = hourlyData;
   const palette = useMemo(() => {
     const hourlyCodes = data
       .map((entry) => entry.code)

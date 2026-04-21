@@ -1,6 +1,5 @@
 // src/components/ForecastCard.jsx
 
-import { memo } from "react";
 import { CalendarDays, Droplets } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
@@ -243,4 +242,4 @@ function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
   );
 }
 
-export default memo(ForecastCard);
+export default ForecastCard;

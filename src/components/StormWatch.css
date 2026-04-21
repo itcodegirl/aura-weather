@@ -305,6 +305,21 @@
   }
 }
 
+@media (max-width: 760px) {
+  .storm-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .storm-module {
+    min-height: 0;
+  }
+
+  .storm-snapshot {
+    gap: 8px;
+  }
+}
+
 @media (max-width: 700px) {
   .storm-header {
     flex-direction: column;

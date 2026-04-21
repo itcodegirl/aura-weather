@@ -133,10 +133,40 @@
   margin-bottom: 0;
 }
 
+@media (max-width: 980px) {
+  .nowcast-summary {
+    font-size: 20px;
+  }
+
+  .nowcast-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
 @media (max-width: 760px) {
   .nowcast-chips {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .nowcast-summary {
+    font-size: 19px;
+  }
+}
+
+@media (max-width: 620px) {
+  .nowcast-primary {
+    padding: 10px 11px;
+  }
+
+  .nowcast-summary {
+    font-size: 18px;
+  }
+
+  .nowcast-details,
+  .nowcast-meta {
+    font-size: 12px;
   }
 }
 

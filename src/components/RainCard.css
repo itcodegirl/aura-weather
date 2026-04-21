@@ -256,6 +256,35 @@
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .rain-stats,
+  .rain-history-pills {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .rain-primary-value {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 620px) {
+  .rain-stats,
+  .rain-history-pills {
+    grid-template-columns: 1fr;
+  }
+
+  .rain-primary {
+    padding: 10px 11px;
+  }
+
+  .rain-primary-value {
+    font-size: 27px;
+  }
+
+  .rain-timeline {
+    height: 42px;
+  }
 }
 
 .rain-bar {

@@ -103,13 +103,56 @@
   font-weight: 600;
 }
 
+@media (max-width: 980px) {
+  .bento-chart {
+    min-height: clamp(220px, 36vw, 308px);
+    gap: 11px;
+  }
+
+  .chart-body {
+    height: min(54vw, 276px);
+    max-height: clamp(176px, 28vh, 240px);
+  }
+}
+
 @media (max-width: 760px) {
+  .chart-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .chart-title {
+    font-size: 17px;
+  }
+
   .chart-body {
     padding: 10px 6px 6px;
+    min-height: clamp(170px, 28vh, 208px);
   }
 
   .chart-lede {
     font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bento-chart {
+    min-height: 0;
+  }
+
+  .chart-body {
+    height: min(62vw, 242px);
+    max-height: none;
+    padding: 9px 4px 5px;
+  }
+
+  .chart-tooltip {
+    min-width: 112px;
+    padding: 9px 10px;
+  }
+
+  .chart-tooltip-temp {
+    font-size: 20px;
   }
 }
 

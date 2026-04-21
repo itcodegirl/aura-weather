@@ -259,9 +259,10 @@
   }
 }
 
-@media (max-width: 760px) {
-  .forecast-summary {
-    font-size: 12px;
+@media (max-width: 860px) {
+  .forecast-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .forecast-row {
@@ -297,6 +298,17 @@
     grid-area: precip;
     min-width: 64px;
     padding: 7px 9px;
+  }
+}
+
+@media (max-width: 760px) {
+  .forecast-summary {
+    font-size: 12px;
+  }
+
+  .forecast-row {
+    gap: 9px;
+    padding: 11px;
   }
 }
 

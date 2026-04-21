@@ -101,7 +101,15 @@ export default function HeaderControls({
       return undefined;
     }
 
-    const desktopQuery = window.matchMedia("(min-width: 701px)");
+    const desktopBreakpoint = (() => {
+      const value = getComputedStyle(document.documentElement)
+        .getPropertyValue("--bp-tablet-small")
+        .trim();
+      const parsed = Number.parseInt(value, 10);
+      return Number.isFinite(parsed) ? parsed + 1 : 761;
+    })();
+
+    const desktopQuery = window.matchMedia(`(min-width: ${desktopBreakpoint}px)`);
 
     if (typeof desktopQuery.addEventListener === "function") {
       desktopQuery.addEventListener("change", handleDesktopChange);

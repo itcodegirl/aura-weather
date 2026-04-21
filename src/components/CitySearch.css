@@ -144,13 +144,18 @@
 }
 
 .city-search-result {
+  border: none;
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
   padding: 11px 14px;
+  background: transparent;
   border-left: 1px solid transparent;
   border-bottom: 1px solid rgba(173, 198, 242, 0.12);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
   transition:
     background var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard),
@@ -163,6 +168,7 @@
 }
 
 .city-search-result:hover,
+.city-search-result:focus-visible,
 .city-search-result.is-active {
   background: rgba(100, 147, 247, 0.2);
   border-left-color: rgba(139, 236, 255, 0.62);

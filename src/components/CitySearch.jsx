@@ -129,28 +129,42 @@ function CitySearch({ onSelect }, ref) {
               const admin1 = typeof city?.admin1 === "string" ? city.admin1 : "";
               const country = typeof city?.country === "string" ? city.country : "";
               const meta = [admin1, country].filter(Boolean).join(" \u00B7 ");
+              const optionLabel = `${name}${meta ? `, ${meta}` : ""}`;
 
               return (
                 <li
                   key={getCityKey(city, index)}
-                  id={`${optionIdPrefix}-${index}`}
-                  role="option"
-                  aria-selected={index === activeIndexSafe}
-                  tabIndex={-1}
-                  className={`city-search-result${index === activeIndexSafe ? " is-active" : ""}`}
-                  onMouseEnter={() => setActiveIndex(index)}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    handleSelect(city);
-                  }}
+                  role="presentation"
                 >
-                  <MapPin size={14} className="city-search-result-icon" />
-                  <div className="city-search-result-text">
-                    <div className="city-search-result-name">{name}</div>
-                    <div className="city-search-result-meta">
-                      {meta && <span>{meta}</span>}
+                  <button
+                    type="button"
+                    id={`${optionIdPrefix}-${index}`}
+                    className={`city-search-result${index === activeIndexSafe ? " is-active" : ""}`}
+                    aria-label={optionLabel}
+                    aria-selected={index === activeIndexSafe}
+                    role="option"
+                    tabIndex={index === activeIndexSafe ? 0 : -1}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      handleSelect(city);
+                    }}
+                    onClick={() => handleSelect(city)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        handleSelect(city);
+                      }
+                    }}
+                  >
+                    <MapPin size={14} className="city-search-result-icon" />
+                    <div className="city-search-result-text">
+                      <div className="city-search-result-name">{name}</div>
+                      <div className="city-search-result-meta">
+                        {meta && <span>{meta}</span>}
+                      </div>
                     </div>
-                  </div>
+                  </button>
                 </li>
               );
             })}

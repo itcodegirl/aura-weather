@@ -14,6 +14,9 @@ export {
   formatTemperature,
 };
 
-export function convertTemp(value, targetUnit, sourceUnit = targetUnit) {
-  return convertTemperature(value, targetUnit, sourceUnit);
+export function convertTemp(fahrenheit, unit) {
+  if (unit === "F") {
+    return Math.round(fahrenheit);
+  }
+  return Math.round(((fahrenheit - 32) * 5) / 9);
 }

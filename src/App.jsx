@@ -3,7 +3,7 @@ import "./App.css";
 import { useWeather } from "./hooks/useWeather";
 import { usePanelPreload, useSearchShortcut } from "./hooks/useAppShellEffects";
 import { useDisplayPreferences } from "./hooks/useDisplayPreferences";
-import { getWeather, gradientCss } from "./domain/weatherCodes";
+import { deriveWeatherScene } from "./domain/weatherScene";
 import {
   AppShell,
   AppLoadingState,
@@ -37,11 +37,14 @@ function App() {
     isLocatingCurrent,
   } = useWeather(unit, { climateEnabled: showClimateContext });
 
-  const hasWeatherData = Boolean(weather);
-  const showGlobalLoading = loading && !hasWeatherData;
-  const isBackgroundLoading = loading && hasWeatherData;
-  const showGlobalError = Boolean(error) && !hasWeatherData;
-  const showRefreshError = Boolean(error) && hasWeatherData;
+  const {
+    showGlobalLoading,
+    isBackgroundLoading,
+    showGlobalError,
+    showRefreshError,
+    weatherInfo,
+    background,
+  } = deriveWeatherScene({ weather, loading, error });
 
   useSearchShortcut(citySearchRef);
   usePanelPreload([loadHourlyCard, loadStormWatch]);
@@ -53,9 +56,6 @@ function App() {
   if (showGlobalError) {
     return <AppErrorState error={error} onRetry={retryWeather} />;
   }
-
-  const weatherInfo = getWeather(weather.current.conditionCode);
-  const background = gradientCss(weatherInfo.gradient);
 
   return (
     <AppShell background={background}>

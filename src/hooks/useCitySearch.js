@@ -37,6 +37,10 @@ export function useCitySearch({ onSelect } = {}) {
   }, [abortGeocodeRequest]);
 
   useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
     function handleClickOutside(event) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         setOpen(false);

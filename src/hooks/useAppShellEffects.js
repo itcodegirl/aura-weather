@@ -12,6 +12,13 @@ function isTypingElement(target) {
 
 export function useSearchShortcut(searchRef) {
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.addEventListener !== "function"
+    ) {
+      return undefined;
+    }
+
     const handleShortcut = (event) => {
       const isMetaOrCtrl = event.metaKey || event.ctrlKey;
       if (!isMetaOrCtrl || event.key.toLowerCase() !== "k") return;
@@ -30,7 +37,10 @@ export function usePanelPreload(loaders, options = {}) {
   const { idleTimeout = 2000, fallbackDelay = 1200 } = options;
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.setTimeout !== "function"
+    ) {
       return undefined;
     }
 

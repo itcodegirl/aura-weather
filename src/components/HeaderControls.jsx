@@ -99,6 +99,10 @@ function HeaderControls({
   );
 
   useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
     if (!showMobileSettings) {
       return undefined;
     }

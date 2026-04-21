@@ -59,13 +59,13 @@ export default function WeatherDashboard({
       aria-busy={isBackgroundLoading}
       tabIndex={-1}
     >
-      <p
+      <h2
         id={GROUP_LABEL_IDS.currentConditions}
         className="bento-group-label"
         style={GROUP_LABEL_STYLE_VARIABLES[0]}
       >
         Current Conditions
-      </p>
+      </h2>
       <HeroCard
         weather={weather}
         location={location}
@@ -86,13 +86,13 @@ export default function WeatherDashboard({
         style={CARD_STYLE_VARIABLES[2]}
       />
 
-      <p
+      <h2
         id={GROUP_LABEL_IDS.nearTermOutlook}
         className="bento-group-label"
         style={GROUP_LABEL_STYLE_VARIABLES[1]}
       >
         Near-Term Outlook
-      </p>
+      </h2>
       <RainCard
         weather={weather}
         unit={unit}
@@ -118,13 +118,13 @@ export default function WeatherDashboard({
         />
       </Suspense>
 
-      <p
+      <h2
         id={GROUP_LABEL_IDS.riskSignals}
         className="bento-group-label"
         style={GROUP_LABEL_STYLE_VARIABLES[2]}
       >
         Risk Signals
-      </p>
+      </h2>
       <Suspense
         fallback={(
           <CardFallback
@@ -141,13 +141,13 @@ export default function WeatherDashboard({
         />
       </Suspense>
 
-      <p
+      <h2
         id={GROUP_LABEL_IDS.weekAhead}
         className="bento-group-label"
         style={GROUP_LABEL_STYLE_VARIABLES[3]}
       >
         Week Ahead
-      </p>
+      </h2>
       <ForecastCard
         weather={weather}
         unit={unit}

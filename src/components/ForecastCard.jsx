@@ -287,4 +287,10 @@ const MemoizedDayRow = memo(
     prevProps.day.rainChanceMax === nextProps.day.rainChanceMax
 );
 
-export default ForecastCard;
+export default memo(
+  ForecastCard,
+  (prevProps, nextProps) =>
+    prevProps.weather?.daily === nextProps.weather?.daily &&
+    prevProps.unit === nextProps.unit &&
+    prevProps.style === nextProps.style
+);

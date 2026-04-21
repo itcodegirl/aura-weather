@@ -185,6 +185,8 @@ export function useWeather(unit = "F", options = {}) {
   const inFlightRequestRef = useRef(null);
   const lastRequestedSignatureRef = useRef("");
   const isMountedRef = useRef(false);
+  const previousUnitRef = useRef(unit);
+  const previousClimateEnabledRef = useRef(climateEnabled);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -576,19 +578,24 @@ export function useWeather(unit = "F", options = {}) {
   const locationCountry = location?.country;
 
   useEffect(() => {
-    if (hasLocation) {
-      const nextSignature = `${locationLat},${locationLon},${unit},${climateEnabled ? 1 : 0}`;
-      if (nextSignature !== lastRequestedSignatureRef.current) {
-        scheduleWeatherLoadAsync(
-          locationLat,
-          locationLon,
-          locationName,
-          locationCountry,
-          unit,
-          { skipIfSignatureMatches: true }
-        );
-      }
+    const unitChanged = previousUnitRef.current !== unit;
+    const climateChanged = previousClimateEnabledRef.current !== climateEnabled;
+
+    previousUnitRef.current = unit;
+    previousClimateEnabledRef.current = climateEnabled;
+
+    if (!hasLocation || (!unitChanged && !climateChanged)) {
+      return;
     }
+
+    scheduleWeatherLoadAsync(
+      locationLat,
+      locationLon,
+      locationName,
+      locationCountry,
+      unit,
+      { skipIfSignatureMatches: true }
+    );
   }, [
     unit,
     climateEnabled,

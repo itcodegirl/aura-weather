@@ -97,12 +97,11 @@ function HeroCard({
   const todayLow = toDisplayTemp(weather?.daily?.temperature_2m_min?.[0]);
   const windDisplay = formatWindSpeed(current.wind_speed_10m, unit, weatherDataUnit);
   const dewPoint = toDisplayTemp(current.dew_point_2m);
-  const sunriseLabel = formatClock(weather?.daily?.sunrise?.[0]);
-  const sunsetLabel = formatClock(weather?.daily?.sunset?.[0]);
-  const daylightLabel = formatDaylightLength(
-    weather?.daily?.sunrise?.[0],
-    weather?.daily?.sunset?.[0]
-  );
+  const sunriseValue = weather?.daily?.sunrise?.[0] ?? "";
+  const sunsetValue = weather?.daily?.sunset?.[0] ?? "";
+  const sunriseLabel = formatClock(sunriseValue);
+  const sunsetLabel = formatClock(sunsetValue);
+  const daylightLabel = formatDaylightLength(sunriseValue, sunsetValue);
   const safeClimateComparison =
     climateComparison && typeof climateComparison === "object"
       ? climateComparison
@@ -208,14 +207,18 @@ function HeroCard({
             <Sunrise size={14} />
             <span>Sunrise</span>
           </div>
-          <div className="hero-sun-value">{sunriseLabel}</div>
+          <time className="hero-sun-value" dateTime={sunriseValue || undefined}>
+            {sunriseLabel}
+          </time>
         </div>
         <div className="hero-sun-chip">
           <div className="hero-sun-label">
             <Sunset size={14} />
             <span>Sunset</span>
           </div>
-          <div className="hero-sun-value">{sunsetLabel}</div>
+          <time className="hero-sun-value" dateTime={sunsetValue || undefined}>
+            {sunsetLabel}
+          </time>
         </div>
         <div className="hero-sun-chip hero-sun-chip--daylight">
           <div className="hero-sun-label">

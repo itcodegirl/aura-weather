@@ -63,6 +63,7 @@ function HeroCard({
   location,
   unit,
   weatherDataUnit = unit,
+  weatherWindSpeedUnit = weatherDataUnit === "C" ? "kmh" : "mph",
   convertTemp,
   climateComparison,
   style,
@@ -95,7 +96,11 @@ function HeroCard({
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
   const todayHigh = toDisplayTemp(weather?.daily?.temperature_2m_max?.[0]);
   const todayLow = toDisplayTemp(weather?.daily?.temperature_2m_min?.[0]);
-  const windDisplay = formatWindSpeed(current.wind_speed_10m, unit, weatherDataUnit);
+  const windDisplay = formatWindSpeed(
+    current.wind_speed_10m,
+    unit,
+    weatherWindSpeedUnit
+  );
   const dewPoint = toDisplayTemp(current.dew_point_2m);
   const sunriseValue = weather?.daily?.sunrise?.[0] ?? "";
   const sunsetValue = weather?.daily?.sunset?.[0] ?? "";

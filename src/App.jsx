@@ -253,6 +253,7 @@ function App() {
   const {
     weather,
     weatherDataUnit,
+    weatherWindSpeedUnit,
     location,
     loading,
     error,
@@ -473,6 +474,7 @@ function App() {
             location={location}
             unit={unit}
             weatherDataUnit={weatherDataUnit}
+            weatherWindSpeedUnit={weatherWindSpeedUnit}
             convertTemp={convertTemp}
             climateComparison={showClimateContext ? climateComparison : null}
             style={CARD_STYLE_VARIABLES[0]}
@@ -630,6 +632,7 @@ function App() {
               weather={weather}
               unit={unit}
               weatherDataUnit={weatherDataUnit}
+              weatherWindSpeedUnit={weatherWindSpeedUnit}
               convertTemp={convertTemp}
               style={CARD_STYLE_VARIABLES[7]}
             />

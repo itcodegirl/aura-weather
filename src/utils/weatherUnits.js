@@ -98,6 +98,38 @@ export function toCelsius(value, sourceUnit = "F") {
   return normalizedSource === "F" ? ((numeric - 32) * 5) / 9 : numeric;
 }
 
+function normalizeWindSpeedSourceUnit(value, fallback = "mph") {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase().replace(/[\s/_-]/g, "");
+
+  if (
+    normalized === "c" ||
+    normalized === "celsius" ||
+    normalized === "kmh" ||
+    normalized === "kmph" ||
+    normalized === "kmhour" ||
+    normalized === "kilometersperhour" ||
+    normalized === "kilometresperhour"
+  ) {
+    return "kmh";
+  }
+
+  if (
+    normalized === "f" ||
+    normalized === "fahrenheit" ||
+    normalized === "mph" ||
+    normalized === "mileperhour" ||
+    normalized === "milesperhour"
+  ) {
+    return "mph";
+  }
+
+  return fallback;
+}
+
 export function formatWindSpeed(speed, targetUnit, sourceUnit = "F") {
   const numeric = Number(speed);
   if (!Number.isFinite(numeric)) {
@@ -105,10 +137,10 @@ export function formatWindSpeed(speed, targetUnit, sourceUnit = "F") {
   }
   const nonNegativeSpeed = Math.max(numeric, 0);
 
-  const sourceNormalized = normalizeBool(sourceUnit);
+  const sourceNormalized = normalizeWindSpeedSourceUnit(sourceUnit);
   const targetNormalized = normalizeBool(targetUnit);
   const speedInMph =
-    sourceNormalized === "F"
+    sourceNormalized === "mph"
       ? nonNegativeSpeed
       : nonNegativeSpeed / WIND_SPEED_CONVERSION;
   const converted =

@@ -28,6 +28,10 @@ describe("weatherUnits", () => {
     assert.equal(formatWindSpeed(10, "F", "F"), "10 mph");
     assert.equal(formatWindSpeed(10, "C", "F"), "16 km/h");
     assert.equal(formatWindSpeed(16.0934, "F", "C"), "10 mph");
+    assert.equal(formatWindSpeed(20, "C", "kmh"), "20 km/h");
+    assert.equal(formatWindSpeed(20, "F", "kmh"), "12 mph");
+    assert.equal(formatWindSpeed(20, "C", "mph"), "32 km/h");
+    assert.equal(formatWindSpeed(20, "C", "celsius"), "20 km/h");
     assert.equal(formatWindSpeed("not-a-number", "C"), "\u2014");
   });
 

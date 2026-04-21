@@ -27,6 +27,7 @@ const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const GEOLOCATION_TIMEOUT_MS = 5000;
 const LOCATION_FALLBACK_DELAY_MS = GEOLOCATION_TIMEOUT_MS + 1000;
 const DEFAULT_DATA_UNIT = "F";
+const DEFAULT_WIND_DATA_UNIT = "mph";
 const LAST_LOCATION_TTL_DAYS = 30;
 
 function scheduleTask(callback) {
@@ -171,6 +172,9 @@ export function useWeather(unit = "F", options = {}) {
   const [weather, setWeather] = useState(null);
   const [location, setLocation] = useState(null);
   const [weatherDataUnit, setWeatherDataUnit] = useState(DEFAULT_DATA_UNIT);
+  const [weatherWindSpeedUnit, setWeatherWindSpeedUnit] = useState(
+    DEFAULT_WIND_DATA_UNIT
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRequest, setLastRequest] = useState(null);
@@ -214,6 +218,7 @@ export function useWeather(unit = "F", options = {}) {
 
       const requestDataUnit = normalizeTemperatureUnit(requestUnit);
       const apiTemperatureUnit = getApiTemperatureUnit(requestDataUnit);
+      const requestWindSpeedUnit = getApiWindSpeedUnit(requestDataUnit);
       const requestName = normalizeLocationName(name);
       const requestCountry = normalizeLocationName(country);
       const requestId = requestIdRef.current + 1;
@@ -249,7 +254,7 @@ export function useWeather(unit = "F", options = {}) {
           fetchWeather(safeLat, safeLon, {
             signal: controller.signal,
             temperatureUnit: apiTemperatureUnit,
-            windSpeedUnit: getApiWindSpeedUnit(requestDataUnit),
+            windSpeedUnit: requestWindSpeedUnit,
             precipitationUnit: getApiPrecipUnit(requestDataUnit),
           }),
           fetchAirQuality(safeLat, safeLon, { signal: controller.signal }),
@@ -300,6 +305,7 @@ export function useWeather(unit = "F", options = {}) {
             : null;
 
         setWeatherDataUnit(requestDataUnit);
+        setWeatherWindSpeedUnit(requestWindSpeedUnit);
         setWeather({ ...weatherData, aqi });
         setLocation({
           lat: safeLat,
@@ -603,6 +609,7 @@ export function useWeather(unit = "F", options = {}) {
   return {
     weather,
     weatherDataUnit,
+    weatherWindSpeedUnit,
     location,
     loading,
     error,

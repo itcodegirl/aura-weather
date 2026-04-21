@@ -154,7 +154,12 @@ function PressureTrend({ weather }) {
   );
 }
 
-function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
+function WindIntelligence({
+  weather,
+  unit,
+  weatherDataUnit = unit,
+  weatherWindSpeedUnit = weatherDataUnit === "C" ? "kmh" : "mph",
+}) {
   const current = weather?.current && typeof weather.current === "object" ? weather.current : {};
   const wind_speed_10m = current.wind_speed_10m;
   const wind_gusts_10m = current.wind_gusts_10m;
@@ -165,11 +170,15 @@ function WindIntelligence({ weather, unit, weatherDataUnit = unit }) {
   const sustained = Number.isFinite(safeWindSpeed) ? safeWindSpeed : 0;
   const directionDegrees = Number.isFinite(safeDirection) ? safeDirection : 0;
 
-  const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit, weatherDataUnit);
+  const sustainedDisplay = formatWindSpeed(
+    safeWindSpeed,
+    unit,
+    weatherWindSpeedUnit
+  );
   const gustsDisplay = formatWindSpeed(
     Number.isFinite(safeWindGusts) ? safeWindGusts : sustained,
     unit,
-    weatherDataUnit
+    weatherWindSpeedUnit
   );
   const direction = windDirectionName(directionDegrees);
   const strength = classifyWind(sustained, weatherDataUnit);
@@ -259,7 +268,14 @@ const MemoizedPressureTrend = memo(PressureTrend);
 const MemoizedWindIntelligence = memo(WindIntelligence);
 const MemoizedComfortIndex = memo(ComfortIndex);
 
-function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
+function StormWatch({
+  weather,
+  unit,
+  weatherDataUnit,
+  weatherWindSpeedUnit,
+  convertTemp,
+  style,
+}) {
   const stormRiskSummaryId = useId();
   const overviewCape = Number(weather?.hourly?.cape?.[0]);
   const safeOverviewCape = Number.isFinite(overviewCape) ? overviewCape : 0;
@@ -318,6 +334,7 @@ function StormWatch({ weather, unit, weatherDataUnit, convertTemp, style }) {
           weather={weather}
           unit={unit}
           weatherDataUnit={weatherDataUnit}
+          weatherWindSpeedUnit={weatherWindSpeedUnit}
         />
         <MemoizedComfortIndex
           weather={weather}

@@ -319,6 +319,53 @@
   }
 }
 
+@media (max-width: 440px) {
+  .rain-title {
+    font-size: 16px;
+  }
+
+  .rain-risk-badge {
+    min-height: 20px;
+    padding: 3px 8px;
+    font-size: 9px;
+    letter-spacing: 0.09em;
+  }
+
+  .rain-mode-toggle {
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .rain-mode-btn {
+    width: 38px;
+    height: 36px;
+  }
+
+  .rain-primary {
+    padding: 10px;
+  }
+
+  .rain-primary-value {
+    font-size: 24px;
+  }
+
+  .rain-primary-label,
+  .rain-timeline-summary {
+    font-size: 12px;
+  }
+
+  .rain-stat,
+  .rain-history-pill {
+    padding: 8px 9px;
+  }
+
+  .rain-stat-label,
+  .rain-history-pill-label,
+  .rain-timeline-labels {
+    font-size: 10px;
+  }
+}
+
 .rain-bar {
   flex: 1;
   min-height: 2px;

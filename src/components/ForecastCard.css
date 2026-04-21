@@ -373,3 +373,37 @@
   }
 }
 
+@media (max-width: 420px) {
+  .forecast-row {
+    grid-template-columns: minmax(62px, 1fr) 30px auto;
+    grid-template-areas:
+      "day icon precip"
+      "temps temps temps"
+      "range range range";
+    gap: 7px;
+    padding: 10px 9px;
+  }
+
+  .forecast-day {
+    font-size: 12px;
+  }
+
+  .forecast-precip {
+    min-width: 54px;
+    padding: 6px 7px;
+    font-size: 10px;
+  }
+
+  .forecast-temps {
+    padding: 6px 8px;
+  }
+
+  .forecast-temp-value {
+    font-size: 16px;
+  }
+
+  .forecast-temp--low .forecast-temp-value {
+    font-size: 15px;
+  }
+}
+

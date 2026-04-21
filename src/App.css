@@ -1152,6 +1152,7 @@ a:focus-visible,
 
   .app-header-primary {
     width: 100%;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
@@ -1267,6 +1268,58 @@ a:focus-visible,
   .sun-times {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --content-gutter: 0.78rem;
+    --card-padding: 18px;
+  }
+
+  .app-inner {
+    padding-top: 12px;
+    padding-bottom: 20px;
+  }
+
+  .app-header {
+    padding: 10px;
+    gap: 10px 12px;
+  }
+
+  .brand {
+    font-size: 28px;
+  }
+
+  .tagline {
+    letter-spacing: 0.13em;
+    font-size: 9px;
+  }
+
+  .app-header-primary {
+    gap: 6px;
+  }
+
+  .current-location-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 12px;
+  }
+
+  .settings-toggle {
+    min-width: 82px;
+    padding: 0 12px;
+    margin-left: 0;
+  }
+
+  .app-header-secondary {
+    gap: 6px;
+  }
+
+  .bento-group-label {
+    padding: 5px 10px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
   }
 }
 

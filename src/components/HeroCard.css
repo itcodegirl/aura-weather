@@ -359,3 +359,54 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 420px) {
+  .hero-location {
+    font-size: 15px;
+  }
+
+  .hero-date {
+    font-size: 12px;
+  }
+
+  .hero-high-low {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .hero-high-low-value {
+    font-size: 17px;
+  }
+
+  .hero-temp {
+    font-size: clamp(62px, 15vw, 74px);
+  }
+
+  .hero-icon {
+    width: 88px;
+  }
+
+  .hero-condition {
+    font-size: 18px;
+  }
+
+  .hero-sun-chip {
+    min-height: 60px;
+    gap: 4px;
+  }
+
+  .hero-sun-label,
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .hero-sun-value,
+  .stat-value {
+    font-size: 15px;
+  }
+
+  .stat {
+    gap: 10px;
+    padding: 10px;
+  }
+}

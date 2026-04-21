@@ -181,5 +181,44 @@
   }
 }
 
+@media (max-width: 420px) {
+  .nowcast-title {
+    font-size: 16px;
+  }
+
+  .nowcast-risk-badge {
+    min-height: 20px;
+    padding: 3px 8px;
+    font-size: 9px;
+    letter-spacing: 0.09em;
+  }
+
+  .nowcast-primary {
+    padding: 9px 10px;
+  }
+
+  .nowcast-summary {
+    font-size: 17px;
+    line-height: 1.28;
+  }
+
+  .nowcast-details,
+  .nowcast-meta {
+    font-size: 11px;
+  }
+
+  .nowcast-chip {
+    padding: 8px 9px;
+  }
+
+  .nowcast-chip-label {
+    font-size: 10px;
+  }
+
+  .nowcast-chip-value {
+    font-size: 15px;
+  }
+}
+
 
 

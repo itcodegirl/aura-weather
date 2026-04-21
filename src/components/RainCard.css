@@ -39,6 +39,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .rain-risk-badge--high {
@@ -83,11 +84,27 @@
   font-weight: 700;
   display: grid;
   place-items: center;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.22s ease;
 }
 
 .rain-mode-btn.is-active {
   color: #061026;
   background: linear-gradient(145deg, #f8fbff, #dbe9ff);
+  box-shadow:
+    0 6px 14px rgba(4, 12, 28, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.rain-mode-btn:hover {
+  transform: translateY(-1px);
+}
+
+.rain-mode-btn:active {
+  transform: scale(0.97);
 }
 
 .rain-primary {
@@ -246,12 +263,14 @@
   min-height: 2px;
   border-radius: 2px 2px 0 0;
   background: linear-gradient(to top, #38bdf8, #67e8f9);
-  transition: opacity 0.2s ease, background 0.2s ease;
+  transform-origin: bottom center;
+  transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
 .rain-bar:hover {
   opacity: 1 !important;
   background: linear-gradient(to top, #0ea5e9, #38bdf8);
+  transform: scaleY(1.03);
 }
 
 .rain-timeline-labels {
@@ -262,6 +281,14 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rain-mode-btn:hover,
+  .rain-mode-btn:active,
+  .rain-bar:hover {
+    transform: none;
+  }
 }
 
 

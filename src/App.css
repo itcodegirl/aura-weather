@@ -43,6 +43,12 @@
   --card-enter-duration: 520ms;
   --card-enter-stagger: 70ms;
   --card-hover-shift: -4px;
+  --motion-fast: 160ms;
+  --motion-medium: 240ms;
+  --motion-slow: 420ms;
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
+  --press-scale: 0.985;
   --focus-ring: 0 0 0 4px rgba(34, 211, 238, 0.4);
 }
 
@@ -259,6 +265,39 @@ a:focus-visible,
   }
 }
 
+@keyframes header-settle {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes controls-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes settings-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .app-header {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -278,6 +317,7 @@ a:focus-visible,
     inset 0 1px 0 rgba(228, 240, 255, 0.12);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  animation: header-settle var(--motion-slow) var(--ease-emphasis) both;
 }
 
 .brand-wrap {
@@ -289,6 +329,8 @@ a:focus-visible,
   align-items: center;
   column-gap: 12px;
   row-gap: 2px;
+  animation: controls-reveal 460ms var(--ease-standard) both;
+  animation-delay: 80ms;
 }
 
 .brand {
@@ -325,6 +367,8 @@ a:focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  animation: controls-reveal 460ms var(--ease-standard) both;
+  animation-delay: 130ms;
 }
 
 .app-header-primary,
@@ -356,7 +400,12 @@ a:focus-visible,
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
-  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-medium) var(--ease-standard);
   backdrop-filter: blur(var(--card-backdrop-blur));
   -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
 }
@@ -394,7 +443,12 @@ a:focus-visible,
   letter-spacing: 0.03em;
   font-weight: 700;
   color: var(--text-muted);
-  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-medium) var(--ease-standard);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -417,6 +471,9 @@ a:focus-visible,
 .toggle-pill-btn.is-active {
   color: #021127;
   background: linear-gradient(145deg, #f9fcff, #d9eaff);
+  box-shadow:
+    0 6px 14px rgba(4, 12, 28, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
 }
 
 .toggle-pill {
@@ -441,6 +498,17 @@ a:focus-visible,
 .settings-toggle:hover {
   color: #f8fbff;
   transform: translateY(-1px);
+  border-color: rgba(174, 227, 255, 0.44);
+  box-shadow:
+    0 8px 18px rgba(4, 12, 28, 0.26),
+    inset 0 1px 0 rgba(229, 241, 255, 0.14);
+}
+
+.current-location-btn:active,
+.unit-btn:active,
+.toggle-pill-btn:active,
+.settings-toggle:active {
+  transform: scale(var(--press-scale));
 }
 
 .current-location-btn:disabled {
@@ -491,7 +559,11 @@ a:focus-visible,
   box-shadow: var(--card-shadow);
   backdrop-filter: blur(var(--card-backdrop-blur));
   -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
-  transition: transform 200ms ease, border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+  transition:
+    transform var(--motion-medium) var(--ease-emphasis),
+    border-color var(--motion-fast) var(--ease-standard),
+    background var(--motion-medium) var(--ease-standard),
+    box-shadow var(--motion-medium) var(--ease-standard);
 }
 
 .bento > section::after {
@@ -501,6 +573,17 @@ a:focus-visible,
   border-radius: calc(var(--card-radius) - 1px);
   pointer-events: none;
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bento > section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 24% 0%, rgba(231, 241, 255, 0.18), transparent 62%);
+  transition: opacity var(--motion-medium) var(--ease-standard);
 }
 
 .bento > section:hover {
@@ -513,6 +596,11 @@ a:focus-visible,
     0 32px 80px rgba(3, 9, 24, 0.46),
     0 14px 34px rgba(129, 160, 240, 0.16),
     inset 0 1px 0 rgba(243, 248, 255, 0.18);
+}
+
+.bento > section:hover::before,
+.bento > section:focus-within::before {
+  opacity: 1;
 }
 
 .bento > section:focus-within {
@@ -832,10 +920,16 @@ a:focus-visible,
   color: #081126;
   font-size: 14px;
   font-weight: 700;
+  transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-medium) var(--ease-standard);
 }
 
 .error-retry:hover {
   transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(4, 12, 30, 0.34);
+}
+
+.error-retry:active {
+  transform: scale(var(--press-scale));
 }
 
 .location-notice {
@@ -885,6 +979,19 @@ a:focus-visible,
   min-height: 28px;
   font-size: 11px;
   font-weight: 700;
+  transition:
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.app-status-retry:hover {
+  background: rgba(254, 242, 242, 0.24);
+  border-color: rgba(254, 226, 226, 0.74);
+}
+
+.app-status-retry:active {
+  transform: scale(var(--press-scale));
 }
 
 @media (max-width: 980px) {
@@ -998,6 +1105,7 @@ a:focus-visible,
 
   .app-header-secondary.is-open {
     display: flex;
+    animation: settings-reveal 220ms var(--ease-standard) both;
   }
 
   .settings-toggle {
@@ -1136,6 +1244,16 @@ a:focus-visible,
   .bento-group-label,
   .bento > section {
     opacity: 1;
+    transform: none;
+  }
+
+  .bento > section:hover,
+  .current-location-btn:hover,
+  .unit-btn:hover,
+  .toggle-pill-btn:hover,
+  .settings-toggle:hover,
+  .error-retry:hover,
+  .app-status-retry:hover {
     transform: none;
   }
 }

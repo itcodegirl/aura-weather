@@ -4,6 +4,7 @@ import { memo, useId, useMemo } from "react";
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -169,6 +170,9 @@ function HourlyCard({
   const minTemp = Math.floor(safeMinTemp - 2);
   const maxTemp = Math.ceil(safeMaxTemp + 2);
   const nowLabel = data[0]?.label;
+  const chartLede = Number.isFinite(currentTemp)
+    ? `Now ${currentTemp}\u00B0${unit} · Low ${Math.round(safeMinTemp)}\u00B0 · High ${Math.round(safeMaxTemp)}\u00B0`
+    : `Range ${Math.round(safeMinTemp)}\u00B0 to ${Math.round(safeMaxTemp)}\u00B0`;
 
   return (
     <section
@@ -184,6 +188,7 @@ function HourlyCard({
         </h2>
         <span className="chart-subtitle">Next 24h</span>
       </header>
+      <p className="chart-lede">{chartLede}</p>
 
       <div className="chart-body">
         <p id={chartSummaryId} className="sr-only">
@@ -196,7 +201,7 @@ function HourlyCard({
           >
             <defs>
               <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={topColor} stopOpacity={0.7} />
+                <stop offset="0%" stopColor={topColor} stopOpacity={0.8} />
                 <stop
                   offset="100%"
                   stopColor={bottomColor}
@@ -205,44 +210,52 @@ function HourlyCard({
               </linearGradient>
             </defs>
 
+            <CartesianGrid
+              vertical={false}
+              stroke="rgba(176, 206, 255, 0.14)"
+              strokeDasharray="3 6"
+            />
+
             <XAxis
               dataKey="label"
               ticks={xTicks}
               interval={0}
-              stroke="rgba(255,255,255,0.35)"
-              tick={{ fontSize: 10, fill: "rgba(255,255,255,0.65)" }}
+              stroke="rgba(214,232,255,0.2)"
+              tick={{ fontSize: 11, fill: "rgba(226,239,255,0.72)" }}
               axisLine={false}
               tickLine={false}
+              tickMargin={10}
             />
 
             <YAxis
               domain={[minTemp, maxTemp]}
-              stroke="rgba(255,255,255,0.35)"
-              tick={{ fontSize: 10, fill: "rgba(255,255,255,0.65)" }}
+              stroke="rgba(214,232,255,0.2)"
+              tick={{ fontSize: 11, fill: "rgba(226,239,255,0.68)" }}
               axisLine={false}
               tickLine={false}
-              width={32}
+              width={34}
+              tickMargin={8}
               tickFormatter={(value) => `${value}\u00B0`}
             />
 
             <Tooltip
               content={<ChartTooltip unit={unit} />}
               cursor={{
-                stroke: "rgba(255,255,255,0.3)",
-                strokeDasharray: "4 4",
+                stroke: "rgba(208, 231, 255, 0.45)",
+                strokeDasharray: "3 4",
               }}
             />
 
             {nowLabel ? (
               <ReferenceLine
                 x={nowLabel}
-                stroke="rgba(255,255,255,0.4)"
+                stroke="rgba(215, 236, 255, 0.5)"
                 strokeDasharray="3 3"
                 label={{
                   value: "Now",
                   position: "top",
-                  fill: "rgba(255,255,255,0.75)",
-                  fontSize: 10,
+                  fill: "rgba(235,245,255,0.85)",
+                  fontSize: 11,
                   fontWeight: 600,
                 }}
               />
@@ -252,11 +265,11 @@ function HourlyCard({
               type="monotone"
               dataKey="temp"
               stroke={topColor}
-              strokeWidth={2.5}
+              strokeWidth={2.8}
               fill={`url(#${chartGradientId})`}
               dot={false}
               activeDot={{
-                r: 5,
+                r: 6,
                 fill: "#fff",
                 stroke: topColor,
                 strokeWidth: 2,

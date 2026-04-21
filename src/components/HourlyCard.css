@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   grid-column: span 5;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
   min-height: clamp(240px, 32vw, 340px);
 }
@@ -11,6 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
 }
 
 .chart-title {
@@ -24,6 +25,30 @@
   letter-spacing: -0.01em;
 }
 
+.chart-title svg {
+  color: rgba(198, 229, 255, 0.95);
+}
+
+.hourly-chart .chart-subtitle {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(179, 206, 245, 0.24);
+  background: rgba(8, 17, 35, 0.44);
+  color: rgba(224, 236, 255, 0.9);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.chart-lede {
+  margin: 0;
+  color: rgba(222, 236, 255, 0.88);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .chart-body {
   position: relative;
   flex: 1;
@@ -32,39 +57,60 @@
   max-height: clamp(180px, 30vh, 260px);
   min-width: 0;
   min-height: clamp(178px, 22vh, 228px);
+  padding: 12px 10px 8px;
+  border-radius: calc(var(--radius-sm) + 2px);
+  border: 1px solid rgba(184, 210, 249, 0.2);
+  background:
+    linear-gradient(180deg, rgba(12, 24, 48, 0.58), rgba(8, 17, 35, 0.52)),
+    rgba(8, 17, 36, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 242, 255, 0.08),
+    0 12px 28px rgba(3, 8, 22, 0.24);
 }
 
 .chart-tooltip {
-  min-width: 112px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(191, 214, 255, 0.3);
-  background: linear-gradient(180deg, rgba(7, 14, 31, 0.94), rgba(4, 10, 22, 0.92));
-  box-shadow: 0 14px 36px rgba(2, 8, 22, 0.55);
+  min-width: 126px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  border: 1px solid rgba(191, 214, 255, 0.34);
+  background: linear-gradient(180deg, rgba(7, 14, 31, 0.96), rgba(4, 10, 22, 0.94));
+  box-shadow: 0 16px 36px rgba(2, 8, 22, 0.58);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .chart-tooltip-time {
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .chart-tooltip-temp {
   font-family: var(--font-display);
-  font-size: 21px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.02em;
 }
 
 .chart-tooltip-condition {
-  margin-top: 3px;
+  margin-top: 4px;
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .chart-body {
+    padding: 10px 6px 6px;
+  }
+
+  .chart-lede {
+    font-size: 13px;
+  }
 }
 
 

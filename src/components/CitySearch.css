@@ -94,6 +94,7 @@
   position: absolute;
   inset: calc(100% + 10px) 0 auto;
   z-index: 50;
+  --card-backdrop-blur: 14px;
   max-height: 320px;
   overflow: hidden auto;
   list-style: none;
@@ -101,8 +102,6 @@
   border: 1px solid rgba(193, 217, 255, 0.25);
   background: linear-gradient(180deg, rgba(7, 14, 31, 0.94), rgba(6, 11, 26, 0.94));
   box-shadow: 0 26px 52px rgba(2, 6, 19, 0.6);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   transform-origin: top center;
   animation: dropdown-reveal 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
 }

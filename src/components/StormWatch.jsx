@@ -307,7 +307,7 @@ function StormWatch({
   );
 
   return (
-    <section className="bento-storm storm-watch" style={style}>
+    <section className="bento-storm storm-watch glass" style={style}>
       <header className="storm-header">
         <div className="storm-header-main">
           <h2 className="storm-title">

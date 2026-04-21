@@ -11,7 +11,7 @@ export default function AppHeader({
   setUnit,
 }) {
   return (
-    <header className="app-header">
+    <header className="app-header glass">
       <div className="brand-wrap">
         <img
           src="/atmosphere-ring.svg"

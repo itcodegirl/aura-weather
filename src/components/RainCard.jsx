@@ -5,12 +5,9 @@ import { CloudRain, Droplets, Clock } from "lucide-react";
 import WeatherIcon from "./WeatherIcon";
 import { useRainAnalysis } from "../hooks/useRainAnalysis";
 import { formatPrecipitation, getPrecipUnitLabel } from "../utils/weatherUnits";
+import { formatHour } from "../utils/dates";
 import { CardHeader } from "./ui";
 import "./RainCard.css";
-
-function formatHour(date) {
-  return date.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
-}
 
 function getRainTimelineSummary(hours, nextRain, peak, total, unit, dataUnit) {
   if (!Array.isArray(hours) || hours.length === 0) {
@@ -71,7 +68,7 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
   const isDry = peak.probability < 20 && total < 0.01;
 
   return (
-    <section className="bento-rain rain-card" style={style}>
+    <section className="bento-rain rain-card glass" style={style}>
       <CardHeader
         headerClassName="rain-header"
         title="Rain Outlook"

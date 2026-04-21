@@ -88,7 +88,7 @@ function CitySearch({ onSelect }, ref) {
       {showDropdown && (
         <ul
           id={resultsId}
-          className="city-search-dropdown"
+          className="city-search-dropdown glass"
           role="listbox"
           aria-label="City suggestions"
         >

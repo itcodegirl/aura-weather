@@ -77,7 +77,7 @@ function ChartTooltip({ active, payload, unit }) {
     : "\u2014";
 
   return (
-    <div className="chart-tooltip">
+    <div className="chart-tooltip glass">
       <div className="chart-tooltip-time">{data.label}</div>
       <div className="chart-tooltip-temp">{tempText}</div>
       <div className="chart-tooltip-condition">{info.label}</div>
@@ -139,7 +139,7 @@ function HourlyCard({
   if (!data.length) {
     return (
       <section
-        className="bento-chart hourly-chart"
+        className="bento-chart hourly-chart glass"
         style={style}
         aria-labelledby={chartTitleId}
         aria-describedby={chartSummaryId}
@@ -187,8 +187,8 @@ function HourlyCard({
     : `Range ${Math.round(safeMinTemp)}\u00B0 to ${Math.round(safeMaxTemp)}\u00B0`;
 
   return (
-    <section
-      className="bento-chart hourly-chart"
+      <section
+        className="bento-chart hourly-chart glass"
       style={style}
       aria-labelledby={chartTitleId}
       aria-describedby={chartSummaryId}

@@ -82,7 +82,7 @@ export default function HeaderControls({
         />
         <button
           type="button"
-          className="current-location-btn"
+          className="current-location-btn glass"
           onClick={() => {
             loadCurrentLocation();
             setShowMobileSettings(false);
@@ -94,7 +94,7 @@ export default function HeaderControls({
         </button>
         <button
           type="button"
-          className="settings-toggle"
+          className="settings-toggle glass"
           aria-label={showMobileSettings ? "Hide display settings" : "Show display settings"}
           aria-expanded={showMobileSettings}
           aria-controls="mobile-settings-panel"
@@ -112,7 +112,7 @@ export default function HeaderControls({
         aria-label="Display settings"
       >
         <div
-          className="toggle-pill"
+          className="toggle-pill glass"
           role="group"
           aria-label="Climate context settings"
         >
@@ -136,7 +136,7 @@ export default function HeaderControls({
           </button>
         </div>
 
-        <div className="unit-toggle" role="group" aria-label="Temperature unit">
+        <div className="unit-toggle glass" role="group" aria-label="Temperature unit">
           <button
             onClick={() => setUnit("F")}
             className={`unit-btn ${unit === "F" ? "is-active" : ""}`}

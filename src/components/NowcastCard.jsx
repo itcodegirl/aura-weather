@@ -178,7 +178,7 @@ function NowcastCard({ weather, style }) {
     : "\u2014";
 
   return (
-    <section className="bento-nowcast nowcast-card" style={style}>
+    <section className="bento-nowcast nowcast-card glass" style={style}>
       <header className="nowcast-header">
         <div className="nowcast-title-wrap">
           <h2 className="nowcast-title">

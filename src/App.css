@@ -146,6 +146,11 @@ a:focus-visible,
   transform: translateY(0);
 }
 
+.glass {
+  backdrop-filter: blur(var(--card-backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
+}
+
 #main-content:focus-visible {
   outline: 2px solid #f8fafc;
   outline-offset: 8px;
@@ -320,8 +325,6 @@ a:focus-visible,
     0 24px 56px rgba(3, 10, 25, 0.34),
     0 8px 20px rgba(17, 29, 59, 0.2),
     inset 0 1px 0 rgba(228, 240, 255, 0.12);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
   animation: header-settle var(--motion-slow) var(--ease-emphasis) both;
 }
 
@@ -411,8 +414,6 @@ a:focus-visible,
     transform var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard),
     box-shadow var(--motion-medium) var(--ease-standard);
-  backdrop-filter: blur(var(--card-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
 }
 
 .settings-toggle[aria-expanded="true"] {
@@ -427,8 +428,6 @@ a:focus-visible,
   background: rgba(8, 17, 38, 0.56);
   border: 1px solid rgba(198, 218, 255, 0.24);
   box-shadow: inset 0 1px 0 rgba(226, 238, 255, 0.08);
-  backdrop-filter: blur(var(--card-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
 }
 
 .unit-toggle {
@@ -584,8 +583,6 @@ a:focus-visible,
     linear-gradient(168deg, rgba(13, 24, 49, 0.68), rgba(8, 15, 33, 0.56)),
     linear-gradient(132deg, rgba(184, 167, 255, 0.08), rgba(111, 188, 255, 0.05) 58%, transparent 84%);
   box-shadow: var(--card-shadow);
-  backdrop-filter: blur(var(--card-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
   transition:
     transform var(--motion-medium) var(--ease-emphasis),
     border-color var(--motion-fast) var(--ease-standard),
@@ -1112,15 +1109,7 @@ a:focus-visible,
     justify-content: center;
   }
 
-  .bento > section,
-  .bento-hero,
-  .bento-exposure,
-  .bento-sunlight,
-  .bento-chart,
-  .bento-rain,
-  .bento-nowcast,
-  .bento-storm,
-  .bento-forecast {
+  .bento > [class*="bento-"] {
     grid-column: auto;
     min-height: 0;
   }

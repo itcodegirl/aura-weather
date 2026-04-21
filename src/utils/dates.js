@@ -60,3 +60,17 @@ export function formatShortDate(isoDate) {
     day: "numeric",
   });
 }
+
+/**
+ * Formats a Date as a short hour label like "3 PM" or "11 AM".
+ */
+export function formatHour(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "\u2014";
+  }
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    hour12: true,
+  });
+}

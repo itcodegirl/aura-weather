@@ -184,7 +184,7 @@ function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
 
   if (!days.length) {
     return (
-      <section className="bento-forecast forecast-card" style={style}>
+      <section className="bento-forecast forecast-card glass" style={style}>
         <CardHeader
           headerClassName="forecast-header"
           title="7-Day Forecast"
@@ -217,7 +217,7 @@ function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
   const weekSummary = buildWeekSummary(days, weekMin, weekMax, unit, weatherDataUnit);
 
   return (
-    <section className="bento-forecast forecast-card" style={style}>
+    <section className="bento-forecast forecast-card glass" style={style}>
       <CardHeader
         headerClassName="forecast-header"
         title="7-Day Forecast"

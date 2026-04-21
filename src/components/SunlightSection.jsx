@@ -43,7 +43,7 @@ export default function SunlightSection({ sunrise, sunset, style }) {
 
   return (
     <section
-      className="bento-sunlight metric-card"
+      className="bento-sunlight metric-card glass"
       style={style}
       aria-labelledby={SUNLIGHT_LABEL_ID}
     >
@@ -71,4 +71,3 @@ export default function SunlightSection({ sunrise, sunset, style }) {
     </section>
   );
 }
-

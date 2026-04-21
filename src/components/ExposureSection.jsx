@@ -20,7 +20,7 @@ export default function ExposureSection({ aqi, uvIndex, style }) {
 
   return (
     <section
-      className="bento-exposure exposure-card metric-card"
+      className="bento-exposure exposure-card metric-card glass"
       style={style}
       aria-labelledby={METRIC_LABEL_IDS.exposure}
     >

@@ -71,13 +71,12 @@
 
 .chart-tooltip {
   min-width: 126px;
+  --card-backdrop-blur: 8px;
   padding: 11px 13px;
   border-radius: 13px;
   border: 1px solid rgba(191, 214, 255, 0.34);
   background: linear-gradient(180deg, rgba(7, 14, 31, 0.96), rgba(4, 10, 22, 0.94));
   box-shadow: 0 16px 36px rgba(2, 8, 22, 0.58);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .chart-tooltip-time {

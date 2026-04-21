@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { formatDayLabel, formatShortDate, parseLocalDate } from "./dates.js";
+import { formatDayLabel, formatShortDate, parseLocalDate, formatHour } from "./dates.js";
 
 function toIsoLocalDate(value) {
   const year = value.getFullYear();
@@ -50,5 +50,19 @@ describe("dates utils", () => {
       day: "numeric",
     });
     assert.equal(formatShortDate(iso), expected);
+  });
+
+  test("formatHour renders a Date into a locale hour label", () => {
+    const target = new Date("2026-04-20T15:00:00");
+    const expected = target.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      hour12: true,
+    });
+
+    assert.equal(formatHour(target), expected);
+  });
+
+  test("formatHour returns fallback for invalid input", () => {
+    assert.equal(formatHour("not-a-date"), "\u2014");
   });
 });

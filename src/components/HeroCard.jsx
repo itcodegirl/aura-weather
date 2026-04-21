@@ -59,7 +59,7 @@ function HeroCard({
 }) {
   if (!weather?.current || !location) {
     return (
-      <section className="bento-hero hero-card" style={style}>
+      <section className="bento-hero hero-card glass" style={style}>
         <header className="hero-meta">
           <div className="hero-location">
             <MapPin size={14} />
@@ -145,7 +145,7 @@ function HeroCard({
   });
 
   return (
-    <section className="bento-hero hero-card" style={style}>
+    <section className="bento-hero hero-card glass" style={style}>
       <header className="hero-meta">
         <div className="hero-location-block">
           <div className="hero-location">

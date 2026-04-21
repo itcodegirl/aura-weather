@@ -60,6 +60,7 @@
 }
 
 .forecast-row {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(88px, 116px) 38px minmax(164px, 186px) minmax(0, 1fr) minmax(72px, 86px);
   align-items: center;
@@ -71,7 +72,30 @@
   box-shadow:
     inset 0 1px 0 rgba(236, 244, 255, 0.08),
     0 10px 20px rgba(3, 8, 22, 0.2);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.forecast-row:first-child {
+  border-color: rgba(147, 219, 255, 0.4);
+  background: linear-gradient(162deg, rgba(16, 32, 63, 0.78), rgba(9, 18, 39, 0.62));
+  box-shadow:
+    inset 0 1px 0 rgba(236, 244, 255, 0.14),
+    0 12px 24px rgba(4, 10, 24, 0.24);
+}
+
+.forecast-row:first-child::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(125, 221, 255, 0.9), rgba(105, 164, 255, 0.74));
+}
+
+.forecast-row:first-child .forecast-day {
+  color: #f7fbff;
 }
 
 .forecast-row:hover {
@@ -335,6 +359,12 @@
     padding: 11px 10px;
   }
 
+  .forecast-row:first-child::before {
+    left: 4px;
+    top: 8px;
+    bottom: 8px;
+  }
+
   .forecast-day {
     font-size: 13px;
   }
@@ -382,6 +412,12 @@
       "range range range";
     gap: 7px;
     padding: 10px 9px;
+  }
+
+  .forecast-row:first-child::before {
+    left: 3px;
+    top: 7px;
+    bottom: 7px;
   }
 
   .forecast-day {

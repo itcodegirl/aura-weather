@@ -1,4 +1,6 @@
-export default function StatusStack({
+import { memo } from "react";
+
+function StatusStack({
   locationNotice,
   isBackgroundLoading,
   showRefreshError,
@@ -39,3 +41,5 @@ export default function StatusStack({
     </div>
   );
 }
+
+export default memo(StatusStack);

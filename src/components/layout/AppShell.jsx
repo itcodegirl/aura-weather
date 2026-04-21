@@ -1,7 +1,8 @@
+import { memo } from "react";
 import { CloudOff } from "lucide-react";
 import WeatherIcon from "../WeatherIcon";
 
-export function AppLoadingState() {
+const AppLoadingState = memo(() => {
   return (
     <div className="app app--loading">
       <div
@@ -20,9 +21,9 @@ export function AppLoadingState() {
       </div>
     </div>
   );
-}
+});
 
-export function AppErrorState({ error, onRetry }) {
+const AppErrorState = memo(({ error, onRetry }) => {
   return (
     <div className="app app--error">
       <div className="error-card">
@@ -39,9 +40,9 @@ export function AppErrorState({ error, onRetry }) {
       </div>
     </div>
   );
-}
+});
 
-export default function AppShell({ background, children }) {
+function AppShell({ background, children }) {
   return (
     <div className="app" style={{ background }}>
       <a href="#main-content" className="skip-link">
@@ -55,3 +56,7 @@ export default function AppShell({ background, children }) {
     </div>
   );
 }
+
+export { AppLoadingState, AppErrorState };
+
+export default memo(AppShell);

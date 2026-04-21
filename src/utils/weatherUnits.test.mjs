@@ -12,6 +12,7 @@ import {
   parseCoordinates,
   validateCoordinates,
   toFahrenheit,
+  convertTemperature,
 } from "./weatherUnits.js";
 
 describe("weatherUnits", () => {
@@ -69,5 +70,13 @@ describe("weatherUnits", () => {
   test("supports dewpoint conversion to Fahrenheit", () => {
     assert.equal(toFahrenheit(0, "C"), 32);
     assert.equal(toFahrenheit(100, "F"), 100);
+  });
+
+  test("converts temperatures between display units", () => {
+    assert.equal(convertTemperature(32, "C", "F"), 0);
+    assert.equal(convertTemperature(0, "F", "C"), 32);
+    assert.equal(convertTemperature(20, "C", "C"), 20);
+    assert.equal(convertTemperature(68, "F", "F"), 68);
+    assert.equal(Number.isNaN(convertTemperature("not-a-number", "F", "C")), true);
   });
 });

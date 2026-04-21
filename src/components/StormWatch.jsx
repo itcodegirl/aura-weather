@@ -17,6 +17,7 @@ import {
   windDirectionName,
   classifyWind,
 } from "../utils/meteorology";
+import { convertTemperature } from "../utils/weatherUnits";
 import { formatWindSpeed } from "../utils/windUnits";
 import "./StormWatch.css";
 
@@ -223,11 +224,12 @@ function WindIntelligence({
   );
 }
 
-function ComfortIndex({ weather, unit, weatherDataUnit = unit, convertTemp }) {
+function ComfortIndex({ weather, unit, weatherDataUnit = unit }) {
   const dewpoint = weather?.current?.dew_point_2m;
   const safeDewpoint = Number(dewpoint);
-  const dewpointDisplay = Number.isFinite(safeDewpoint)
-    ? convertTemp(safeDewpoint)
+  const dewpointConverted = convertTemperature(safeDewpoint, unit, weatherDataUnit);
+  const dewpointDisplay = Number.isFinite(dewpointConverted)
+    ? Math.round(dewpointConverted)
     : "\u2014";
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
   const comfort = classifyComfort(
@@ -273,7 +275,6 @@ function StormWatch({
   unit,
   weatherDataUnit,
   weatherWindSpeedUnit,
-  convertTemp,
   style,
 }) {
   const stormRiskSummaryId = useId();
@@ -340,7 +341,6 @@ function StormWatch({
           weather={weather}
           unit={unit}
           weatherDataUnit={weatherDataUnit}
-          convertTemp={convertTemp}
         />
       </div>
     </section>

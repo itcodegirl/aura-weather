@@ -13,9 +13,15 @@ import {
 } from "recharts";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
+import { convertTemperature } from "../utils/weatherUnits";
 import "./HourlyCard.css";
 
-function buildHourlyData(hourly, convertTemp) {
+function toDisplayTemperature(value, unit, sourceUnit) {
+  const converted = convertTemperature(value, unit, sourceUnit);
+  return Number.isFinite(converted) ? Math.round(converted) : Number.NaN;
+}
+
+function buildHourlyData(hourly, unit, sourceUnit) {
   if (
     !Array.isArray(hourly?.time) ||
     !Array.isArray(hourly.temperature_2m) ||
@@ -42,7 +48,7 @@ function buildHourlyData(hourly, convertTemp) {
       const rawTemp = hourly.temperature_2m[idx + i];
       const baseTemp = Number(rawTemp);
       const convertedTemp = Number.isFinite(baseTemp)
-        ? Number(convertTemp(baseTemp))
+        ? toDisplayTemperature(baseTemp, unit, sourceUnit)
         : Number.NaN;
 
       return {
@@ -102,7 +108,7 @@ function getHourlySummary(data, unit) {
 function HourlyCard({
   weather,
   unit,
-  convertTemp,
+  weatherDataUnit = unit,
   chartTopColor,
   chartBottomColor,
   style,
@@ -112,9 +118,10 @@ function HourlyCard({
   const chartTitleId = `${chartId}-title`;
   const chartSummaryId = `${chartId}-summary`;
   const chartGradientId = `${chartId}-temp-gradient`.replace(/:/g, "");
-  const data = useMemo(() => buildHourlyData(weather?.hourly, convertTemp), [
+  const data = useMemo(() => buildHourlyData(weather?.hourly, unit, weatherDataUnit), [
     weather?.hourly,
-    convertTemp,
+    unit,
+    weatherDataUnit,
   ]);
   const palette = useMemo(() => {
     const hourlyCodes = data
@@ -156,7 +163,7 @@ function HourlyCard({
   const xTicks = data.filter((_, i) => i % 3 === 0).map((d) => d.label);
   const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
   const currentTemp = Number.isFinite(Number(weather?.current?.temperature_2m))
-    ? Number(convertTemp(weather.current.temperature_2m))
+    ? toDisplayTemperature(weather.current.temperature_2m, unit, weatherDataUnit)
     : Number.NaN;
   const safeMinTemp = temps.length
     ? Math.min(...temps)

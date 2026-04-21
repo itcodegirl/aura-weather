@@ -12,6 +12,7 @@ import {
   Sun,
 } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
+import { convertTemperature } from "../utils/weatherUnits";
 import { formatWindSpeed } from "../utils/windUnits";
 import WeatherIcon from "./WeatherIcon";
 import "./HeroCard.css";
@@ -64,7 +65,6 @@ function HeroCard({
   unit,
   weatherDataUnit = unit,
   weatherWindSpeedUnit = weatherDataUnit === "C" ? "kmh" : "mph",
-  convertTemp,
   climateComparison,
   style,
 }) {
@@ -91,8 +91,10 @@ function HeroCard({
     ? safeLocation.country.trim()
     : "";
   const info = getWeather(current.weather_code);
-  const toDisplayTemp = (value) =>
-    Number.isFinite(Number(value)) ? convertTemp(Number(value)) : "\u2014";
+  const toDisplayTemp = (value, sourceUnit = weatherDataUnit) => {
+    const converted = convertTemperature(value, unit, sourceUnit);
+    return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
+  };
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
   const todayHigh = toDisplayTemp(weather?.daily?.temperature_2m_max?.[0]);
   const todayLow = toDisplayTemp(weather?.daily?.temperature_2m_min?.[0]);
@@ -117,7 +119,7 @@ function HeroCard({
     ? climateDifference
     : null;
   const climateDelta = hasClimateComparison
-    ? convertTemp(
+    ? toDisplayTemp(
         Math.abs(climateDeltaRaw),
         typeof safeClimateComparison?.differenceUnit === "string"
           ? safeClimateComparison.differenceUnit

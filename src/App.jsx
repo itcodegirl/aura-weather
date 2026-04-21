@@ -1,4 +1,4 @@
-﻿import { useCallback, useRef, useEffect, lazy, Suspense } from "react";
+import { useRef, useEffect, lazy, Suspense } from "react";
 import { CloudOff } from "lucide-react";
 import "./App.css";
 import { useWeather } from "./hooks/useWeather";
@@ -156,18 +156,6 @@ function App() {
   const showRefreshError = Boolean(error) && hasWeatherData;
   const hasStatusStack = Boolean(
     locationNotice || isBackgroundLoading || showRefreshError
-  );
-
-  const convertTemp = useCallback(
-    (value, sourceUnit = weatherDataUnit || "F") => {
-      if (!Number.isFinite(Number(value))) return "\u2014";
-      const normalizedSource = sourceUnit === "C" ? "C" : "F";
-
-      if (unit === normalizedSource) return Math.round(value);
-      if (unit === "F") return Math.round((Number(value) * 9) / 5 + 32);
-      return Math.round(((Number(value) - 32) * 5) / 9);
-    },
-    [unit, weatherDataUnit]
   );
 
   useEffect(() => {
@@ -365,7 +353,6 @@ function App() {
             unit={unit}
             weatherDataUnit={weatherDataUnit}
             weatherWindSpeedUnit={weatherWindSpeedUnit}
-            convertTemp={convertTemp}
             climateComparison={showClimateContext ? climateComparison : null}
             style={CARD_STYLE_VARIABLES[0]}
           />
@@ -461,7 +448,7 @@ function App() {
             <HourlyCard
               weather={weather}
               unit={unit}
-              convertTemp={convertTemp}
+              weatherDataUnit={weatherDataUnit}
               chartTopColor={weatherInfo?.gradient?.[0]}
               chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
               style={CARD_STYLE_VARIABLES[5]}
@@ -488,7 +475,6 @@ function App() {
               unit={unit}
               weatherDataUnit={weatherDataUnit}
               weatherWindSpeedUnit={weatherWindSpeedUnit}
-              convertTemp={convertTemp}
               style={CARD_STYLE_VARIABLES[6]}
             />
           </Suspense>
@@ -502,7 +488,7 @@ function App() {
           <ForecastCard
             weather={weather}
             unit={unit}
-            convertTemp={convertTemp}
+            weatherDataUnit={weatherDataUnit}
             style={CARD_STYLE_VARIABLES[7]}
           />
         </main>
@@ -512,5 +498,3 @@ function App() {
 }
 
 export default App;
-
-

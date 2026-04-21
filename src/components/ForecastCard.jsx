@@ -4,6 +4,7 @@ import { memo } from "react";
 import { CalendarDays, Droplets } from "lucide-react";
 import { getWeather } from "../utils/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
+import { convertTemperature } from "../utils/weatherUnits";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
 
@@ -35,7 +36,12 @@ function getDaySignal(day, weekMin, weekMax) {
   return { label: "Steady", tone: "steady" };
 }
 
-function buildWeekSummary(days, weekMin, weekMax, convertTemp) {
+function toDisplayTemp(value, unit, weatherDataUnit) {
+  const converted = convertTemperature(value, unit, weatherDataUnit);
+  return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
+}
+
+function buildWeekSummary(days, weekMin, weekMax, unit, weatherDataUnit) {
   const firstMax = days[0]?.temp_max;
   const lastMax = days[days.length - 1]?.temp_max;
   const delta =
@@ -51,16 +57,20 @@ function buildWeekSummary(days, weekMin, weekMax, convertTemp) {
     wettestDay.precipitation_probability_max >= 25
       ? `${formatDayLabel(wettestDay.date)} peaks at ${wettestDay.precipitation_probability_max}% rain chance`
       : "Rain chances stay mostly low";
-  const weekRangeText = `${convertTemp(weekMin)}\u00B0 to ${convertTemp(weekMax)}\u00B0`;
+  const weekRangeText = `${toDisplayTemp(weekMin, unit, weatherDataUnit)}\u00B0 to ${toDisplayTemp(weekMax, unit, weatherDataUnit)}\u00B0`;
 
   return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
 }
 
-function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
+function DayRow({ day, weekMin, weekMax, unit, weatherDataUnit, rangeGradient }) {
   const info = getWeather(day.weather_code);
   const label = formatDayLabel(day.date);
-  const high = Number.isFinite(day.temp_max) ? convertTemp(day.temp_max) : "\u2014";
-  const low = Number.isFinite(day.temp_min) ? convertTemp(day.temp_min) : "\u2014";
+  const high = Number.isFinite(day.temp_max)
+    ? toDisplayTemp(day.temp_max, unit, weatherDataUnit)
+    : "\u2014";
+  const low = Number.isFinite(day.temp_min)
+    ? toDisplayTemp(day.temp_min, unit, weatherDataUnit)
+    : "\u2014";
   const tempUnit = "\u00B0";
   const rainChance = day.precipitation_probability_max;
   const hasNotableRainChance = rainChance >= 20;
@@ -136,7 +146,7 @@ function DayRow({ day, weekMin, weekMax, convertTemp, rangeGradient }) {
   );
 }
 
-function ForecastCard({ weather, convertTemp, style }) {
+function ForecastCard({ weather, unit, weatherDataUnit = unit, style }) {
   const daily = weather?.daily && typeof weather.daily === "object" ? weather.daily : null;
   const times = Array.isArray(daily?.time) ? daily.time : [];
   const weatherCodes = Array.isArray(daily?.weather_code) ? daily.weather_code : [];
@@ -197,7 +207,7 @@ function ForecastCard({ weather, convertTemp, style }) {
   const rangeGradientEnd =
     weekMax >= 95 ? "#ef4444" : weekMax >= 82 ? "#f97316" : "#fbbf24";
   const rangeGradient = `linear-gradient(to right, ${rangeGradientStart}, ${rangeGradientEnd})`;
-  const weekSummary = buildWeekSummary(days, weekMin, weekMax, convertTemp);
+  const weekSummary = buildWeekSummary(days, weekMin, weekMax, unit, weatherDataUnit);
 
   return (
     <section className="bento-forecast forecast-card" style={style}>
@@ -219,7 +229,8 @@ function ForecastCard({ weather, convertTemp, style }) {
             day={day}
             weekMin={weekMin}
             weekMax={weekMax}
-            convertTemp={convertTemp}
+            unit={unit}
+            weatherDataUnit={weatherDataUnit}
             rangeGradient={rangeGradient}
           />
         ))}

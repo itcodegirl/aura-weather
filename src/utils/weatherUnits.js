@@ -98,6 +98,13 @@ export function toCelsius(value, sourceUnit = "F") {
   return normalizedSource === "F" ? ((numeric - 32) * 5) / 9 : numeric;
 }
 
+export function convertTemperature(value, targetUnit = "F", sourceUnit = "F") {
+  const normalizedTarget = normalizeBool(targetUnit);
+  return normalizedTarget === "C"
+    ? toCelsius(value, sourceUnit)
+    : toFahrenheit(value, sourceUnit);
+}
+
 function normalizeWindSpeedSourceUnit(value, fallback = "mph") {
   if (typeof value !== "string") {
     return fallback;

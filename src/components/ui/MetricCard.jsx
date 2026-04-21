@@ -83,7 +83,7 @@ function MetricDensityBar({ value, max, statusColor }) {
   );
 }
 
-function ExposureMetricCard({
+function MetricCard({
   id,
   title,
   context,
@@ -121,4 +121,4 @@ function ExposureMetricCard({
   );
 }
 
-export default memo(ExposureMetricCard);
+export default memo(MetricCard);

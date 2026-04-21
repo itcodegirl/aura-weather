@@ -11,7 +11,7 @@ import ForecastCard from "./components/ForecastCard";
 import NowcastCard from "./components/NowcastCard";
 import HeaderControls from "./components/HeaderControls";
 import WeatherIcon from "./components/WeatherIcon";
-import ExposureMetricCard from "./components/ExposureMetricCard";
+import MetricCard from "./components/ui/MetricCard";
 
 const loadStormWatch = () => import("./components/StormWatch");
 const loadHourlyCard = () => import("./components/HourlyCard");
@@ -370,7 +370,7 @@ function App() {
             </div>
 
             <div className="exposure-grid">
-              <ExposureMetricCard
+              <MetricCard
                 id={METRIC_LABEL_IDS.airQuality}
                 title="Air Quality"
                 context="AQI"
@@ -380,7 +380,7 @@ function App() {
                 gaugeLabel="Air quality index"
                 supportText={aqiSupportText}
               />
-              <ExposureMetricCard
+              <MetricCard
                 id={METRIC_LABEL_IDS.uvIndex}
                 title="UV Index"
                 context="Today"

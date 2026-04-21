@@ -334,7 +334,7 @@ function CitySearch({ onSelect }, ref) {
                   aria-selected={index === activeIndexSafe}
                   tabIndex={-1}
                   className={`city-search-result${index === activeIndexSafe ? " is-active" : ""}`}
-                  onMouseMove={() => setActiveIndex(index)}
+                  onMouseEnter={() => setActiveIndex(index)}
                   onMouseDown={(event) => {
                     event.preventDefault();
                     handleSelect(city);

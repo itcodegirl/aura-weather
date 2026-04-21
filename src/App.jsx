@@ -1,5 +1,4 @@
 import { useRef, useEffect, lazy, Suspense } from "react";
-import { CloudOff } from "lucide-react";
 import "./App.css";
 import { useWeather } from "./hooks/useWeather";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
@@ -11,7 +10,7 @@ import NowcastCard from "./components/NowcastCard";
 import ExposureSection from "./components/ExposureSection";
 import SunlightSection from "./components/SunlightSection";
 import HeaderControls from "./components/HeaderControls";
-import WeatherIcon from "./components/WeatherIcon";
+import { AppShell, AppLoadingState, AppErrorState } from "./components/layout";
 
 const loadStormWatch = () => import("./components/StormWatch");
 const loadHourlyCard = () => import("./components/HourlyCard");
@@ -170,59 +169,19 @@ function App() {
   }, []);
 
   if (showGlobalLoading) {
-    return (
-      <div className="app app--loading">
-        <div
-          className="loader"
-          role="status"
-          aria-live="polite"
-          aria-label="Loading weather data"
-        >
-          <WeatherIcon
-            code={0}
-            size={80}
-            animated={false}
-            className="loader-weather-icon"
-          />
-          <p className="loader-text">Loading live conditions{"\u2026"}</p>
-        </div>
-      </div>
-    );
+    return <AppLoadingState />;
   }
 
   if (showGlobalError) {
-    return (
-      <div className="app app--error">
-        <div className="error-card">
-          <CloudOff size={42} className="error-card-icon" aria-hidden="true" />
-          <h1>We couldn't load weather data</h1>
-          <p>{error}</p>
-          <button
-            type="button"
-            className="error-retry"
-            onClick={retryWeather}
-          >
-            Reload weather
-          </button>
-        </div>
-      </div>
-    );
+    return <AppErrorState error={error} onRetry={retryWeather} />;
   }
 
   const weatherInfo = getWeather(weather.current.conditionCode);
   const background = gradientCss(weatherInfo.gradient);
 
   return (
-    <div className="app" style={{ background }}>
-      <a href="#main-content" className="skip-link">
-        Skip to main content
-      </a>
-
-      <div className="ambient-blob ambient-blob--tl" />
-      <div className="ambient-blob ambient-blob--br" />
-
-      <div className="app-inner">
-        <header className="app-header">
+    <AppShell background={background}>
+      <header className="app-header">
           <div className="brand-wrap">
             <img
               src="/atmosphere-ring.svg"
@@ -245,41 +204,41 @@ function App() {
             unit={unit}
             setUnit={setUnit}
           />
-        </header>
+      </header>
 
-        {hasStatusStack ? (
-          <div className="status-stack">
-            {locationNotice && (
-              <p className="location-notice" role="status" aria-live="polite">
-                {locationNotice}
-              </p>
-            )}
-            {isBackgroundLoading && (
-              <p className="app-status app-status--loading" role="status" aria-live="polite">
-                Updating weather for your current settings...
-              </p>
-            )}
-            {showRefreshError && (
-              <p className="app-status app-status--error" role="alert">
-                Could not refresh weather right now. Showing last known data.
-                <button
-                  type="button"
-                  className="app-status-retry"
-                  onClick={retryWeather}
-                >
-                  Retry
-                </button>
-              </p>
-            )}
-          </div>
-        ) : null}
+      {hasStatusStack ? (
+        <div className="status-stack">
+          {locationNotice && (
+            <p className="location-notice" role="status" aria-live="polite">
+              {locationNotice}
+            </p>
+          )}
+          {isBackgroundLoading && (
+            <p className="app-status app-status--loading" role="status" aria-live="polite">
+              Updating weather for your current settings...
+            </p>
+          )}
+          {showRefreshError && (
+            <p className="app-status app-status--error" role="alert">
+              Could not refresh weather right now. Showing last known data.
+              <button
+                type="button"
+                className="app-status-retry"
+                onClick={retryWeather}
+              >
+                Retry
+              </button>
+            </p>
+          )}
+        </div>
+      ) : null}
 
-        <main
-          className="bento"
-          id="main-content"
-          aria-busy={isBackgroundLoading}
-          tabIndex={-1}
-        >
+      <main
+        className="bento"
+        id="main-content"
+        aria-busy={isBackgroundLoading}
+        tabIndex={-1}
+      >
           <p
             id={GROUP_LABEL_IDS.currentConditions}
             className="bento-group-label"
@@ -378,9 +337,8 @@ function App() {
             weatherDataUnit={weatherDataUnit}
             style={CARD_STYLE_VARIABLES[7]}
           />
-        </main>
-      </div>
-    </div>
+      </main>
+    </AppShell>
   );
 }
 

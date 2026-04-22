@@ -59,6 +59,8 @@ function ExposureSection({
           status={aqiStatus}
           gaugeLabel="Air quality index"
           supportText={aqiSupportText}
+          helpTitle="AQI scale explained"
+          helpText="AQI summarizes air pollution levels. 0 to 50 is generally good, 51 to 100 is moderate, and values above 100 indicate less healthy air."
         />
         <MetricCard
           id={METRIC_LABEL_IDS.uvIndex}
@@ -70,6 +72,8 @@ function ExposureSection({
           gaugeLabel="UV index"
           decimals={1}
           supportText={uvSupportText}
+          helpTitle="UV scale explained"
+          helpText="UV index estimates sunburn risk. 0 to 2 is low, 3 to 5 is moderate, 6 to 7 is high, 8 to 10 is very high, and 11+ is extreme."
         />
       </div>
     </section>

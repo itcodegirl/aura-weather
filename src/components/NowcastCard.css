@@ -19,6 +19,20 @@
   gap: 7px;
 }
 
+.nowcast-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nowcast-help-drawer {
+  align-items: flex-start;
+}
+
+.nowcast-help-drawer .info-drawer-panel {
+  width: min(246px, 80vw);
+}
+
 .nowcast-explainer {
   margin: 0;
   color: var(--text-muted);

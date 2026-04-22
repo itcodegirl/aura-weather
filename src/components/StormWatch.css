@@ -141,6 +141,16 @@
   text-transform: uppercase;
 }
 
+.storm-module-subtitle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.storm-help-drawer .info-drawer-panel {
+  width: min(220px, 72vw);
+}
+
 .storm-level {
   font-size: 26px;
   font-weight: 650;

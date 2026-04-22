@@ -19,7 +19,7 @@ import {
 } from "../domain";
 import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
-import { CardHeader, DataTrustMeta, Stat } from "./ui";
+import { CardHeader, DataTrustMeta, InfoDrawer, Stat } from "./ui";
 import "./StormWatch.css";
 
 function StormRisk({ risk, cape, summaryId }) {
@@ -35,8 +35,18 @@ function StormRisk({ risk, cape, summaryId }) {
         titleTag="h3"
         titleClassName="storm-module-header"
         icon={<Zap size={14} />}
-        subtitle="Thunderstorm potential"
-        subtitleClassName="storm-module-kicker"
+        subtitle={(
+          <span className="storm-module-subtitle-wrap">
+            <span className="storm-module-kicker">Thunderstorm potential</span>
+            <InfoDrawer
+              label="About CAPE storm energy"
+              title="What CAPE means"
+              className="storm-help-drawer"
+            >
+              CAPE estimates how much rising energy the atmosphere has for thunderstorms. Higher CAPE values can support stronger storm growth when other ingredients align.
+            </InfoDrawer>
+          </span>
+        )}
       />
       <div
         className="storm-level"
@@ -124,8 +134,18 @@ function PressureTrend({ trend }) {
         titleTag="h3"
         titleClassName="storm-module-header"
         icon={<Icon size={14} style={{ color: trendColor }} />}
-        subtitle="6h trend"
-        subtitleClassName="storm-module-kicker"
+        subtitle={(
+          <span className="storm-module-subtitle-wrap">
+            <span className="storm-module-kicker">6h trend</span>
+            <InfoDrawer
+              label="About pressure trends"
+              title="How pressure trend helps"
+              className="storm-help-drawer"
+            >
+              Falling pressure can hint at a nearby low-pressure system and unsettled weather, while rising pressure often aligns with improving and more stable conditions.
+            </InfoDrawer>
+          </span>
+        )}
       />
       <div className="storm-level" style={{ color: trendColor }}>
         {trend.interpretation}

@@ -1,7 +1,7 @@
 import { memo, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { findWindowStartIndex } from "../utils/timeSeries";
-import { DataTrustMeta } from "./ui";
+import { DataTrustMeta, InfoDrawer } from "./ui";
 import "./NowcastCard.css";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
@@ -213,10 +213,19 @@ function NowcastCard({
     >
       <header className="nowcast-header">
         <div className="nowcast-title-wrap">
-          <h3 className="nowcast-title">
-            <CloudRain size={16} />
-            <span>Nowcast</span>
-          </h3>
+          <div className="nowcast-title-row">
+            <h3 className="nowcast-title">
+              <CloudRain size={16} />
+              <span>Nowcast</span>
+            </h3>
+            <InfoDrawer
+              label="About nowcast guidance"
+              title="How to read nowcast"
+              className="nowcast-help-drawer"
+            >
+              Nowcast is short-range guidance built from 15-minute weather points. It estimates start time, likely duration, and peak rain chance over the next 2 hours.
+            </InfoDrawer>
+          </div>
           <p className="nowcast-explainer">
             15-minute rain guidance over the next 2 hours.
           </p>

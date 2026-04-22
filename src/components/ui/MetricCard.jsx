@@ -1,4 +1,5 @@
 import { memo } from "react";
+import InfoDrawer from "./InfoDrawer";
 import "../MetricPanels.css";
 
 function clamp(value, min, max) {
@@ -118,6 +119,8 @@ function MetricCard({
   status,
   gaugeLabel,
   supportText,
+  helpTitle,
+  helpText,
   decimals = 0,
 }) {
   const hasData = value !== null && value !== undefined && Number.isFinite(Number(value));
@@ -131,7 +134,18 @@ function MetricCard({
         <h3 id={id} className="metric-label">
           {title}
         </h3>
-        <span className="metric-context">{context}</span>
+        <div className="metric-head-side">
+          <span className="metric-context">{context}</span>
+          {helpText && (
+            <InfoDrawer
+              label={`About ${title}`}
+              title={helpTitle}
+              className="metric-help-drawer"
+            >
+              {helpText}
+            </InfoDrawer>
+          )}
+        </div>
       </div>
       <ArcGauge
         value={value}

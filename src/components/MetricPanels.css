@@ -24,6 +24,20 @@
   gap: 10px;
 }
 
+.metric-head-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-help-drawer {
+  align-items: flex-end;
+}
+
+.metric-help-drawer .info-drawer-panel {
+  width: min(220px, 72vw);
+}
+
 .metric-context {
   display: inline-flex;
   align-items: center;
@@ -251,5 +265,13 @@
   .exposure-grid {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .metric-head {
+    align-items: center;
+  }
+
+  .metric-head-side {
+    gap: 4px;
   }
 }

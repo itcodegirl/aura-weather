@@ -12,6 +12,8 @@
     "test": "node --test",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
+    "test:visual": "playwright test e2e/visual-regression.spec.js",
+    "test:visual:update": "playwright test e2e/visual-regression.spec.js --update-snapshots",
     "test:lighthouse": "npm run build && node scripts/run-lighthouse-budgets.mjs"
   },
   "dependencies": {

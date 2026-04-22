@@ -132,10 +132,23 @@ npm run test:lighthouse
 
 - Framework: Playwright + axe-core.
 - Coverage includes dashboard load, city-search location switch, and baseline accessibility assertions.
+- Visual snapshots: desktop/tablet/mobile regression checks via `e2e/visual-regression.spec.js`.
 - First-time setup for local machines:
 
 ```bash
 npx playwright install chromium
+```
+
+- Run visual checks:
+
+```bash
+npm run test:visual
+```
+
+- Update visual baselines intentionally:
+
+```bash
+npm run test:visual:update
 ```
 
 ## Lighthouse Budgets

@@ -728,11 +728,7 @@ a:focus-visible,
 }
 
 .bento-exposure {
-  grid-column: span 4;
-}
-
-.bento-sunlight {
-  grid-column: span 2;
+  grid-column: span 6;
 }
 
 .forecast-subtitle,
@@ -1059,11 +1055,7 @@ a:focus-visible,
   }
 
   .bento-exposure {
-    grid-column: span 2;
-  }
-
-  .bento-sunlight {
-    grid-column: span 1;
+    grid-column: span 3;
   }
 
   .bento-rain {
@@ -1096,7 +1088,6 @@ a:focus-visible,
 
   .bento-hero,
   .bento-exposure,
-  .bento-sunlight,
   .bento-rain,
   .bento-nowcast,
   .bento-chart,

@@ -4,7 +4,6 @@ import RainCard from "../RainCard";
 import ForecastCard from "../ForecastCard";
 import NowcastCard from "../NowcastCard";
 import ExposureSection from "../ExposureSection";
-import SunlightSection from "../SunlightSection";
 import { HourlyPanel, StormWatchPanel } from "../lazyPanels";
 
 const CARD_STYLE_VARIABLES = [
@@ -15,7 +14,6 @@ const CARD_STYLE_VARIABLES = [
   { "--i": 4 },
   { "--i": 5 },
   { "--i": 6 },
-  { "--i": 7 },
 ];
 
 const GROUP_LABEL_STYLE_VARIABLES = [
@@ -80,12 +78,6 @@ function WeatherDashboard({
         style={CARD_STYLE_VARIABLES[1]}
       />
 
-      <SunlightSection
-        sunrise={weather.daily?.sunrise?.[0]}
-        sunset={weather.daily?.sunset?.[0]}
-        style={CARD_STYLE_VARIABLES[2]}
-      />
-
       <h2
         id={GROUP_LABEL_IDS.nearTermOutlook}
         className="bento-group-label"
@@ -97,14 +89,14 @@ function WeatherDashboard({
         weather={weather}
         unit={unit}
         dataUnit={weatherDataUnit}
-        style={CARD_STYLE_VARIABLES[3]}
+        style={CARD_STYLE_VARIABLES[2]}
       />
-      <NowcastCard weather={weather} style={CARD_STYLE_VARIABLES[4]} />
+      <NowcastCard weather={weather} style={CARD_STYLE_VARIABLES[3]} />
       <Suspense
         fallback={(
           <CardFallback
             className="bento-chart"
-            style={CARD_STYLE_VARIABLES[5]}
+            style={CARD_STYLE_VARIABLES[4]}
             title="Loading hourly outlook..."
           />
         )}
@@ -114,7 +106,7 @@ function WeatherDashboard({
           unit={unit}
           chartTopColor={weatherInfo?.gradient?.[0]}
           chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
-          style={CARD_STYLE_VARIABLES[5]}
+          style={CARD_STYLE_VARIABLES[4]}
         />
       </Suspense>
 
@@ -129,7 +121,7 @@ function WeatherDashboard({
         fallback={(
           <CardFallback
             className="bento-storm"
-            style={CARD_STYLE_VARIABLES[6]}
+            style={CARD_STYLE_VARIABLES[5]}
             title="Loading risk signals..."
           />
         )}
@@ -137,7 +129,7 @@ function WeatherDashboard({
         <StormWatchPanel
           weather={weather}
           unit={unit}
-          style={CARD_STYLE_VARIABLES[6]}
+          style={CARD_STYLE_VARIABLES[5]}
         />
       </Suspense>
 
@@ -151,7 +143,7 @@ function WeatherDashboard({
       <ForecastCard
         weather={weather}
         unit={unit}
-        style={CARD_STYLE_VARIABLES[7]}
+        style={CARD_STYLE_VARIABLES[6]}
       />
     </main>
   );

@@ -30,9 +30,14 @@ const GROUP_LABEL_IDS = {
   weekAhead: "group-week-ahead",
 };
 
-function CardFallback({ className, style, title }) {
+function CardFallback({ className, style, title, isRefreshing }) {
   return (
-    <section className={`${className} loading-card glass`} style={style}>
+    <section
+      className={`${className} loading-card glass`}
+      style={style}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <p className="loading-card-title">
         {title}
       </p>
@@ -70,12 +75,14 @@ function WeatherDashboard({
         unit={unit}
         climateComparison={showClimateContext ? climateComparison : null}
         style={CARD_STYLE_VARIABLES[0]}
+        isRefreshing={isBackgroundLoading}
       />
 
       <ExposureSection
         aqi={weather.aqi}
         uvIndex={weather.daily?.uvIndexMax?.[0]}
         style={CARD_STYLE_VARIABLES[1]}
+        isRefreshing={isBackgroundLoading}
       />
 
       <h2
@@ -90,14 +97,20 @@ function WeatherDashboard({
         unit={unit}
         dataUnit={weatherDataUnit}
         style={CARD_STYLE_VARIABLES[2]}
+        isRefreshing={isBackgroundLoading}
       />
-      <NowcastCard weather={weather} style={CARD_STYLE_VARIABLES[3]} />
+      <NowcastCard
+        weather={weather}
+        style={CARD_STYLE_VARIABLES[3]}
+        isRefreshing={isBackgroundLoading}
+      />
       <Suspense
         fallback={(
           <CardFallback
             className="bento-chart"
             style={CARD_STYLE_VARIABLES[4]}
             title="Loading hourly outlook..."
+            isRefreshing={isBackgroundLoading}
           />
         )}
       >
@@ -107,6 +120,7 @@ function WeatherDashboard({
           chartTopColor={weatherInfo?.gradient?.[0]}
           chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
           style={CARD_STYLE_VARIABLES[4]}
+          isRefreshing={isBackgroundLoading}
         />
       </Suspense>
 
@@ -123,6 +137,7 @@ function WeatherDashboard({
             className="bento-storm"
             style={CARD_STYLE_VARIABLES[5]}
             title="Loading risk signals..."
+            isRefreshing={isBackgroundLoading}
           />
         )}
       >
@@ -130,6 +145,7 @@ function WeatherDashboard({
           weather={weather}
           unit={unit}
           style={CARD_STYLE_VARIABLES[5]}
+          isRefreshing={isBackgroundLoading}
         />
       </Suspense>
 
@@ -144,6 +160,7 @@ function WeatherDashboard({
         weather={weather}
         unit={unit}
         style={CARD_STYLE_VARIABLES[6]}
+        isRefreshing={isBackgroundLoading}
       />
     </main>
   );

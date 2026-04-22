@@ -29,8 +29,9 @@ function ArcGauge({
   statusColor = "#f97316",
   label,
   decimals = 0,
+  hasData = false,
 }) {
-  const safe = clamp(value, min, max);
+  const safe = hasData ? clamp(value, min, max) : min;
   const span = clamp(max - min, 0.0001, Number.POSITIVE_INFINITY);
   const progress = (safe - min) / span;
   const cx = 58;
@@ -38,47 +39,71 @@ function ArcGauge({
   const r = 44;
   const start = -140;
   const end = 100;
-  const safeValue = Number.isFinite(value) ? value.toFixed(decimals) : "\u2014";
+  const safeValue = hasData ? Number(value).toFixed(decimals) : "\u2014";
+  const gaugeLabel = hasData ? `${label} ${safeValue}` : `${label} unavailable`;
 
   return (
-    <div className="metric-gauge" aria-label={`${label} ${safeValue}`}>
+    <div className="metric-gauge" aria-label={gaugeLabel}>
       <svg className="metric-gauge-svg" viewBox="0 0 116 120" role="img">
         <path className="metric-gauge-track" d={arcPath(cx, cy, r, start, end)} />
-        <path
-          className="metric-gauge-fill"
-          d={arcPath(cx, cy, r, start, start + (end - start) * progress)}
-          stroke={statusColor}
-        />
+        {hasData && (
+          <path
+            className="metric-gauge-fill"
+            d={arcPath(cx, cy, r, start, start + (end - start) * progress)}
+            stroke={statusColor}
+          />
+        )}
       </svg>
       <div className="metric-gauge-value">{safeValue}</div>
     </div>
   );
 }
 
-function MetricDensityBar({ value, max, statusColor }) {
-  const safeValue = Number.isFinite(Number(value))
+function MetricDensityBar({ value, max, statusColor, hasData }) {
+  const safeValue = hasData
     ? Math.max(0, Math.min(Number(value), max))
     : 0;
   const progress = max > 0 ? (safeValue / max) * 100 : 0;
+  const label = hasData ? `${safeValue} of ${max}` : "No live data";
 
   return (
-    <div className="metric-density" aria-label={`${safeValue} of ${max}`}>
+    <div
+      className={`metric-density ${hasData ? "" : "metric-density--missing"}`.trim()}
+      aria-label={label}
+    >
       <div className="metric-density-track" aria-hidden="true">
-        <span
-          className="metric-density-fill"
-          style={{ width: `${progress}%`, backgroundColor: statusColor }}
-        />
-        <span
-          className="metric-density-marker"
-          style={{
-            left: `calc(${progress}% - 5px)`,
-            borderColor: statusColor,
-          }}
-        />
+        {hasData ? (
+          <>
+            <span
+              className="metric-density-fill"
+              style={{ width: `${progress}%`, backgroundColor: statusColor }}
+            />
+            <span
+              className="metric-density-marker"
+              style={{
+                left: `calc(${progress}% - 5px)`,
+                borderColor: statusColor,
+              }}
+            />
+          </>
+        ) : (
+          <span className="metric-density-fill metric-density-fill--missing" />
+        )}
       </div>
-      <div className="metric-density-scale">
-        <span>0</span>
-        <span>{max}</span>
+      <div
+        className={`metric-density-scale ${hasData ? "" : "metric-density-scale--missing"}`.trim()}
+      >
+        {hasData ? (
+          <>
+            <span>0</span>
+            <span>{max}</span>
+          </>
+        ) : (
+          <>
+            <span>No live reading</span>
+            <span>\u2014</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -95,8 +120,13 @@ function MetricCard({
   supportText,
   decimals = 0,
 }) {
+  const hasData = value !== null && value !== undefined && Number.isFinite(Number(value));
+
   return (
-    <article className="exposure-panel metric-card metric-card--meter" aria-labelledby={id}>
+    <article
+      className={`exposure-panel metric-card metric-card--meter ${hasData ? "" : "metric-card--no-data"}`.trim()}
+      aria-labelledby={id}
+    >
       <div className="metric-head exposure-panel-head">
         <h3 id={id} className="metric-label">
           {title}
@@ -109,15 +139,27 @@ function MetricCard({
         statusColor={status.color}
         decimals={decimals}
         label={gaugeLabel}
+        hasData={hasData}
       />
       <div className="metric-meter-stack">
-        {status.label && (
+        {hasData && status.label && (
           <span className="metric-pill" style={{ "--status-color": status.color }}>
             <span className="metric-dot" />
             <span>{status.label}</span>
           </span>
         )}
-        <MetricDensityBar value={value} max={max} statusColor={status.color} />
+        {!hasData && (
+          <span className="metric-pill metric-pill--missing">
+            <span className="metric-dot" />
+            <span>No live data</span>
+          </span>
+        )}
+        <MetricDensityBar
+          value={value}
+          max={max}
+          statusColor={status.color}
+          hasData={hasData}
+        />
       </div>
       <p className="metric-support">{supportText}</p>
     </article>

@@ -27,7 +27,13 @@ function getRainTimelineSummary(hours, nextRain, peak, total, unit, dataUnit) {
   return `No immediate rain onset detected. Peak chance is ${peakProbability}% near ${peakTime}. Projected 24-hour accumulation is ${projectedTotal}.`;
 }
 
-function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
+function RainCard({
+  weather,
+  unit = "F",
+  dataUnit = unit,
+  style,
+  isRefreshing = false,
+}) {
   const timelineId = useId();
   const timelineSummaryId = `${timelineId}-summary`;
   const timelineDetailsId = `${timelineId}-details`;
@@ -154,7 +160,12 @@ function RainCard({ weather, unit = "F", dataUnit = unit, style }) {
   ]);
 
   return (
-    <section className="bento-rain rain-card glass" style={style}>
+    <section
+      className="bento-rain rain-card glass"
+      style={style}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <CardHeader
         headerClassName="rain-header"
         title="Rain Outlook"

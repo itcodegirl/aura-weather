@@ -25,6 +25,7 @@ function HeroCard({
   unit,
   climateComparison,
   style,
+  isRefreshing = false,
 }) {
   const heroData = useMemo(() => {
     if (!weather?.current || !location) {
@@ -129,7 +130,12 @@ function HeroCard({
 
   if (!heroData) {
     return (
-      <section className="bento-hero hero-card glass" style={style}>
+      <section
+        className="bento-hero hero-card glass"
+        style={style}
+        data-refreshing={isRefreshing ? "true" : undefined}
+        aria-busy={isRefreshing || undefined}
+      >
         <header className="hero-meta">
           <div className="hero-location">
             <MapPin size={14} />
@@ -163,7 +169,12 @@ function HeroCard({
   } = heroData;
 
   return (
-    <section className="bento-hero hero-card glass" style={style}>
+    <section
+      className="bento-hero hero-card glass"
+      style={style}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <header className="hero-meta">
         <div className="hero-location-block">
           <div className="hero-location">

@@ -270,6 +270,20 @@ a:focus-visible,
   }
 }
 
+@keyframes refreshing-chip-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(110, 231, 255, 0.24),
+      0 6px 12px rgba(6, 12, 28, 0.24);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(110, 231, 255, 0.42),
+      0 8px 14px rgba(6, 12, 28, 0.3);
+  }
+}
+
 @keyframes hero-landing {
   from {
     opacity: 0;
@@ -714,6 +728,33 @@ a:focus-visible,
 
 .bento > section:focus-within::before {
   opacity: 1;
+}
+
+.bento > section[data-refreshing="true"] {
+  box-shadow:
+    0 30px 72px rgba(2, 8, 24, 0.42),
+    0 6px 18px rgba(7, 20, 46, 0.24),
+    inset 0 0 0 1px rgba(128, 226, 255, 0.34);
+}
+
+.bento > section[data-refreshing="true"]::before {
+  content: "Refreshing";
+  inset: auto 14px auto auto;
+  top: 12px;
+  width: auto;
+  height: auto;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(130, 228, 255, 0.36);
+  background: rgba(10, 25, 52, 0.8);
+  color: rgba(218, 244, 255, 0.94);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: none;
+  opacity: 1;
+  animation: refreshing-chip-pulse 1.3s ease-in-out infinite;
 }
 
 .bento > section:focus-within {

@@ -280,6 +280,7 @@ function StormWatch({
   weather,
   unit,
   style,
+  isRefreshing = false,
 }) {
   const stormRiskSummaryId = useId();
   const overviewCape = Number(weather?.hourly?.cape?.[0]);
@@ -300,7 +301,12 @@ function StormWatch({
   );
 
   return (
-    <section className="bento-storm storm-watch glass" style={style}>
+    <section
+      className="bento-storm storm-watch glass"
+      style={style}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <header className="storm-header">
         <div className="storm-header-main">
           <h3 className="storm-title">

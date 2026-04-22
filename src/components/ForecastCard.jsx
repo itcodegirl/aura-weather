@@ -194,7 +194,7 @@ function buildWeekSummary(days, weekMin, weekMax, unit) {
   return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
 }
 
-function ForecastCard({ weather, unit, style }) {
+function ForecastCard({ weather, unit, style, isRefreshing = false }) {
   const days = useMemo(
     () => buildForecastDays(weather?.daily),
     [weather?.daily]
@@ -224,7 +224,12 @@ function ForecastCard({ weather, unit, style }) {
 
   if (!days.length) {
     return (
-      <section className="bento-forecast forecast-card glass" style={style}>
+      <section
+        className="bento-forecast forecast-card glass"
+        style={style}
+        data-refreshing={isRefreshing ? "true" : undefined}
+        aria-busy={isRefreshing || undefined}
+      >
         <CardHeader
           headerClassName="forecast-header"
           title="7-Day Forecast"
@@ -243,7 +248,12 @@ function ForecastCard({ weather, unit, style }) {
   }
 
   return (
-    <section className="bento-forecast forecast-card glass" style={style}>
+    <section
+      className="bento-forecast forecast-card glass"
+      style={style}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <CardHeader
         headerClassName="forecast-header"
         title="7-Day Forecast"
@@ -292,5 +302,6 @@ export default memo(
   (prevProps, nextProps) =>
     prevProps.weather?.daily === nextProps.weather?.daily &&
     prevProps.unit === nextProps.unit &&
-    prevProps.style === nextProps.style
+    prevProps.style === nextProps.style &&
+    prevProps.isRefreshing === nextProps.isRefreshing
 );

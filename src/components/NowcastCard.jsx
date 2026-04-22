@@ -152,7 +152,7 @@ function analyzeNowcast(nowcast) {
   };
 }
 
-function NowcastCard({ weather, style }) {
+function NowcastCard({ weather, style, isRefreshing = false }) {
   const nowcast = useMemo(() => analyzeNowcast(weather?.nowcast), [weather?.nowcast]);
   const {
     nowcastRiskTone,
@@ -198,7 +198,12 @@ function NowcastCard({ weather, style }) {
   }, [nowcast]);
 
   return (
-    <section className="bento-nowcast nowcast-card glass" style={style}>
+    <section
+      className="bento-nowcast nowcast-card glass"
+      style={style}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
+    >
       <header className="nowcast-header">
         <div className="nowcast-title-wrap">
           <h3 className="nowcast-title">

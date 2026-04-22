@@ -168,6 +168,7 @@ function HourlyCard({
   chartTopColor,
   chartBottomColor,
   style,
+  isRefreshing = false,
 }) {
   const currentWeatherCode = weather?.current?.conditionCode;
   const currentTemperature = weather?.current?.temperature;
@@ -224,6 +225,8 @@ function HourlyCard({
         style={style}
         aria-labelledby={chartTitleId}
         aria-describedby={chartSummaryId}
+        data-refreshing={isRefreshing ? "true" : undefined}
+        aria-busy={isRefreshing || undefined}
       >
         <CardHeader
           headerClassName="chart-header"
@@ -256,6 +259,8 @@ function HourlyCard({
       style={style}
       aria-labelledby={chartTitleId}
       aria-describedby={chartSummaryId}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
     >
       <CardHeader
         headerClassName="chart-header"

@@ -9,13 +9,16 @@ const METRIC_LABEL_IDS = {
   uvIndex: "metric-uv-index",
 };
 
-function ExposureSection({ aqi, uvIndex, style }) {
+function ExposureSection({ aqi, uvIndex, style, isRefreshing = false }) {
+  const hasAqiData = Number.isFinite(Number(aqi));
+  const hasUvData = Number.isFinite(Number(uvIndex));
+  const hasFullExposureData = hasAqiData && hasUvData;
   const aqiStatus = getAqiStatus(aqi);
   const uvStatus = getUvStatus(uvIndex);
-  const aqiSupportText = Number.isFinite(Number(aqi))
+  const aqiSupportText = hasAqiData
     ? `Current AQI is ${Math.round(Number(aqi))} out of 300.`
     : "Air quality data is temporarily unavailable.";
-  const uvSupportText = Number.isFinite(Number(uvIndex))
+  const uvSupportText = hasUvData
     ? `Peak UV is ${Number(uvIndex).toFixed(1)} on an 11+ scale.`
     : "UV data is temporarily unavailable.";
 
@@ -24,19 +27,21 @@ function ExposureSection({ aqi, uvIndex, style }) {
       className="bento-exposure exposure-card metric-card glass"
       style={style}
       aria-labelledby={METRIC_LABEL_IDS.exposure}
+      data-refreshing={isRefreshing ? "true" : undefined}
+      aria-busy={isRefreshing || undefined}
     >
       <div className="metric-head">
         <h3 id={METRIC_LABEL_IDS.exposure} className="metric-label">
           Environmental Exposure
         </h3>
-        <span className="metric-context">Live</span>
+        <span className="metric-context">{hasFullExposureData ? "Live" : "Partial data"}</span>
       </div>
 
       <div className="exposure-grid">
         <MetricCard
           id={METRIC_LABEL_IDS.airQuality}
           title="Air Quality"
-          context="AQI"
+          context={hasAqiData ? "AQI" : "AQI offline"}
           value={aqi}
           max={300}
           status={aqiStatus}
@@ -46,7 +51,7 @@ function ExposureSection({ aqi, uvIndex, style }) {
         <MetricCard
           id={METRIC_LABEL_IDS.uvIndex}
           title="UV Index"
-          context="Today"
+          context={hasUvData ? "Today" : "UV offline"}
           value={uvIndex}
           max={11}
           status={uvStatus}

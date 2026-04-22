@@ -174,6 +174,34 @@ export async function installOpenMeteoMocks(page) {
     });
   });
 
+  await page.route("https://api.weather.gov/alerts/active**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/geo+json",
+      body: JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              id: "nws-alert-001",
+              event: "Severe Thunderstorm Warning",
+              headline: "Severe Thunderstorm Warning issued for Cook County",
+              severity: "Severe",
+              urgency: "Immediate",
+              certainty: "Likely",
+              effective: "2026-04-21T16:00:00-05:00",
+              expires: "2026-04-21T17:15:00-05:00",
+              areaDesc: "Cook County",
+              senderName: "NWS Chicago IL",
+              description: "Damaging wind gusts are possible with this storm.",
+            },
+          },
+        ],
+      }),
+    });
+  });
+
   await page.route("https://geocoding-api.open-meteo.com/v1/search**", async (route) => {
     const requestUrl = new URL(route.request().url());
     const query = (requestUrl.searchParams.get("name") || "").toLowerCase();

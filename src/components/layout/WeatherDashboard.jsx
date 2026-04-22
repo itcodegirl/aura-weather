@@ -3,6 +3,7 @@ import HeroCard from "../HeroCard";
 import RainCard from "../RainCard";
 import ForecastCard from "../ForecastCard";
 import NowcastCard from "../NowcastCard";
+import AlertsCard from "../AlertsCard";
 import ExposureSection from "../ExposureSection";
 import { HourlyPanel, StormWatchPanel } from "../lazyPanels";
 
@@ -14,6 +15,7 @@ const CARD_STYLE_VARIABLES = [
   { "--i": 4 },
   { "--i": 5 },
   { "--i": 6 },
+  { "--i": 7 },
 ];
 
 const GROUP_LABEL_STYLE_VARIABLES = [
@@ -71,6 +73,7 @@ function WeatherDashboard({
   const weatherFetchedAt = trustMeta?.weatherFetchedAt ?? null;
   const aqiFetchedAt = trustMeta?.aqiFetchedAt ?? null;
   const climateFetchedAt = trustMeta?.climateFetchedAt ?? null;
+  const alertsFetchedAt = trustMeta?.alertsFetchedAt ?? null;
 
   return (
     <main
@@ -159,11 +162,18 @@ function WeatherDashboard({
       >
         Risk Signals
       </h2>
+      <AlertsCard
+        alerts={weather?.alerts}
+        style={CARD_STYLE_VARIABLES[5]}
+        isRefreshing={isBackgroundLoading}
+        lastUpdatedAt={alertsFetchedAt ?? weatherFetchedAt}
+        nowMs={nowMs}
+      />
       <Suspense
         fallback={(
           <CardFallback
             className="bento-storm"
-            style={CARD_STYLE_VARIABLES[5]}
+            style={CARD_STYLE_VARIABLES[6]}
             title="Loading risk signals..."
             isRefreshing={isBackgroundLoading}
           />
@@ -172,7 +182,7 @@ function WeatherDashboard({
         <StormWatchPanel
           weather={weather}
           unit={unit}
-          style={CARD_STYLE_VARIABLES[5]}
+          style={CARD_STYLE_VARIABLES[6]}
           isRefreshing={isBackgroundLoading}
           lastUpdatedAt={weatherFetchedAt}
           nowMs={nowMs}
@@ -189,7 +199,7 @@ function WeatherDashboard({
       <ForecastCard
         weather={weather}
         unit={unit}
-        style={CARD_STYLE_VARIABLES[6]}
+        style={CARD_STYLE_VARIABLES[7]}
         isRefreshing={isBackgroundLoading}
         lastUpdatedAt={weatherFetchedAt}
         nowMs={nowMs}

@@ -8,6 +8,7 @@ const ENDPOINTS = {
   archive: "https://archive-api.open-meteo.com/v1/archive",
   aqi: "https://air-quality-api.open-meteo.com/v1/air-quality",
   geocode: "https://geocoding-api.open-meteo.com/v1/search",
+  alerts: "https://api.weather.gov/alerts/active",
 };
 const GEOCODE_RESULTS_LIMIT = 5;
 
@@ -153,6 +154,55 @@ function getDateInTimeZone(timeZone) {
 function toNumber(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+function mapAlertSeverityScore(severity) {
+  const normalized = typeof severity === "string" ? severity.trim().toLowerCase() : "";
+  if (normalized === "extreme") return 4;
+  if (normalized === "severe") return 3;
+  if (normalized === "moderate") return 2;
+  if (normalized === "minor") return 1;
+  return 0;
+}
+
+function mapAlertUrgencyScore(urgency) {
+  const normalized = typeof urgency === "string" ? urgency.trim().toLowerCase() : "";
+  if (normalized === "immediate") return 2;
+  if (normalized === "expected") return 1;
+  return 0;
+}
+
+function getAlertPriority(score) {
+  if (score >= 6) return "critical";
+  if (score >= 4) return "high";
+  if (score >= 2) return "moderate";
+  return "low";
+}
+
+function normalizeAlert(feature, index) {
+  const properties =
+    feature && typeof feature === "object" && feature.properties && typeof feature.properties === "object"
+      ? feature.properties
+      : {};
+  const severity = typeof properties.severity === "string" ? properties.severity : "Unknown";
+  const urgency = typeof properties.urgency === "string" ? properties.urgency : "Unknown";
+  const alertScore = mapAlertSeverityScore(severity) + mapAlertUrgencyScore(urgency);
+
+  return {
+    id: typeof properties.id === "string" ? properties.id : `alert-${index}`,
+    event: typeof properties.event === "string" ? properties.event : "Weather Alert",
+    headline: typeof properties.headline === "string" ? properties.headline : "",
+    area: typeof properties.areaDesc === "string" ? properties.areaDesc : "",
+    severity,
+    urgency,
+    certainty: typeof properties.certainty === "string" ? properties.certainty : "Unknown",
+    startsAt: typeof properties.effective === "string" ? properties.effective : null,
+    endsAt: typeof properties.expires === "string" ? properties.expires : null,
+    sender: typeof properties.senderName === "string" ? properties.senderName : "National Weather Service",
+    description: typeof properties.description === "string" ? properties.description : "",
+    priority: getAlertPriority(alertScore),
+    priorityScore: alertScore,
+  };
 }
 
 /**
@@ -309,5 +359,27 @@ export async function geocodeCity(name, options = {}) {
     { signal: options.signal }
   );
   return Array.isArray(data?.results) ? data.results : [];
+}
+
+/**
+ * Fetches active severe weather alerts from U.S. National Weather Service.
+ * Returns an empty list if no alerts are active for the coordinates.
+ */
+export async function fetchSevereWeatherAlerts(lat, lon, options = {}) {
+  const coordinates = validateCoordinates(lat, lon);
+  const params = new URLSearchParams({
+    point: `${coordinates.latitude},${coordinates.longitude}`,
+  });
+  const payload = await fetchJson(`${ENDPOINTS.alerts}?${params}`, {
+    signal: options.signal,
+    headers: {
+      Accept: "application/geo+json",
+    },
+  });
+
+  const features = Array.isArray(payload?.features) ? payload.features : [];
+  return features
+    .map((feature, index) => normalizeAlert(feature, index))
+    .sort((a, b) => b.priorityScore - a.priorityScore);
 }
 

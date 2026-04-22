@@ -3,6 +3,7 @@ import {
   fetchWeather,
   fetchAirQuality,
   fetchHistoricalTemperatureAverage,
+  fetchSevereWeatherAlerts,
 } from "../api";
 import {
   getApiWindSpeedUnit,
@@ -54,6 +55,7 @@ export function useWeatherData(location, unit = "F", options = {}) {
     weatherFetchedAt: null,
     aqiFetchedAt: null,
     climateFetchedAt: null,
+    alertsFetchedAt: null,
   });
 
   const requestIdRef = useRef(0);
@@ -103,7 +105,7 @@ export function useWeatherData(location, unit = "F", options = {}) {
     setClimateComparison(null);
 
     try {
-      const [weatherData, aqi] = await Promise.all([
+      const [weatherData, aqi, alerts] = await Promise.all([
         fetchWeather(coordinates.latitude, coordinates.longitude, {
           signal: controller.signal,
           temperatureUnit: apiTemperatureUnit,
@@ -113,6 +115,9 @@ export function useWeatherData(location, unit = "F", options = {}) {
         fetchAirQuality(coordinates.latitude, coordinates.longitude, {
           signal: controller.signal,
         }),
+        fetchSevereWeatherAlerts(coordinates.latitude, coordinates.longitude, {
+          signal: controller.signal,
+        }).catch(() => []),
       ]);
 
       const historicalAverage = climateEnabled
@@ -136,11 +141,16 @@ export function useWeatherData(location, unit = "F", options = {}) {
       const climateDelta = getDifference(currentTemperature, historicalTemperature);
       const fetchedAt = Date.now();
 
-      setWeather({ ...weatherData, aqi });
+      setWeather({
+        ...weatherData,
+        aqi,
+        alerts: Array.isArray(alerts) ? alerts : [],
+      });
       setTrustMeta((previousMeta) => ({
         weatherFetchedAt: fetchedAt,
         aqiFetchedAt: fetchedAt,
         climateFetchedAt: historicalAverage ? fetchedAt : previousMeta.climateFetchedAt,
+        alertsFetchedAt: fetchedAt,
       }));
 
       setClimateComparison(

@@ -1,4 +1,6 @@
+import { useCallback } from "react";
 import "./App.css";
+import { LOCATION_FALLBACK_NOTICE } from "./hooks/useLocation";
 import { useWeatherDashboardViewModel } from "./hooks/useWeatherDashboardViewModel";
 import {
   AppShell,
@@ -33,6 +35,10 @@ function App() {
     showClimateContext,
     setShowClimateContext,
   } = useWeatherDashboardViewModel();
+  const showLocationSetupPrompt = locationNotice === LOCATION_FALLBACK_NOTICE;
+  const handleFocusCitySearch = useCallback(() => {
+    citySearchRef.current?.focus?.();
+  }, [citySearchRef]);
 
   if (showGlobalLoading) {
     return <AppLoadingState />;
@@ -58,6 +64,10 @@ function App() {
 
       <StatusStack
         locationNotice={locationNotice}
+        showLocationSetupPrompt={showLocationSetupPrompt}
+        onUseCurrentLocation={loadCurrentLocation}
+        onFocusCitySearch={handleFocusCitySearch}
+        isLocatingCurrent={isLocatingCurrent}
         isBackgroundLoading={isBackgroundLoading}
         showRefreshError={showRefreshError}
         onRetry={retryWeather}

@@ -8,6 +8,10 @@ function HeaderControls({
   loadWeather,
   loadCurrentLocation,
   clearSavedLocation,
+  savedCities,
+  location,
+  loadSavedCity,
+  forgetSavedCity,
   isLocatingCurrent,
   showClimateContext,
   setShowClimateContext,
@@ -35,6 +39,25 @@ function HeaderControls({
       clearSavedLocation();
     }
   }, [clearSavedLocation]);
+
+  const handleLoadSavedCity = useCallback(
+    (city) => {
+      if (typeof loadSavedCity === "function") {
+        loadSavedCity(city);
+      }
+    },
+    [loadSavedCity]
+  );
+
+  const handleForgetSavedCity = useCallback(
+    (event, city) => {
+      event.stopPropagation();
+      if (typeof forgetSavedCity === "function") {
+        forgetSavedCity(city);
+      }
+    },
+    [forgetSavedCity]
+  );
 
   const handleSetClimateContext = useCallback(
     (nextValue) => {
@@ -66,19 +89,58 @@ function HeaderControls({
     handleSetUnit("C");
   }, [handleSetUnit]);
 
+  const safeSavedCities = Array.isArray(savedCities) ? savedCities : [];
+
   return (
     <div className="app-header-actions">
       <div className="app-header-primary">
-        <CitySearch ref={citySearchRef} onSelect={handleCitySelect} />
-        <button
-          type="button"
-          className="current-location-btn glass"
-          onClick={handleLoadCurrentLocation}
-          disabled={isLocatingCurrent}
-          aria-label="Use my location"
-        >
-          {isLocatingCurrent ? "Finding..." : "My location"}
-        </button>
+        <div className="app-header-primary-row">
+          <CitySearch ref={citySearchRef} onSelect={handleCitySelect} />
+          <button
+            type="button"
+            className="current-location-btn glass"
+            onClick={handleLoadCurrentLocation}
+            disabled={isLocatingCurrent}
+            aria-label="Use my location"
+          >
+            {isLocatingCurrent ? "Finding..." : "My location"}
+          </button>
+        </div>
+        {safeSavedCities.length > 0 && (
+          <div className="saved-cities-strip" role="list" aria-label="Saved cities">
+            {safeSavedCities.map((city) => {
+              const key = `${city.lat}:${city.lon}:${city.name}`;
+              const isActive =
+                Number(location?.lat) === Number(city.lat) &&
+                Number(location?.lon) === Number(city.lon);
+
+              return (
+                <div
+                  key={key}
+                  className={`saved-city-chip-wrap ${isActive ? "is-active" : ""}`}
+                  role="listitem"
+                >
+                  <button
+                    type="button"
+                    className={`saved-city-chip ${isActive ? "is-active" : ""}`}
+                    onClick={() => handleLoadSavedCity(city)}
+                    aria-pressed={isActive}
+                  >
+                    {city.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="saved-city-remove"
+                    onClick={(event) => handleForgetSavedCity(event, city)}
+                    aria-label={`Remove ${city.name} from saved cities`}
+                  >
+                    \u00D7
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div

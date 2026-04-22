@@ -4,7 +4,10 @@ import assert from "node:assert/strict";
 import {
   clearPersistedLocation,
   getPersistedLocation,
+  getSavedCities,
   persistLocation,
+  removeSavedCity,
+  upsertSavedCity,
 } from "./useLocation.js";
 
 const store = new Map();
@@ -55,5 +58,28 @@ describe("location persistence helpers", () => {
 
     clearPersistedLocation();
     assert.equal(getPersistedLocation(), null);
+  });
+
+  test("stores saved cities for quick switching", () => {
+    globalThis.window = { localStorage: createLocalStorageMock() };
+
+    upsertSavedCity(35.6762, 139.6503, "Tokyo", "Japan");
+    upsertSavedCity(51.5072, -0.1276, "London", "United Kingdom");
+
+    const savedCities = getSavedCities();
+    assert.equal(savedCities.length, 2);
+    assert.equal(savedCities[0].name, "London");
+    assert.equal(savedCities[1].name, "Tokyo");
+  });
+
+  test("removes a saved city by coordinates", () => {
+    globalThis.window = { localStorage: createLocalStorageMock() };
+
+    upsertSavedCity(35.6762, 139.6503, "Tokyo", "Japan");
+    upsertSavedCity(51.5072, -0.1276, "London", "United Kingdom");
+
+    const remaining = removeSavedCity(35.6762, 139.6503);
+    assert.equal(remaining.length, 1);
+    assert.equal(remaining[0].name, "London");
   });
 });

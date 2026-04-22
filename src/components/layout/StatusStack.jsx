@@ -3,8 +3,10 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 function StatusStack({
   locationNotice,
   showLocationSetupPrompt,
+  showPermissionOnboarding,
   onUseCurrentLocation,
   onFocusCitySearch,
+  onDismissPermissionOnboarding,
   isLocatingCurrent,
   isBackgroundLoading,
   showRefreshError,
@@ -36,7 +38,11 @@ function StatusStack({
   }, [isRetryCoolingDown, onRetry]);
 
   const hasStatusStack = Boolean(
-    locationNotice || isBackgroundLoading || showRefreshError || showLocationSetupPrompt
+    locationNotice ||
+    isBackgroundLoading ||
+    showRefreshError ||
+    showLocationSetupPrompt ||
+    showPermissionOnboarding
   );
 
   if (!hasStatusStack) {
@@ -50,6 +56,33 @@ function StatusStack({
           <span className="location-notice-label">Location</span>
           <span className="location-notice-text">{locationNotice}</span>
         </p>
+      )}
+      {showPermissionOnboarding && (
+        <section className="permission-onboarding" aria-label="Location onboarding">
+          <p className="permission-onboarding-kicker">First-time setup</p>
+          <h2 className="permission-onboarding-title">Get forecasts for where you are</h2>
+          <p className="permission-onboarding-copy">
+            We use your browser location only to personalize weather for your current area.
+            You can search cities manually any time.
+          </p>
+          <div className="permission-onboarding-actions">
+            <button
+              type="button"
+              className="location-setup-btn location-setup-btn--primary"
+              onClick={onUseCurrentLocation}
+              disabled={isLocatingCurrent}
+            >
+              {isLocatingCurrent ? "Requesting permission..." : "Allow location access"}
+            </button>
+            <button
+              type="button"
+              className="location-setup-btn"
+              onClick={onDismissPermissionOnboarding}
+            >
+              Continue without location
+            </button>
+          </div>
+        </section>
       )}
       {showLocationSetupPrompt && (
         <section className="location-setup-prompt" aria-label="Location setup">

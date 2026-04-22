@@ -4,7 +4,11 @@ import {
   useLocation,
   persistLocation,
   clearPersistedLocation,
+  getSavedCities,
+  upsertSavedCity,
+  removeSavedCity,
   normalizeLocationName,
+  LOCATION_FALLBACK_NOTICE,
 } from "./useLocation";
 import { useWeatherData } from "./useWeatherData";
 
@@ -26,6 +30,7 @@ export function useWeather(unit = "F", options = {}) {
   const { climateEnabled = true } = options;
   const [location, setLocation] = useState(null);
   const [locationNotice, setLocationNotice] = useState(null);
+  const [savedCities, setSavedCities] = useState(() => getSavedCities());
   const locationRef = useRef(location);
   const locationNoticeRef = useRef(locationNotice);
 
@@ -47,7 +52,8 @@ export function useWeather(unit = "F", options = {}) {
   }, []);
 
   const applyLocation = useCallback(
-    (nextLocation, notice = null) => {
+    (nextLocation, notice = null, options = {}) => {
+      const { saveCity = true } = options;
       const currentLocation = locationRef.current;
       const hasSameLocation =
         currentLocation &&
@@ -65,6 +71,16 @@ export function useWeather(unit = "F", options = {}) {
         setLocation(nextLocation);
         locationRef.current = nextLocation;
         persistLocationPayload(nextLocation);
+
+        if (saveCity) {
+          const updatedSavedCities = upsertSavedCity(
+            nextLocation.lat,
+            nextLocation.lon,
+            nextLocation.name,
+            nextLocation.country
+          );
+          setSavedCities(updatedSavedCities);
+        }
       }
 
       if (!hasSameNotice) {
@@ -81,7 +97,8 @@ export function useWeather(unit = "F", options = {}) {
       if (!nextLocation) {
         return;
       }
-      applyLocation(nextLocation, notice);
+      const shouldSaveCity = notice !== LOCATION_FALLBACK_NOTICE;
+      applyLocation(nextLocation, notice, { saveCity: shouldSaveCity });
     },
     [applyLocation]
   );
@@ -107,10 +124,32 @@ export function useWeather(unit = "F", options = {}) {
       if (!nextLocation) {
         return;
       }
-      applyLocation(nextLocation, null);
+      applyLocation(nextLocation, null, { saveCity: true });
     },
     [applyLocation]
   );
+
+  const loadSavedCity = useCallback(
+    (city) => {
+      const nextLocation = toLocationPayload(
+        city?.lat,
+        city?.lon,
+        city?.name,
+        city?.country
+      );
+      if (!nextLocation) {
+        return;
+      }
+
+      applyLocation(nextLocation, null, { saveCity: true });
+    },
+    [applyLocation]
+  );
+
+  const forgetSavedCity = useCallback((city) => {
+    const updatedSavedCities = removeSavedCity(city?.lat, city?.lon);
+    setSavedCities(updatedSavedCities);
+  }, []);
 
   const clearSavedLocation = useCallback(() => {
     clearPersistedLocation();
@@ -131,5 +170,8 @@ export function useWeather(unit = "F", options = {}) {
     trustMeta,
     isLocatingCurrent,
     clearSavedLocation,
+    savedCities,
+    loadSavedCity,
+    forgetSavedCity,
   };
 }

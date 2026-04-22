@@ -1,6 +1,7 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import "./App.css";
 import { LOCATION_FALLBACK_NOTICE } from "./hooks/useLocation";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { useWeatherDashboardViewModel } from "./hooks/useWeatherDashboardViewModel";
 import {
   AppShell,
@@ -11,6 +12,16 @@ import {
   WeatherDashboard,
 } from "./components/layout";
 
+const LOCATION_ONBOARDING_KEY = "aura-weather-location-onboarding-v1";
+
+function deserializeLocationOnboardingPreference(value) {
+  return value !== "dismissed";
+}
+
+function serializeLocationOnboardingPreference(value) {
+  return value ? "visible" : "dismissed";
+}
+
 function App() {
   const {
     weather,
@@ -20,6 +31,9 @@ function App() {
     loadWeather,
     loadCurrentLocation,
     clearSavedLocation,
+    savedCities,
+    loadSavedCity,
+    forgetSavedCity,
     retryWeather,
     climateComparison,
     isLocatingCurrent,
@@ -36,10 +50,30 @@ function App() {
     showClimateContext,
     setShowClimateContext,
   } = useWeatherDashboardViewModel();
-  const showLocationSetupPrompt = locationNotice === LOCATION_FALLBACK_NOTICE;
+  const [showPermissionOnboarding, setShowPermissionOnboarding] = useLocalStorageState(
+    LOCATION_ONBOARDING_KEY,
+    true,
+    {
+      deserialize: deserializeLocationOnboardingPreference,
+      serialize: serializeLocationOnboardingPreference,
+    }
+  );
+  const isFallbackLocation = locationNotice === LOCATION_FALLBACK_NOTICE;
+  const shouldShowPermissionOnboarding = isFallbackLocation && showPermissionOnboarding;
+  const showLocationSetupPrompt = isFallbackLocation && !shouldShowPermissionOnboarding;
+
+  useEffect(() => {
+    if (!isFallbackLocation && showPermissionOnboarding) {
+      setShowPermissionOnboarding(false);
+    }
+  }, [isFallbackLocation, setShowPermissionOnboarding, showPermissionOnboarding]);
+
   const handleFocusCitySearch = useCallback(() => {
     citySearchRef.current?.focus?.();
   }, [citySearchRef]);
+  const handleDismissPermissionOnboarding = useCallback(() => {
+    setShowPermissionOnboarding(false);
+  }, [setShowPermissionOnboarding]);
 
   if (showGlobalLoading) {
     return <AppLoadingState />;
@@ -56,6 +90,10 @@ function App() {
         loadWeather={loadWeather}
         loadCurrentLocation={loadCurrentLocation}
         clearSavedLocation={clearSavedLocation}
+        savedCities={savedCities}
+        location={location}
+        loadSavedCity={loadSavedCity}
+        forgetSavedCity={forgetSavedCity}
         isLocatingCurrent={isLocatingCurrent}
         showClimateContext={showClimateContext}
         setShowClimateContext={setShowClimateContext}
@@ -66,8 +104,10 @@ function App() {
       <StatusStack
         locationNotice={locationNotice}
         showLocationSetupPrompt={showLocationSetupPrompt}
+        showPermissionOnboarding={shouldShowPermissionOnboarding}
         onUseCurrentLocation={loadCurrentLocation}
         onFocusCitySearch={handleFocusCitySearch}
+        onDismissPermissionOnboarding={handleDismissPermissionOnboarding}
         isLocatingCurrent={isLocatingCurrent}
         isBackgroundLoading={isBackgroundLoading}
         showRefreshError={showRefreshError}

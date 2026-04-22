@@ -11,6 +11,8 @@ export const LOCATION_FALLBACK_NOTICE =
   "Location not available \u2014 showing Chicago";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const LAST_LOCATION_KEY = "aura-weather-last-location";
+const SAVED_CITIES_KEY = "aura-weather-saved-cities";
+const MAX_SAVED_CITIES = 6;
 const LAST_LOCATION_TTL_DAYS = 30;
 const GEOLOCATION_TIMEOUT_MS = 5000;
 export const LOCATION_FALLBACK_DELAY_MS = GEOLOCATION_TIMEOUT_MS + 1000;
@@ -44,6 +46,41 @@ function hasGeolocationSupport() {
     navigator.geolocation !== null &&
     typeof navigator.geolocation.getCurrentPosition === "function"
   );
+}
+
+function toCityKey(lat, lon) {
+  return `${lat.toFixed(4)}:${lon.toFixed(4)}`;
+}
+
+function normalizeSavedCities(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set();
+
+  return value
+    .map((city) => {
+      const coordinates = parseCoordinates(city?.lat, city?.lon);
+      if (!coordinates) {
+        return null;
+      }
+
+      const key = toCityKey(coordinates.latitude, coordinates.longitude);
+      if (seen.has(key)) {
+        return null;
+      }
+      seen.add(key);
+
+      return {
+        lat: coordinates.latitude,
+        lon: coordinates.longitude,
+        name: normalizeLocationName(city?.name, "Saved place"),
+        country: normalizeLocationName(city?.country, ""),
+      };
+    })
+    .filter(Boolean)
+    .slice(0, MAX_SAVED_CITIES);
 }
 
 export function getPersistedLocation() {
@@ -80,6 +117,40 @@ export function getPersistedLocation() {
   }
 }
 
+export function getSavedCities() {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return [];
+    const saved = window.localStorage.getItem(SAVED_CITIES_KEY);
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    const normalized = normalizeSavedCities(parsed);
+    if (!Array.isArray(parsed) || parsed.length !== normalized.length) {
+      window.localStorage.setItem(SAVED_CITIES_KEY, JSON.stringify(normalized));
+    }
+    return normalized;
+  } catch {
+    try {
+      window.localStorage.removeItem(SAVED_CITIES_KEY);
+    } catch {
+      // localStorage may be unavailable or inaccessible in restricted contexts.
+    }
+    return [];
+  }
+}
+
+function persistSavedCities(cities) {
+  const normalized = normalizeSavedCities(cities);
+
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return normalized;
+    window.localStorage.setItem(SAVED_CITIES_KEY, JSON.stringify(normalized));
+  } catch {
+    // localStorage may be unavailable in restricted contexts.
+  }
+
+  return normalized;
+}
+
 export function persistLocation(lat, lon, name, country) {
   const coordinates = parseCoordinates(lat, lon);
   if (!coordinates) return;
@@ -102,6 +173,43 @@ export function persistLocation(lat, lon, name, country) {
   } catch {
     // localStorage may be unavailable in restricted contexts.
   }
+}
+
+export function upsertSavedCity(lat, lon, name, country) {
+  const coordinates = parseCoordinates(lat, lon);
+  if (!coordinates) {
+    return getSavedCities();
+  }
+
+  const nextEntry = {
+    lat: coordinates.latitude,
+    lon: coordinates.longitude,
+    name: normalizeLocationName(name, "Saved place"),
+    country: normalizeLocationName(country, ""),
+  };
+
+  const existingCities = getSavedCities();
+  const nextCities = [
+    nextEntry,
+    ...existingCities.filter((city) => {
+      return !(city.lat === nextEntry.lat && city.lon === nextEntry.lon);
+    }),
+  ];
+
+  return persistSavedCities(nextCities);
+}
+
+export function removeSavedCity(lat, lon) {
+  const coordinates = parseCoordinates(lat, lon);
+  if (!coordinates) {
+    return getSavedCities();
+  }
+
+  const remainingCities = getSavedCities().filter((city) => {
+    return !(city.lat === coordinates.latitude && city.lon === coordinates.longitude);
+  });
+
+  return persistSavedCities(remainingCities);
 }
 
 export function clearPersistedLocation() {

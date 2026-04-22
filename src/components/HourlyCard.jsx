@@ -5,7 +5,7 @@ import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
 import { findWindowStartIndex } from "../utils/timeSeries";
-import { CardHeader } from "./ui";
+import { CardHeader, DataTrustMeta } from "./ui";
 import "./HourlyCard.css";
 
 function toDisplayTemperature(value, unit) {
@@ -169,6 +169,8 @@ function HourlyCard({
   chartBottomColor,
   style,
   isRefreshing = false,
+  lastUpdatedAt,
+  nowMs,
 }) {
   const currentWeatherCode = weather?.current?.conditionCode;
   const currentTemperature = weather?.current?.temperature;
@@ -238,6 +240,11 @@ function HourlyCard({
           subtitle="Next 24h"
           subtitleClassName="chart-subtitle"
         />
+        <DataTrustMeta
+          sourceLabel="Open-Meteo Hourly"
+          lastUpdatedAt={lastUpdatedAt}
+          nowMs={nowMs}
+        />
 
         <div className="chart-body" style={{ display: "grid", placeItems: "center" }}>
           <p className="loader-text" role="status" aria-live="polite">
@@ -271,6 +278,11 @@ function HourlyCard({
         icon={<LineIcon size={16} />}
         subtitle="Next 24h"
         subtitleClassName="chart-subtitle"
+      />
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Hourly"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
       />
       <p className="chart-lede">{chartLede}</p>
 

@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { findWindowStartIndex } from "../utils/timeSeries";
+import { DataTrustMeta } from "./ui";
 import "./NowcastCard.css";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
@@ -152,7 +153,13 @@ function analyzeNowcast(nowcast) {
   };
 }
 
-function NowcastCard({ weather, style, isRefreshing = false }) {
+function NowcastCard({
+  weather,
+  style,
+  isRefreshing = false,
+  lastUpdatedAt,
+  nowMs,
+}) {
   const nowcast = useMemo(() => analyzeNowcast(weather?.nowcast), [weather?.nowcast]);
   const {
     nowcastRiskTone,
@@ -218,6 +225,11 @@ function NowcastCard({ weather, style, isRefreshing = false }) {
           </span>
         </div>
       </header>
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Minutely"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
+      />
 
       <div className="nowcast-primary">
         <p className="nowcast-summary">{nowcast.summary}</p>

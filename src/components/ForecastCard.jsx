@@ -3,7 +3,7 @@ import { memo, useMemo } from "react";
 import { getWeather } from "../domain/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
 import { convertTemp } from "../utils/temperature";
-import { CardHeader } from "./ui";
+import { CardHeader, DataTrustMeta } from "./ui";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
 
@@ -194,7 +194,14 @@ function buildWeekSummary(days, weekMin, weekMax, unit) {
   return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
 }
 
-function ForecastCard({ weather, unit, style, isRefreshing = false }) {
+function ForecastCard({
+  weather,
+  unit,
+  style,
+  isRefreshing = false,
+  lastUpdatedAt,
+  nowMs,
+}) {
   const days = useMemo(
     () => buildForecastDays(weather?.daily),
     [weather?.daily]
@@ -240,6 +247,11 @@ function ForecastCard({ weather, unit, style, isRefreshing = false }) {
           subtitle="Upcoming week"
           subtitleClassName="forecast-subtitle"
         />
+        <DataTrustMeta
+          sourceLabel="Open-Meteo Daily"
+          lastUpdatedAt={lastUpdatedAt}
+          nowMs={nowMs}
+        />
         <p className="loader-text" role="status" aria-live="polite">
           7-day forecast is temporarily unavailable.
         </p>
@@ -265,6 +277,11 @@ function ForecastCard({ weather, unit, style, isRefreshing = false }) {
         summaryClassName="forecast-summary"
         subtitle="Upcoming week"
         subtitleClassName="forecast-subtitle"
+      />
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Daily"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
       />
 
       <ul className="forecast-list" role="list">
@@ -303,5 +320,7 @@ export default memo(
     prevProps.weather?.daily === nextProps.weather?.daily &&
     prevProps.unit === nextProps.unit &&
     prevProps.style === nextProps.style &&
-    prevProps.isRefreshing === nextProps.isRefreshing
+    prevProps.isRefreshing === nextProps.isRefreshing &&
+    prevProps.lastUpdatedAt === nextProps.lastUpdatedAt &&
+    prevProps.nowMs === nextProps.nowMs
 );

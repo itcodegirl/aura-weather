@@ -19,7 +19,7 @@ import {
 } from "../domain";
 import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
-import { Stat, CardHeader } from "./ui";
+import { CardHeader, DataTrustMeta, Stat } from "./ui";
 import "./StormWatch.css";
 
 function StormRisk({ risk, cape, summaryId }) {
@@ -281,6 +281,8 @@ function StormWatch({
   unit,
   style,
   isRefreshing = false,
+  lastUpdatedAt,
+  nowMs,
 }) {
   const stormRiskSummaryId = useId();
   const overviewCape = Number(weather?.hourly?.cape?.[0]);
@@ -319,6 +321,11 @@ function StormWatch({
         </div>
         <span className="storm-subtitle">Storm watch</span>
       </header>
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Forecast"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
+      />
 
       <div className="storm-snapshot" role="list" aria-label="Storm snapshot">
         <span

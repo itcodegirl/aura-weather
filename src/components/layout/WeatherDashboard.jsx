@@ -1,4 +1,4 @@
-import { memo, Suspense } from "react";
+import { memo, Suspense, useEffect, useState } from "react";
 import HeroCard from "../HeroCard";
 import RainCard from "../RainCard";
 import ForecastCard from "../ForecastCard";
@@ -54,7 +54,24 @@ function WeatherDashboard({
   showClimateContext,
   isBackgroundLoading,
   weatherInfo,
+  trustMeta,
 }) {
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setNowMs(Date.now());
+    }, 60_000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const weatherFetchedAt = trustMeta?.weatherFetchedAt ?? null;
+  const aqiFetchedAt = trustMeta?.aqiFetchedAt ?? null;
+  const climateFetchedAt = trustMeta?.climateFetchedAt ?? null;
+
   return (
     <main
       className="bento"
@@ -76,6 +93,9 @@ function WeatherDashboard({
         climateComparison={showClimateContext ? climateComparison : null}
         style={CARD_STYLE_VARIABLES[0]}
         isRefreshing={isBackgroundLoading}
+        lastUpdatedAt={weatherFetchedAt}
+        nowMs={nowMs}
+        climateLastUpdatedAt={climateFetchedAt}
       />
 
       <ExposureSection
@@ -83,6 +103,8 @@ function WeatherDashboard({
         uvIndex={weather.daily?.uvIndexMax?.[0]}
         style={CARD_STYLE_VARIABLES[1]}
         isRefreshing={isBackgroundLoading}
+        lastUpdatedAt={aqiFetchedAt ?? weatherFetchedAt}
+        nowMs={nowMs}
       />
 
       <h2
@@ -98,11 +120,15 @@ function WeatherDashboard({
         dataUnit={weatherDataUnit}
         style={CARD_STYLE_VARIABLES[2]}
         isRefreshing={isBackgroundLoading}
+        lastUpdatedAt={weatherFetchedAt}
+        nowMs={nowMs}
       />
       <NowcastCard
         weather={weather}
         style={CARD_STYLE_VARIABLES[3]}
         isRefreshing={isBackgroundLoading}
+        lastUpdatedAt={weatherFetchedAt}
+        nowMs={nowMs}
       />
       <Suspense
         fallback={(
@@ -121,6 +147,8 @@ function WeatherDashboard({
           chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
           style={CARD_STYLE_VARIABLES[4]}
           isRefreshing={isBackgroundLoading}
+          lastUpdatedAt={weatherFetchedAt}
+          nowMs={nowMs}
         />
       </Suspense>
 
@@ -146,6 +174,8 @@ function WeatherDashboard({
           unit={unit}
           style={CARD_STYLE_VARIABLES[5]}
           isRefreshing={isBackgroundLoading}
+          lastUpdatedAt={weatherFetchedAt}
+          nowMs={nowMs}
         />
       </Suspense>
 
@@ -161,6 +191,8 @@ function WeatherDashboard({
         unit={unit}
         style={CARD_STYLE_VARIABLES[6]}
         isRefreshing={isBackgroundLoading}
+        lastUpdatedAt={weatherFetchedAt}
+        nowMs={nowMs}
       />
     </main>
   );
@@ -175,7 +207,8 @@ function areWeatherDashboardPropsEqual(prevProps, nextProps) {
     prevProps.climateComparison === nextProps.climateComparison &&
     prevProps.showClimateContext === nextProps.showClimateContext &&
     prevProps.isBackgroundLoading === nextProps.isBackgroundLoading &&
-    prevProps.weatherInfo === nextProps.weatherInfo
+    prevProps.weatherInfo === nextProps.weatherInfo &&
+    prevProps.trustMeta === nextProps.trustMeta
   );
 }
 

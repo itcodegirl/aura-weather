@@ -6,7 +6,7 @@ import WeatherIcon from "./WeatherIcon";
 import { useRainAnalysis } from "../hooks/useRainAnalysis";
 import { formatPrecipitation, getPrecipUnitLabel } from "../utils/weatherUnits";
 import { formatHour } from "../utils/dates";
-import { CardHeader } from "./ui";
+import { CardHeader, DataTrustMeta } from "./ui";
 import "./RainCard.css";
 
 function getRainTimelineSummary(hours, nextRain, peak, total, unit, dataUnit) {
@@ -33,6 +33,8 @@ function RainCard({
   dataUnit = unit,
   style,
   isRefreshing = false,
+  lastUpdatedAt,
+  nowMs,
 }) {
   const timelineId = useId();
   const timelineSummaryId = `${timelineId}-summary`;
@@ -178,6 +180,11 @@ function RainCard({
             {rainRiskLabel}
           </span>
         }
+      />
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Forecast"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
       />
       <div className="rain-mode-toggle" role="group" aria-label="Chart mode">
           <button

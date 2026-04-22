@@ -28,6 +28,7 @@ function App() {
     showGlobalError,
     showRefreshError,
     weatherInfo,
+    trustMeta,
     background,
     citySearchRef,
     unit,
@@ -82,6 +83,7 @@ function App() {
         showClimateContext={showClimateContext}
         isBackgroundLoading={isBackgroundLoading}
         weatherInfo={weatherInfo}
+        trustMeta={trustMeta}
       />
     </AppShell>
   );

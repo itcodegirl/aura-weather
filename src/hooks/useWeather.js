@@ -96,6 +96,7 @@ export function useWeather(unit = "F", options = {}) {
     error,
     climateComparison,
     retryWeather,
+    trustMeta,
   } = useWeatherData(location, unit, {
     climateEnabled,
   });
@@ -127,6 +128,7 @@ export function useWeather(unit = "F", options = {}) {
     loadCurrentLocation,
     retryWeather,
     climateComparison,
+    trustMeta,
     isLocatingCurrent,
     clearSavedLocation,
   };

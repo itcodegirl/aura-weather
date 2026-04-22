@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { MetricCard } from "./ui";
+import { DataTrustMeta, MetricCard } from "./ui";
 import { getAqiStatus, getUvStatus } from "../utils/meteorology";
 import "./MetricPanels.css";
 
@@ -9,7 +9,14 @@ const METRIC_LABEL_IDS = {
   uvIndex: "metric-uv-index",
 };
 
-function ExposureSection({ aqi, uvIndex, style, isRefreshing = false }) {
+function ExposureSection({
+  aqi,
+  uvIndex,
+  style,
+  isRefreshing = false,
+  lastUpdatedAt,
+  nowMs,
+}) {
   const hasAqiData = Number.isFinite(Number(aqi));
   const hasUvData = Number.isFinite(Number(uvIndex));
   const hasFullExposureData = hasAqiData && hasUvData;
@@ -36,6 +43,11 @@ function ExposureSection({ aqi, uvIndex, style, isRefreshing = false }) {
         </h3>
         <span className="metric-context">{hasFullExposureData ? "Live" : "Partial data"}</span>
       </div>
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Air Quality"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
+      />
 
       <div className="exposure-grid">
         <MetricCard

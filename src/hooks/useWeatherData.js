@@ -50,6 +50,11 @@ export function useWeatherData(location, unit = "F", options = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [climateComparison, setClimateComparison] = useState(null);
+  const [trustMeta, setTrustMeta] = useState({
+    weatherFetchedAt: null,
+    aqiFetchedAt: null,
+    climateFetchedAt: null,
+  });
 
   const requestIdRef = useRef(0);
   const inFlightRequestRef = useRef(null);
@@ -129,8 +134,14 @@ export function useWeatherData(location, unit = "F", options = {}) {
       const currentTemperature = Number(weatherData?.current?.temperature);
       const historicalTemperature = Number(historicalAverage?.averageTemperature);
       const climateDelta = getDifference(currentTemperature, historicalTemperature);
+      const fetchedAt = Date.now();
 
       setWeather({ ...weatherData, aqi });
+      setTrustMeta((previousMeta) => ({
+        weatherFetchedAt: fetchedAt,
+        aqiFetchedAt: fetchedAt,
+        climateFetchedAt: historicalAverage ? fetchedAt : previousMeta.climateFetchedAt,
+      }));
 
       setClimateComparison(
         historicalAverage && Number.isFinite(climateDelta)
@@ -184,5 +195,6 @@ export function useWeatherData(location, unit = "F", options = {}) {
     error,
     climateComparison,
     retryWeather,
+    trustMeta,
   };
 }

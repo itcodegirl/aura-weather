@@ -16,7 +16,7 @@ import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
 import { formatSunClock, formatDaylightLengthLabel } from "../utils/sunlight";
 import WeatherIcon from "./WeatherIcon";
-import { Stat } from "./ui";
+import { DataTrustMeta, Stat } from "./ui";
 import "./HeroCard.css";
 
 function HeroCard({
@@ -26,6 +26,9 @@ function HeroCard({
   climateComparison,
   style,
   isRefreshing = false,
+  lastUpdatedAt,
+  climateLastUpdatedAt,
+  nowMs,
 }) {
   const heroData = useMemo(() => {
     if (!weather?.current || !location) {
@@ -203,6 +206,19 @@ function HeroCard({
           </div>
         </div>
       </header>
+      <DataTrustMeta
+        sourceLabel="Open-Meteo Forecast"
+        lastUpdatedAt={lastUpdatedAt}
+        nowMs={nowMs}
+      />
+      {hasClimateComparison && (
+        <DataTrustMeta
+          sourceLabel="Open-Meteo Archive"
+          lastUpdatedAt={climateLastUpdatedAt ?? lastUpdatedAt}
+          nowMs={nowMs}
+          staleAfterMinutes={120}
+        />
+      )}
 
       <div className="hero-main">
         <div className="hero-temp-block">

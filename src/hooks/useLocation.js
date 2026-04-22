@@ -151,6 +151,10 @@ function persistSavedCities(cities) {
   return normalized;
 }
 
+export function replaceSavedCities(cities) {
+  return persistSavedCities(cities);
+}
+
 export function persistLocation(lat, lon, name, country) {
   const coordinates = parseCoordinates(lat, lon);
   if (!coordinates) return;

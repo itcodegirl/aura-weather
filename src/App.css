@@ -498,6 +498,126 @@ a:focus-visible,
   box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.34);
 }
 
+.sync-account-panel {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 620px;
+  padding: 10px 11px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(185, 211, 250, 0.24);
+  background: rgba(7, 16, 35, 0.56);
+  box-shadow: inset 0 1px 0 rgba(228, 240, 255, 0.08);
+}
+
+.sync-account-title {
+  margin: 0;
+  color: rgba(212, 227, 252, 0.92);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.sync-account-status {
+  margin: 0;
+  color: #e3efff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sync-account-actions,
+.sync-account-manual {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.sync-account-connect {
+  display: grid;
+  gap: 7px;
+}
+
+.sync-account-btn {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(186, 214, 252, 0.28);
+  background: rgba(8, 17, 38, 0.58);
+  color: #e3efff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.sync-account-btn:hover {
+  border-color: rgba(166, 227, 255, 0.5);
+  background: rgba(10, 22, 48, 0.72);
+  transform: translateY(-1px);
+}
+
+.sync-account-btn:disabled,
+.sync-account-input:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.sync-account-btn:disabled:hover {
+  border-color: rgba(186, 214, 252, 0.28);
+  background: rgba(8, 17, 38, 0.58);
+  transform: none;
+}
+
+.sync-account-btn--subtle {
+  color: rgba(212, 226, 248, 0.92);
+  background: rgba(8, 17, 37, 0.44);
+}
+
+.sync-account-input {
+  flex: 1 1 220px;
+  min-height: 30px;
+  min-width: 0;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(180, 209, 249, 0.28);
+  background: rgba(6, 14, 31, 0.64);
+  color: #eef6ff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sync-account-input::placeholder {
+  color: rgba(181, 203, 238, 0.78);
+}
+
+.sync-account-input:focus-visible {
+  border-color: rgba(130, 228, 255, 0.66);
+  box-shadow: 0 0 0 3px rgba(64, 196, 255, 0.2);
+}
+
+.sync-account-key {
+  margin: 0;
+  color: rgba(177, 205, 244, 0.9);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sync-account-error {
+  margin: 0;
+  color: #fecaca;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .header-control-stack {
   display: flex;
   flex-direction: column;
@@ -1494,6 +1614,10 @@ a:focus-visible,
     flex-wrap: wrap;
   }
 
+  .sync-account-panel {
+    max-width: 100%;
+  }
+
   .app-header-secondary {
     display: flex;
     flex-wrap: wrap;
@@ -1672,6 +1796,20 @@ a:focus-visible,
     width: 18px;
     height: 18px;
     font-size: 12px;
+  }
+
+  .sync-account-panel {
+    padding: 9px 10px;
+  }
+
+  .sync-account-status,
+  .sync-account-input {
+    font-size: 11px;
+  }
+
+  .sync-account-btn {
+    min-height: 28px;
+    font-size: 10px;
   }
 
   .bento-group-label {

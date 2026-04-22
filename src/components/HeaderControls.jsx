@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import CitySearch from "./CitySearch";
 
 const CLIMATE_CONTEXT_LABEL_ID = "climate-context-label";
@@ -12,12 +12,21 @@ function HeaderControls({
   location,
   loadSavedCity,
   forgetSavedCity,
+  syncConnected,
+  syncAccount,
+  syncState,
+  createSyncAccount,
+  connectSyncAccount,
+  disconnectSyncAccount,
+  syncSavedCitiesNow,
   isLocatingCurrent,
   showClimateContext,
   setShowClimateContext,
   unit,
   setUnit,
 }) {
+  const [syncKeyInput, setSyncKeyInput] = useState("");
+
   const handleCitySelect = useCallback(
     (city) => {
       const lat = Number(city?.lat);
@@ -90,6 +99,42 @@ function HeaderControls({
   }, [handleSetUnit]);
 
   const safeSavedCities = Array.isArray(savedCities) ? savedCities : [];
+  const syncStatusText =
+    typeof syncState?.message === "string" && syncState.message.trim()
+      ? syncState.message.trim()
+      : syncConnected
+        ? "Sync connected"
+        : "Sync not connected";
+
+  const syncErrorText =
+    typeof syncState?.error === "string" && syncState.error.trim()
+      ? syncState.error.trim()
+      : "";
+  const isSyncing = syncState?.status === "syncing";
+
+  const handleCreateSyncAccount = useCallback(() => {
+    if (typeof createSyncAccount === "function") {
+      void createSyncAccount();
+    }
+  }, [createSyncAccount]);
+
+  const handleConnectSyncAccount = useCallback(() => {
+    if (typeof connectSyncAccount === "function") {
+      void connectSyncAccount(syncKeyInput);
+    }
+  }, [connectSyncAccount, syncKeyInput]);
+
+  const handleDisconnectSyncAccount = useCallback(() => {
+    if (typeof disconnectSyncAccount === "function") {
+      disconnectSyncAccount();
+    }
+  }, [disconnectSyncAccount]);
+
+  const handleSyncNow = useCallback(() => {
+    if (typeof syncSavedCitiesNow === "function") {
+      void syncSavedCitiesNow();
+    }
+  }, [syncSavedCitiesNow]);
 
   return (
     <div className="app-header-actions">
@@ -141,6 +186,68 @@ function HeaderControls({
             })}
           </div>
         )}
+        <div className="sync-account-panel" aria-live="polite">
+          <p className="sync-account-title">Account Sync</p>
+          <p className="sync-account-status">{syncStatusText}</p>
+          {syncConnected ? (
+            <div className="sync-account-actions">
+              <button
+                type="button"
+                className="sync-account-btn"
+                onClick={handleSyncNow}
+                disabled={isSyncing}
+              >
+                Sync now
+              </button>
+              <button
+                type="button"
+                className="sync-account-btn sync-account-btn--subtle"
+                onClick={handleDisconnectSyncAccount}
+                disabled={isSyncing}
+              >
+                Disconnect
+              </button>
+            </div>
+          ) : (
+            <div className="sync-account-connect">
+              <button
+                type="button"
+                className="sync-account-btn"
+                onClick={handleCreateSyncAccount}
+                disabled={isSyncing}
+              >
+                Create cloud account
+              </button>
+              <div className="sync-account-manual">
+                <input
+                  type="text"
+                  className="sync-account-input"
+                  value={syncKeyInput}
+                  onChange={(event) => setSyncKeyInput(event.target.value)}
+                  placeholder="Paste sync key or URL"
+                  aria-label="Sync key"
+                  disabled={isSyncing}
+                />
+                <button
+                  type="button"
+                  className="sync-account-btn sync-account-btn--subtle"
+                  onClick={handleConnectSyncAccount}
+                  disabled={isSyncing}
+                >
+                  Connect
+                </button>
+              </div>
+            </div>
+          )}
+          {syncConnected && (
+            <p className="sync-account-key" title={syncAccount?.syncKey || undefined}>
+              Key: {typeof syncAccount?.syncKey === "string"
+                ? syncAccount.syncKey.slice(0, 32)
+                : ""}
+            </p>
+          )}
+          {syncErrorText && <p className="sync-account-error">{syncErrorText}</p>}
+        </div>
       </div>
 
       <div

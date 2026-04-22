@@ -10,6 +10,13 @@ function AppHeader({
   location,
   loadSavedCity,
   forgetSavedCity,
+  syncConnected,
+  syncAccount,
+  syncState,
+  createSyncAccount,
+  connectSyncAccount,
+  disconnectSyncAccount,
+  syncSavedCitiesNow,
   isLocatingCurrent,
   showClimateContext,
   setShowClimateContext,
@@ -38,6 +45,13 @@ function AppHeader({
         location={location}
         loadSavedCity={loadSavedCity}
         forgetSavedCity={forgetSavedCity}
+        syncConnected={syncConnected}
+        syncAccount={syncAccount}
+        syncState={syncState}
+        createSyncAccount={createSyncAccount}
+        connectSyncAccount={connectSyncAccount}
+        disconnectSyncAccount={disconnectSyncAccount}
+        syncSavedCitiesNow={syncSavedCitiesNow}
         isLocatingCurrent={isLocatingCurrent}
         showClimateContext={showClimateContext}
         setShowClimateContext={setShowClimateContext}

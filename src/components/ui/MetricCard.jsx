@@ -110,13 +110,15 @@ function MetricCard({
         decimals={decimals}
         label={gaugeLabel}
       />
-      {status.label && (
-        <span className="metric-pill" style={{ "--status-color": status.color }}>
-          <span className="metric-dot" />
-          <span>{status.label}</span>
-        </span>
-      )}
-      <MetricDensityBar value={value} max={max} statusColor={status.color} />
+      <div className="metric-meter-stack">
+        {status.label && (
+          <span className="metric-pill" style={{ "--status-color": status.color }}>
+            <span className="metric-dot" />
+            <span>{status.label}</span>
+          </span>
+        )}
+        <MetricDensityBar value={value} max={max} statusColor={status.color} />
+      </div>
       <p className="metric-support">{supportText}</p>
     </article>
   );

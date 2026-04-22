@@ -21,7 +21,13 @@ export function useSearchShortcut(searchRef) {
 
     const handleShortcut = (event) => {
       const isMetaOrCtrl = event.metaKey || event.ctrlKey;
-      if (!isMetaOrCtrl || event.key.toLowerCase() !== "k") return;
+      const isSlashShortcut =
+        !isMetaOrCtrl &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key === "/";
+      const isCommandShortcut = isMetaOrCtrl && event.key.toLowerCase() === "k";
+      if (!isSlashShortcut && !isCommandShortcut) return;
       if (isTypingElement(event.target)) return;
 
       event.preventDefault();

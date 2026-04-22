@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback } from "react";
 import CitySearch from "./CitySearch";
 
 const CLIMATE_CONTEXT_LABEL_ID = "climate-context-label";
@@ -14,13 +14,6 @@ function HeaderControls({
   unit,
   setUnit,
 }) {
-  const [showMobileSettings, setShowMobileSettings] = useState(false);
-  const controlsRef = useRef(null);
-
-  const closeMobileSettings = useCallback(() => {
-    setShowMobileSettings(false);
-  }, []);
-
   const handleCitySelect = useCallback(
     (city) => {
       const lat = Number(city?.lat);
@@ -29,26 +22,19 @@ function HeaderControls({
         return;
       }
       loadWeather(lat, lon, city.name, city.country);
-      closeMobileSettings();
     },
-    [closeMobileSettings, loadWeather]
+    [loadWeather]
   );
 
   const handleLoadCurrentLocation = useCallback(() => {
     loadCurrentLocation();
-    closeMobileSettings();
-  }, [closeMobileSettings, loadCurrentLocation]);
-
-  const handleToggleSettings = useCallback(() => {
-    setShowMobileSettings((current) => !current);
-  }, []);
+  }, [loadCurrentLocation]);
 
   const handleClearSavedLocation = useCallback(() => {
     if (typeof clearSavedLocation === "function") {
       clearSavedLocation();
     }
-    closeMobileSettings();
-  }, [clearSavedLocation, closeMobileSettings]);
+  }, [clearSavedLocation]);
 
   const handleSetClimateContext = useCallback(
     (nextValue) => {
@@ -80,86 +66,8 @@ function HeaderControls({
     handleSetUnit("C");
   }, [handleSetUnit]);
 
-  const handleDesktopChange = useCallback((event) => {
-    if (event.matches) {
-      closeMobileSettings();
-    }
-  }, [closeMobileSettings]);
-
-  const handleDocumentPointerDown = useCallback(
-    (event) => {
-      if (
-        controlsRef.current &&
-        event.target instanceof Node &&
-        !controlsRef.current.contains(event.target)
-      ) {
-        closeMobileSettings();
-      }
-    },
-    [closeMobileSettings]
-  );
-
-  const handleEscape = useCallback(
-    (event) => {
-      if (event.key === "Escape") {
-        closeMobileSettings();
-      }
-    },
-    [closeMobileSettings]
-  );
-
-  useEffect(() => {
-    if (typeof document === "undefined") {
-      return undefined;
-    }
-
-    if (!showMobileSettings) {
-      return undefined;
-    }
-
-    document.addEventListener("pointerdown", handleDocumentPointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("pointerdown", handleDocumentPointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [showMobileSettings, handleDocumentPointerDown, handleEscape]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      return undefined;
-    }
-
-    const desktopBreakpoint = (() => {
-      if (
-        typeof document === "undefined" ||
-        !document.documentElement ||
-        typeof window.getComputedStyle !== "function"
-      ) {
-        return 761;
-      }
-
-      const value = getComputedStyle(document.documentElement)
-        .getPropertyValue("--bp-tablet-small")
-        .trim();
-      const parsed = Number.parseInt(value, 10);
-      return Number.isFinite(parsed) ? parsed + 1 : 761;
-    })();
-
-    const desktopQuery = window.matchMedia(`(min-width: ${desktopBreakpoint}px)`);
-
-    if (typeof desktopQuery.addEventListener === "function") {
-      desktopQuery.addEventListener("change", handleDesktopChange);
-      return () => desktopQuery.removeEventListener("change", handleDesktopChange);
-    }
-
-    desktopQuery.addListener(handleDesktopChange);
-    return () => desktopQuery.removeListener(handleDesktopChange);
-  }, [handleDesktopChange]);
-
   return (
-    <div className="app-header-actions" ref={controlsRef}>
+    <div className="app-header-actions">
       <div className="app-header-primary">
         <CitySearch ref={citySearchRef} onSelect={handleCitySelect} />
         <button
@@ -171,21 +79,11 @@ function HeaderControls({
         >
           {isLocatingCurrent ? "Finding..." : "My location"}
         </button>
-        <button
-          type="button"
-          className="settings-toggle glass"
-          aria-label={showMobileSettings ? "Hide display settings" : "Show display settings"}
-          aria-expanded={showMobileSettings}
-          aria-controls="mobile-settings-panel"
-          onClick={handleToggleSettings}
-        >
-          Display
-        </button>
       </div>
 
       <div
-        id="mobile-settings-panel"
-        className={`app-header-secondary ${showMobileSettings ? "is-open" : ""}`}
+        id="display-settings-panel"
+        className="app-header-secondary"
         role="region"
         aria-label="Display settings"
       >
@@ -244,7 +142,7 @@ function HeaderControls({
           onClick={handleClearSavedLocation}
           aria-label="Clear saved location preference"
         >
-          Forget Saved
+          Clear saved location
         </button>
       </div>
     </div>

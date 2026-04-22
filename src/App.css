@@ -1166,22 +1166,15 @@ a:focus-visible,
   }
 
   .app-header-secondary {
-    display: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
     width: 100%;
     gap: 8px;
   }
 
-  .app-header-secondary.is-open {
-    display: flex;
-    animation: settings-reveal var(--motion-subtle-slow) var(--ease-standard) both;
-  }
-
   .settings-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-    margin-left: auto;
+    display: none;
   }
 
   .app-header-secondary .toggle-pill,

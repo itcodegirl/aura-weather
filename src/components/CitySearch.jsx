@@ -131,6 +131,11 @@ function CitySearch({ onSelect }, ref) {
           aria-activedescendant={activeDescendant}
           autoComplete="off"
         />
+        {!query && (
+          <span className="city-search-shortcut-badge" aria-hidden="true">
+            / search
+          </span>
+        )}
         {query && (
           <button
             type="button"

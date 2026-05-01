@@ -26,6 +26,7 @@ function HeaderControls({
   setShowClimateContext,
   unit,
   setUnit,
+  hasPersistedLocation,
 }) {
   const handleCitySelect = useCallback(
     (city) => {
@@ -154,6 +155,7 @@ function HeaderControls({
         onSetUnitF={handleSetUnitF}
         onSetUnitC={handleSetUnitC}
         onClearSavedLocation={handleClearSavedLocation}
+        hasPersistedLocation={hasPersistedLocation}
       />
     </div>
   );

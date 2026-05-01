@@ -23,6 +23,7 @@ function AppHeader({
   setShowClimateContext,
   unit,
   setUnit,
+  hasPersistedLocation,
 }) {
   return (
     <header className="app-header glass">
@@ -59,6 +60,7 @@ function AppHeader({
         setShowClimateContext={setShowClimateContext}
         unit={unit}
         setUnit={setUnit}
+        hasPersistedLocation={hasPersistedLocation}
       />
     </header>
   );

@@ -50,12 +50,14 @@ function getInitialLocationState() {
     return {
       location: persistedLocation,
       notice: SAVED_LOCATION_NOTICE,
+      hasPersistedLocation: true,
     };
   }
 
   return {
     location: DEFAULT_LOCATION,
     notice: LOCATION_FALLBACK_NOTICE,
+    hasPersistedLocation: false,
   };
 }
 
@@ -64,6 +66,9 @@ export function useWeather(options = {}) {
   const [initialLocationState] = useState(() => getInitialLocationState());
   const [location, setLocation] = useState(initialLocationState.location);
   const [locationNotice, setLocationNotice] = useState(initialLocationState.notice);
+  const [hasPersistedLocation, setHasPersistedLocation] = useState(
+    initialLocationState.hasPersistedLocation
+  );
   const [savedCities, setSavedCities] = useState(() => getSavedCities());
   const locationRef = useRef(location);
   const locationNoticeRef = useRef(locationNotice);
@@ -83,6 +88,7 @@ export function useWeather(options = {}) {
       nextLocation.name,
       nextLocation.country
     );
+    setHasPersistedLocation(true);
   }, []);
 
   const applyLocation = useCallback(
@@ -196,6 +202,7 @@ export function useWeather(options = {}) {
     }
 
     clearPersistedLocation();
+    setHasPersistedLocation(false);
     const removedSavedLocationNotice =
       "Saved startup location removed. Aura will open to Chicago next time.";
     setLocationNotice(removedSavedLocationNotice);
@@ -213,6 +220,7 @@ export function useWeather(options = {}) {
 
   const clearSavedLocation = useCallback(() => {
     clearPersistedLocation();
+    setHasPersistedLocation(false);
     setLocationNotice("Saved location removed for future sessions.");
     locationNoticeRef.current = "Saved location removed for future sessions.";
   }, []);
@@ -231,6 +239,7 @@ export function useWeather(options = {}) {
     trustMeta,
     isLocatingCurrent,
     isGeolocationSupported,
+    hasPersistedLocation,
     clearSavedLocation,
     savedCities,
     loadSavedCity,

@@ -1,5 +1,5 @@
 import { ChevronDown, Cloud } from "lucide-react";
-import { memo, useCallback, useId, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 function SyncAccountPanel({
   syncConnected,
@@ -11,6 +11,7 @@ function SyncAccountPanel({
   onSyncNow,
 }) {
   const [syncKeyInput, setSyncKeyInput] = useState("");
+  const wasConnectedRef = useRef(syncConnected);
   const syncStatusText =
     typeof syncState?.message === "string" && syncState.message.trim()
       ? syncState.message.trim()
@@ -39,6 +40,17 @@ function SyncAccountPanel({
       void onConnectSyncAccount(syncKeyInput);
     }
   }, [onConnectSyncAccount, syncKeyInput]);
+
+  useEffect(() => {
+    const wasConnected = wasConnectedRef.current;
+    if (syncConnected || wasConnected !== syncConnected) {
+      if (syncConnected || wasConnected) {
+        setSyncKeyInput("");
+      }
+    }
+
+    wasConnectedRef.current = syncConnected;
+  }, [syncConnected]);
 
   return (
     <div className="sync-account-shell">

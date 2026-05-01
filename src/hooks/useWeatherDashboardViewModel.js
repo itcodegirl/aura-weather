@@ -1,7 +1,6 @@
 import { useMemo, useRef } from "react";
-import { PRELOAD_HEAVY_PANELS } from "../components/lazyPanels";
 import { deriveWeatherScene } from "../domain/weatherScene";
-import { usePanelPreload, useSearchShortcut } from "./useAppShellEffects";
+import { useSearchShortcut } from "./useAppShellEffects";
 import { useDisplayPreferences } from "./useDisplayPreferences";
 import { useWeather } from "./useWeather";
 
@@ -22,7 +21,6 @@ export function useWeatherDashboardViewModel() {
   );
 
   useSearchShortcut(citySearchRef);
-  usePanelPreload(PRELOAD_HEAVY_PANELS);
 
   return {
     ...weatherState,

@@ -1,3 +1,5 @@
+const MOCK_NOW_ISO = "2026-04-21T12:00:00-05:00";
+
 function toIsoMinute(date) {
   return date.toISOString().slice(0, 16);
 }
@@ -6,8 +8,12 @@ function toDateAtOffset(baseDate, minutesOffset) {
   return new Date(baseDate.getTime() + minutesOffset * 60_000);
 }
 
+function getMockNow() {
+  return new Date(MOCK_NOW_ISO);
+}
+
 function buildWeatherPayload(latitude, longitude) {
-  const now = new Date();
+  const now = getMockNow();
   now.setSeconds(0, 0);
   const currentHour = new Date(now);
   currentHour.setMinutes(0, 0, 0);
@@ -119,7 +125,7 @@ function buildWeatherPayload(latitude, longitude) {
 }
 
 function buildArchivePayload() {
-  const now = new Date();
+  const now = getMockNow();
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const day = String(now.getUTCDate()).padStart(2, "0");
   const currentYear = now.getUTCFullYear();

@@ -51,7 +51,7 @@ function StatusStack({
 
   return (
     <div className="status-stack">
-      {locationNotice && (
+      {locationNotice && !showPermissionOnboarding && !showLocationSetupPrompt && (
         <p className="location-notice">
           <span className="location-notice-label">Location</span>
           <span className="location-notice-text">{locationNotice}</span>
@@ -62,8 +62,8 @@ function StatusStack({
           <p className="permission-onboarding-kicker">First-time setup</p>
           <h2 className="permission-onboarding-title">Get forecasts for where you are</h2>
           <p className="permission-onboarding-copy">
-            We use your browser location only to personalize weather for your current area.
-            You can search cities manually any time.
+            Chicago is ready as a starting forecast. Share your browser location only if
+            you want live weather for where you are right now, or search any city manually.
           </p>
           <div className="permission-onboarding-actions">
             <button

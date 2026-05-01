@@ -498,11 +498,72 @@ a:focus-visible,
   box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.34);
 }
 
+.sync-account-shell {
+  width: 100%;
+  max-width: 620px;
+  display: grid;
+  gap: 8px;
+}
+
+.sync-account-toggle {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(185, 211, 250, 0.24);
+  background: rgba(7, 16, 35, 0.48);
+  box-shadow: inset 0 1px 0 rgba(228, 240, 255, 0.08);
+  text-align: left;
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.sync-account-toggle:hover {
+  border-color: rgba(166, 227, 255, 0.42);
+  background: rgba(9, 20, 42, 0.62);
+  transform: translateY(-1px);
+}
+
+.sync-account-toggle-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.sync-account-toggle-hint {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(178, 209, 252, 0.28);
+  background: rgba(8, 18, 39, 0.62);
+  color: rgba(210, 227, 252, 0.9);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sync-account-toggle-icon {
+  color: rgba(214, 230, 252, 0.86);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.sync-account-toggle.is-expanded .sync-account-toggle-icon {
+  transform: rotate(180deg);
+}
+
 .sync-account-panel {
   display: grid;
   gap: 6px;
   width: 100%;
-  max-width: 620px;
   padding: 10px 11px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(185, 211, 250, 0.24);
@@ -512,6 +573,9 @@ a:focus-visible,
 
 .sync-account-title {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: rgba(212, 227, 252, 0.92);
   font-size: 10px;
   font-weight: 700;
@@ -524,6 +588,13 @@ a:focus-visible,
   color: #e3efff;
   font-size: 12px;
   font-weight: 600;
+}
+
+.sync-account-note {
+  margin: 0;
+  color: rgba(205, 221, 247, 0.88);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .sync-account-actions,
@@ -1614,10 +1685,6 @@ a:focus-visible,
     flex-wrap: wrap;
   }
 
-  .sync-account-panel {
-    max-width: 100%;
-  }
-
   .app-header-secondary {
     display: flex;
     flex-wrap: wrap;
@@ -1800,6 +1867,14 @@ a:focus-visible,
 
   .sync-account-panel {
     padding: 9px 10px;
+  }
+
+  .sync-account-toggle {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .sync-account-toggle-hint {
+    display: none;
   }
 
   .sync-account-status,

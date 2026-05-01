@@ -17,6 +17,7 @@ It is designed as a portfolio project with real frontend concerns in scope:
 
 ## Product Highlights
 
+- Immediate fallback forecast for Chicago on first load, with optional location permission instead of a stalled geolocation wait
 - Current conditions, hourly outlook, rain guidance, risk signals, and 7-day forecast in one surface
 - Open-Meteo powered weather, air quality, geocoding, and archive data
 - NOAA / NWS severe alerts with explicit unsupported-region fallback messaging
@@ -109,6 +110,13 @@ npm run test:lighthouse
   - tablet dashboard
   - mobile dashboard
 
+## Demo Expectations
+
+- First load opens to a usable Chicago forecast immediately instead of stalling on a geolocation permission prompt.
+- Browser location is opt-in. Users can keep the fallback city, search manually, or grant location access.
+- Core weather data loads first. Air quality, alerts, and climate context can recover independently if a secondary API is slow or unavailable.
+- Cloud sync is optional and intentionally secondary to the main forecast workflow.
+
 ## Accessibility Notes
 
 - Skip link to main content
@@ -123,6 +131,23 @@ npm run test:lighthouse
 - NOAA / NWS severe alerts are U.S.-region only; unsupported regions fall back to explanatory messaging instead of a false all-clear.
 - Saved-location cloud sync is intentionally lightweight and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`.
 - `npm run test:lighthouse` still fails the performance budget at the time of writing. Accessibility, SEO, and best-practices budgets pass, but performance optimization remains unfinished.
+
+## Portfolio / Case Study Notes
+
+If this project is presented in a portfolio, the strongest story is:
+
+- resilient client-side API composition instead of a single happy-path fetch
+- responsive dashboard work that now has smoke and visual regression protection
+- accessibility work that goes beyond color tweaks into keyboard flow, live status messaging, and baseline axe coverage
+- product decisions around trust cues, unsupported alert regions, and location permission onboarding
+
+The weakest current story is performance. This repo is better as a frontend architecture and QA sample than as a claim of production-grade performance optimization.
+
+## Screenshot Guidance
+
+- Use one desktop screenshot that shows the current conditions hero, exposure metrics, and risk panels together.
+- Use one mobile screenshot that proves the stacked layout stays readable without horizontal overflow.
+- If you write a case study, call out the unsupported-region alerts fallback and the opt-in location onboarding instead of only showing polished visuals.
 
 ## Recruiter Notes
 

@@ -1,14 +1,17 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { parseCoordinates } from "../utils/weatherUnits";
 import {
+  DEFAULT_LOCATION,
   useLocation,
   persistLocation,
   clearPersistedLocation,
+  getPersistedLocation,
   getSavedCities,
   upsertSavedCity,
   removeSavedCity,
   normalizeLocationName,
   LOCATION_FALLBACK_NOTICE,
+  SAVED_LOCATION_NOTICE,
 } from "./useLocation";
 import { useSavedLocationsSync } from "./useSavedLocationsSync";
 import { useWeatherData } from "./useWeatherData";
@@ -27,10 +30,26 @@ function toLocationPayload(lat, lon, name = "", country = "") {
   };
 }
 
+function getInitialLocationState() {
+  const persistedLocation = getPersistedLocation();
+  if (persistedLocation) {
+    return {
+      location: persistedLocation,
+      notice: SAVED_LOCATION_NOTICE,
+    };
+  }
+
+  return {
+    location: DEFAULT_LOCATION,
+    notice: LOCATION_FALLBACK_NOTICE,
+  };
+}
+
 export function useWeather(unit = "F", options = {}) {
   const { climateEnabled = true } = options;
-  const [location, setLocation] = useState(null);
-  const [locationNotice, setLocationNotice] = useState(null);
+  const [initialLocationState] = useState(() => getInitialLocationState());
+  const [location, setLocation] = useState(initialLocationState.location);
+  const [locationNotice, setLocationNotice] = useState(initialLocationState.notice);
   const [savedCities, setSavedCities] = useState(() => getSavedCities());
   const locationRef = useRef(location);
   const locationNoticeRef = useRef(locationNotice);
@@ -54,7 +73,7 @@ export function useWeather(unit = "F", options = {}) {
 
   const applyLocation = useCallback(
     (nextLocation, notice = null, options = {}) => {
-      const { saveCity = true } = options;
+      const { saveCity = true, persistLocation: shouldPersistLocation = true } = options;
       const currentLocation = locationRef.current;
       const hasSameLocation =
         currentLocation &&
@@ -71,7 +90,9 @@ export function useWeather(unit = "F", options = {}) {
       if (!hasSameLocation) {
         setLocation(nextLocation);
         locationRef.current = nextLocation;
-        persistLocationPayload(nextLocation);
+        if (shouldPersistLocation) {
+          persistLocationPayload(nextLocation);
+        }
 
         if (saveCity) {
           const updatedSavedCities = upsertSavedCity(
@@ -99,7 +120,10 @@ export function useWeather(unit = "F", options = {}) {
         return;
       }
       const shouldSaveCity = notice !== LOCATION_FALLBACK_NOTICE;
-      applyLocation(nextLocation, notice, { saveCity: shouldSaveCity });
+      applyLocation(nextLocation, notice, {
+        saveCity: shouldSaveCity,
+        persistLocation: shouldSaveCity,
+      });
     },
     [applyLocation]
   );

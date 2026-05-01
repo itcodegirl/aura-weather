@@ -73,6 +73,7 @@ function WeatherDashboard({
   const weatherFetchedAt = trustMeta?.weatherFetchedAt ?? null;
   const aqiFetchedAt = trustMeta?.aqiFetchedAt ?? null;
   const climateFetchedAt = trustMeta?.climateFetchedAt ?? null;
+  const climateStatus = trustMeta?.climateStatus ?? "idle";
   const alertsFetchedAt = trustMeta?.alertsFetchedAt ?? null;
   const alertsStatus = trustMeta?.alertsStatus ?? weather?.alertsStatus ?? "idle";
 
@@ -94,7 +95,9 @@ function WeatherDashboard({
         weather={weather}
         location={location}
         unit={unit}
-        climateComparison={showClimateContext ? climateComparison : null}
+        climateComparison={climateComparison}
+        showClimateContext={showClimateContext}
+        climateStatus={climateStatus}
         style={CARD_STYLE_VARIABLES[0]}
         isRefreshing={isBackgroundLoading}
         lastUpdatedAt={weatherFetchedAt}
@@ -103,8 +106,8 @@ function WeatherDashboard({
       />
 
       <ExposureSection
-        aqi={weather.aqi}
-        uvIndex={weather.daily?.uvIndexMax?.[0]}
+        aqi={weather?.aqi}
+        uvIndex={weather?.daily?.uvIndexMax?.[0]}
         style={CARD_STYLE_VARIABLES[1]}
         isRefreshing={isBackgroundLoading}
         lastUpdatedAt={aqiFetchedAt ?? weatherFetchedAt}

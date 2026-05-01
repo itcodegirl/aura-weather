@@ -13,14 +13,28 @@ async function openDashboard(page) {
 test.beforeEach(async ({ page, context }) => {
   await mockDeniedGeolocation(context);
   await installOpenMeteoMocks(page);
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+  });
 });
 
 test("loads the dashboard with fallback location and core controls", async ({ page }) => {
   await openDashboard(page);
 
-  await expect(page.getByText("Location not available")).toBeVisible();
   await expect(page.locator(".hero-location")).toContainText("Chicago, United States");
-  await expect(page.getByText("Climate Context")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Chicago is ready as a starting forecast. Share your browser location only if you want live weather for where you are right now, or search any city manually."
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Location onboarding").getByRole("button", { name: "Allow location access" })
+  ).toBeVisible();
+  await expect(page.locator(".location-notice")).toHaveCount(0);
+  await expect(page.getByText("Cloud Sync")).toBeVisible();
+  await expect(
+    page.locator(".header-control-label").filter({ hasText: "Climate Context" })
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Clear saved location preference" })
   ).toBeVisible();

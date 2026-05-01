@@ -8,7 +8,7 @@ export const DEFAULT_LOCATION = {
   country: "United States",
 };
 export const LOCATION_FALLBACK_NOTICE =
-  "Location not available \u2014 showing Chicago";
+  "Showing Chicago until you choose a location";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 const LAST_LOCATION_KEY = "aura-weather-last-location";
 const SAVED_CITIES_KEY = "aura-weather-saved-cities";
@@ -382,18 +382,17 @@ export function useLocation(onResolved) {
       return undefined;
     }
 
-    Promise.resolve().then(() => {
-      requestCurrentPositionWithFallback({
-        fallbackNotice: LOCATION_FALLBACK_NOTICE,
-        trackCurrentLookup: false,
-      });
-    });
+    notifyResolvedLocation(
+      onResolvedRef.current,
+      DEFAULT_LOCATION.lat,
+      DEFAULT_LOCATION.lon,
+      DEFAULT_LOCATION.name,
+      DEFAULT_LOCATION.country,
+      LOCATION_FALLBACK_NOTICE
+    );
 
-    return () => {
-      clearFallbackTimer();
-      activeRequestRef.current += 1;
-    };
-  }, [requestCurrentPositionWithFallback, clearFallbackTimer]);
+    return undefined;
+  }, []);
 
   return {
     isLocatingCurrent,

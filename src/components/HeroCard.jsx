@@ -24,6 +24,8 @@ function HeroCard({
   location,
   unit,
   climateComparison,
+  showClimateContext = true,
+  climateStatus = "idle",
   style,
   isRefreshing = false,
   lastUpdatedAt,
@@ -170,6 +172,25 @@ function HeroCard({
     climateMessage,
     today,
   } = heroData;
+  const shouldShowClimateMeta = showClimateContext && climateStatus !== "disabled";
+  const climateMetaStatusLabel =
+    climateStatus === "loading"
+      ? "Loading climate context"
+      : climateStatus === "unavailable"
+        ? "Climate context unavailable"
+        : "";
+  const climateMetaTitle =
+    climateStatus === "loading"
+      ? "Aura Weather is comparing current conditions against the historical Open-Meteo archive."
+      : climateStatus === "unavailable"
+        ? "The Open-Meteo historical archive did not return a usable response for this comparison."
+        : "";
+  const climateFallbackMessage =
+    climateStatus === "loading"
+      ? "Comparing today's conditions with the historical average..."
+      : climateStatus === "unavailable"
+        ? "Climate context is temporarily unavailable. Current weather is still live."
+        : "";
 
   return (
     <section
@@ -215,12 +236,16 @@ function HeroCard({
         lastUpdatedAt={lastUpdatedAt}
         nowMs={nowMs}
       />
-      {hasClimateComparison && (
+      {shouldShowClimateMeta && (
         <DataTrustMeta
           sourceLabel="Open-Meteo Archive"
-          lastUpdatedAt={climateLastUpdatedAt ?? lastUpdatedAt}
+          lastUpdatedAt={
+            climateStatus === "ready" ? climateLastUpdatedAt ?? lastUpdatedAt : null
+          }
           nowMs={nowMs}
           staleAfterMinutes={120}
+          statusLabel={climateMetaStatusLabel}
+          titleOverride={climateMetaTitle}
         />
       )}
 
@@ -242,6 +267,9 @@ function HeroCard({
           </div>
           {hasClimateComparison && (
             <p className="hero-insight">{climateMessage}</p>
+          )}
+          {!hasClimateComparison && climateFallbackMessage && (
+            <p className="hero-insight">{climateFallbackMessage}</p>
           )}
         </div>
       </div>

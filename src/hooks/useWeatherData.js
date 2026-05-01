@@ -13,6 +13,14 @@ import {
   parseCoordinates,
 } from "../utils/weatherUnits";
 
+const DEFAULT_TRUST_META = {
+  weatherFetchedAt: null,
+  aqiFetchedAt: null,
+  climateFetchedAt: null,
+  climateStatus: "idle",
+  alertsFetchedAt: null,
+  alertsStatus: "idle",
+};
 
 function getErrorMessage(error, fallback) {
   if (typeof error === "string") {
@@ -46,6 +54,31 @@ function isAbortError(error) {
   return error?.name === "AbortError";
 }
 
+function buildClimateComparison(weatherData, historicalAverage, weatherDataUnit) {
+  const currentTemperature = Number(weatherData?.current?.temperature);
+  const historicalTemperature = Number(historicalAverage?.averageTemperature);
+  const climateDelta = getDifference(currentTemperature, historicalTemperature);
+
+  if (!historicalAverage || !Number.isFinite(climateDelta)) {
+    return null;
+  }
+
+  return {
+    ...historicalAverage,
+    difference: climateDelta,
+    differenceUnit: weatherDataUnit,
+  };
+}
+
+function buildBaseWeatherState(weatherData) {
+  return {
+    ...weatherData,
+    aqi: null,
+    alerts: [],
+    alertsStatus: "idle",
+  };
+}
+
 export function useWeatherData(location, unit = "F", options = {}) {
   const { climateEnabled = true } = options;
   const locationLat = location?.lat;
@@ -53,19 +86,18 @@ export function useWeatherData(location, unit = "F", options = {}) {
   const weatherDataUnit = normalizeTemperatureUnit(unit);
 
   const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() =>
+    Boolean(parseCoordinates(locationLat, locationLon))
+  );
   const [error, setError] = useState(null);
   const [climateComparison, setClimateComparison] = useState(null);
-  const [trustMeta, setTrustMeta] = useState({
-    weatherFetchedAt: null,
-    aqiFetchedAt: null,
-    climateFetchedAt: null,
-    alertsFetchedAt: null,
-    alertsStatus: "idle",
-  });
+  const [trustMeta, setTrustMeta] = useState(DEFAULT_TRUST_META);
 
   const requestIdRef = useRef(0);
   const inFlightRequestRef = useRef(null);
+  const climateRequestRef = useRef(null);
+  const climateRequestIdRef = useRef(0);
+  const climateEnabledRef = useRef(climateEnabled);
   const isMountedRef = useRef(false);
 
   useEffect(() => {
@@ -74,6 +106,10 @@ export function useWeatherData(location, unit = "F", options = {}) {
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    climateEnabledRef.current = climateEnabled;
+  }, [climateEnabled]);
 
   const abortInFlightRequest = useCallback(() => {
     if (!inFlightRequestRef.current) {
@@ -84,14 +120,191 @@ export function useWeatherData(location, unit = "F", options = {}) {
     inFlightRequestRef.current = null;
   }, []);
 
+  const abortClimateRequest = useCallback(() => {
+    if (!climateRequestRef.current) {
+      return;
+    }
+
+    climateRequestRef.current.abort();
+    climateRequestRef.current = null;
+  }, []);
+
+  const requestClimateComparison = useCallback(async ({
+    coordinates,
+    weatherData,
+    weatherFetchedAt,
+    apiTemperatureUnit = "fahrenheit",
+  }) => {
+    if (!climateEnabledRef.current) {
+      setClimateComparison(null);
+      setTrustMeta((currentTrustMeta) => ({
+        ...currentTrustMeta,
+        climateFetchedAt: null,
+        climateStatus: "disabled",
+      }));
+      return;
+    }
+
+    const requestId = climateRequestIdRef.current + 1;
+    climateRequestIdRef.current = requestId;
+
+    abortClimateRequest();
+
+    const controller = new AbortController();
+    climateRequestRef.current = controller;
+
+    setTrustMeta((currentTrustMeta) => ({
+      ...currentTrustMeta,
+      climateStatus: "loading",
+    }));
+
+    try {
+      const historicalAverage = await fetchHistoricalTemperatureAverage(
+        coordinates.latitude,
+        coordinates.longitude,
+        weatherData?.meta?.timezone,
+        {
+          signal: controller.signal,
+          temperatureUnit: apiTemperatureUnit,
+        }
+      );
+
+      if (
+        requestId !== climateRequestIdRef.current ||
+        !isMountedRef.current
+      ) {
+        return;
+      }
+
+      const nextClimateComparison = buildClimateComparison(
+        weatherData,
+        historicalAverage,
+        weatherDataUnit
+      );
+
+      setClimateComparison(nextClimateComparison);
+      setTrustMeta((currentTrustMeta) => ({
+        ...currentTrustMeta,
+        weatherFetchedAt,
+        climateFetchedAt: nextClimateComparison ? Date.now() : null,
+        climateStatus: nextClimateComparison ? "ready" : "unavailable",
+      }));
+    } catch (climateError) {
+      if (
+        requestId !== climateRequestIdRef.current ||
+        isAbortError(climateError) ||
+        !isMountedRef.current
+      ) {
+        return;
+      }
+
+      setClimateComparison(null);
+      setTrustMeta((currentTrustMeta) => ({
+        ...currentTrustMeta,
+        climateFetchedAt: null,
+        climateStatus: "unavailable",
+      }));
+    } finally {
+      if (climateRequestRef.current === controller) {
+        climateRequestRef.current = null;
+      }
+    }
+  }, [abortClimateRequest, weatherDataUnit]);
+
+  const applySupplementalData = useCallback(async ({
+    requestId,
+    controller,
+    coordinates,
+    weatherFetchedAt,
+  }) => {
+    const supplementalTasks = [
+      fetchAirQuality(coordinates.latitude, coordinates.longitude, {
+        signal: controller.signal,
+      }).then((aqi) => ({
+        kind: "aqi",
+        value: aqi,
+      })),
+      fetchSevereWeatherAlerts(coordinates.latitude, coordinates.longitude, {
+        signal: controller.signal,
+      }).then((alerts) => ({
+        kind: "alerts",
+        value: alerts,
+      })),
+    ];
+
+    try {
+      const results = await Promise.allSettled(supplementalTasks);
+      if (requestId !== requestIdRef.current || !isMountedRef.current) {
+        return;
+      }
+
+      let nextAqi = null;
+      let alertsPayload = null;
+
+      for (const result of results) {
+        if (result.status !== "fulfilled") {
+          if (isAbortError(result.reason)) {
+            return;
+          }
+          continue;
+        }
+
+        if (result.value.kind === "aqi") {
+          nextAqi = result.value.value;
+        }
+
+        if (result.value.kind === "alerts") {
+          alertsPayload = result.value.value;
+        }
+      }
+
+      setWeather((currentWeather) => {
+        if (!currentWeather) {
+          return currentWeather;
+        }
+
+        const nextWeather = { ...currentWeather };
+        nextWeather.aqi = nextAqi;
+
+        if (alertsPayload) {
+          nextWeather.alerts = Array.isArray(alertsPayload?.alerts)
+            ? alertsPayload.alerts
+            : [];
+          nextWeather.alertsStatus =
+            typeof alertsPayload?.status === "string"
+              ? alertsPayload.status
+              : ALERTS_STATUS.unavailable;
+        }
+
+        return nextWeather;
+      });
+
+      setTrustMeta((currentTrustMeta) => ({
+        ...currentTrustMeta,
+        weatherFetchedAt,
+        aqiFetchedAt: Number.isFinite(Number(nextAqi)) ? Date.now() : null,
+        alertsFetchedAt:
+          alertsPayload?.status === ALERTS_STATUS.ready ? Date.now() : null,
+        alertsStatus:
+          typeof alertsPayload?.status === "string"
+            ? alertsPayload.status
+            : currentTrustMeta.alertsStatus,
+      }));
+    } finally {
+      if (inFlightRequestRef.current === controller) {
+        inFlightRequestRef.current = null;
+      }
+    }
+  }, []);
+
   const requestWeatherData = useCallback(async () => {
     const coordinates = parseCoordinates(locationLat, locationLon);
 
     if (!coordinates) {
       if (typeof locationLat === "number" || typeof locationLon === "number") {
         setError("Invalid location coordinates");
-        setLoading(false);
       }
+      setLoading(false);
       return;
     }
 
@@ -102,6 +315,7 @@ export function useWeatherData(location, unit = "F", options = {}) {
     const requestWindSpeedUnit = getApiWindSpeedUnit();
 
     abortInFlightRequest();
+    abortClimateRequest();
 
     const controller = new AbortController();
     inFlightRequestRef.current = controller;
@@ -110,76 +324,50 @@ export function useWeatherData(location, unit = "F", options = {}) {
     setError(null);
     setClimateComparison(null);
 
+    let shouldKeepController = false;
+
     try {
-      const [weatherData, aqi, alerts] = await Promise.all([
-        fetchWeather(coordinates.latitude, coordinates.longitude, {
+      const weatherData = await fetchWeather(
+        coordinates.latitude,
+        coordinates.longitude,
+        {
           signal: controller.signal,
           temperatureUnit: apiTemperatureUnit,
           windSpeedUnit: requestWindSpeedUnit,
           precipitationUnit: getApiPrecipUnit(weatherDataUnit),
-        }),
-        fetchAirQuality(coordinates.latitude, coordinates.longitude, {
-          signal: controller.signal,
-        }),
-        fetchSevereWeatherAlerts(coordinates.latitude, coordinates.longitude, {
-          signal: controller.signal,
-        }),
-      ]);
-
-      let historicalAverage = null;
-      if (climateEnabled) {
-        try {
-          historicalAverage = await fetchHistoricalTemperatureAverage(
-            coordinates.latitude,
-            coordinates.longitude,
-            weatherData?.meta?.timezone,
-            {
-              signal: controller.signal,
-              temperatureUnit: apiTemperatureUnit,
-            }
-          );
-        } catch (climateError) {
-          if (isAbortError(climateError)) {
-            throw climateError;
-          }
         }
-      }
+      );
 
       if (requestId !== requestIdRef.current || !isMountedRef.current) {
         return;
       }
 
-      const alertsList = Array.isArray(alerts?.alerts) ? alerts.alerts : [];
-      const alertsStatus =
-        typeof alerts?.status === "string" ? alerts.status : ALERTS_STATUS.unavailable;
-      const currentTemperature = Number(weatherData?.current?.temperature);
-      const historicalTemperature = Number(historicalAverage?.averageTemperature);
-      const climateDelta = getDifference(currentTemperature, historicalTemperature);
       const fetchedAt = Date.now();
 
-      setWeather({
-        ...weatherData,
-        aqi,
-        alerts: alertsList,
-        alertsStatus,
-      });
+      setWeather(buildBaseWeatherState(weatherData));
       setTrustMeta({
         weatherFetchedAt: fetchedAt,
-        aqiFetchedAt: fetchedAt,
-        climateFetchedAt: historicalAverage ? fetchedAt : null,
-        alertsFetchedAt: alertsStatus === ALERTS_STATUS.ready ? fetchedAt : null,
-        alertsStatus,
+        aqiFetchedAt: null,
+        climateFetchedAt: null,
+        climateStatus: climateEnabledRef.current ? "loading" : "disabled",
+        alertsFetchedAt: null,
+        alertsStatus: "idle",
       });
+      setLoading(false);
 
-      setClimateComparison(
-        historicalAverage && Number.isFinite(climateDelta)
-          ? {
-              ...historicalAverage,
-              difference: climateDelta,
-              differenceUnit: weatherDataUnit,
-            }
-          : null
-      );
+      shouldKeepController = true;
+      void applySupplementalData({
+        requestId,
+        controller,
+        coordinates,
+        weatherFetchedAt: fetchedAt,
+      });
+      void requestClimateComparison({
+        coordinates,
+        weatherData,
+        weatherFetchedAt: fetchedAt,
+        apiTemperatureUnit,
+      });
     } catch (requestError) {
       if (
         requestId === requestIdRef.current &&
@@ -191,12 +379,20 @@ export function useWeatherData(location, unit = "F", options = {}) {
     } finally {
       if (requestId === requestIdRef.current && isMountedRef.current) {
         setLoading(false);
-        if (inFlightRequestRef.current === controller) {
-          inFlightRequestRef.current = null;
-        }
+      }
+      if (!shouldKeepController && inFlightRequestRef.current === controller) {
+        inFlightRequestRef.current = null;
       }
     }
-  }, [abortInFlightRequest, climateEnabled, locationLat, locationLon, weatherDataUnit]);
+  }, [
+    abortClimateRequest,
+    abortInFlightRequest,
+    applySupplementalData,
+    locationLat,
+    locationLon,
+    requestClimateComparison,
+    weatherDataUnit,
+  ]);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -205,8 +401,42 @@ export function useWeatherData(location, unit = "F", options = {}) {
 
     return () => {
       abortInFlightRequest();
+      abortClimateRequest();
     };
-  }, [abortInFlightRequest, requestWeatherData]);
+  }, [abortClimateRequest, abortInFlightRequest, requestWeatherData]);
+
+  useEffect(() => {
+    if (climateEnabled) {
+      const coordinates = parseCoordinates(locationLat, locationLon);
+      if (
+        coordinates &&
+        weather &&
+        !climateComparison &&
+        trustMeta.climateStatus !== "loading"
+      ) {
+        Promise.resolve().then(() => {
+          void requestClimateComparison({
+            coordinates,
+            weatherData: weather,
+            weatherFetchedAt: trustMeta.weatherFetchedAt,
+          });
+        });
+      }
+      return;
+    }
+
+    abortClimateRequest();
+  }, [
+    abortClimateRequest,
+    climateComparison,
+    climateEnabled,
+    locationLat,
+    locationLon,
+    requestClimateComparison,
+    trustMeta.climateStatus,
+    trustMeta.weatherFetchedAt,
+    weather,
+  ]);
 
   const retryWeather = useCallback(() => {
     if (!isMountedRef.current) {

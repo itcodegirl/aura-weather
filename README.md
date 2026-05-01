@@ -1,178 +1,137 @@
-# Aura - Atmospheric Intelligence
+# Aura Weather
 
-Aura is a modern weather dashboard focused on real atmospheric signal quality, not just headline temperature.
-It combines live weather data, adaptive visual treatment, and a portfolio-ready interface system.
+Aura Weather is a React weather dashboard built around fast scanning, atmospheric context, and resilient client-side API handling.
 
-## Live
+It is designed as a portfolio project with real frontend concerns in scope:
 
-- Demo: add your deployed URL before portfolio sharing (for example Netlify or Vercel)
-- Local demo: run `npm run dev` and open `http://127.0.0.1:5173`
-- Social preview image: [`public/og-image.png`](./public/og-image.png)
+- live weather, geocoding, air quality, and optional climate context
+- responsive dashboard behavior from desktop down to small mobile screens
+- accessible search, controls, and status messaging
+- defensive API fallbacks for unsupported or degraded data sources
+- automated smoke, visual regression, and unit coverage
 
-## What Makes It Portfolio-Ready
+## Live Demo
 
-- Clear product framing: current conditions, near-term outlook, risk signals, and week-ahead planning.
-- Consistent design system: shared tokens for spacing, typography, surfaces, elevation, and motion.
-- Polished interactions: meaningful card transitions, grouped section reveals, keyboard-first controls, and reduced-motion fallbacks.
-- Accessibility attention: semantic regions, ARIA usage, skip link, visible focus states, and stronger high-contrast mode support.
+- Production: [aura-weather-platform.netlify.app](https://aura-weather-platform.netlify.app/)
+- Local dev: `npm run dev`
 
-## Recent UX Audit Upgrades
+## Product Highlights
 
-- Added a visible `Climate Context` label above the On/Off control so intent is clear for sighted users.
-- Renamed `Forget Saved` to `Clear saved location` and styled it as a low-emphasis destructive action.
-- Removed the mobile `Display` settings drawer so key controls are always visible.
-- Added an in-context `/ search` keyboard hint in the city search control.
-- Added first-session setup guidance when the app falls back to Chicago, including `Use my location` and `Search a city`.
-- Added retry button cooldown handling to prevent repeated rapid refresh attempts.
-- Renamed `Atmospheric Signals` to `Risk & Conditions` and added plain-language context for CAPE.
-- Refined exposure cards to clearly distinguish missing data (for example AQI/UV offline) from true low values.
-- Added per-card refresh indicators during background data updates so stale content is visibly marked as updating.
-
-## Core Features
-
-- Real-time weather, air quality, and geocoding via Open-Meteo.
-- Unit switching between Fahrenheit and Celsius.
-- City search with keyboard navigation and async request cancellation.
-- Current-location lookup with graceful status handling.
-- Hero conditions card with climate comparison context.
-- Hourly temperature chart, nowcast, rain intelligence, storm watch, and 7-day forecast.
-
-## Architecture At A Glance
-
-- `src/api`: raw Open-Meteo fetch adapters and response shaping.
-- `src/domain`: weather classification and scene derivation logic (`meteorology`, `weatherScene`, `wind`, `weatherCodes`).
-- `src/hooks`: orchestration hooks for location, weather fetch lifecycle, display preferences, and dashboard view model composition.
-- `src/components/layout`: app shell, header, status stack, and dashboard composition boundaries.
-- `src/components/ui`: reusable presentational primitives such as card headers, metric cards, and stats.
-
-## Design Upgrade Summary
-
-### Phase 1 - Foundation
-
-- Reworked visual tokens and typography system.
-- Unified card language across major components.
-- Improved visual hierarchy and responsive rhythm.
-
-### Phase 2 - Information Architecture
-
-- Added explicit dashboard section group labels.
-- Reduced dense rain history content into compact summary pills.
-- Added a storm snapshot strip for fast scanning.
-
-### Phase 3 - Polish
-
-- Added motion refinements for section labels and focus-within card emphasis.
-- Added reduced-motion and touch-hover safeguards.
-- Added high-contrast support tuning.
-- Improved metadata and sharing polish in `index.html`.
-
-## Engineering Hardening Phases
-
-### Phase A - Render Efficiency
-
-- Added memoized boundaries in high-cost views (`WeatherDashboard`, `ForecastCard`, `HeroCard`, `RainCard`, `NowcastCard`).
-- Reduced duplicate derived computations in intelligence panels (for example `StormWatch` and weather-scene derivation).
-- Stabilized list rendering in timeline-heavy UI (rain bars now use stable timestamp keys).
-
-### Phase B - Interaction + Accessibility
-
-- City search now follows combobox/listbox semantics more closely, with direct `role="option"` entries.
-- Preserved keyboard-first interaction while preventing focus loss on pointer selection.
-- Scoped global outside-click listeners to active/open states only.
-
-### Phase C - State + Data Hygiene
-
-- Prevented redundant location state updates and duplicate persistence writes in weather orchestration hooks.
-- Removed obsolete compatibility shims and dead utility exports.
-- Added defensive DOM guards around global event registration for broader rendering safety.
-- Added a user-facing control to clear persisted location preference for privacy-conscious usage.
-
-### Phase D - Bundle + Runtime Efficiency
-
-- Replaced the hourly chart dependency with a native SVG renderer.
-- Removed `recharts` from runtime dependencies and cleaned stale build chunk config.
+- Current conditions, hourly outlook, rain guidance, risk signals, and 7-day forecast in one surface
+- Open-Meteo powered weather, air quality, geocoding, and archive data
+- NOAA / NWS severe alerts with explicit unsupported-region fallback messaging
+- Saved cities, persisted location preference, and optional cloud sync for saved locations
+- Keyboard-friendly city search with async cancellation and combobox/listbox behavior
+- Reduced-motion-safe card rendering and refreshed mobile layouts
 
 ## Tech Stack
 
 - React 19
 - Vite 6
 - Lucide React
-- Plain CSS (token-driven)
+- Plain CSS
+- Playwright + axe-core
 - Open-Meteo APIs
 
 ## Project Structure
 
 ```text
 src/
-  api/             # API adapters + weather model normalization
-  domain/          # Classification and weather-scene logic
-  hooks/           # Data orchestration and app lifecycle hooks
-  components/      # Layout, weather modules, and UI primitives
-  services/        # Shared service helpers
-  utils/           # Date/unit/format utilities
-  App.jsx          # Dashboard composition
-  App.css          # Global design system and layout
+  api/             # Fetch adapters and response normalization
+  domain/          # Weather classification and derived scene logic
+  hooks/           # Location, sync, weather, and view-model orchestration
+  components/      # Dashboard modules, layout, and UI primitives
+  services/        # Cross-cutting services such as saved-location sync
+  utils/           # Date, unit, and formatting helpers
 ```
 
-## Getting Started
+## Running Locally
+
+1. Install dependencies:
 
 ```bash
-npm install
+npm ci
+```
+
+2. Copy the optional env file if you want key-based sync URLs:
+
+```bash
+Copy-Item .env.example .env
+```
+
+3. Start the dev server:
+
+```bash
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173` after the dev server starts.
+4. Open `http://127.0.0.1:5173`
 
-### First-Time Test Setup
+## Environment Variables
 
-```bash
-npx playwright install chromium
-```
+Aura works without API keys for weather data.
+
+Optional variables:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `VITE_AURA_SYNC_API_BASE` | No | Base URL for saved-location sync when users enter a short key instead of a full sync URL |
+
+If `VITE_AURA_SYNC_API_BASE` is not set, sync still works when the stored account value is a full URL.
 
 ## Quality Checks
 
 ```bash
 npm run lint
-npm run build
 npm test
+npm run build
 npm run test:e2e
+npm run test:visual
 npm run test:lighthouse
 ```
 
-## E2E Smoke Tests
+### Current automated coverage
 
-- Framework: Playwright + axe-core.
-- Coverage includes dashboard load, city-search location switch, and baseline accessibility assertions.
-- Visual snapshots: desktop/tablet/mobile regression checks via `e2e/visual-regression.spec.js`.
-- First-time setup for local machines:
+- Node tests for:
+  - API model contracts
+  - alert coverage fallback behavior
+  - saved-location sync normalization and error handling
+  - location persistence helpers
+  - weather domain utilities and formatters
+- Playwright smoke coverage for:
+  - dashboard boot
+  - city search and location switching
+  - unsupported-region severe alert fallback
+  - mobile overflow regression
+  - accessibility scan using axe-core
+- Playwright visual baselines for:
+  - desktop dashboard
+  - tablet dashboard
+  - mobile dashboard
 
-```bash
-npx playwright install chromium
-```
+## Accessibility Notes
 
-- Run visual checks:
+- Skip link to main content
+- Visible focus states
+- Keyboard-searchable city combobox
+- Live status messaging for loading and refresh states
+- Reduced-motion-safe card visibility and transitions
+- Updated mobile touch targets for smaller utility controls
 
-```bash
-npm run test:visual
-```
+## Known Limitations
 
-- Update visual baselines intentionally:
+- NOAA / NWS severe alerts are U.S.-region only; unsupported regions fall back to explanatory messaging instead of a false all-clear.
+- Saved-location cloud sync is intentionally lightweight and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`.
+- `npm run test:lighthouse` still fails the performance budget at the time of writing. Accessibility, SEO, and best-practices budgets pass, but performance optimization remains unfinished.
 
-```bash
-npm run test:visual:update
-```
+## Recruiter Notes
 
-## Lighthouse Budgets
+This project is strongest as a frontend implementation sample for:
 
-- Budget command: `npm run test:lighthouse`
-- Budget config: `config/lighthouse-budgets.json`
-- Runner script: `scripts/run-lighthouse-budgets.mjs`
-- Enforced categories: performance, accessibility, best practices, and SEO.
-- PR automation: `.github/workflows/quality-gates.yml`
+- API integration and defensive client-side data handling
+- responsive dashboard composition
+- accessible interaction design
+- CSS systems work without a component library
+- QA maturity beyond a basic tutorial app
 
-## Roadmap
-
-- NWS severe weather alerts (US)
-- Saved cities and quick switching
-- Visual regression snapshots for UI QA
-- Optional radar overlay exploration
+It is not pretending to be a full production weather platform. The main remaining gap is performance work: the UI is more stable and more trustworthy now, but the desktop Lighthouse performance budget still needs focused optimization.

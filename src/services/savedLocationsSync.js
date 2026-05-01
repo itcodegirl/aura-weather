@@ -1,4 +1,5 @@
 import { parseCoordinates } from "../utils/weatherUnits";
+import { MAX_SAVED_CITIES } from "../hooks/useLocation";
 
 const DEFAULT_SYNC_CREATE_ENDPOINT = "https://jsonblob.com/api/jsonBlob";
 
@@ -39,7 +40,7 @@ function normalizeSavedCities(cities) {
       seen.add(key);
       return true;
     })
-    .slice(0, 10);
+    .slice(0, MAX_SAVED_CITIES);
 }
 
 function isAbsoluteHttpUrl(value) {

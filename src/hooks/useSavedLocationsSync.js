@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { parseCoordinates } from "../utils/weatherUnits";
 import {
+  MAX_SAVED_CITIES,
   replaceSavedCities,
   normalizeLocationName,
 } from "./useLocation";
@@ -82,7 +83,26 @@ function mergeSavedCities(localCities, remoteCities) {
     });
   }
 
-  return merged.slice(0, 10);
+  return {
+    cities: merged.slice(0, MAX_SAVED_CITIES),
+    wasTrimmed: merged.length > MAX_SAVED_CITIES,
+  };
+}
+
+function formatPullSuccessMessage(remoteCities, savedCitiesCount, wasTrimmed) {
+  if (!Array.isArray(remoteCities) || remoteCities.length === 0) {
+    return "Sync connected";
+  }
+
+  const locationCount = Number.isFinite(savedCitiesCount)
+    ? savedCitiesCount
+    : remoteCities.length;
+  const label = locationCount === 1 ? "location" : "locations";
+  if (wasTrimmed) {
+    return `Synced ${locationCount} saved ${label} (kept newest ${MAX_SAVED_CITIES})`;
+  }
+
+  return `Synced ${locationCount} saved ${label}`;
 }
 
 export function useSavedLocationsSync(savedCities, setSavedCities) {
@@ -137,7 +157,10 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
         return [];
       }
 
-      const mergedCities = mergeSavedCities(savedCitiesRef.current, remoteCities);
+      const { cities: mergedCities, wasTrimmed } = mergeSavedCities(
+        savedCitiesRef.current,
+        remoteCities
+      );
       skipNextSyncPushRef.current = true;
       const normalizedLocal = replaceSavedCities(mergedCities);
       setSavedCities(normalizedLocal);
@@ -146,10 +169,11 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       setSyncState((previousState) => ({
         ...previousState,
         status: "ready",
-        message:
-          remoteCities.length > 0
-            ? `Synced ${remoteCities.length} saved locations`
-            : "Sync connected",
+        message: formatPullSuccessMessage(
+          remoteCities,
+          normalizedLocal.length,
+          wasTrimmed
+        ),
         error: null,
         lastSyncedAt: Date.now(),
       }));

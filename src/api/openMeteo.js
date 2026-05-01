@@ -17,6 +17,11 @@ const DEFAULT_TEMPERATURE_UNIT = "fahrenheit";
 const DEFAULT_WIND_SPEED_UNIT = "mph";
 const DEFAULT_PRECIPITATION_UNIT = "inch";
 const DEFAULT_TIMEZONE = "UTC";
+export const ALERTS_STATUS = {
+  ready: "ready",
+  unsupported: "unsupported",
+  unavailable: "unavailable",
+};
 
 function getSignal(signal) {
   const hasAbortSignal = typeof AbortSignal !== "undefined";
@@ -87,7 +92,11 @@ async function fetchJson(url, options = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
+    const error = new Error(`Request failed (${response.status})`);
+    error.name = "RequestError";
+    error.status = response.status;
+    error.url = url;
+    throw error;
   }
 
   try {
@@ -363,23 +372,41 @@ export async function geocodeCity(name, options = {}) {
 
 /**
  * Fetches active severe weather alerts from U.S. National Weather Service.
- * Returns an empty list if no alerts are active for the coordinates.
+ * Returns coverage metadata so the UI can distinguish no alerts from no support.
  */
 export async function fetchSevereWeatherAlerts(lat, lon, options = {}) {
   const coordinates = validateCoordinates(lat, lon);
   const params = new URLSearchParams({
     point: `${coordinates.latitude},${coordinates.longitude}`,
   });
-  const payload = await fetchJson(`${ENDPOINTS.alerts}?${params}`, {
-    signal: options.signal,
-    headers: {
-      Accept: "application/geo+json",
-    },
-  });
+  try {
+    const payload = await fetchJson(`${ENDPOINTS.alerts}?${params}`, {
+      signal: options.signal,
+      headers: {
+        Accept: "application/geo+json",
+      },
+    });
 
-  const features = Array.isArray(payload?.features) ? payload.features : [];
-  return features
-    .map((feature, index) => normalizeAlert(feature, index))
-    .sort((a, b) => b.priorityScore - a.priorityScore);
+    const features = Array.isArray(payload?.features) ? payload.features : [];
+    return {
+      alerts: features
+        .map((feature, index) => normalizeAlert(feature, index))
+        .sort((a, b) => b.priorityScore - a.priorityScore),
+      status: ALERTS_STATUS.ready,
+    };
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw error;
+    }
+
+    const status = Number(error?.status);
+    return {
+      alerts: [],
+      status:
+        status === 400 || status === 404
+          ? ALERTS_STATUS.unsupported
+          : ALERTS_STATUS.unavailable,
+    };
+  }
 }
 

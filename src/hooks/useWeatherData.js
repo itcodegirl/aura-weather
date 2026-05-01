@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
+  ALERTS_STATUS,
   fetchWeather,
   fetchAirQuality,
   fetchHistoricalTemperatureAverage,
@@ -41,6 +42,10 @@ function getDifference(currentTemperature, historicalTemperature) {
   return currentTemperature - historicalTemperature;
 }
 
+function isAbortError(error) {
+  return error?.name === "AbortError";
+}
+
 export function useWeatherData(location, unit = "F", options = {}) {
   const { climateEnabled = true } = options;
   const locationLat = location?.lat;
@@ -56,6 +61,7 @@ export function useWeatherData(location, unit = "F", options = {}) {
     aqiFetchedAt: null,
     climateFetchedAt: null,
     alertsFetchedAt: null,
+    alertsStatus: "idle",
   });
 
   const requestIdRef = useRef(0);
@@ -117,11 +123,13 @@ export function useWeatherData(location, unit = "F", options = {}) {
         }),
         fetchSevereWeatherAlerts(coordinates.latitude, coordinates.longitude, {
           signal: controller.signal,
-        }).catch(() => []),
+        }),
       ]);
 
-      const historicalAverage = climateEnabled
-        ? await fetchHistoricalTemperatureAverage(
+      let historicalAverage = null;
+      if (climateEnabled) {
+        try {
+          historicalAverage = await fetchHistoricalTemperatureAverage(
             coordinates.latitude,
             coordinates.longitude,
             weatherData?.meta?.timezone,
@@ -129,13 +137,21 @@ export function useWeatherData(location, unit = "F", options = {}) {
               signal: controller.signal,
               temperatureUnit: apiTemperatureUnit,
             }
-          )
-        : null;
+          );
+        } catch (climateError) {
+          if (isAbortError(climateError)) {
+            throw climateError;
+          }
+        }
+      }
 
       if (requestId !== requestIdRef.current || !isMountedRef.current) {
         return;
       }
 
+      const alertsList = Array.isArray(alerts?.alerts) ? alerts.alerts : [];
+      const alertsStatus =
+        typeof alerts?.status === "string" ? alerts.status : ALERTS_STATUS.unavailable;
       const currentTemperature = Number(weatherData?.current?.temperature);
       const historicalTemperature = Number(historicalAverage?.averageTemperature);
       const climateDelta = getDifference(currentTemperature, historicalTemperature);
@@ -144,14 +160,16 @@ export function useWeatherData(location, unit = "F", options = {}) {
       setWeather({
         ...weatherData,
         aqi,
-        alerts: Array.isArray(alerts) ? alerts : [],
+        alerts: alertsList,
+        alertsStatus,
       });
-      setTrustMeta((previousMeta) => ({
+      setTrustMeta({
         weatherFetchedAt: fetchedAt,
         aqiFetchedAt: fetchedAt,
-        climateFetchedAt: historicalAverage ? fetchedAt : previousMeta.climateFetchedAt,
-        alertsFetchedAt: fetchedAt,
-      }));
+        climateFetchedAt: historicalAverage ? fetchedAt : null,
+        alertsFetchedAt: alertsStatus === ALERTS_STATUS.ready ? fetchedAt : null,
+        alertsStatus,
+      });
 
       setClimateComparison(
         historicalAverage && Number.isFinite(climateDelta)
@@ -165,7 +183,7 @@ export function useWeatherData(location, unit = "F", options = {}) {
     } catch (requestError) {
       if (
         requestId === requestIdRef.current &&
-        requestError?.name !== "AbortError" &&
+        !isAbortError(requestError) &&
         isMountedRef.current
       ) {
         setError(getErrorMessage(requestError, "Could not load weather"));

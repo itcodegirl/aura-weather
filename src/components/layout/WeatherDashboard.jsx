@@ -74,6 +74,7 @@ function WeatherDashboard({
   const aqiFetchedAt = trustMeta?.aqiFetchedAt ?? null;
   const climateFetchedAt = trustMeta?.climateFetchedAt ?? null;
   const alertsFetchedAt = trustMeta?.alertsFetchedAt ?? null;
+  const alertsStatus = trustMeta?.alertsStatus ?? weather?.alertsStatus ?? "idle";
 
   return (
     <main
@@ -164,9 +165,10 @@ function WeatherDashboard({
       </h2>
       <AlertsCard
         alerts={weather?.alerts}
+        alertsStatus={alertsStatus}
         style={CARD_STYLE_VARIABLES[5]}
         isRefreshing={isBackgroundLoading}
-        lastUpdatedAt={alertsFetchedAt ?? weatherFetchedAt}
+        lastUpdatedAt={alertsFetchedAt}
         nowMs={nowMs}
       />
       <Suspense

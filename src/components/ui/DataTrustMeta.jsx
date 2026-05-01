@@ -10,12 +10,20 @@ function DataTrustMeta({
   lastUpdatedAt,
   nowMs,
   staleAfterMinutes = 25,
+  statusLabel = "",
+  titleOverride = "",
 }) {
   const effectiveNowMs = Number.isFinite(Number(nowMs))
     ? Number(nowMs)
     : Number(lastUpdatedAt);
-  const updatedLabel = formatLastUpdatedLabel(lastUpdatedAt, effectiveNowMs);
-  const title = formatTimestampTitle(lastUpdatedAt);
+  const updatedLabel =
+    typeof statusLabel === "string" && statusLabel.trim()
+      ? statusLabel.trim()
+      : formatLastUpdatedLabel(lastUpdatedAt, effectiveNowMs);
+  const title =
+    typeof titleOverride === "string" && titleOverride.trim()
+      ? titleOverride.trim()
+      : formatTimestampTitle(lastUpdatedAt);
   const ageMinutes = getAgeMinutes(lastUpdatedAt, effectiveNowMs);
   const isStale = Number.isFinite(ageMinutes) && ageMinutes >= staleAfterMinutes;
 

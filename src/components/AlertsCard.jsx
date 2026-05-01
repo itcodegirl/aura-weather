@@ -18,6 +18,7 @@ function formatAlertTime(value) {
 
 function AlertsCard({
   alerts,
+  alertsStatus = "idle",
   style,
   isRefreshing = false,
   lastUpdatedAt,
@@ -26,6 +27,47 @@ function AlertsCard({
   const visibleAlerts = useMemo(() => {
     return Array.isArray(alerts) ? alerts.slice(0, 4) : [];
   }, [alerts]);
+  const emptyState = useMemo(() => {
+    if (visibleAlerts.length > 0 || alertsStatus === "ready") {
+      return {
+        subtitle: "Priority states",
+        trustLabel: "",
+        trustTitle: "",
+        title: "No active severe alerts",
+        copy: "No active NWS weather alerts are currently affecting this location.",
+      };
+    }
+
+    if (alertsStatus === "unsupported") {
+      return {
+        subtitle: "Regional coverage",
+        trustLabel: "Coverage unavailable",
+        trustTitle: "NOAA / NWS alerts are only available for supported U.S. locations.",
+        title: "Alerts unavailable for this region",
+        copy:
+          "Current weather is still live, but NOAA / NWS alert coverage does not extend to this location.",
+      };
+    }
+
+    if (alertsStatus === "unavailable") {
+      return {
+        subtitle: "Service issue",
+        trustLabel: "Service unavailable",
+        trustTitle: "The NOAA / NWS alerts feed did not return a usable response.",
+        title: "Could not load severe alerts",
+        copy:
+          "Current conditions loaded successfully, but the alerts feed did not respond. Refresh for the latest hazard data.",
+      };
+    }
+
+    return {
+      subtitle: "Checking status",
+      trustLabel: "Checking alerts",
+      trustTitle: "Aura Weather is still checking severe weather coverage for this location.",
+      title: "Checking severe alerts",
+      copy: "Weather conditions loaded first. Alert coverage will appear as soon as it is confirmed.",
+    };
+  }, [alertsStatus, visibleAlerts.length]);
 
   return (
     <section
@@ -39,7 +81,7 @@ function AlertsCard({
           <Siren size={16} />
           <span>Severe Alerts</span>
         </h3>
-        <span className="alerts-subtitle">Priority states</span>
+        <span className="alerts-subtitle">{emptyState.subtitle}</span>
       </header>
 
       <DataTrustMeta
@@ -47,13 +89,15 @@ function AlertsCard({
         lastUpdatedAt={lastUpdatedAt}
         nowMs={nowMs}
         staleAfterMinutes={12}
+        statusLabel={lastUpdatedAt ? "" : emptyState.trustLabel}
+        titleOverride={lastUpdatedAt ? "" : emptyState.trustTitle}
       />
 
       {visibleAlerts.length === 0 ? (
         <div className="alerts-empty" role="status" aria-live="polite">
-          <p className="alerts-empty-title">No active severe alerts</p>
+          <p className="alerts-empty-title">{emptyState.title}</p>
           <p className="alerts-empty-copy">
-            No active NWS weather alerts are currently affecting this location.
+            {emptyState.copy}
           </p>
         </div>
       ) : (

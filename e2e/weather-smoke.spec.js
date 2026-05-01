@@ -24,7 +24,7 @@ test("loads the dashboard with fallback location and core controls", async ({ pa
   await expect(page.locator(".hero-location")).toContainText("Chicago, United States");
   await expect(
     page.getByText(
-      "Chicago is ready as a starting forecast. Share your browser location only if you want live weather for where you are right now, or search any city manually."
+      "Chicago is already loaded as a starting point. Use your browser location for local conditions right now, or search for any city when you want a different view."
     )
   ).toBeVisible();
   await expect(

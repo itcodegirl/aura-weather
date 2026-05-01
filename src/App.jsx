@@ -130,6 +130,8 @@ function App() {
         isBackgroundLoading={isBackgroundLoading}
         showRefreshError={showRefreshError}
         onRetry={retryWeather}
+        showSetupPrompts={false}
+        className="status-stack--runtime"
       />
 
       <WeatherDashboard
@@ -142,6 +144,22 @@ function App() {
         isBackgroundLoading={isBackgroundLoading}
         weatherInfo={weatherInfo}
         trustMeta={trustMeta}
+      />
+
+      <StatusStack
+        locationNotice={locationNotice}
+        showLocationSetupPrompt={showLocationSetupPrompt}
+        showPermissionOnboarding={shouldShowPermissionOnboarding}
+        onUseCurrentLocation={loadCurrentLocation}
+        onFocusCitySearch={handleFocusCitySearch}
+        onDismissPermissionOnboarding={handleDismissPermissionOnboarding}
+        isLocatingCurrent={isLocatingCurrent}
+        isGeolocationSupported={isGeolocationSupported}
+        isBackgroundLoading={isBackgroundLoading}
+        showRefreshError={showRefreshError}
+        onRetry={retryWeather}
+        showRuntimeStatus={false}
+        className="status-stack--setup"
       />
     </AppShell>
   );

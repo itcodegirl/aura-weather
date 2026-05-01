@@ -138,7 +138,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
 
   const pullFromSyncAccount = useCallback(async (accountToUse, options = {}) => {
     if (!accountToUse?.syncKey) {
-      return [];
+      return null;
     }
 
     const requestId = syncRequestRef.current + 1;
@@ -191,7 +191,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
         error: getSyncErrorMessage(syncError, "Could not sync saved locations."),
       }));
 
-      return [];
+      return null;
     }
   }, [setSavedCities]);
 
@@ -282,9 +282,13 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     }
 
     const nextAccount = { syncKey: normalizedSyncKey };
+    const connectedCities = await pullFromSyncAccount(nextAccount, { initial: true });
+    if (connectedCities === null) {
+      return;
+    }
+
     skipNextAutoPullRef.current = true;
     setSyncAccount(nextAccount);
-    await pullFromSyncAccount(nextAccount, { initial: true });
   }, [pullFromSyncAccount, setSyncAccount]);
 
   const disconnectSyncAccount = useCallback(() => {

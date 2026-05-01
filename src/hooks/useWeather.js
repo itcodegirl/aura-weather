@@ -30,6 +30,20 @@ function toLocationPayload(lat, lon, name = "", country = "") {
   };
 }
 
+function hasMatchingCoordinates(firstLocation, secondLocation) {
+  const firstCoordinates = parseCoordinates(firstLocation?.lat, firstLocation?.lon);
+  const secondCoordinates = parseCoordinates(secondLocation?.lat, secondLocation?.lon);
+
+  if (!firstCoordinates || !secondCoordinates) {
+    return false;
+  }
+
+  return (
+    firstCoordinates.latitude === secondCoordinates.latitude &&
+    firstCoordinates.longitude === secondCoordinates.longitude
+  );
+}
+
 function getInitialLocationState() {
   const persistedLocation = getPersistedLocation();
   if (persistedLocation) {
@@ -175,6 +189,17 @@ export function useWeather(options = {}) {
   const forgetSavedCity = useCallback((city) => {
     const updatedSavedCities = removeSavedCity(city?.lat, city?.lon);
     setSavedCities(updatedSavedCities);
+
+    const persistedLocation = getPersistedLocation();
+    if (!hasMatchingCoordinates(persistedLocation, city)) {
+      return;
+    }
+
+    clearPersistedLocation();
+    const removedSavedLocationNotice =
+      "Saved startup location removed. Aura will open to Chicago next time.";
+    setLocationNotice(removedSavedLocationNotice);
+    locationNoticeRef.current = removedSavedLocationNotice;
   }, []);
   const {
     syncConnected,

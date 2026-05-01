@@ -175,6 +175,10 @@ function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
 }
 
 function buildWeekSummary(days, weekMin, weekMax, unit) {
+  if (!Array.isArray(days) || days.length === 0) {
+    return "7-day forecast is temporarily unavailable.";
+  }
+
   const firstMax = days[0]?.temperatureMax;
   const lastMax = days[days.length - 1]?.temperatureMax;
   const delta =

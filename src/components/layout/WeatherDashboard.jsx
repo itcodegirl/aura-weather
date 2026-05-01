@@ -106,8 +106,8 @@ function WeatherDashboard({
       />
 
       <ExposureSection
-        aqi={weather.aqi}
-        uvIndex={weather.daily?.uvIndexMax?.[0]}
+        aqi={weather?.aqi}
+        uvIndex={weather?.daily?.uvIndexMax?.[0]}
         style={CARD_STYLE_VARIABLES[1]}
         isRefreshing={isBackgroundLoading}
         lastUpdatedAt={aqiFetchedAt ?? weatherFetchedAt}

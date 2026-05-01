@@ -322,7 +322,7 @@ function HourlyCard({
                   x={geometry.margins.left - 6}
                   y={tick.y + 3}
                 >
-                  {tick.value}\u00B0
+                  {`${tick.value}\u00B0`}
                 </text>
               </g>
             ))}

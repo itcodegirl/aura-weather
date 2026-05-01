@@ -106,7 +106,7 @@ function MetricDensityBar({ value, max, statusColor, hasData }) {
         ) : (
           <>
             <span>No live reading</span>
-            <span>\u2014</span>
+            <span aria-hidden="true">{"\u2014"}</span>
           </>
         )}
       </div>

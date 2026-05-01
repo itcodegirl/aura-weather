@@ -46,6 +46,7 @@ function App() {
     weatherDataUnit,
     isLocatingCurrent,
     isGeolocationSupported,
+    hasPersistedLocation,
     showGlobalLoading,
     isBackgroundLoading,
     showGlobalError,
@@ -116,6 +117,7 @@ function App() {
         setShowClimateContext={setShowClimateContext}
         unit={unit}
         setUnit={setUnit}
+        hasPersistedLocation={hasPersistedLocation}
       />
 
       <StatusStack

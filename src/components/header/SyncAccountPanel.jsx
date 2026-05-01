@@ -1,17 +1,17 @@
 import { ChevronDown, Cloud } from "lucide-react";
-import { memo, useId, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 function SyncAccountPanel({
   syncConnected,
   syncAccount,
   syncState,
-  syncKeyInput,
-  setSyncKeyInput,
   onCreateSyncAccount,
   onConnectSyncAccount,
   onDisconnectSyncAccount,
   onSyncNow,
 }) {
+  const [syncKeyInput, setSyncKeyInput] = useState("");
+  const wasConnectedRef = useRef(syncConnected);
   const syncStatusText =
     typeof syncState?.message === "string" && syncState.message.trim()
       ? syncState.message.trim()
@@ -35,6 +35,33 @@ function SyncAccountPanel({
     }
     return "Optional";
   }, [syncConnected, syncErrorText]);
+  const syncLastUpdatedLabel = useMemo(() => {
+    const lastSyncedAt = Number(syncState?.lastSyncedAt);
+    if (!Number.isFinite(lastSyncedAt)) {
+      return "";
+    }
+
+    return new Date(lastSyncedAt).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }, [syncState?.lastSyncedAt]);
+  const handleConnect = useCallback(() => {
+    if (typeof onConnectSyncAccount === "function") {
+      void onConnectSyncAccount(syncKeyInput);
+    }
+  }, [onConnectSyncAccount, syncKeyInput]);
+
+  useEffect(() => {
+    const wasConnected = wasConnectedRef.current;
+    if (syncConnected || wasConnected !== syncConnected) {
+      if (syncConnected || wasConnected) {
+        setSyncKeyInput("");
+      }
+    }
+
+    wasConnectedRef.current = syncConnected;
+  }, [syncConnected]);
 
   return (
     <div className="sync-account-shell">
@@ -65,6 +92,9 @@ function SyncAccountPanel({
           <p className="sync-account-note">
             Keep your saved cities in sync across devices with a shareable sync key.
           </p>
+          {syncLastUpdatedLabel ? (
+            <p className="sync-account-meta">Last synced {syncLastUpdatedLabel}</p>
+          ) : null}
           {syncConnected ? (
             <div className="sync-account-actions">
               <button
@@ -107,7 +137,7 @@ function SyncAccountPanel({
                 <button
                   type="button"
                   className="sync-account-btn sync-account-btn--subtle"
-                  onClick={onConnectSyncAccount}
+                  onClick={handleConnect}
                   disabled={isSyncing || !syncKeyInput.trim()}
                 >
                   Connect

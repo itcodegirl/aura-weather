@@ -37,7 +37,7 @@ test("loads the dashboard with fallback location and core controls", async ({ pa
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Clear saved location preference" })
-  ).toBeVisible();
+  ).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "Current Conditions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Near-Term Outlook" })).toBeVisible();
@@ -58,6 +58,26 @@ test("updates hero location when a city is selected from search", async ({ page 
   await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
   await expect(searchInput).toHaveValue("");
   await expect(page.locator(".location-notice")).toHaveCount(0);
+});
+
+test("shows a searching state before empty search results resolve", async ({ page }) => {
+  await page.route(/https:\/\/geocoding-api\.open-meteo\.com\/v1\/search\?name=zur.*/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ results: [] }),
+    });
+  });
+
+  await openDashboard(page);
+
+  const searchInput = page.getByRole("combobox", { name: "Search for a city" });
+  await searchInput.fill("zur");
+
+  await expect(page.getByText("Searching locations...")).toBeVisible();
+  await expect(page.getByText("No matching cities")).toHaveCount(0);
+  await expect(page.getByText("No matching cities")).toBeVisible();
 });
 
 test("switches display units without refetching the forecast", async ({ page }) => {
@@ -94,6 +114,46 @@ test("switches display units without refetching the forecast", async ({ page }) 
 
   expect(forecastRequests).toBe(baselineForecastRequests);
   expect(archiveRequests).toBe(baselineArchiveRequests);
+});
+
+test("keeps cloud sync disconnected when a manual connect attempt fails", async ({ page }) => {
+  await page.route(/https:\/\/jsonblob\.com\/api\/jsonBlob\/broken-sync$/, async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Could not load synced locations (503)" }),
+    });
+  });
+
+  await openDashboard(page);
+
+  await page.getByRole("button", { name: /cloud sync/i }).click();
+  await page.getByLabel("Sync key").fill("https://jsonblob.com/api/jsonBlob/broken-sync");
+  await page.getByRole("button", { name: "Connect", exact: true }).click();
+
+  await expect(page.getByText("Could not load synced locations (503)")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Disconnect" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Connect", exact: true })).toBeVisible();
+});
+
+test("removing the active saved city clears its startup persistence", async ({ page }) => {
+  await openDashboard(page);
+
+  const searchInput = page.getByRole("combobox", { name: "Search for a city" });
+  await searchInput.fill("tok");
+  await page.getByRole("option", { name: /tokyo/i }).click();
+
+  await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
+  await page.getByRole("button", { name: "Remove Tokyo from saved cities" }).click();
+  await expect(
+    page.getByText("Saved startup location removed. Aura will open to Chicago next time.")
+  ).toBeVisible();
+
+  const persistedLocation = await page.evaluate(() =>
+    window.localStorage.getItem("aura-weather-last-location")
+  );
+
+  expect(persistedLocation).toBeNull();
 });
 
 test("shows regional alerts fallback for locations outside NWS coverage", async ({ page }) => {

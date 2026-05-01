@@ -30,18 +30,34 @@ function toLocationPayload(lat, lon, name = "", country = "") {
   };
 }
 
+function hasMatchingCoordinates(firstLocation, secondLocation) {
+  const firstCoordinates = parseCoordinates(firstLocation?.lat, firstLocation?.lon);
+  const secondCoordinates = parseCoordinates(secondLocation?.lat, secondLocation?.lon);
+
+  if (!firstCoordinates || !secondCoordinates) {
+    return false;
+  }
+
+  return (
+    firstCoordinates.latitude === secondCoordinates.latitude &&
+    firstCoordinates.longitude === secondCoordinates.longitude
+  );
+}
+
 function getInitialLocationState() {
   const persistedLocation = getPersistedLocation();
   if (persistedLocation) {
     return {
       location: persistedLocation,
       notice: SAVED_LOCATION_NOTICE,
+      hasPersistedLocation: true,
     };
   }
 
   return {
     location: DEFAULT_LOCATION,
     notice: LOCATION_FALLBACK_NOTICE,
+    hasPersistedLocation: false,
   };
 }
 
@@ -50,6 +66,9 @@ export function useWeather(options = {}) {
   const [initialLocationState] = useState(() => getInitialLocationState());
   const [location, setLocation] = useState(initialLocationState.location);
   const [locationNotice, setLocationNotice] = useState(initialLocationState.notice);
+  const [hasPersistedLocation, setHasPersistedLocation] = useState(
+    initialLocationState.hasPersistedLocation
+  );
   const [savedCities, setSavedCities] = useState(() => getSavedCities());
   const locationRef = useRef(location);
   const locationNoticeRef = useRef(locationNotice);
@@ -69,6 +88,7 @@ export function useWeather(options = {}) {
       nextLocation.name,
       nextLocation.country
     );
+    setHasPersistedLocation(true);
   }, []);
 
   const applyLocation = useCallback(
@@ -175,6 +195,18 @@ export function useWeather(options = {}) {
   const forgetSavedCity = useCallback((city) => {
     const updatedSavedCities = removeSavedCity(city?.lat, city?.lon);
     setSavedCities(updatedSavedCities);
+
+    const persistedLocation = getPersistedLocation();
+    if (!hasMatchingCoordinates(persistedLocation, city)) {
+      return;
+    }
+
+    clearPersistedLocation();
+    setHasPersistedLocation(false);
+    const removedSavedLocationNotice =
+      "Saved startup location removed. Aura will open to Chicago next time.";
+    setLocationNotice(removedSavedLocationNotice);
+    locationNoticeRef.current = removedSavedLocationNotice;
   }, []);
   const {
     syncConnected,
@@ -188,6 +220,7 @@ export function useWeather(options = {}) {
 
   const clearSavedLocation = useCallback(() => {
     clearPersistedLocation();
+    setHasPersistedLocation(false);
     setLocationNotice("Saved location removed for future sessions.");
     locationNoticeRef.current = "Saved location removed for future sessions.";
   }, []);
@@ -206,6 +239,7 @@ export function useWeather(options = {}) {
     trustMeta,
     isLocatingCurrent,
     isGeolocationSupported,
+    hasPersistedLocation,
     clearSavedLocation,
     savedCities,
     loadSavedCity,

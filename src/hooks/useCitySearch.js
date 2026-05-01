@@ -12,6 +12,7 @@ export function useCitySearch({ onSelect } = {}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [resolvedQuery, setResolvedQuery] = useState("");
 
   const containerRef = useRef(null);
   const inputRef = useRef(null);
@@ -67,7 +68,12 @@ export function useCitySearch({ onSelect } = {}) {
     showDropdown && activeIndex >= 0 && results.length > 0
       ? Math.min(activeIndex, results.length - 1)
       : -1;
-  const canShowNoResults = normalizedQuery.length >= MIN_SEARCH_QUERY_LENGTH;
+  const canShowNoResults =
+    normalizedQuery.length >= MIN_SEARCH_QUERY_LENGTH &&
+    resolvedQuery === normalizedQuery &&
+    !loading &&
+    !error &&
+    results.length === 0;
 
   const runSearch = useCallback(
     async (term) => {
@@ -89,6 +95,7 @@ export function useCitySearch({ onSelect } = {}) {
               : []
           );
           setError(null);
+          setResolvedQuery(term);
         }
       } catch (searchError) {
         if (
@@ -98,6 +105,7 @@ export function useCitySearch({ onSelect } = {}) {
         ) {
           setError("Couldn't fetch locations. Try again.");
           setResults([]);
+          setResolvedQuery(term);
         }
       } finally {
         if (
@@ -132,9 +140,14 @@ export function useCitySearch({ onSelect } = {}) {
         setResults([]);
         setError(null);
         setLoading(false);
+        setResolvedQuery("");
         return;
       }
 
+      setResults([]);
+      setError(null);
+      setLoading(true);
+      setResolvedQuery("");
       debounceRef.current = setTimeout(() => {
         runSearch(trimmedQuery);
       }, SEARCH_DEBOUNCE_MS);
@@ -171,6 +184,7 @@ export function useCitySearch({ onSelect } = {}) {
       setResults([]);
       setOpen(false);
       setActiveIndex(-1);
+      setResolvedQuery("");
       inputRef.current?.blur();
     },
     [onSelect]
@@ -233,6 +247,7 @@ export function useCitySearch({ onSelect } = {}) {
     setError(null);
     setLoading(false);
     setActiveIndex(-1);
+    setResolvedQuery("");
     inputRef.current?.focus();
   }, [abortGeocodeRequest]);
 

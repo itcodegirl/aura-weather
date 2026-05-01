@@ -1,5 +1,5 @@
-import { parseCoordinates } from "../utils/weatherUnits";
-import { MAX_SAVED_CITIES } from "../hooks/useLocation";
+import { parseCoordinates } from "../utils/weatherUnits.js";
+import { MAX_SAVED_CITIES } from "../hooks/useLocation.js";
 
 const DEFAULT_SYNC_CREATE_ENDPOINT = "https://jsonblob.com/api/jsonBlob";
 

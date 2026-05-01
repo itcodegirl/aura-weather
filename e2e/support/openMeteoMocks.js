@@ -175,6 +175,31 @@ export async function installOpenMeteoMocks(page) {
   });
 
   await page.route("https://api.weather.gov/alerts/active**", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const [latitudeValue, longitudeValue] = String(
+      requestUrl.searchParams.get("point") || ""
+    )
+      .split(",")
+      .map((value) => Number(value));
+    const hasUsCoverage =
+      Number.isFinite(latitudeValue) &&
+      Number.isFinite(longitudeValue) &&
+      latitudeValue >= 18 &&
+      latitudeValue <= 72 &&
+      longitudeValue >= -179 &&
+      longitudeValue <= -60;
+
+    if (!hasUsCoverage) {
+      await route.fulfill({
+        status: 400,
+        contentType: "application/geo+json",
+        body: JSON.stringify({
+          title: "Unsupported point",
+        }),
+      });
+      return;
+    }
+
     await route.fulfill({
       status: 200,
       contentType: "application/geo+json",

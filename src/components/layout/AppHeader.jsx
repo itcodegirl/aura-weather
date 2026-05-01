@@ -18,6 +18,7 @@ function AppHeader({
   disconnectSyncAccount,
   syncSavedCitiesNow,
   isLocatingCurrent,
+  isGeolocationSupported,
   showClimateContext,
   setShowClimateContext,
   unit,
@@ -53,6 +54,7 @@ function AppHeader({
         disconnectSyncAccount={disconnectSyncAccount}
         syncSavedCitiesNow={syncSavedCitiesNow}
         isLocatingCurrent={isLocatingCurrent}
+        isGeolocationSupported={isGeolocationSupported}
         showClimateContext={showClimateContext}
         setShowClimateContext={setShowClimateContext}
         unit={unit}

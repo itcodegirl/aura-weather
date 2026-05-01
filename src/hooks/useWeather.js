@@ -128,7 +128,7 @@ export function useWeather(unit = "F", options = {}) {
     [applyLocation]
   );
 
-  const { isLocatingCurrent, loadCurrentLocation } = useLocation(
+  const { isLocatingCurrent, isGeolocationSupported, loadCurrentLocation } = useLocation(
     handleLocationResolved
   );
 
@@ -203,6 +203,7 @@ export function useWeather(unit = "F", options = {}) {
     climateComparison,
     trustMeta,
     isLocatingCurrent,
+    isGeolocationSupported,
     clearSavedLocation,
     savedCities,
     loadSavedCity,

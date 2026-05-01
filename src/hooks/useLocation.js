@@ -10,6 +10,8 @@ export const DEFAULT_LOCATION = {
 export const LOCATION_FALLBACK_NOTICE =
   "Showing Chicago until you choose a location";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
+export const LOCATION_UNSUPPORTED_NOTICE =
+  "Location access is unavailable in this browser. Search for a city instead.";
 const LAST_LOCATION_KEY = "aura-weather-last-location";
 const SAVED_CITIES_KEY = "aura-weather-saved-cities";
 export const MAX_SAVED_CITIES = 6;
@@ -38,7 +40,7 @@ function hasValidLastLocationTimestamp(saved) {
   return ageMs >= 0 && ageMs <= maxAgeMs;
 }
 
-function hasGeolocationSupport() {
+export function hasGeolocationSupport() {
   return (
     typeof navigator !== "undefined" &&
     navigator &&
@@ -242,6 +244,7 @@ function notifyResolvedLocation(callback, lat, lon, name, country, notice) {
 
 export function useLocation(onResolved) {
   const [isLocatingCurrent, setIsLocatingCurrent] = useState(false);
+  const [isGeolocationSupported] = useState(() => hasGeolocationSupport());
   const isMountedRef = useRef(false);
   const fallbackTimerRef = useRef(null);
   const activeRequestRef = useRef(0);
@@ -273,7 +276,11 @@ export function useLocation(onResolved) {
   }, [onResolved]);
 
   const requestCurrentPositionWithFallback = useCallback(
-    ({ fallbackNotice = LOCATION_FALLBACK_NOTICE, trackCurrentLookup = false } = {}) => {
+    ({
+      fallbackNotice = LOCATION_FALLBACK_NOTICE,
+      unsupportedNotice = LOCATION_UNSUPPORTED_NOTICE,
+      trackCurrentLookup = false,
+    } = {}) => {
       const requestId = activeRequestRef.current + 1;
       activeRequestRef.current = requestId;
       const resolveCallback = onResolvedRef.current;
@@ -313,7 +320,16 @@ export function useLocation(onResolved) {
       }, LOCATION_FALLBACK_DELAY_MS);
 
       if (!hasGeolocationSupport()) {
-        fallback();
+        clearFallbackTimer();
+        notifyResolvedLocation(
+          resolveCallback,
+          DEFAULT_LOCATION.lat,
+          DEFAULT_LOCATION.lon,
+          DEFAULT_LOCATION.name,
+          DEFAULT_LOCATION.country,
+          unsupportedNotice
+        );
+        markLookupComplete();
         return;
       }
 
@@ -359,9 +375,13 @@ export function useLocation(onResolved) {
   );
 
   const loadCurrentLocation = useCallback(
-    ({ fallbackNotice = LOCATION_FALLBACK_NOTICE } = {}) => {
+    ({
+      fallbackNotice = LOCATION_FALLBACK_NOTICE,
+      unsupportedNotice = LOCATION_UNSUPPORTED_NOTICE,
+    } = {}) => {
       requestCurrentPositionWithFallback({
         fallbackNotice,
+        unsupportedNotice,
         trackCurrentLookup: true,
       });
     },
@@ -396,6 +416,7 @@ export function useLocation(onResolved) {
 
   return {
     isLocatingCurrent,
+    isGeolocationSupported,
     loadCurrentLocation,
   };
 }

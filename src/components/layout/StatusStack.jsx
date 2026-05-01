@@ -8,6 +8,7 @@ function StatusStack({
   onFocusCitySearch,
   onDismissPermissionOnboarding,
   isLocatingCurrent,
+  isGeolocationSupported,
   isBackgroundLoading,
   showRefreshError,
   onRetry,
@@ -62,18 +63,29 @@ function StatusStack({
           <p className="permission-onboarding-kicker">First-time setup</p>
           <h2 className="permission-onboarding-title">Get forecasts for where you are</h2>
           <p className="permission-onboarding-copy">
-            Chicago is ready as a starting forecast. Share your browser location only if
-            you want live weather for where you are right now, or search any city manually.
+            {isGeolocationSupported
+              ? "Chicago is ready as a starting forecast. Share your browser location only if you want live weather for where you are right now, or search any city manually."
+              : "Chicago is ready as a starting forecast. This browser cannot provide live location, so search for any city manually when you want a different forecast."}
           </p>
           <div className="permission-onboarding-actions">
-            <button
-              type="button"
-              className="location-setup-btn location-setup-btn--primary"
-              onClick={onUseCurrentLocation}
-              disabled={isLocatingCurrent}
-            >
-              {isLocatingCurrent ? "Requesting permission..." : "Allow location access"}
-            </button>
+            {isGeolocationSupported ? (
+              <button
+                type="button"
+                className="location-setup-btn location-setup-btn--primary"
+                onClick={onUseCurrentLocation}
+                disabled={isLocatingCurrent}
+              >
+                {isLocatingCurrent ? "Requesting permission..." : "Allow location access"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="location-setup-btn location-setup-btn--primary"
+                onClick={onFocusCitySearch}
+              >
+                Search a city
+              </button>
+            )}
             <button
               type="button"
               className="location-setup-btn"
@@ -87,20 +99,24 @@ function StatusStack({
       {showLocationSetupPrompt && (
         <section className="location-setup-prompt" aria-label="Location setup">
           <p className="location-setup-title">
-            Personalize your forecast by using your location or searching for your city.
+            {isGeolocationSupported
+              ? "Personalize your forecast by using your location or searching for your city."
+              : "Search for your city to personalize the forecast. Live browser location is unavailable here."}
           </p>
           <div className="location-setup-actions">
+            {isGeolocationSupported ? (
+              <button
+                type="button"
+                className="location-setup-btn location-setup-btn--primary"
+                onClick={onUseCurrentLocation}
+                disabled={isLocatingCurrent}
+              >
+                {isLocatingCurrent ? "Finding your location..." : "Use my location"}
+              </button>
+            ) : null}
             <button
               type="button"
-              className="location-setup-btn location-setup-btn--primary"
-              onClick={onUseCurrentLocation}
-              disabled={isLocatingCurrent}
-            >
-              {isLocatingCurrent ? "Finding your location..." : "Use my location"}
-            </button>
-            <button
-              type="button"
-              className="location-setup-btn"
+              className={`location-setup-btn ${isGeolocationSupported ? "" : "location-setup-btn--primary"}`.trim()}
               onClick={onFocusCitySearch}
             >
               Search a city

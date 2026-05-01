@@ -44,6 +44,7 @@ function App() {
     retryWeather,
     climateComparison,
     isLocatingCurrent,
+    isGeolocationSupported,
     showGlobalLoading,
     isBackgroundLoading,
     showGlobalError,
@@ -109,6 +110,7 @@ function App() {
         disconnectSyncAccount={disconnectSyncAccount}
         syncSavedCitiesNow={syncSavedCitiesNow}
         isLocatingCurrent={isLocatingCurrent}
+        isGeolocationSupported={isGeolocationSupported}
         showClimateContext={showClimateContext}
         setShowClimateContext={setShowClimateContext}
         unit={unit}
@@ -123,6 +125,7 @@ function App() {
         onFocusCitySearch={handleFocusCitySearch}
         onDismissPermissionOnboarding={handleDismissPermissionOnboarding}
         isLocatingCurrent={isLocatingCurrent}
+        isGeolocationSupported={isGeolocationSupported}
         isBackgroundLoading={isBackgroundLoading}
         showRefreshError={showRefreshError}
         onRetry={retryWeather}

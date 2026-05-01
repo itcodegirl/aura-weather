@@ -21,6 +21,7 @@ function HeaderControls({
   disconnectSyncAccount,
   syncSavedCitiesNow,
   isLocatingCurrent,
+  isGeolocationSupported,
   showClimateContext,
   setShowClimateContext,
   unit,
@@ -113,10 +114,21 @@ function HeaderControls({
             type="button"
             className="current-location-btn glass"
             onClick={handleLoadCurrentLocation}
-            disabled={isLocatingCurrent}
-            aria-label="Use my location"
+            disabled={isLocatingCurrent || !isGeolocationSupported}
+            aria-label={
+              isGeolocationSupported
+                ? "Use my location"
+                : "Location access unavailable in this browser"
+            }
+            title={
+              isGeolocationSupported
+                ? undefined
+                : "Location access is unavailable in this browser. Search for a city instead."
+            }
           >
-            {isLocatingCurrent ? "Finding..." : "My location"}
+            {isGeolocationSupported
+              ? (isLocatingCurrent ? "Finding..." : "My location")
+              : "Unavailable"}
           </button>
         </div>
         <SavedCitiesStrip

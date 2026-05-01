@@ -35,6 +35,17 @@ function SyncAccountPanel({
     }
     return "Optional";
   }, [syncConnected, syncErrorText]);
+  const syncLastUpdatedLabel = useMemo(() => {
+    const lastSyncedAt = Number(syncState?.lastSyncedAt);
+    if (!Number.isFinite(lastSyncedAt)) {
+      return "";
+    }
+
+    return new Date(lastSyncedAt).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }, [syncState?.lastSyncedAt]);
   const handleConnect = useCallback(() => {
     if (typeof onConnectSyncAccount === "function") {
       void onConnectSyncAccount(syncKeyInput);
@@ -81,6 +92,9 @@ function SyncAccountPanel({
           <p className="sync-account-note">
             Keep your saved cities in sync across devices with a shareable sync key.
           </p>
+          {syncLastUpdatedLabel ? (
+            <p className="sync-account-meta">Last synced {syncLastUpdatedLabel}</p>
+          ) : null}
           {syncConnected ? (
             <div className="sync-account-actions">
               <button

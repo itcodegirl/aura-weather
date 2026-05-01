@@ -37,7 +37,7 @@ test("loads the dashboard with fallback location and core controls", async ({ pa
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Clear saved location preference" })
-  ).toBeVisible();
+  ).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "Current Conditions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Near-Term Outlook" })).toBeVisible();

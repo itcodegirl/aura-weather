@@ -10,6 +10,7 @@ function DisplaySettingsControls({
   onSetUnitF,
   onSetUnitC,
   onClearSavedLocation,
+  hasPersistedLocation,
 }) {
   return (
     <div
@@ -69,14 +70,16 @@ function DisplaySettingsControls({
         </button>
       </div>
 
-      <button
-        type="button"
-        className="header-secondary-action header-secondary-action--danger"
-        onClick={onClearSavedLocation}
-        aria-label="Clear saved location preference"
-      >
-        Clear saved location
-      </button>
+      {hasPersistedLocation ? (
+        <button
+          type="button"
+          className="header-secondary-action header-secondary-action--danger"
+          onClick={onClearSavedLocation}
+          aria-label="Clear saved location preference"
+        >
+          Clear startup city
+        </button>
+      ) : null}
     </div>
   );
 }

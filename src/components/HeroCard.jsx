@@ -240,11 +240,31 @@ function HeroCard({
         >
           <div className="hero-high-low-item">
             <span className="hero-high-low-label">High</span>
-            <span className="hero-high-low-value">{todayHighDisplay}</span>
+            <span
+              className={`hero-high-low-value${
+                todayHighDisplay === "—" ? " is-missing" : ""
+              }`}
+            >
+              {todayHighDisplay === "—" ? (
+                <span aria-label="No data available">{todayHighDisplay}</span>
+              ) : (
+                todayHighDisplay
+              )}
+            </span>
           </div>
           <div className="hero-high-low-item">
             <span className="hero-high-low-label">Low</span>
-            <span className="hero-high-low-value">{todayLowDisplay}</span>
+            <span
+              className={`hero-high-low-value${
+                todayLowDisplay === "—" ? " is-missing" : ""
+              }`}
+            >
+              {todayLowDisplay === "—" ? (
+                <span aria-label="No data available">{todayLowDisplay}</span>
+              ) : (
+                todayLowDisplay
+              )}
+            </span>
           </div>
         </div>
       </header>

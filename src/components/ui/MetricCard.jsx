@@ -1,5 +1,6 @@
 import { memo } from "react";
 import InfoDrawer from "./InfoDrawer";
+import { hasFiniteValue, MISSING_VALUE_DASH } from "../../utils/missingData";
 import "../MetricPanels.css";
 
 function clamp(value, min, max) {
@@ -40,7 +41,7 @@ function ArcGauge({
   const r = 44;
   const start = -140;
   const end = 100;
-  const safeValue = hasData ? Number(value).toFixed(decimals) : "\u2014";
+  const safeValue = hasData ? Number(value).toFixed(decimals) : MISSING_VALUE_DASH;
   const gaugeLabel = hasData ? `${label} ${safeValue}` : `${label} unavailable`;
 
   return (
@@ -106,7 +107,7 @@ function MetricDensityBar({ value, max, statusColor, hasData }) {
         ) : (
           <>
             <span>No live reading</span>
-            <span>\u2014</span>
+            <span aria-hidden="true">{MISSING_VALUE_DASH}</span>
           </>
         )}
       </div>
@@ -127,7 +128,7 @@ function MetricCard({
   helpText,
   decimals = 0,
 }) {
-  const hasData = value !== null && value !== undefined && Number.isFinite(Number(value));
+  const hasData = hasFiniteValue(value);
 
   return (
     <article

@@ -3,17 +3,17 @@ import { memo, useMemo } from "react";
 import { getWeather } from "../domain/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
 import { convertTemp } from "../utils/temperature";
+import {
+  hasFiniteValue,
+  MISSING_VALUE_DASH,
+  toFiniteNumber,
+} from "../utils/missingData";
 import { CardHeader, DataTrustMeta } from "./ui";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
-}
-
-function toFiniteNumber(value, fallback = NaN) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
 }
 
 function clampPercent(value) {
@@ -36,8 +36,11 @@ function getDaySignal(day, weekMin, weekMax) {
 }
 
 function toDisplayTemp(value, unit) {
+  if (!hasFiniteValue(value)) {
+    return MISSING_VALUE_DASH;
+  }
   const converted = convertTemp(value, unit);
-  return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
+  return Number.isFinite(converted) ? Math.round(converted) : MISSING_VALUE_DASH;
 }
 
 function buildForecastDays(weatherDaily) {
@@ -92,22 +95,20 @@ function getForecastRangeGradient(weekMin, weekMax) {
 function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
   const info = getWeather(day.conditionCode);
   const label = formatDayLabel(day.date);
-  const high = Number.isFinite(day.temperatureMax)
-    ? toDisplayTemp(day.temperatureMax, unit)
-    : "\u2014";
-  const low = Number.isFinite(day.temperatureMin)
-    ? toDisplayTemp(day.temperatureMin, unit)
-    : "\u2014";
+  const hasHigh = hasFiniteValue(day.temperatureMax);
+  const hasLow = hasFiniteValue(day.temperatureMin);
+  const high = hasHigh ? toDisplayTemp(day.temperatureMax, unit) : MISSING_VALUE_DASH;
+  const low = hasLow ? toDisplayTemp(day.temperatureMin, unit) : MISSING_VALUE_DASH;
   const tempUnit = "\u00B0";
   const rainChance = day.rainChanceMax;
   const hasNotableRainChance = rainChance >= 20;
   const daySignal = getDaySignal(day, weekMin, weekMax);
 
   const weekRange = weekMax - weekMin || 1;
-  const startPct = Number.isFinite(day.temperatureMin)
+  const startPct = hasLow
     ? clamp(((day.temperatureMin - weekMin) / weekRange) * 100, 0, 100)
     : 0;
-  const endPct = Number.isFinite(day.temperatureMax)
+  const endPct = hasHigh
     ? clamp(((day.temperatureMax - weekMin) / weekRange) * 100, 0, 100)
     : 0;
 
@@ -130,13 +131,17 @@ function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
       <div
         className="forecast-temps"
         role="group"
-        aria-label={`High ${high}${tempUnit}, low ${low}${tempUnit}`}
+        aria-label={
+          hasHigh || hasLow
+            ? `High ${hasHigh ? `${high}${tempUnit}` : "unavailable"}, low ${hasLow ? `${low}${tempUnit}` : "unavailable"}`
+            : "Daily high and low unavailable"
+        }
       >
         <div className="forecast-temp forecast-temp--high">
           <span className="forecast-temp-label">High</span>
           <span className="forecast-temp-value">
             {high}
-            {tempUnit}
+            {hasHigh && tempUnit}
           </span>
         </div>
         <span className="forecast-temp-divider" aria-hidden="true" />
@@ -144,7 +149,7 @@ function DayRow({ day, weekMin, weekMax, unit, rangeGradient }) {
           <span className="forecast-temp-label">Low</span>
           <span className="forecast-temp-value">
             {low}
-            {tempUnit}
+            {hasLow && tempUnit}
           </span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { DataTrustMeta, MetricCard } from "./ui";
 import { getAqiStatus, getUvStatus } from "../utils/meteorology";
+import { hasFiniteValue } from "../utils/missingData";
 import "./MetricPanels.css";
 
 const METRIC_LABEL_IDS = {
@@ -17,17 +18,17 @@ function ExposureSection({
   lastUpdatedAt,
   nowMs,
 }) {
-  const hasAqiData = Number.isFinite(Number(aqi));
-  const hasUvData = Number.isFinite(Number(uvIndex));
+  const hasAqiData = hasFiniteValue(aqi);
+  const hasUvData = hasFiniteValue(uvIndex);
   const hasFullExposureData = hasAqiData && hasUvData;
   const aqiStatus = getAqiStatus(aqi);
   const uvStatus = getUvStatus(uvIndex);
   const aqiSupportText = hasAqiData
     ? `Current AQI is ${Math.round(Number(aqi))} out of 300.`
-    : "Air quality data is temporarily unavailable.";
+    : "Air quality data is temporarily unavailable. Check back after the next refresh.";
   const uvSupportText = hasUvData
     ? `Peak UV is ${Number(uvIndex).toFixed(1)} on an 11+ scale.`
-    : "UV data is temporarily unavailable.";
+    : "UV data is temporarily unavailable. Check back after the next refresh.";
 
   return (
     <section

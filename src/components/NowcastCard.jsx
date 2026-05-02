@@ -1,17 +1,13 @@
 import { memo, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { findWindowStartIndex } from "../utils/timeSeries";
+import { toFiniteNumber } from "../utils/missingData";
 import { DataTrustMeta, InfoDrawer } from "./ui";
 import "./NowcastCard.css";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
 const NOWCAST_STEP_MINUTES = 15;
 const NOWCAST_WINDOW_SIZE = 8; // next 2 hours with 15-min resolution
-
-function toFiniteNumber(value, fallback = 0) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
-}
 
 function clampProbability(value) {
   const clamped = Math.max(0, Math.min(100, Math.round(value)));

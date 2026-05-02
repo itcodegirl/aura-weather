@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { findWindowStartIndex } from "../utils/timeSeries";
+import { toFiniteNumber as toStrictFiniteNumber } from "../utils/numbers";
 import { DataTrustMeta, InfoDrawer } from "./ui";
 import "./NowcastCard.css";
 
@@ -8,9 +9,12 @@ const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 
 const NOWCAST_STEP_MINUTES = 15;
 const NOWCAST_WINDOW_SIZE = 8; // next 2 hours with 15-min resolution
 
+// Nowcast intentionally treats missing rain readings as "no rain
+// visible" (probability 0, amount 0). Wrap the strict helper so the
+// fallback is explicit at every call site.
 function toFiniteNumber(value, fallback = 0) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
+  const parsed = toStrictFiniteNumber(value);
+  return parsed === null ? fallback : parsed;
 }
 
 function clampProbability(value) {

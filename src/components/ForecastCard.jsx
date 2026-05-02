@@ -3,6 +3,7 @@ import { memo, useMemo } from "react";
 import { getWeather } from "../domain/weatherCodes";
 import { formatDayLabel, parseLocalDate } from "../utils/dates";
 import { convertTemp } from "../utils/temperature";
+import { toFiniteNumber as toStrictFiniteNumber } from "../utils/numbers";
 import { CardHeader, DataTrustMeta } from "./ui";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
@@ -11,9 +12,12 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+// Wraps the strict shared helper so callers can pass an explicit
+// fallback (e.g. condition code defaults to 0/Clear, while a missing
+// daily high temperature should remain NaN so the row renders "—").
 function toFiniteNumber(value, fallback = NaN) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : fallback;
+  const parsed = toStrictFiniteNumber(value);
+  return parsed === null ? fallback : parsed;
 }
 
 function clampPercent(value) {

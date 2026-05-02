@@ -29,6 +29,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Component render tests
+        run: npm run test:components
+
   browser-quality:
     runs-on: ubuntu-latest
 

@@ -114,6 +114,7 @@ function HeaderControls({
             className="current-location-btn glass"
             onClick={handleLoadCurrentLocation}
             disabled={isLocatingCurrent || !isGeolocationSupported}
+            aria-busy={isLocatingCurrent || undefined}
             aria-label={
               isGeolocationSupported
                 ? "Use my location"

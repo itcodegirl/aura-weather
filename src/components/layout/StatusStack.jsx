@@ -80,6 +80,7 @@ function StatusStack({
                 className="location-setup-btn location-setup-btn--primary"
                 onClick={onUseCurrentLocation}
                 disabled={isLocatingCurrent}
+                aria-busy={isLocatingCurrent || undefined}
               >
                 {isLocatingCurrent ? "Requesting permission..." : "Allow location access"}
               </button>
@@ -116,6 +117,7 @@ function StatusStack({
                 className="location-setup-btn location-setup-btn--primary"
                 onClick={onUseCurrentLocation}
                 disabled={isLocatingCurrent}
+                aria-busy={isLocatingCurrent || undefined}
               >
                 {isLocatingCurrent ? "Finding your location..." : "Use my location"}
               </button>
@@ -145,6 +147,7 @@ function StatusStack({
             className="app-status-retry"
             onClick={handleRetry}
             disabled={isRetryCoolingDown}
+            aria-busy={isRetryCoolingDown || undefined}
           >
             {isRetryCoolingDown ? "Retrying..." : "Retry"}
           </button>

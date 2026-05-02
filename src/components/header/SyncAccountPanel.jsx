@@ -104,6 +104,7 @@ function SyncAccountPanel({
                 className="sync-account-btn"
                 onClick={onSyncNow}
                 disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
               >
                 Sync now
               </button>
@@ -112,6 +113,7 @@ function SyncAccountPanel({
                 className="sync-account-btn sync-account-btn--subtle"
                 onClick={onDisconnectSyncAccount}
                 disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
               >
                 Disconnect
               </button>
@@ -123,6 +125,7 @@ function SyncAccountPanel({
                 className="sync-account-btn"
                 onClick={onCreateSyncAccount}
                 disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
               >
                 Create cloud account
               </button>

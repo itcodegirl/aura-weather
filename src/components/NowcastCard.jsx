@@ -172,9 +172,8 @@ function NowcastCard({
     durationValue,
     peakValue,
   } = useMemo(() => {
-    const peakProbability = Number.isFinite(Number(nowcast.peakProbability))
-      ? Math.round(Number(nowcast.peakProbability))
-      : 0;
+    const parsedPeak = toStrictFiniteNumber(nowcast.peakProbability);
+    const peakProbability = parsedPeak === null ? 0 : Math.round(parsedPeak);
     const riskTone = !nowcast.hasRain
       ? "minimal"
       : peakProbability >= 70

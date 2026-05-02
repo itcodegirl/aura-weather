@@ -1,34 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchHistoricalTemperatureAverage } from "../api";
+import { buildClimateComparison } from "./climateComparison";
 
 const DEFAULT_API_TEMPERATURE_UNIT = "fahrenheit";
-const SOURCE_TEMPERATURE_UNIT = "F";
 
 function isAbortError(error) {
   return error?.name === "AbortError";
-}
-
-function getDifference(currentTemperature, historicalTemperature) {
-  if (!Number.isFinite(currentTemperature) || !Number.isFinite(historicalTemperature)) {
-    return null;
-  }
-  return currentTemperature - historicalTemperature;
-}
-
-function buildClimateComparison(weatherData, historicalAverage) {
-  const currentTemperature = Number(weatherData?.current?.temperature);
-  const historicalTemperature = Number(historicalAverage?.averageTemperature);
-  const climateDelta = getDifference(currentTemperature, historicalTemperature);
-
-  if (!historicalAverage || !Number.isFinite(climateDelta)) {
-    return null;
-  }
-
-  return {
-    ...historicalAverage,
-    difference: climateDelta,
-    differenceUnit: SOURCE_TEMPERATURE_UNIT,
-  };
 }
 
 /**

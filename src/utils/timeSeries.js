@@ -1,5 +1,5 @@
 export function findWindowStartIndex(timeValues, options = {}) {
-  const { now = Date.now(), windowSize = 1 } = options;
+  const { now = Date.now(), windowSize = 1, currentSlotToleranceMs = 0 } = options;
 
   if (!Array.isArray(timeValues) || timeValues.length === 0) {
     return -1;
@@ -7,6 +7,12 @@ export function findWindowStartIndex(timeValues, options = {}) {
 
   const normalizedNow = Number.isFinite(Number(now)) ? Number(now) : Date.now();
   const normalizedWindowSize = Math.max(1, Math.trunc(Number(windowSize) || 1));
+  const normalizedTolerance = Math.max(
+    0,
+    Number.isFinite(Number(currentSlotToleranceMs))
+      ? Number(currentSlotToleranceMs)
+      : 0
+  );
 
   const validEntries = timeValues
     .map((value, index) => {
@@ -25,6 +31,21 @@ export function findWindowStartIndex(timeValues, options = {}) {
 
   if (validEntries.length === 0) {
     return -1;
+  }
+
+  if (normalizedTolerance > 0) {
+    let activeEntry = null;
+    for (const entry of validEntries) {
+      if (entry.timestamp > normalizedNow) {
+        break;
+      }
+      if (normalizedNow - entry.timestamp <= normalizedTolerance) {
+        activeEntry = entry;
+      }
+    }
+    if (activeEntry) {
+      return activeEntry.index;
+    }
   }
 
   const firstFutureEntry = validEntries.find(

@@ -21,6 +21,8 @@ const DEFAULT_TRUST_META = {
   alertsStatus: "idle",
 };
 
+// Forecast data is always fetched in Fahrenheit / inch units and converted
+// client-side. Switching units in the UI must not trigger a refetch.
 const WEATHER_SOURCE_UNIT = "F";
 const WEATHER_PRECIPITATION_UNIT = getApiPrecipUnit(WEATHER_SOURCE_UNIT);
 

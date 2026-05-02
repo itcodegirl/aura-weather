@@ -23,7 +23,12 @@ function buildHourlyData(hourly, unit) {
     return [];
   }
 
-  const idx = findWindowStartIndex(hourly.time, { windowSize: 24 });
+  const idx = findWindowStartIndex(hourly.time, {
+    windowSize: 24,
+    // Snap "Now" to the current hour band rather than the next future
+    // entry, so the Now indicator aligns with the active hour.
+    currentSlotToleranceMs: 60 * 60 * 1000,
+  });
   if (idx < 0) {
     return [];
   }

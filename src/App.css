@@ -907,163 +907,11 @@ a:focus-visible,
   box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.16);
 }
 
-.bento {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 22px;
-}
-
-.bento-group-label {
-  grid-column: 1 / -1;
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 24px;
-  margin: 2px 0 -4px;
-  padding-left: 14px;
-  color: rgba(226, 237, 255, 0.94);
-  font-size: 12px;
-  font-weight: 720;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  opacity: 1;
-  animation: label-reveal var(--motion-label-reveal) var(--ease-standard) forwards;
-  animation-delay: calc(var(--group-i, 0) * 120ms);
-}
-
-.bento-group-label::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 4px;
-  height: 16px;
-  border-radius: var(--radius-pill);
-  transform: translateY(-50%);
-  background: linear-gradient(180deg, rgba(148, 228, 255, 0.95), rgba(123, 155, 255, 0.82));
-  box-shadow: 0 0 0 2px rgba(110, 231, 255, 0.16);
-}
-
-.bento-group-label::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  margin-left: 12px;
-  border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, rgba(166, 209, 255, 0.56), rgba(166, 209, 255, 0.06));
-}
-
-.bento > section {
-  position: relative;
-  min-width: 0;
-  min-height: 186px;
-  padding: var(--card-padding);
-  border-radius: var(--card-radius);
-  border: var(--card-border);
-  opacity: 1;
-  animation: card-slide-up var(--card-enter-duration) cubic-bezier(0.25, 0.95, 0.3, 1) forwards;
-  animation-delay: calc(var(--i, 0) * var(--card-enter-stagger));
-  background:
-    linear-gradient(168deg, rgba(13, 24, 49, 0.68), rgba(8, 15, 33, 0.56)),
-    linear-gradient(132deg, rgba(184, 167, 255, 0.08), rgba(111, 188, 255, 0.05) 58%, transparent 84%);
-  box-shadow: var(--card-shadow);
-  transition:
-    transform var(--motion-medium) var(--ease-emphasis),
-    border-color var(--motion-fast) var(--ease-standard),
-    background var(--motion-medium) var(--ease-standard),
-    box-shadow var(--motion-medium) var(--ease-standard);
-}
-
-.bento > section::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: calc(var(--card-radius) - 1px);
-  pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.bento > section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(circle at 24% 0%, rgba(231, 241, 255, 0.18), transparent 62%);
-  transition: opacity var(--motion-medium) var(--ease-standard);
-}
-
-.bento > section:focus-within::before {
-  opacity: 1;
-}
-
-.bento > section[data-refreshing="true"] {
-  box-shadow:
-    0 30px 72px rgba(2, 8, 24, 0.42),
-    0 6px 18px rgba(7, 20, 46, 0.24),
-    inset 0 0 0 1px rgba(128, 226, 255, 0.34);
-}
-
-.bento > section[data-refreshing="true"]::before {
-  content: "Refreshing";
-  inset: auto 14px auto auto;
-  top: 12px;
-  width: auto;
-  height: auto;
-  padding: 4px 9px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(130, 228, 255, 0.36);
-  background: rgba(10, 25, 52, 0.8);
-  color: rgba(218, 244, 255, 0.94);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transform: none;
-  opacity: 1;
-  animation: refreshing-chip-pulse 1.3s ease-in-out infinite;
-}
-
-.bento > section:focus-within {
-  border-color: rgba(133, 230, 255, 0.72);
-  box-shadow:
-    0 28px 62px rgba(3, 9, 24, 0.42),
-    0 0 0 2px rgba(133, 230, 255, 0.45),
-    inset 0 1px 0 rgba(243, 248, 255, 0.18);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .bento > section:hover {
-    transform: translateY(var(--card-hover-shift));
-    border-color: rgba(182, 220, 255, 0.44);
-    background:
-      linear-gradient(165deg, rgba(16, 31, 63, 0.76), rgba(8, 16, 34, 0.6)),
-      linear-gradient(130deg, rgba(191, 175, 255, 0.1), rgba(120, 198, 255, 0.06) 60%, transparent 86%);
-    box-shadow:
-      0 32px 80px rgba(3, 9, 24, 0.46),
-      0 14px 34px rgba(129, 160, 240, 0.16),
-      inset 0 1px 0 rgba(243, 248, 255, 0.18);
-  }
-
-  .bento > section:hover::before {
-    opacity: 1;
-  }
-}
-
-.bento-hero {
-  grid-column: span 6;
-  min-height: clamp(280px, 28vw, 360px);
-  animation: hero-landing 500ms cubic-bezier(0.25, 1, 0.3, 1) forwards;
-  animation-delay: calc(var(--i, 0) * 80ms);
-}
-
-.bento-exposure {
-  grid-column: span 6;
-}
+/*
+ * Bento layout rules (.bento, .bento-group-label, .bento > section,
+ * .bento-hero, .bento-exposure and their responsive overrides) live
+ * in src/components/layout/WeatherDashboard.css.
+ */
 
 .forecast-subtitle,
 .chart-subtitle,
@@ -1104,10 +952,6 @@ a:focus-visible,
   .app-inner {
     padding: 24px 0 38px;
   }
-
-  .bento {
-    gap: 20px;
-  }
 }
 
 @media (max-width: 980px) {
@@ -1125,61 +969,11 @@ a:focus-visible,
     flex: 1 1 100%;
     gap: 8px;
   }
-
-  .bento {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 15px;
-  }
-
-  .bento-group-label {
-    font-size: 11px;
-  }
-
-  .bento-hero {
-    grid-column: span 3;
-    min-height: clamp(170px, 44vw, 236px);
-  }
-
-  .bento-exposure {
-    grid-column: span 3;
-  }
-
-  .bento-rain {
-    grid-column: span 2;
-  }
-
-  .bento-chart,
-  .bento-storm {
-    grid-column: span 3;
-  }
-
-  .bento-forecast {
-    grid-column: span 3;
-  }
-
-  .bento-nowcast {
-    grid-column: span 1;
-  }
 }
 
 @media (max-width: 860px) {
   .app-inner {
     padding: 20px 0 30px;
-  }
-
-  .bento {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .bento-hero,
-  .bento-exposure,
-  .bento-rain,
-  .bento-nowcast,
-  .bento-chart,
-  .bento-storm,
-  .bento-forecast {
-    grid-column: span 2;
   }
 }
 
@@ -1270,21 +1064,6 @@ a:focus-visible,
     padding-top: 14px;
     padding-bottom: 24px;
   }
-
-  .bento {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .bento-group-label {
-    justify-content: flex-start;
-  }
-
-  .bento > [class*="bento-"] {
-    grid-column: auto;
-    min-height: 0;
-  }
-
 }
 
 @media (max-width: 560px) {
@@ -1395,17 +1174,6 @@ a:focus-visible,
     min-height: 36px;
     font-size: 10px;
   }
-
-  .bento-group-label {
-    padding-left: 13px;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-  }
-
-  .bento-group-label::after {
-    margin-left: 8px;
-  }
-
 }
 
 @media (hover: none) {
@@ -1425,7 +1193,6 @@ a:focus-visible,
     --border: 1px solid rgba(236, 243, 255, 0.6);
   }
 
-  .bento > section,
   .app-header,
   .city-search-dropdown {
     background: rgba(4, 11, 25, 0.9);
@@ -1446,13 +1213,6 @@ a:focus-visible,
     display: none;
   }
 
-  .bento-group-label,
-  .bento > section {
-    opacity: 1;
-    transform: none;
-  }
-
-  .bento > section:hover,
   .current-location-btn:hover,
   .unit-btn:hover,
   .toggle-pill-btn:hover,

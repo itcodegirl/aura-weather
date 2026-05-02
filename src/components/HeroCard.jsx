@@ -15,6 +15,11 @@ import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
 import { formatSunClock, formatDaylightLengthLabel } from "../utils/sunlight";
+import {
+  hasFiniteValue,
+  MISSING_VALUE_DASH,
+  MISSING_VALUE_LABEL,
+} from "../utils/missingData";
 import WeatherIcon from "./WeatherIcon";
 import { DataTrustMeta, Stat } from "./ui";
 import "./HeroCard.css";
@@ -46,25 +51,38 @@ function HeroCard({
       ? safeLocation.country.trim()
       : "";
     const info = getWeather(current.conditionCode);
-    const toDisplayTemp = (value) => {
+    const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
+    const formatTempWithUnit = (value) => {
+      if (!hasFiniteValue(value)) {
+        return MISSING_VALUE_DASH;
+      }
       const converted = convertTemp(value, unit);
-      return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
+      if (!Number.isFinite(converted)) {
+        return MISSING_VALUE_DASH;
+      }
+      return `${Math.round(converted)}${tempUnit}`;
     };
 
     const toDisplayTempDelta = (deltaValue) => {
       const numericDelta = Number(deltaValue);
       if (!Number.isFinite(numericDelta)) {
-        return "\u2014";
+        return MISSING_VALUE_DASH;
       }
       const safeDelta = Math.abs(numericDelta);
       const convertedDelta = unit === "C" ? (safeDelta * 5) / 9 : safeDelta;
       return Math.round(convertedDelta);
     };
-    const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
-    const todayHigh = toDisplayTemp(weather?.daily?.temperatureMax?.[0]);
-    const todayLow = toDisplayTemp(weather?.daily?.temperatureMin?.[0]);
-    const windDisplay = formatWindSpeed(current.windSpeed, unit);
-    const dewPoint = toDisplayTemp(current.dewPoint);
+    const hasCurrentTemp = hasFiniteValue(current.temperature);
+    const currentTempDisplay = hasCurrentTemp
+      ? Math.round(convertTemp(current.temperature, unit))
+      : MISSING_VALUE_DASH;
+    const feelsLikeDisplay = formatTempWithUnit(current.feelsLike);
+    const todayHigh = formatTempWithUnit(weather?.daily?.temperatureMax?.[0]);
+    const todayLow = formatTempWithUnit(weather?.daily?.temperatureMin?.[0]);
+    const windDisplay = hasFiniteValue(current.windSpeed)
+      ? formatWindSpeed(current.windSpeed, unit)
+      : MISSING_VALUE_LABEL;
+    const dewPoint = formatTempWithUnit(current.dewPoint);
     const sunriseValue = weather?.daily?.sunrise?.[0] ?? "";
     const sunsetValue = weather?.daily?.sunset?.[0] ?? "";
     const sunriseLabel = formatSunClock(sunriseValue);
@@ -116,8 +134,10 @@ function HeroCard({
       info,
       safeLocationName,
       safeLocationCountry,
-      toDisplayTemp,
       tempUnit,
+      hasCurrentTemp,
+      currentTempDisplay,
+      feelsLikeDisplay,
       todayHigh,
       todayLow,
       windDisplay,
@@ -157,8 +177,10 @@ function HeroCard({
     info,
     safeLocationName,
     safeLocationCountry,
-    toDisplayTemp,
     tempUnit,
+    hasCurrentTemp,
+    currentTempDisplay,
+    feelsLikeDisplay,
     todayHigh,
     todayLow,
     windDisplay,
@@ -217,17 +239,11 @@ function HeroCard({
         >
           <div className="hero-high-low-item">
             <span className="hero-high-low-label">High</span>
-            <span className="hero-high-low-value">
-              {todayHigh}
-              {tempUnit}
-            </span>
+            <span className="hero-high-low-value">{todayHigh}</span>
           </div>
           <div className="hero-high-low-item">
             <span className="hero-high-low-label">Low</span>
-            <span className="hero-high-low-value">
-              {todayLow}
-              {tempUnit}
-            </span>
+            <span className="hero-high-low-value">{todayLow}</span>
           </div>
         </div>
       </header>
@@ -253,8 +269,10 @@ function HeroCard({
         <div className="hero-temp-block">
           <div className="hero-temp-row">
             <div className="hero-temp">
-              {toDisplayTemp(current.temperature)}
-              <span className="hero-temp-unit">{tempUnit}</span>
+              {currentTempDisplay}
+              {hasCurrentTemp && (
+                <span className="hero-temp-unit">{tempUnit}</span>
+              )}
             </div>
             <div className="hero-icon">
               <WeatherIcon code={current.conditionCode} size={124} animated />
@@ -262,8 +280,9 @@ function HeroCard({
           </div>
           <div className="hero-condition">{info.label}</div>
           <div className="hero-feels">
-            Feels like {toDisplayTemp(current.feelsLike)}
-            {tempUnit}
+            {feelsLikeDisplay === MISSING_VALUE_DASH
+              ? "Feels-like temperature unavailable"
+              : `Feels like ${feelsLikeDisplay}`}
           </div>
           {hasClimateComparison && (
             <p className="hero-insight">{climateMessage}</p>
@@ -312,24 +331,24 @@ function HeroCard({
           icon={<Droplets size={18} />}
           label="Humidity"
           value={
-            Number.isFinite(Number(current.humidity))
+            hasFiniteValue(current.humidity)
               ? `${Math.round(current.humidity)}%`
-              : "\u2014"
+              : MISSING_VALUE_LABEL
           }
         />
         <Stat
           icon={<Gauge size={18} />}
           label="Pressure"
           value={
-            Number.isFinite(Number(current.pressure))
+            hasFiniteValue(current.pressure)
               ? `${Math.round(current.pressure)} hPa`
-              : "\u2014"
+              : MISSING_VALUE_LABEL
           }
         />
         <Stat
           icon={<Thermometer size={18} />}
           label="Dew Point"
-          value={`${dewPoint}${tempUnit}`}
+          value={dewPoint === MISSING_VALUE_DASH ? MISSING_VALUE_LABEL : dewPoint}
         />
       </div>
     </section>

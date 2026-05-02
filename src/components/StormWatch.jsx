@@ -19,13 +19,20 @@ import {
 } from "../domain";
 import { convertTemp } from "../utils/temperature";
 import { formatWindSpeed } from "../domain/wind";
+import {
+  hasFiniteValue,
+  toFiniteNumber,
+  MISSING_VALUE_LABEL,
+} from "../utils/missingData";
 import { CardHeader, DataTrustMeta, InfoDrawer, Stat } from "./ui";
 import "./StormWatch.css";
 
 function StormRisk({ risk, cape, summaryId }) {
-  const hasCape = Number.isFinite(cape);
-  const safeCape = hasCape ? Math.round(cape) : null;
-  const stormRiskSummary = `Storm risk: ${risk.level}; level ${risk.score + 1} of 5 based on current conditions.`;
+  const hasCape = hasFiniteValue(cape);
+  const safeCape = hasCape ? Math.round(Number(cape)) : null;
+  const stormRiskSummary = hasCape
+    ? `Storm risk: ${risk.level}; level ${risk.score + 1} of 5 based on current conditions.`
+    : "Storm risk unavailable: live CAPE reading missing.";
 
   return (
     <div className="storm-module">
@@ -50,12 +57,16 @@ function StormRisk({ risk, cape, summaryId }) {
       />
       <div
         className="storm-level"
-        style={{ color: risk.color }}
+        style={{ color: hasCape ? risk.color : "#94a3b8" }}
         aria-describedby={summaryId}
       >
-        {risk.level}
+        {hasCape ? risk.level : MISSING_VALUE_LABEL}
       </div>
-      <p className="storm-module-summary">Risk index {risk.score + 1} of 5</p>
+      <p className="storm-module-summary">
+        {hasCape
+          ? `Risk index ${risk.score + 1} of 5`
+          : "Live storm energy reading unavailable"}
+      </p>
       <div id={summaryId} className="storm-risk-accessibility">
         {stormRiskSummary}
       </div>
@@ -65,7 +76,8 @@ function StormRisk({ risk, cape, summaryId }) {
             key={i}
             className="storm-risk-pip"
             style={{
-              background: i <= risk.score ? risk.color : "rgba(255,255,255,0.1)",
+              background:
+                hasCape && i <= risk.score ? risk.color : "rgba(255,255,255,0.1)",
             }}
           />
         ))}
@@ -82,7 +94,7 @@ function StormRisk({ risk, cape, summaryId }) {
             CAPE
           </abbr>
         )}
-        value={hasCape ? `${safeCape} J/kg` : "Data unavailable"}
+        value={hasCape ? `${safeCape} J/kg` : MISSING_VALUE_LABEL}
       />
     </div>
   );
@@ -190,19 +202,36 @@ function WindIntelligence({
   unit,
 }) {
   const current = weather?.current && typeof weather.current === "object" ? weather.current : {};
-  const safeWindSpeed = Number(current.windSpeed);
-  const safeWindGusts = Number(current.windGust);
-  const safeDirection = Number(current.windDirection);
-  const sustained = Number.isFinite(safeWindSpeed) ? safeWindSpeed : 0;
-  const directionDegrees = Number.isFinite(safeDirection) ? safeDirection : 0;
+  const sustainedSpeed = toFiniteNumber(current.windSpeed);
+  const gustSpeed = toFiniteNumber(current.windGust);
+  const directionValue = toFiniteNumber(current.windDirection);
+  const hasSustained = sustainedSpeed !== null;
+  const hasDirection = directionValue !== null;
 
-  const sustainedDisplay = formatWindSpeed(safeWindSpeed, unit);
-  const gustsDisplay = formatWindSpeed(
-    Number.isFinite(safeWindGusts) ? safeWindGusts : sustained,
-    unit
-  );
-  const direction = windDirectionName(directionDegrees);
-  const strength = classifyWind(sustained, "F");
+  const sustainedDisplay = hasSustained
+    ? formatWindSpeed(sustainedSpeed, unit)
+    : MISSING_VALUE_LABEL;
+  const gustsDisplay =
+    gustSpeed !== null
+      ? formatWindSpeed(gustSpeed, unit)
+      : hasSustained
+        ? formatWindSpeed(sustainedSpeed, unit)
+        : MISSING_VALUE_LABEL;
+  const direction = hasDirection
+    ? windDirectionName(directionValue)
+    : "";
+  const strength = hasSustained
+    ? classifyWind(sustainedSpeed, "F")
+    : MISSING_VALUE_LABEL;
+  const compassRotation = hasDirection ? directionValue + 180 : 0;
+  const compassLabel = hasDirection
+    ? `Wind from ${direction}`
+    : "Wind direction unavailable";
+  const summary = hasSustained
+    ? hasDirection
+      ? `Flow from ${direction}`
+      : "Wind direction unavailable"
+    : "Live wind reading unavailable";
 
   return (
     <div className="storm-module">
@@ -216,23 +245,25 @@ function WindIntelligence({
         subtitleClassName="storm-module-kicker"
       />
       <div className="storm-level">{strength}</div>
-      <p className="storm-module-summary">Flow from {direction}</p>
+      <p className="storm-module-summary">{summary}</p>
 
-      <div className="wind-compass" role="img" aria-label={`Wind from ${direction}`}>
+      <div className="wind-compass" role="img" aria-label={compassLabel}>
         <div className="wind-compass-ring">
           <span className="wind-compass-label wind-compass-n">N</span>
           <span className="wind-compass-label wind-compass-e">E</span>
           <span className="wind-compass-label wind-compass-s">S</span>
           <span className="wind-compass-label wind-compass-w">W</span>
-          <span
-            className="wind-compass-arrow"
-            aria-hidden="true"
-            style={{
-              transform: `translate(-50%, -50%) rotate(${directionDegrees + 180}deg)`,
-            }}
-          >
-            <ArrowUp size={16} strokeWidth={2.3} />
-          </span>
+          {hasDirection && (
+            <span
+              className="wind-compass-arrow"
+              aria-hidden="true"
+              style={{
+                transform: `translate(-50%, -50%) rotate(${compassRotation}deg)`,
+              }}
+            >
+              <ArrowUp size={16} strokeWidth={2.3} />
+            </span>
+          )}
         </div>
       </div>
 
@@ -240,25 +271,30 @@ function WindIntelligence({
         className="storm-detail"
         labelClassName="storm-detail-label"
         valueClassName="storm-detail-value"
-        label={`${sustainedDisplay} ${direction}`}
-        value={`Gusts ${gustsDisplay}`}
+        label={
+          hasSustained
+            ? hasDirection
+              ? `${sustainedDisplay} ${direction}`
+              : sustainedDisplay
+            : MISSING_VALUE_LABEL
+        }
+        value={hasSustained ? `Gusts ${gustsDisplay}` : ""}
       />
     </div>
   );
 }
 
 function ComfortIndex({ weather, unit }) {
-  const dewpoint = weather?.current?.dewPoint;
-  const safeDewpoint = Number(dewpoint);
-  const dewpointConverted = convertTemp(safeDewpoint, unit);
-  const dewpointDisplay = Number.isFinite(dewpointConverted)
-    ? Math.round(dewpointConverted)
-    : "\u2014";
+  const dewpoint = toFiniteNumber(weather?.current?.dewPoint);
+  const hasDewpoint = dewpoint !== null;
+  const dewpointConverted = hasDewpoint ? convertTemp(dewpoint, unit) : null;
   const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
-  const comfort = classifyComfort(
-    safeDewpoint,
-    "F"
-  );
+  const dewpointDisplay = Number.isFinite(dewpointConverted)
+    ? `${Math.round(dewpointConverted)}${tempUnit}`
+    : MISSING_VALUE_LABEL;
+  const comfort = hasDewpoint ? classifyComfort(dewpoint, "F") : null;
+  const comfortLevel = comfort?.level ?? MISSING_VALUE_LABEL;
+  const comfortColor = comfort?.color ?? "#94a3b8";
 
   return (
     <div className="storm-module">
@@ -271,20 +307,29 @@ function ComfortIndex({ weather, unit }) {
         subtitle="Moisture"
         subtitleClassName="storm-module-kicker"
       />
-      <div className="storm-level" style={{ color: comfort.color }}>
-        {comfort.level}
+      <div className="storm-level" style={{ color: comfortColor }}>
+        {comfortLevel}
       </div>
-      <p className="storm-module-summary">Dew point driven comfort signal</p>
+      <p className="storm-module-summary">
+        {hasDewpoint
+          ? "Dew point driven comfort signal"
+          : "Dew point reading unavailable"}
+      </p>
       <div className="comfort-scale" aria-hidden="true">
         <div className="comfort-gradient" />
-        <div className="comfort-marker" style={{ left: `${comfort.position}%` }} />
+        {hasDewpoint && (
+          <div
+            className="comfort-marker"
+            style={{ left: `${comfort.position}%` }}
+          />
+        )}
       </div>
       <Stat
         className="storm-detail"
         labelClassName="storm-detail-label"
         valueClassName="storm-detail-value"
         label="Dewpoint"
-        value={`${dewpointDisplay}${tempUnit}`}
+        value={dewpointDisplay}
       />
     </div>
   );
@@ -304,22 +349,22 @@ function StormWatch({
   nowMs,
 }) {
   const stormRiskSummaryId = useId();
-  const overviewCape = Number(weather?.hourly?.cape?.[0]);
-  const safeOverviewCape = Number.isFinite(overviewCape) ? overviewCape : 0;
+  const overviewCape = toFiniteNumber(weather?.hourly?.cape?.[0]);
+  const hasOverviewCape = overviewCape !== null;
   const currentConditionCode = weather?.current?.conditionCode ?? 0;
   const overviewRisk = useMemo(
-    () => classifyStormRisk(safeOverviewCape, currentConditionCode),
-    [safeOverviewCape, currentConditionCode]
+    () => classifyStormRisk(hasOverviewCape ? overviewCape : 0, currentConditionCode),
+    [hasOverviewCape, overviewCape, currentConditionCode]
   );
   const overviewPressure = useMemo(
     () => calculatePressureTrend(weather?.hourly?.pressure, weather?.hourly?.time),
     [weather?.hourly?.pressure, weather?.hourly?.time]
   );
-  const overviewWindSpeed = Number(weather?.current?.windSpeed);
-  const overviewWind = classifyWind(
-    Number.isFinite(overviewWindSpeed) ? overviewWindSpeed : 0,
-    "F"
-  );
+  const overviewWindSpeed = toFiniteNumber(weather?.current?.windSpeed);
+  const hasOverviewWind = overviewWindSpeed !== null;
+  const overviewWind = hasOverviewWind
+    ? classifyWind(overviewWindSpeed, "F")
+    : MISSING_VALUE_LABEL;
 
   return (
     <section
@@ -350,10 +395,12 @@ function StormWatch({
         <span
           className="storm-snapshot-chip"
           role="listitem"
-          style={{ "--chip-accent": overviewRisk.color }}
+          style={{ "--chip-accent": hasOverviewCape ? overviewRisk.color : "#94a3b8" }}
         >
           <span className="storm-snapshot-label">Storm risk</span>
-          <span className="storm-snapshot-value">{overviewRisk.level}</span>
+          <span className="storm-snapshot-value">
+            {hasOverviewCape ? overviewRisk.level : MISSING_VALUE_LABEL}
+          </span>
         </span>
         <span className="storm-snapshot-chip" role="listitem">
           <span className="storm-snapshot-label">Pressure trend</span>
@@ -368,7 +415,7 @@ function StormWatch({
       <div className="storm-grid">
         <MemoizedStormRisk
           risk={overviewRisk}
-          cape={safeOverviewCape}
+          cape={hasOverviewCape ? overviewCape : null}
           summaryId={stormRiskSummaryId}
         />
         <MemoizedPressureTrend trend={overviewPressure} />

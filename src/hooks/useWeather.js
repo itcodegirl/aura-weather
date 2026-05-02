@@ -138,7 +138,12 @@ export function useWeather(options = {}) {
     climateEnabled,
   });
 
-  const loadWeather = useCallback(
+  // Shared entrypoint used by both the search bar (loadWeather, called
+  // with positional args) and the saved-cities strip (loadSavedCity,
+  // called with a city object). Both flows resolve to the same
+  // applyLocation invocation; keeping a single body makes it impossible
+  // for the two to drift.
+  const applyResolvedLocation = useCallback(
     (lat, lon, name, country) => {
       const nextLocation = toLocationPayload(lat, lon, name, country);
       if (!nextLocation) {
@@ -149,21 +154,15 @@ export function useWeather(options = {}) {
     [applyLocation]
   );
 
-  const loadSavedCity = useCallback(
-    (city) => {
-      const nextLocation = toLocationPayload(
-        city?.lat,
-        city?.lon,
-        city?.name,
-        city?.country
-      );
-      if (!nextLocation) {
-        return;
-      }
+  const loadWeather = useCallback(
+    (lat, lon, name, country) => applyResolvedLocation(lat, lon, name, country),
+    [applyResolvedLocation]
+  );
 
-      applyLocation(nextLocation, null, { saveCity: true });
-    },
-    [applyLocation]
+  const loadSavedCity = useCallback(
+    (city) =>
+      applyResolvedLocation(city?.lat, city?.lon, city?.name, city?.country),
+    [applyResolvedLocation]
   );
 
   const forgetSavedCity = useCallback((city) => {

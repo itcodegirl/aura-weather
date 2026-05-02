@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   ALERTS_STATUS,
+  fetchHistoricalTemperatureAverage,
   fetchWeather,
   fetchSevereWeatherAlerts,
 } from "./openMeteo.js";
@@ -103,5 +104,61 @@ describe("Open-Meteo alert coverage helpers", () => {
 
     assert.equal(result.status, ALERTS_STATUS.unavailable);
     assert.deepEqual(result.alerts, []);
+  });
+});
+
+describe("fetchHistoricalTemperatureAverage", () => {
+  test("ignores null and empty-string samples instead of averaging them as 0", async () => {
+    // Historical archive responses can contain null entries when a
+    // station was offline. The Phase 1 strict-coercion contract must
+    // hold here: missing samples drop out of the average rather than
+    // pulling it toward 0°F.
+    globalThis.fetch = async () =>
+      createJsonResponse({
+        daily: {
+          time: [
+            "1995-05-02",
+            "1996-05-02",
+            "1997-05-02",
+            "1998-05-02",
+            "1999-05-02",
+          ],
+          temperature_2m_mean: [60, null, 62, "", 64],
+          temperature_2m_min: [50, 52, 54, 56, 58],
+          temperature_2m_max: [70, 72, 74, 76, 80],
+        },
+      });
+
+    const result = await fetchHistoricalTemperatureAverage(
+      41.8781,
+      -87.6298,
+      "America/Chicago"
+    );
+
+    assert.ok(result, "expected an averaged result");
+    // Real means: 60, 62, 64. Null + empty samples fall back to
+    // (min+max)/2 = 62 and 66. So the average is (60+62+62+66+64)/5 = 62.8.
+    assert.equal(result.averageTemperature, 62.8);
+    assert.equal(result.sampleYears, 5);
+  });
+
+  test("returns null when the archive returns no usable samples", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse({
+        daily: {
+          time: ["1995-05-02"],
+          temperature_2m_mean: [null],
+          temperature_2m_min: [null],
+          temperature_2m_max: [null],
+        },
+      });
+
+    const result = await fetchHistoricalTemperatureAverage(
+      41.8781,
+      -87.6298,
+      "America/Chicago"
+    );
+
+    assert.equal(result, null);
   });
 });

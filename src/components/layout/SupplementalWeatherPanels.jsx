@@ -2,20 +2,8 @@ import { memo, Suspense } from "react";
 import NowcastCard from "../NowcastCard";
 import AlertsCard from "../AlertsCard";
 import ForecastCard from "../ForecastCard";
+import { CardFallback } from "../ui";
 import { HourlyPanel, StormWatchPanel } from "../lazyPanels";
-
-function CardFallback({ className, style, title, isRefreshing }) {
-  return (
-    <section
-      className={`${className} loading-card glass`}
-      style={style}
-      data-refreshing={isRefreshing ? "true" : undefined}
-      aria-busy={isRefreshing || undefined}
-    >
-      <p className="loading-card-title">{title}</p>
-    </section>
-  );
-}
 
 function SupplementalWeatherPanels({
   weather,

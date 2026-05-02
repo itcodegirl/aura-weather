@@ -2,6 +2,10 @@ import { lazy, memo, Suspense, useEffect, useState } from "react";
 import HeroCard from "../HeroCard";
 import RainCard from "../RainCard";
 import ExposureSection from "../ExposureSection";
+import { CardFallback } from "../ui";
+import { useDeferredMount } from "../../hooks/useDeferredMount";
+import { usePanelPreload } from "../../hooks/useAppShellEffects";
+import { PRELOAD_HEAVY_PANELS } from "../lazyPanels";
 const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
 
 const CARD_STYLE_VARIABLES = [
@@ -29,21 +33,6 @@ const GROUP_LABEL_IDS = {
   weekAhead: "group-week-ahead",
 };
 
-function CardFallback({ className, style, title, isRefreshing }) {
-  return (
-    <section
-      className={`${className} loading-card glass`}
-      style={style}
-      data-refreshing={isRefreshing ? "true" : undefined}
-      aria-busy={isRefreshing || undefined}
-    >
-      <p className="loading-card-title">
-        {title}
-      </p>
-    </section>
-  );
-}
-
 function WeatherDashboard({
   weather,
   location,
@@ -56,7 +45,7 @@ function WeatherDashboard({
   trustMeta,
 }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [showSupplementalPanels, setShowSupplementalPanels] = useState(false);
+  const showSupplementalPanels = useDeferredMount(Boolean(weather));
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -68,42 +57,7 @@ function WeatherDashboard({
     };
   }, []);
 
-  useEffect(() => {
-    if (!weather || showSupplementalPanels) {
-      return undefined;
-    }
-
-    let timeoutId = null;
-    let idleId = null;
-
-    const revealSupplementalPanels = () => {
-      setShowSupplementalPanels(true);
-    };
-
-    if (
-      typeof window !== "undefined" &&
-      typeof window.requestIdleCallback === "function"
-    ) {
-      idleId = window.requestIdleCallback(revealSupplementalPanels, {
-        timeout: 700,
-      });
-    } else {
-      timeoutId = window.setTimeout(revealSupplementalPanels, 180);
-    }
-
-    return () => {
-      if (
-        idleId !== null &&
-        typeof window !== "undefined" &&
-        typeof window.cancelIdleCallback === "function"
-      ) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [showSupplementalPanels, weather]);
+  usePanelPreload(PRELOAD_HEAVY_PANELS);
 
   const weatherFetchedAt = trustMeta?.weatherFetchedAt ?? null;
   const aqiFetchedAt = trustMeta?.aqiFetchedAt ?? null;

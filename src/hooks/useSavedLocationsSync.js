@@ -1,10 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { parseCoordinates } from "../utils/weatherUnits";
-import {
-  MAX_SAVED_CITIES,
-  replaceSavedCities,
-  normalizeLocationName,
-} from "./useLocation";
+import { replaceSavedCities } from "./useLocation";
 import { useLocalStorageState } from "./useLocalStorageState";
 import {
   createSavedLocationsSyncAccount,
@@ -12,98 +7,16 @@ import {
   pushSavedLocationsToSync,
   getSyncErrorMessage,
 } from "../services/savedLocationsSync";
+import {
+  deserializeSyncAccount,
+  formatPullSuccessMessage,
+  getSavedCitiesSignature,
+  mergeSavedCities,
+  serializeSyncAccount,
+} from "./savedLocationsSyncHelpers";
 
 const SYNC_ACCOUNT_KEY = "aura-weather-sync-account-v1";
-
-function deserializeSyncAccount(rawValue) {
-  try {
-    const parsed = JSON.parse(rawValue);
-    if (!parsed || typeof parsed !== "object") {
-      return null;
-    }
-
-    const syncKey =
-      typeof parsed.syncKey === "string" ? parsed.syncKey.trim() : "";
-    if (!syncKey) {
-      return null;
-    }
-
-    return { syncKey };
-  } catch {
-    return null;
-  }
-}
-
-function serializeSyncAccount(value) {
-  if (!value || typeof value !== "object") {
-    return "";
-  }
-
-  return JSON.stringify({
-    syncKey: typeof value.syncKey === "string" ? value.syncKey.trim() : "",
-  });
-}
-
-function getSavedCitiesSignature(savedCities) {
-  return JSON.stringify(
-    (Array.isArray(savedCities) ? savedCities : []).map((city) => ({
-      lat: city?.lat,
-      lon: city?.lon,
-      name: city?.name,
-      country: city?.country,
-    }))
-  );
-}
-
-function mergeSavedCities(localCities, remoteCities) {
-  const seen = new Set();
-  const merged = [];
-  const candidates = [
-    ...(Array.isArray(localCities) ? localCities : []),
-    ...(Array.isArray(remoteCities) ? remoteCities : []),
-  ];
-
-  for (const city of candidates) {
-    const coordinates = parseCoordinates(city?.lat, city?.lon);
-    if (!coordinates) {
-      continue;
-    }
-
-    const key = `${coordinates.latitude.toFixed(4)}:${coordinates.longitude.toFixed(4)}`;
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-
-    merged.push({
-      lat: coordinates.latitude,
-      lon: coordinates.longitude,
-      name: normalizeLocationName(city?.name, "Saved place"),
-      country: normalizeLocationName(city?.country, ""),
-    });
-  }
-
-  return {
-    cities: merged.slice(0, MAX_SAVED_CITIES),
-    wasTrimmed: merged.length > MAX_SAVED_CITIES,
-  };
-}
-
-function formatPullSuccessMessage(remoteCities, savedCitiesCount, wasTrimmed) {
-  if (!Array.isArray(remoteCities) || remoteCities.length === 0) {
-    return "Sync connected";
-  }
-
-  const locationCount = Number.isFinite(savedCitiesCount)
-    ? savedCitiesCount
-    : remoteCities.length;
-  const label = locationCount === 1 ? "location" : "locations";
-  if (wasTrimmed) {
-    return `Synced ${locationCount} saved ${label} (kept newest ${MAX_SAVED_CITIES})`;
-  }
-
-  return `Synced ${locationCount} saved ${label}`;
-}
+const AUTO_PUSH_DEBOUNCE_MS = 900;
 
 export function useSavedLocationsSync(savedCities, setSavedCities) {
   const [syncAccount, setSyncAccount] = useLocalStorageState(
@@ -341,7 +254,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
 
     const timerId = setTimeout(() => {
       void pushToSyncAccount(syncAccount, savedCities, { auto: true });
-    }, 900);
+    }, AUTO_PUSH_DEBOUNCE_MS);
 
     return () => {
       clearTimeout(timerId);

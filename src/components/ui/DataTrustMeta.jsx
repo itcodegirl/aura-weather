@@ -4,6 +4,7 @@ import {
   formatTimestampTitle,
   getAgeMinutes,
 } from "../../utils/dataTrust";
+import "./DataTrustMeta.css";
 
 function DataTrustMeta({
   sourceLabel,

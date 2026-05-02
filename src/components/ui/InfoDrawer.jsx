@@ -1,4 +1,5 @@
 import { memo, useId, useState } from "react";
+import "./InfoDrawer.css";
 
 function InfoDrawer({
   label,

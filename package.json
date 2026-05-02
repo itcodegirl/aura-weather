@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --test",
-    "test:render": "node --import ./scripts/test-render-setup.mjs --test 'src/**/*.render.test.mjs'",
+    "test:render": "node --test 'src/**/*.render.test.mjs'",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:visual": "playwright test e2e/visual-regression.spec.js",

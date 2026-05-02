@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   ALERTS_STATUS,
   fetchWeather,
   fetchAirQuality,
-  fetchHistoricalTemperatureAverage,
   fetchSevereWeatherAlerts,
 } from "../api";
 import {
@@ -11,12 +10,11 @@ import {
   getApiPrecipUnit,
   parseCoordinates,
 } from "../utils/weatherUnits";
+import { useClimateComparison } from "./useClimateComparison";
 
 const DEFAULT_TRUST_META = {
   weatherFetchedAt: null,
   aqiFetchedAt: null,
-  climateFetchedAt: null,
-  climateStatus: "idle",
   alertsFetchedAt: null,
   alertsStatus: "idle",
 };
@@ -25,6 +23,7 @@ const DEFAULT_TRUST_META = {
 // client-side. Switching units in the UI must not trigger a refetch.
 const WEATHER_SOURCE_UNIT = "F";
 const WEATHER_PRECIPITATION_UNIT = getApiPrecipUnit(WEATHER_SOURCE_UNIT);
+const API_TEMPERATURE_UNIT = "fahrenheit";
 
 function getErrorMessage(error, fallback) {
   if (typeof error === "string") {
@@ -47,31 +46,8 @@ function getErrorMessage(error, fallback) {
   return fallback;
 }
 
-function getDifference(currentTemperature, historicalTemperature) {
-  if (!Number.isFinite(currentTemperature) || !Number.isFinite(historicalTemperature)) {
-    return null;
-  }
-  return currentTemperature - historicalTemperature;
-}
-
 function isAbortError(error) {
   return error?.name === "AbortError";
-}
-
-function buildClimateComparison(weatherData, historicalAverage) {
-  const currentTemperature = Number(weatherData?.current?.temperature);
-  const historicalTemperature = Number(historicalAverage?.averageTemperature);
-  const climateDelta = getDifference(currentTemperature, historicalTemperature);
-
-  if (!historicalAverage || !Number.isFinite(climateDelta)) {
-    return null;
-  }
-
-  return {
-    ...historicalAverage,
-    difference: climateDelta,
-    differenceUnit: WEATHER_SOURCE_UNIT,
-  };
 }
 
 function buildBaseWeatherState(weatherData) {
@@ -94,15 +70,23 @@ export function useWeatherData(location, options = {}) {
     Boolean(parseCoordinates(locationLat, locationLon))
   );
   const [error, setError] = useState(null);
-  const [climateComparison, setClimateComparison] = useState(null);
   const [trustMeta, setTrustMeta] = useState(DEFAULT_TRUST_META);
 
   const requestIdRef = useRef(0);
   const inFlightRequestRef = useRef(null);
-  const climateRequestRef = useRef(null);
-  const climateRequestIdRef = useRef(0);
-  const climateEnabledRef = useRef(climateEnabled);
   const isMountedRef = useRef(false);
+
+  const {
+    climateComparison,
+    climateStatus,
+    climateLastUpdatedAt,
+    requestClimateComparison,
+    abortClimateRequest,
+    resetClimateComparison,
+  } = useClimateComparison({
+    enabled: climateEnabled,
+    apiTemperatureUnit: API_TEMPERATURE_UNIT,
+  });
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -110,10 +94,6 @@ export function useWeatherData(location, options = {}) {
       isMountedRef.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    climateEnabledRef.current = climateEnabled;
-  }, [climateEnabled]);
 
   const abortInFlightRequest = useCallback(() => {
     if (!inFlightRequestRef.current) {
@@ -123,96 +103,6 @@ export function useWeatherData(location, options = {}) {
     inFlightRequestRef.current.abort();
     inFlightRequestRef.current = null;
   }, []);
-
-  const abortClimateRequest = useCallback(() => {
-    if (!climateRequestRef.current) {
-      return;
-    }
-
-    climateRequestRef.current.abort();
-    climateRequestRef.current = null;
-  }, []);
-
-  const requestClimateComparison = useCallback(async ({
-    coordinates,
-    weatherData,
-    weatherFetchedAt,
-    apiTemperatureUnit = "fahrenheit",
-  }) => {
-    if (!climateEnabledRef.current) {
-      setClimateComparison(null);
-      setTrustMeta((currentTrustMeta) => ({
-        ...currentTrustMeta,
-        climateFetchedAt: null,
-        climateStatus: "disabled",
-      }));
-      return;
-    }
-
-    const requestId = climateRequestIdRef.current + 1;
-    climateRequestIdRef.current = requestId;
-
-    abortClimateRequest();
-
-    const controller = new AbortController();
-    climateRequestRef.current = controller;
-
-    setTrustMeta((currentTrustMeta) => ({
-      ...currentTrustMeta,
-      climateStatus: "loading",
-    }));
-
-    try {
-      const historicalAverage = await fetchHistoricalTemperatureAverage(
-        coordinates.latitude,
-        coordinates.longitude,
-        weatherData?.meta?.timezone,
-        {
-          signal: controller.signal,
-          temperatureUnit: apiTemperatureUnit,
-        }
-      );
-
-      if (
-        requestId !== climateRequestIdRef.current ||
-        !isMountedRef.current
-      ) {
-        return;
-      }
-
-      const nextClimateComparison = buildClimateComparison(
-        weatherData,
-        historicalAverage
-      );
-
-      setClimateComparison(nextClimateComparison);
-      setTrustMeta((currentTrustMeta) => ({
-        ...currentTrustMeta,
-        weatherFetchedAt,
-        climateFetchedAt: nextClimateComparison ? Date.now() : null,
-        climateStatus: nextClimateComparison ? "ready" : "unavailable",
-      }));
-    } catch (climateError) {
-      if (
-        requestId !== climateRequestIdRef.current ||
-        isAbortError(climateError) ||
-        !isMountedRef.current
-      ) {
-        return;
-      }
-
-      setClimateComparison(null);
-      setTrustMeta((currentTrustMeta) => ({
-        ...currentTrustMeta,
-        climateFetchedAt: null,
-        climateStatus: "unavailable",
-      }));
-    } finally {
-      if (climateRequestRef.current === controller) {
-        climateRequestRef.current = null;
-      }
-    }
-  }, [abortClimateRequest]);
 
   const applySupplementalData = useCallback(async ({
     requestId,
@@ -314,18 +204,16 @@ export function useWeatherData(location, options = {}) {
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
 
-    const apiTemperatureUnit = "fahrenheit";
     const requestWindSpeedUnit = getApiWindSpeedUnit();
 
     abortInFlightRequest();
-    abortClimateRequest();
+    resetClimateComparison();
 
     const controller = new AbortController();
     inFlightRequestRef.current = controller;
 
     setLoading(true);
     setError(null);
-    setClimateComparison(null);
 
     let shouldKeepController = false;
 
@@ -335,7 +223,7 @@ export function useWeatherData(location, options = {}) {
         coordinates.longitude,
         {
           signal: controller.signal,
-          temperatureUnit: apiTemperatureUnit,
+          temperatureUnit: API_TEMPERATURE_UNIT,
           windSpeedUnit: requestWindSpeedUnit,
           precipitationUnit: WEATHER_PRECIPITATION_UNIT,
         }
@@ -351,8 +239,6 @@ export function useWeatherData(location, options = {}) {
       setTrustMeta({
         weatherFetchedAt: fetchedAt,
         aqiFetchedAt: null,
-        climateFetchedAt: null,
-        climateStatus: climateEnabledRef.current ? "loading" : "disabled",
         alertsFetchedAt: null,
         alertsStatus: "idle",
       });
@@ -368,8 +254,6 @@ export function useWeatherData(location, options = {}) {
       void requestClimateComparison({
         coordinates,
         weatherData,
-        weatherFetchedAt: fetchedAt,
-        apiTemperatureUnit,
       });
     } catch (requestError) {
       if (
@@ -388,12 +272,12 @@ export function useWeatherData(location, options = {}) {
       }
     }
   }, [
-    abortClimateRequest,
     abortInFlightRequest,
     applySupplementalData,
     locationLat,
     locationLon,
     requestClimateComparison,
+    resetClimateComparison,
   ]);
 
   useEffect(() => {
@@ -407,37 +291,35 @@ export function useWeatherData(location, options = {}) {
     };
   }, [abortClimateRequest, abortInFlightRequest, requestWeatherData]);
 
+  // When the user re-enables climate context after disabling it, fetch
+  // the historical comparison for the existing weather snapshot rather
+  // than refetching the forecast.
   useEffect(() => {
-    if (climateEnabled) {
-      const coordinates = parseCoordinates(locationLat, locationLon);
-      if (
-        coordinates &&
-        weather &&
-        !climateComparison &&
-        (trustMeta.climateStatus === "idle" ||
-          trustMeta.climateStatus === "disabled")
-      ) {
-        Promise.resolve().then(() => {
-          void requestClimateComparison({
-            coordinates,
-            weatherData: weather,
-            weatherFetchedAt: trustMeta.weatherFetchedAt,
-          });
-        });
-      }
+    if (!climateEnabled) {
       return;
     }
-
-    abortClimateRequest();
+    const coordinates = parseCoordinates(locationLat, locationLon);
+    if (
+      !coordinates ||
+      !weather ||
+      climateComparison ||
+      (climateStatus !== "idle" && climateStatus !== "disabled")
+    ) {
+      return;
+    }
+    Promise.resolve().then(() => {
+      void requestClimateComparison({
+        coordinates,
+        weatherData: weather,
+      });
+    });
   }, [
-    abortClimateRequest,
     climateComparison,
     climateEnabled,
+    climateStatus,
     locationLat,
     locationLon,
     requestClimateComparison,
-    trustMeta.climateStatus,
-    trustMeta.weatherFetchedAt,
     weather,
   ]);
 
@@ -449,6 +331,17 @@ export function useWeatherData(location, options = {}) {
     void requestWeatherData();
   }, [requestWeatherData]);
 
+  // Project climate state back into trustMeta so existing consumers keep
+  // working without prop-shape churn.
+  const compositeTrustMeta = useMemo(
+    () => ({
+      ...trustMeta,
+      climateFetchedAt: climateLastUpdatedAt,
+      climateStatus,
+    }),
+    [trustMeta, climateLastUpdatedAt, climateStatus]
+  );
+
   return {
     weather,
     weatherDataUnit,
@@ -456,6 +349,6 @@ export function useWeatherData(location, options = {}) {
     error,
     climateComparison,
     retryWeather,
-    trustMeta,
+    trustMeta: compositeTrustMeta,
   };
 }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
+import { toFiniteNumber } from "../utils/numbers";
 import { formatWindSpeed } from "../domain/wind";
 import { formatSunClock, formatDaylightLengthLabel } from "../utils/sunlight";
 import WeatherIcon from "./WeatherIcon";
@@ -65,6 +66,12 @@ function HeroCard({
     const todayLow = toDisplayTemp(weather?.daily?.temperatureMin?.[0]);
     const windDisplay = formatWindSpeed(current.windSpeed, unit);
     const dewPoint = toDisplayTemp(current.dewPoint);
+    const humidityValue = toFiniteNumber(current.humidity);
+    const humidityDisplay =
+      humidityValue === null ? "—" : `${Math.round(humidityValue)}%`;
+    const pressureValue = toFiniteNumber(current.pressure);
+    const pressureDisplay =
+      pressureValue === null ? "—" : `${Math.round(pressureValue)} hPa`;
     const sunriseValue = weather?.daily?.sunrise?.[0] ?? "";
     const sunsetValue = weather?.daily?.sunset?.[0] ?? "";
     const sunriseLabel = formatSunClock(sunriseValue);
@@ -88,10 +95,9 @@ function HeroCard({
       else if (climateDeltaRaw < 0) climateDirection = "colder";
       else climateDirection = "about the same";
     }
+    const sampleYearsValue = toFiniteNumber(safeClimateComparison?.sampleYears);
     const climateSource = hasClimateComparison
-      ? `${Number.isFinite(Number(safeClimateComparison?.sampleYears))
-          ? Number(safeClimateComparison.sampleYears)
-          : 30}-year`
+      ? `${sampleYearsValue ?? 30}-year`
       : "";
     const climateDate =
       typeof safeClimateComparison?.referenceDateLabel === "string" &&
@@ -122,6 +128,8 @@ function HeroCard({
       todayLow,
       windDisplay,
       dewPoint,
+      humidityDisplay,
+      pressureDisplay,
       sunriseValue,
       sunsetValue,
       sunriseLabel,
@@ -163,6 +171,8 @@ function HeroCard({
     todayLow,
     windDisplay,
     dewPoint,
+    humidityDisplay,
+    pressureDisplay,
     sunriseValue,
     sunsetValue,
     sunriseLabel,
@@ -311,20 +321,12 @@ function HeroCard({
         <Stat
           icon={<Droplets size={18} />}
           label="Humidity"
-          value={
-            Number.isFinite(Number(current.humidity))
-              ? `${Math.round(current.humidity)}%`
-              : "\u2014"
-          }
+          value={humidityDisplay}
         />
         <Stat
           icon={<Gauge size={18} />}
           label="Pressure"
-          value={
-            Number.isFinite(Number(current.pressure))
-              ? `${Math.round(current.pressure)} hPa`
-              : "\u2014"
-          }
+          value={pressureDisplay}
         />
         <Stat
           icon={<Thermometer size={18} />}

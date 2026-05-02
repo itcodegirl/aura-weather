@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { DataTrustMeta, MetricCard } from "./ui";
 import { getAqiStatus, getUvStatus } from "../utils/meteorology";
+import { toFiniteNumber } from "../utils/numbers";
 import "./MetricPanels.css";
 
 const METRIC_LABEL_IDS = {
@@ -17,16 +18,18 @@ function ExposureSection({
   lastUpdatedAt,
   nowMs,
 }) {
-  const hasAqiData = Number.isFinite(Number(aqi));
-  const hasUvData = Number.isFinite(Number(uvIndex));
+  const aqiValue = toFiniteNumber(aqi);
+  const uvValue = toFiniteNumber(uvIndex);
+  const hasAqiData = aqiValue !== null;
+  const hasUvData = uvValue !== null;
   const hasFullExposureData = hasAqiData && hasUvData;
-  const aqiStatus = getAqiStatus(aqi);
-  const uvStatus = getUvStatus(uvIndex);
+  const aqiStatus = getAqiStatus(aqiValue);
+  const uvStatus = getUvStatus(uvValue);
   const aqiSupportText = hasAqiData
-    ? `Current AQI is ${Math.round(Number(aqi))} out of 300.`
+    ? `Current AQI is ${Math.round(aqiValue)} out of 300.`
     : "Air quality data is temporarily unavailable.";
   const uvSupportText = hasUvData
-    ? `Peak UV is ${Number(uvIndex).toFixed(1)} on an 11+ scale.`
+    ? `Peak UV is ${uvValue.toFixed(1)} on an 11+ scale.`
     : "UV data is temporarily unavailable.";
 
   return (
@@ -54,7 +57,7 @@ function ExposureSection({
           id={METRIC_LABEL_IDS.airQuality}
           title="Air Quality"
           context={hasAqiData ? "AQI" : "AQI offline"}
-          value={aqi}
+          value={aqiValue}
           max={300}
           status={aqiStatus}
           gaugeLabel="Air quality index"
@@ -66,7 +69,7 @@ function ExposureSection({
           id={METRIC_LABEL_IDS.uvIndex}
           title="UV Index"
           context={hasUvData ? "Today" : "UV offline"}
-          value={uvIndex}
+          value={uvValue}
           max={11}
           status={uvStatus}
           gaugeLabel="UV index"

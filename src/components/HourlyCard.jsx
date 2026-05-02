@@ -203,9 +203,11 @@ function HourlyCard({
 
   const chartMetrics = useMemo(() => {
     const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
-    const currentTemp = Number.isFinite(Number(currentTemperature))
-      ? toDisplayTemperature(currentTemperature, unit)
-      : Number.NaN;
+    const baseCurrentTemp = toFiniteNumber(currentTemperature);
+    const currentTemp =
+      baseCurrentTemp === null
+        ? Number.NaN
+        : toDisplayTemperature(baseCurrentTemp, unit);
 
     const safeMinTemp = temps.length
       ? Math.min(...temps)

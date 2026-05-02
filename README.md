@@ -130,7 +130,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`103` tests)
+- `npm test` passes (`129` tests)
 - `npm run build` passes
 - `npm run test:e2e` passes (`13` Playwright checks, including smoke, unicode-escape leak guard, and visual regression)
 - `npm run test:lighthouse` passes the local budget gate
@@ -200,38 +200,47 @@ Short notes on the non-obvious choices a reviewer might question.
 - **In-flight async announcement** — async buttons (Use my location, Allow location, Retry, Sync now, Disconnect, Create cloud account) now expose `aria-busy` while their work is in flight, so screen-reader users get a signal even after tabbing away.
 - **Climate comparison nullish-input fix** — `buildClimateComparison` now rejects nullish temperatures explicitly instead of coercing them to zero, which previously could surface fake "65°F warmer than average" lines for partial archive responses.
 - **Status-stack collapse** — App.jsx no longer mounts two `role="status"` regions on every render.
+- **Per-panel error boundary** — a lazy chunk loading failure (HourlyChart, StormWatch) used to take down the whole app via the root error boundary. A new `PanelErrorBoundary` isolates per-panel render and dynamic-import errors so the rest of the dashboard keeps working.
+- **Null-coordinate guard** — `parseCoordinates(null, null)` no longer silently resolves to `(0, 0)` Null Island; the same strict numeric helper now protects geolocation parsing and saved-city storage.
+- **DataTrustMeta age guard** — a null `lastUpdatedAt` no longer computes a fake "Stale data (millions m old)" warning before the first response.
+- **Alert overflow signal** — when NWS returns more than four alerts the card now surfaces an "+ N more alerts not shown" footnote ordered by priority.
+- **prefers-reduced-data support** — when the user-agent reports `prefers-reduced-data: reduce`, the historical-archive call is suppressed automatically. The user-facing climate toggle is unchanged.
 
 ## Known Limitations
 
-- NOAA / NWS severe alerts are U.S.-region only; unsupported regions fall back to explanatory messaging instead of a false all-clear.
-- Saved-location cloud sync is intentionally lightweight and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`.
-- The current Lighthouse budget now passes locally, but the app still carries a relatively large CSS surface and could be trimmed further for stronger real-world performance margins.
+- **U.S.-only severe alerts.** NOAA / NWS coverage stops at the U.S. border; non-U.S. locations fall back to explanatory messaging instead of a false all-clear.
+- **Lightweight cloud sync.** The optional sync flow uses a public jsonblob.com store and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`. It is not encrypted at rest and is not a substitute for an account system.
+- **Geolocation falls back fast.** If the browser's geolocation prompt does not resolve in 5 seconds the app drops to the Chicago default rather than blocking the dashboard. The user can re-trigger the prompt at any time from the header.
+- **Historical archive lag.** The Open-Meteo archive is updated daily and may not include the most recent week; on those days the climate-context panel shows "Climate context unavailable" instead of a stale comparison.
+- **No service worker / offline mode.** A dropped connection during a refresh keeps the previous reading on screen with a `Stale data` warning, but the app does not synthesize cached forecasts when fully offline.
+- **Lighthouse budget passes locally** but real-world performance varies with the network. The CSS and JS footprint shrunk substantially during the audit (App.css 2,067 → ~500 lines), but a service worker and image-pre-caching pass would still be the next wins.
 
 ## Portfolio / Case Study Notes
 
-If this project is presented in a portfolio, the strongest story is:
+The strongest narrative for this project is the **trust contract**: the audit found and fixed a class of `Number(null) === 0` bugs that silently rendered missing API readings as `0%` humidity, `0 hPa` pressure, `0°F` historical samples, `(0, 0)` Null-Island geolocation, and millions-of-minutes "Stale data" warnings. A single shared `toFiniteNumber` helper at the API boundary, with explicit fallback per call site, replaced six independent inline coercions. Every layer now has direct unit tests pinning the contract.
 
-- resilient client-side API composition instead of a single happy-path fetch
-- responsive dashboard work that now has smoke and visual regression protection
-- accessibility work that goes beyond color tweaks into keyboard flow, live status messaging, and baseline axe coverage
-- product decisions around trust cues, unsupported alert regions, location permission onboarding, and startup/sync recovery states
+Other strong stories:
 
-The weakest current story is still long-term performance optimization at scale. This repo is better as a frontend architecture and QA sample than as a claim of fully production-grade performance tuning, and there is still room to reduce CSS and JS weight further.
+- **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
+- **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
+- **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
+- **QA maturity** — 129 unit tests covering API normalization, climate comparison, location persistence, sync helpers, time-series snap, AQI/UV/weather-code lookup, and trust-meta age formatting; 13 Playwright checks for smoke, visual regression, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 
-- Use one desktop screenshot that shows the current conditions hero, exposure metrics, and risk panels together.
-- Use one mobile screenshot that proves the stacked layout stays readable without horizontal overflow.
-- If you write a case study, call out the unsupported-region alerts fallback, opt-in location onboarding, and the sync/search trust-state fixes instead of only showing polished visuals.
+- **Desktop hero shot** — current conditions hero, exposure metrics, and risk panels visible together so the bento composition is obvious.
+- **Mobile stack shot** — the dashboard at ≤420 px proving the layout stacks cleanly with no horizontal overflow.
+- **Trust-contract shot** — a card or trust-meta row showing `—` for a missing reading, captured with a network mock that returns null. This is the strongest single signal of the trust narrative.
+- **Alert overflow shot** — five or more mocked alerts so the new "+ N more alerts not shown" footnote is visible.
+- **Empty/error states** — the unsupported-region alerts fallback, the refresh-error retry banner, and the permission-onboarding card. These say "the team thought about failure modes" louder than a polished happy-path shot.
 
 ## Recruiter Notes
 
-This project is strongest as a frontend implementation sample for:
+This is a frontend-only project (HTML5, CSS, JavaScript, React 19) with no backend, no component library, and no UI framework beyond Lucide icons. It is strongest as a sample of:
 
-- API integration and defensive client-side data handling
-- responsive dashboard composition
-- accessible interaction design
-- CSS systems work without a component library
-- QA maturity beyond a basic tutorial app, including regression coverage for async search, sync failures, and persistence cleanup
+- defensive client-side data handling with end-to-end nullish-rejection contracts
+- multi-API composition with independent fetch lifecycles
+- responsive, accessible dashboard layout written in plain CSS
+- QA breadth: unit, integration, E2E (Playwright + axe), visual regression, Lighthouse budgets
 
-It is not pretending to be a full production weather platform. The strongest recruiter signal now is the combination of resilient client logic, accessible/mobile hardening, and a QA setup that includes smoke, visual, and Lighthouse gates. The remaining gap is headroom: the budget passes, but there is still room to slim the CSS/JS footprint further.
+It is not a full production weather platform. The strongest recruiter signal is the combination of stability fixes (caught and fixed during an internal audit), accessible/mobile hardening, and the QA suite that locks the trust contract so the same bug class cannot regress.

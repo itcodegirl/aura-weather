@@ -97,7 +97,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`71` tests)
+- `npm test` passes (`79` tests)
 - `npm run build` passes
 - `npm run test:e2e` passes (`13` Playwright checks, including smoke, unicode-escape leak guard, and visual regression)
 - `npm run test:lighthouse` passes the local budget gate
@@ -150,7 +150,8 @@ npm run test:lighthouse
 - **Unicode-escape rendering bug** — JSX text leaking literal `°` on the hourly chart Y axis and `—` in the AQI/UV empty state was fixed and now gated by an automated regression test.
 - **Hourly chart "Now" alignment** — the active-hour indicator now snaps to the current hour band instead of skipping ahead to the next future timestamp, with a new `currentSlotToleranceMs` option in `findWindowStartIndex` and unit coverage to lock the behavior in.
 - **Architecture trim** — extracted shared `CardFallback`, `useDeferredMount`, and `useClimateComparison` primitives to replace duplicated and oversized hook code. Pure helpers for climate comparison and saved-locations sync moved to dedicated modules with direct unit coverage. Activated the previously-unused `usePanelPreload` hook so heavy lazy panels warm up during browser idle.
-- **CSS co-location** — `App.css` shrank from 2,067 to roughly 1,465 lines as `DataTrustMeta`, `InfoDrawer`, `AppShell`, and `StatusStack` rules moved next to their owning components.
+- **CSS co-location** — `App.css` shrank from 2,067 to roughly 1,225 lines as `DataTrustMeta`, `InfoDrawer`, `AppShell`, `StatusStack`, and the bento dashboard layout moved next to their owning components.
+- **Scoped live regions** — `SyncAccountPanel` no longer wraps its full body in `aria-live="polite"`; only the error (`role="alert"`) and last-synced timestamp (`role="status"`) announce, and the truncated sync key advertises its full value via aria-label.
 - **Climate comparison nullish-input fix** — `buildClimateComparison` now rejects nullish temperatures explicitly instead of coercing them to zero, which previously could surface fake "65°F warmer than average" lines for partial archive responses.
 - **Status-stack collapse** — App.jsx no longer mounts two `role="status"` regions on every render.
 

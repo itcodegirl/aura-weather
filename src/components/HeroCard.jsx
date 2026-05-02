@@ -51,6 +51,13 @@ function HeroCard({
       const converted = convertTemp(value, unit);
       return Number.isFinite(converted) ? Math.round(converted) : "\u2014";
     };
+    // Renders the temperature with its unit suffix, or just the em-dash
+    // placeholder when the reading is missing (so the UI shows "\u2014"
+    // rather than the misleading "\u2014\u00b0F").
+    const formatTempDisplay = (value) => {
+      const display = toDisplayTemp(value);
+      return display === "\u2014" ? display : `${display}${unit === "F" ? "\u00b0F" : "\u00b0C"}`;
+    };
 
     const toDisplayTempDelta = (deltaValue) => {
       const numericDelta = Number(deltaValue);
@@ -62,10 +69,14 @@ function HeroCard({
       return Math.round(convertedDelta);
     };
     const tempUnit = unit === "F" ? "\u00B0F" : "\u00B0C";
-    const todayHigh = toDisplayTemp(weather?.daily?.temperatureMax?.[0]);
-    const todayLow = toDisplayTemp(weather?.daily?.temperatureMin?.[0]);
+    const todayHighDisplay = formatTempDisplay(
+      weather?.daily?.temperatureMax?.[0]
+    );
+    const todayLowDisplay = formatTempDisplay(
+      weather?.daily?.temperatureMin?.[0]
+    );
     const windDisplay = formatWindSpeed(current.windSpeed, unit);
-    const dewPoint = toDisplayTemp(current.dewPoint);
+    const dewPointDisplay = formatTempDisplay(current.dewPoint);
     const humidityValue = toFiniteNumber(current.humidity);
     const humidityDisplay =
       humidityValue === null ? "—" : `${Math.round(humidityValue)}%`;
@@ -123,11 +134,12 @@ function HeroCard({
       safeLocationName,
       safeLocationCountry,
       toDisplayTemp,
+      formatTempDisplay,
       tempUnit,
-      todayHigh,
-      todayLow,
+      todayHighDisplay,
+      todayLowDisplay,
       windDisplay,
-      dewPoint,
+      dewPointDisplay,
       humidityDisplay,
       pressureDisplay,
       sunriseValue,
@@ -166,11 +178,12 @@ function HeroCard({
     safeLocationName,
     safeLocationCountry,
     toDisplayTemp,
+    formatTempDisplay,
     tempUnit,
-    todayHigh,
-    todayLow,
+    todayHighDisplay,
+    todayLowDisplay,
     windDisplay,
-    dewPoint,
+    dewPointDisplay,
     humidityDisplay,
     pressureDisplay,
     sunriseValue,
@@ -227,17 +240,11 @@ function HeroCard({
         >
           <div className="hero-high-low-item">
             <span className="hero-high-low-label">High</span>
-            <span className="hero-high-low-value">
-              {todayHigh}
-              {tempUnit}
-            </span>
+            <span className="hero-high-low-value">{todayHighDisplay}</span>
           </div>
           <div className="hero-high-low-item">
             <span className="hero-high-low-label">Low</span>
-            <span className="hero-high-low-value">
-              {todayLow}
-              {tempUnit}
-            </span>
+            <span className="hero-high-low-value">{todayLowDisplay}</span>
           </div>
         </div>
       </header>
@@ -264,7 +271,9 @@ function HeroCard({
           <div className="hero-temp-row">
             <div className="hero-temp">
               {toDisplayTemp(current.temperature)}
-              <span className="hero-temp-unit">{tempUnit}</span>
+              {toDisplayTemp(current.temperature) !== "—" && (
+                <span className="hero-temp-unit">{tempUnit}</span>
+              )}
             </div>
             <div className="hero-icon">
               <WeatherIcon code={current.conditionCode} size={124} animated />
@@ -272,8 +281,7 @@ function HeroCard({
           </div>
           <div className="hero-condition">{info.label}</div>
           <div className="hero-feels">
-            Feels like {toDisplayTemp(current.feelsLike)}
-            {tempUnit}
+            Feels like {formatTempDisplay(current.feelsLike)}
           </div>
           {hasClimateComparison && (
             <p className="hero-insight">{climateMessage}</p>
@@ -331,7 +339,7 @@ function HeroCard({
         <Stat
           icon={<Thermometer size={18} />}
           label="Dew Point"
-          value={`${dewPoint}${tempUnit}`}
+          value={dewPointDisplay}
         />
       </div>
     </section>

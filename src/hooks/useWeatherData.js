@@ -76,6 +76,11 @@ export function useWeatherData(location, options = {}) {
   const requestIdRef = useRef(0);
   const inFlightRequestRef = useRef(null);
   const isMountedRef = useRef(false);
+  // Tracks the coordinates of the most recent successful response so
+  // the next request can decide whether to clear the existing weather
+  // (different city → clear, so users never see Tokyo's name above
+  // Chicago's numbers) or keep it visible during a same-city refresh.
+  const lastFetchedCoordsRef = useRef(null);
 
   const {
     climateComparison,
@@ -213,6 +218,21 @@ export function useWeatherData(location, options = {}) {
     const controller = new AbortController();
     inFlightRequestRef.current = controller;
 
+    // If the user switched cities (different lat/lon), drop the
+    // existing weather state so the dashboard does not render the
+    // previous city's numbers under the new city's name. A same-city
+    // refresh keeps the existing snapshot visible behind a "Refreshing"
+    // pill — that is the trust cue for an in-place update.
+    const lastCoords = lastFetchedCoordsRef.current;
+    const isSameLocation =
+      lastCoords &&
+      lastCoords.latitude === coordinates.latitude &&
+      lastCoords.longitude === coordinates.longitude;
+    if (!isSameLocation) {
+      setWeather(null);
+      setTrustMeta(DEFAULT_TRUST_META);
+    }
+
     setLoading(true);
     setError(null);
 
@@ -243,6 +263,10 @@ export function useWeatherData(location, options = {}) {
         alertsFetchedAt: null,
         alertsStatus: "idle",
       });
+      lastFetchedCoordsRef.current = {
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+      };
       setLoading(false);
 
       shouldKeepController = true;

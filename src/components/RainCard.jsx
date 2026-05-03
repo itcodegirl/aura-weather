@@ -6,6 +6,7 @@ import WeatherIcon from "./WeatherIcon";
 import { useRainAnalysis } from "../hooks/useRainAnalysis";
 import { formatPrecipitation, getPrecipUnitLabel } from "../utils/weatherUnits";
 import { formatHour } from "../utils/dates";
+import { toFiniteNumber } from "../utils/numbers";
 import { CardHeader, DataTrustMeta } from "./ui";
 import "./RainCard.css";
 
@@ -15,9 +16,9 @@ function getRainTimelineSummary(hours, nextRain, peak, total, unit, dataUnit) {
   }
 
   const peakTime = peak?.time instanceof Date ? formatHour(peak.time) : "later";
-  const peakProbability = Number.isFinite(Number(peak?.probability))
-    ? Math.round(Number(peak.probability))
-    : 0;
+  const parsedPeakProbability = toFiniteNumber(peak?.probability);
+  const peakProbability =
+    parsedPeakProbability === null ? 0 : Math.round(parsedPeakProbability);
   const projectedTotal = formatPrecipitation(total, unit, dataUnit);
 
   if (nextRain?.time instanceof Date) {
@@ -71,9 +72,9 @@ function RainCard({
     timelineBars,
     timelineAccessibleText,
   } = useMemo(() => {
-    const safePeakProbability = Number.isFinite(Number(peak?.probability))
-      ? Math.round(Number(peak.probability))
-      : 0;
+    const parsedPeakProbability = toFiniteNumber(peak?.probability);
+    const safePeakProbability =
+      parsedPeakProbability === null ? 0 : Math.round(parsedPeakProbability);
 
     const safeRiskTone =
       safePeakProbability >= 70
@@ -95,9 +96,7 @@ function RainCard({
 
     const safePeakTimeLabel = formatHour(peak?.time);
     const safeNextRainTimeLabel = nextRain ? formatHour(nextRain.time) : "";
-    const safePeakAmount = Number.isFinite(Number(peakAmount))
-      ? Number(peakAmount)
-      : 0;
+    const safePeakAmount = toFiniteNumber(peakAmount) ?? 0;
     const bars = hours.map((hour) => {
       const heightPct =
         mode === "chance"

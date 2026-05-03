@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { parseCoordinates } from "../utils/weatherUnits";
 import {
   DEFAULT_LOCATION,
   useLocation,
@@ -9,40 +8,15 @@ import {
   getSavedCities,
   upsertSavedCity,
   removeSavedCity,
-  normalizeLocationName,
   LOCATION_FALLBACK_NOTICE,
   SAVED_LOCATION_NOTICE,
 } from "./useLocation";
 import { useSavedLocationsSync } from "./useSavedLocationsSync";
 import { useWeatherData } from "./useWeatherData";
-
-function toLocationPayload(lat, lon, name = "", country = "") {
-  const coordinates = parseCoordinates(lat, lon);
-  if (!coordinates) {
-    return null;
-  }
-
-  return {
-    lat: coordinates.latitude,
-    lon: coordinates.longitude,
-    name: normalizeLocationName(name, ""),
-    country: normalizeLocationName(country, ""),
-  };
-}
-
-function hasMatchingCoordinates(firstLocation, secondLocation) {
-  const firstCoordinates = parseCoordinates(firstLocation?.lat, firstLocation?.lon);
-  const secondCoordinates = parseCoordinates(secondLocation?.lat, secondLocation?.lon);
-
-  if (!firstCoordinates || !secondCoordinates) {
-    return false;
-  }
-
-  return (
-    firstCoordinates.latitude === secondCoordinates.latitude &&
-    firstCoordinates.longitude === secondCoordinates.longitude
-  );
-}
+import {
+  hasMatchingCoordinates,
+  toLocationPayload,
+} from "./locationHelpers";
 
 function getInitialLocationState() {
   const persistedLocation = getPersistedLocation();
@@ -164,7 +138,12 @@ export function useWeather(options = {}) {
     climateEnabled,
   });
 
-  const loadWeather = useCallback(
+  // Shared entrypoint used by both the search bar (loadWeather, called
+  // with positional args) and the saved-cities strip (loadSavedCity,
+  // called with a city object). Both flows resolve to the same
+  // applyLocation invocation; keeping a single body makes it impossible
+  // for the two to drift.
+  const applyResolvedLocation = useCallback(
     (lat, lon, name, country) => {
       const nextLocation = toLocationPayload(lat, lon, name, country);
       if (!nextLocation) {
@@ -175,21 +154,15 @@ export function useWeather(options = {}) {
     [applyLocation]
   );
 
-  const loadSavedCity = useCallback(
-    (city) => {
-      const nextLocation = toLocationPayload(
-        city?.lat,
-        city?.lon,
-        city?.name,
-        city?.country
-      );
-      if (!nextLocation) {
-        return;
-      }
+  const loadWeather = useCallback(
+    (lat, lon, name, country) => applyResolvedLocation(lat, lon, name, country),
+    [applyResolvedLocation]
+  );
 
-      applyLocation(nextLocation, null, { saveCity: true });
-    },
-    [applyLocation]
+  const loadSavedCity = useCallback(
+    (city) =>
+      applyResolvedLocation(city?.lat, city?.lon, city?.name, city?.country),
+    [applyResolvedLocation]
   );
 
   const forgetSavedCity = useCallback((city) => {

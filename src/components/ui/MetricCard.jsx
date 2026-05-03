@@ -1,5 +1,6 @@
 import { memo } from "react";
 import InfoDrawer from "./InfoDrawer";
+import { toFiniteNumber } from "../../utils/numbers";
 import "../MetricPanels.css";
 
 function clamp(value, min, max) {
@@ -127,7 +128,7 @@ function MetricCard({
   helpText,
   decimals = 0,
 }) {
-  const hasData = value !== null && value !== undefined && Number.isFinite(Number(value));
+  const hasData = toFiniteNumber(value) !== null;
 
   return (
     <article

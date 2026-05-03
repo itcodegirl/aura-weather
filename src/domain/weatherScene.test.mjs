@@ -32,4 +32,43 @@ describe("weather scene derivation", () => {
     assert.equal(scene.showRefreshError, true);
     assert.equal(scene.weatherInfo.label, "Thunderstorm");
   });
+
+  test("returns global error state when there is no weather and an error", () => {
+    const scene = deriveWeatherScene({
+      weather: null,
+      loading: false,
+      error: "Could not load weather",
+    });
+
+    assert.equal(scene.showGlobalLoading, false);
+    assert.equal(scene.showGlobalError, true);
+    assert.equal(scene.showRefreshError, false);
+    assert.equal(scene.isBackgroundLoading, false);
+  });
+
+  test("returns background-loading state when weather already exists", () => {
+    const scene = deriveWeatherScene({
+      weather: { current: { conditionCode: 1 } },
+      loading: true,
+      error: null,
+    });
+
+    assert.equal(scene.showGlobalLoading, false);
+    assert.equal(scene.isBackgroundLoading, true);
+    assert.equal(scene.showRefreshError, false);
+    assert.equal(scene.showGlobalError, false);
+    assert.equal(scene.weatherInfo.label, "Mostly Clear");
+  });
+
+  test("falls back to the clear scene when weather lacks a condition code", () => {
+    const scene = deriveWeatherScene({
+      weather: { current: {} },
+      loading: false,
+      error: null,
+    });
+
+    assert.equal(scene.weatherInfo.label, "Clear");
+    assert.equal(scene.showGlobalLoading, false);
+    assert.equal(scene.showGlobalError, false);
+  });
 });

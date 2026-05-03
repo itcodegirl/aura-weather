@@ -10,6 +10,7 @@ import {
   getApiPrecipUnit,
   parseCoordinates,
 } from "../utils/weatherUnits";
+import { toFiniteNumber } from "../utils/numbers";
 import { useClimateComparison } from "./useClimateComparison";
 
 const DEFAULT_TRUST_META = {
@@ -175,7 +176,7 @@ export function useWeatherData(location, options = {}) {
       setTrustMeta((currentTrustMeta) => ({
         ...currentTrustMeta,
         weatherFetchedAt,
-        aqiFetchedAt: Number.isFinite(Number(nextAqi)) ? Date.now() : null,
+        aqiFetchedAt: toFiniteNumber(nextAqi) === null ? null : Date.now(),
         alertsFetchedAt:
           alertsPayload?.status === ALERTS_STATUS.ready ? Date.now() : null,
         alertsStatus:

@@ -183,6 +183,67 @@ test("keeps the mobile dashboard within the viewport width", async ({ page }) =>
   expect(hasHorizontalOverflow).toBe(false);
 });
 
+test("renders the missing-data placeholder when the forecast reports null fields", async ({ page }) => {
+  // Override the standard forecast mock with one that returns null for
+  // humidity and pressure. The trust contract requires the hero card
+  // to render "—" instead of fake "0%" / "0 hPa" readings.
+  await page.route("https://api.open-meteo.com/v1/forecast**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        latitude: 41.8781,
+        longitude: -87.6298,
+        timezone: "America/Chicago",
+        current: {
+          temperature_2m: 67.4,
+          relative_humidity_2m: null,
+          apparent_temperature: 68.6,
+          weather_code: 2,
+          wind_speed_10m: 9.8,
+          wind_gusts_10m: 15.4,
+          wind_direction_10m: 220,
+          surface_pressure: null,
+          dew_point_2m: 52.1,
+          cloud_cover: 34,
+          visibility: 12000,
+        },
+        hourly: { time: [], temperature_2m: [] },
+        daily: {
+          time: ["2026-04-21"],
+          weather_code: [2],
+          temperature_2m_max: [70],
+          temperature_2m_min: [55],
+          sunrise: ["2026-04-21T11:18:00-05:00"],
+          sunset: ["2026-04-21T23:41:00-05:00"],
+          uv_index_max: [7],
+          precipitation_probability_max: [10],
+          precipitation_sum: [0],
+        },
+        minutely_15: { time: [] },
+      }),
+    });
+  });
+
+  await openDashboard(page);
+
+  const humidityStat = page
+    .locator(".hero-stats .stat", { hasText: "Humidity" })
+    .first();
+  await expect(humidityStat).toBeVisible();
+  await expect(humidityStat).toContainText("—");
+  await expect(humidityStat).not.toContainText("0%");
+  await expect(humidityStat.locator(".stat-value")).toHaveClass(
+    /is-missing/
+  );
+
+  const pressureStat = page
+    .locator(".hero-stats .stat", { hasText: "Pressure" })
+    .first();
+  await expect(pressureStat).toContainText("—");
+  await expect(pressureStat).not.toContainText("0 hPa");
+});
+
 test("does not leak literal unicode escape sequences into rendered text", async ({ page }) => {
   await openDashboard(page);
 

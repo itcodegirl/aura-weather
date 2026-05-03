@@ -88,12 +88,14 @@ function SyncAccountPanel({
       </button>
 
       {isPanelVisible && (
-        <div id={panelId} className="sync-account-panel" aria-live="polite">
+        <div id={panelId} className="sync-account-panel">
           <p className="sync-account-note">
             Keep your saved cities in sync across devices with a shareable sync key.
           </p>
           {syncLastUpdatedLabel ? (
-            <p className="sync-account-meta">Last synced {syncLastUpdatedLabel}</p>
+            <p className="sync-account-meta" role="status">
+              Last synced {syncLastUpdatedLabel}
+            </p>
           ) : null}
           {syncConnected ? (
             <div className="sync-account-actions">
@@ -102,6 +104,7 @@ function SyncAccountPanel({
                 className="sync-account-btn"
                 onClick={onSyncNow}
                 disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
               >
                 Sync now
               </button>
@@ -110,6 +113,7 @@ function SyncAccountPanel({
                 className="sync-account-btn sync-account-btn--subtle"
                 onClick={onDisconnectSyncAccount}
                 disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
               >
                 Disconnect
               </button>
@@ -121,6 +125,7 @@ function SyncAccountPanel({
                 className="sync-account-btn"
                 onClick={onCreateSyncAccount}
                 disabled={isSyncing}
+                aria-busy={isSyncing || undefined}
               >
                 Create cloud account
               </button>
@@ -145,14 +150,23 @@ function SyncAccountPanel({
               </div>
             </div>
           )}
-          {syncConnected && (
-            <p className="sync-account-key" title={syncAccount?.syncKey || undefined}>
-              Key: {typeof syncAccount?.syncKey === "string"
-                ? syncAccount.syncKey.slice(0, 32)
-                : ""}
+          {syncConnected && typeof syncAccount?.syncKey === "string" && (
+            <p
+              className="sync-account-key"
+              title={syncAccount.syncKey}
+              aria-label={`Sync key: ${syncAccount.syncKey}`}
+            >
+              Key:{" "}
+              {syncAccount.syncKey.length > 32
+                ? `${syncAccount.syncKey.slice(0, 32)}…`
+                : syncAccount.syncKey}
             </p>
           )}
-          {syncErrorText && <p className="sync-account-error">{syncErrorText}</p>}
+          {syncErrorText && (
+            <p className="sync-account-error" role="alert">
+              {syncErrorText}
+            </p>
+          )}
         </div>
       )}
     </div>

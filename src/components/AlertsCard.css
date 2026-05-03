@@ -166,6 +166,18 @@
   white-space: nowrap;
 }
 
+.alerts-overflow {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(186, 212, 252, 0.28);
+  background: rgba(8, 17, 36, 0.4);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 @media (max-width: 760px) {
   .alerts-item {
     flex-direction: column;

@@ -6,6 +6,7 @@ import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
 import { PRELOAD_HEAVY_PANELS } from "../lazyPanels";
+import "./WeatherDashboard.css";
 const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
 
 const CARD_STYLE_VARIABLES = [

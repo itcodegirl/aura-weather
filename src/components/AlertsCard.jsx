@@ -16,6 +16,8 @@ function formatAlertTime(value) {
   });
 }
 
+const VISIBLE_ALERT_LIMIT = 4;
+
 function AlertsCard({
   alerts,
   alertsStatus = "idle",
@@ -24,9 +26,11 @@ function AlertsCard({
   lastUpdatedAt,
   nowMs,
 }) {
+  const totalAlertCount = Array.isArray(alerts) ? alerts.length : 0;
   const visibleAlerts = useMemo(() => {
-    return Array.isArray(alerts) ? alerts.slice(0, 4) : [];
+    return Array.isArray(alerts) ? alerts.slice(0, VISIBLE_ALERT_LIMIT) : [];
   }, [alerts]);
+  const hiddenAlertCount = Math.max(0, totalAlertCount - visibleAlerts.length);
   const emptyState = useMemo(() => {
     if (visibleAlerts.length > 0 || alertsStatus === "ready") {
       return {
@@ -101,30 +105,38 @@ function AlertsCard({
           </p>
         </div>
       ) : (
-        <ul className="alerts-list" role="list">
-          {visibleAlerts.map((alert) => (
-            <li
-              key={alert.id}
-              className={`alerts-item alerts-item--${alert.priority || "low"}`}
-              role="listitem"
-            >
-              <div className="alerts-item-main">
-                <p className="alerts-event">{alert.event}</p>
-                <p className="alerts-headline">
-                  {alert.headline || "Severe weather statement in effect"}
-                </p>
-              </div>
-              <div className="alerts-item-meta">
-                <span className={`alerts-priority alerts-priority--${alert.priority || "low"}`}>
-                  {(alert.priority || "low").toUpperCase()}
-                </span>
-                <span className="alerts-window">
-                  Until {formatAlertTime(alert.endsAt)}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="alerts-list" role="list">
+            {visibleAlerts.map((alert) => (
+              <li
+                key={alert.id}
+                className={`alerts-item alerts-item--${alert.priority || "low"}`}
+                role="listitem"
+              >
+                <div className="alerts-item-main">
+                  <p className="alerts-event">{alert.event}</p>
+                  <p className="alerts-headline">
+                    {alert.headline || "Severe weather statement in effect"}
+                  </p>
+                </div>
+                <div className="alerts-item-meta">
+                  <span className={`alerts-priority alerts-priority--${alert.priority || "low"}`}>
+                    {(alert.priority || "low").toUpperCase()}
+                  </span>
+                  <span className="alerts-window">
+                    Until {formatAlertTime(alert.endsAt)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {hiddenAlertCount > 0 && (
+            <p className="alerts-overflow" role="status">
+              + {hiddenAlertCount} more {hiddenAlertCount === 1 ? "alert" : "alerts"} not shown.
+              Highest-priority alerts are listed first.
+            </p>
+          )}
+        </>
       )}
     </section>
   );

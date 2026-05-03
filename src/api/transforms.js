@@ -1,4 +1,5 @@
 import { createEmptyWeatherModel } from "./types.js";
+import { toFiniteNumber } from "../utils/numbers.js";
 
 const DEFAULT_TIMEZONE = "UTC";
 
@@ -10,10 +11,7 @@ export function normalizeTimeZone(value, fallback = DEFAULT_TIMEZONE) {
   return trimmed || fallback;
 }
 
-function toNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-}
+const toNumber = toFiniteNumber;
 
 function asArray(value) {
   return Array.isArray(value) ? value : [];

@@ -4,6 +4,7 @@ import {
   formatTimestampTitle,
   getAgeMinutes,
 } from "../../utils/dataTrust";
+import { toFiniteNumber } from "../../utils/numbers";
 import "./DataTrustMeta.css";
 
 function DataTrustMeta({
@@ -14,9 +15,11 @@ function DataTrustMeta({
   statusLabel = "",
   titleOverride = "",
 }) {
-  const effectiveNowMs = Number.isFinite(Number(nowMs))
-    ? Number(nowMs)
-    : Number(lastUpdatedAt);
+  // Strict coercion so a null nowMs falls back to the last-updated
+  // timestamp, not 0 (which would otherwise compute an epoch-old age).
+  const parsedNowMs = toFiniteNumber(nowMs);
+  const effectiveNowMs =
+    parsedNowMs !== null ? parsedNowMs : toFiniteNumber(lastUpdatedAt);
   const updatedLabel =
     typeof statusLabel === "string" && statusLabel.trim()
       ? statusLabel.trim()

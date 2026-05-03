@@ -1,5 +1,6 @@
 import { memo } from "react";
 import HeaderControls from "../HeaderControls";
+import "./AppHeader.css";
 
 function AppHeader({
   citySearchRef,

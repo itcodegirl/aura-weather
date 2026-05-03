@@ -5,6 +5,7 @@ import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
 import { findWindowStartIndex } from "../utils/timeSeries";
+import { toFiniteNumber } from "../utils/numbers";
 import { CardHeader, DataTrustMeta } from "./ui";
 import "./HourlyCard.css";
 
@@ -39,11 +40,12 @@ function buildHourlyData(hourly, unit) {
       const timestamp = new Date(t);
       if (!Number.isFinite(timestamp.getTime())) return null;
 
-      const rawTemp = hourly.temperature[idx + i];
-      const baseTemp = Number(rawTemp);
-      const convertedTemp = Number.isFinite(baseTemp)
-        ? toDisplayTemperature(baseTemp, unit)
-        : Number.NaN;
+      // toFiniteNumber rejects nullish/empty values, so a missing
+      // hourly sample renders as a gap in the chart instead of a fake
+      // 0°F point.
+      const baseTemp = toFiniteNumber(hourly.temperature[idx + i]);
+      const convertedTemp =
+        baseTemp === null ? Number.NaN : toDisplayTemperature(baseTemp, unit);
 
       return {
         time: timestamp,
@@ -201,9 +203,11 @@ function HourlyCard({
 
   const chartMetrics = useMemo(() => {
     const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
-    const currentTemp = Number.isFinite(Number(currentTemperature))
-      ? toDisplayTemperature(currentTemperature, unit)
-      : Number.NaN;
+    const baseCurrentTemp = toFiniteNumber(currentTemperature);
+    const currentTemp =
+      baseCurrentTemp === null
+        ? Number.NaN
+        : toDisplayTemperature(baseCurrentTemp, unit);
 
     const safeMinTemp = temps.length
       ? Math.min(...temps)

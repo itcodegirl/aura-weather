@@ -1,6 +1,10 @@
+import { toFiniteNumber } from "./numbers.js";
+
+// Routes through the strict shared helper so a null lastUpdatedAt
+// cannot be silently coerced to 0 — which would compute an
+// epoch-old "stale" age and render a misleading warning.
 function toTimestamp(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
+  return toFiniteNumber(value);
 }
 
 export function getAgeMinutes(lastUpdatedAt, nowMs = Date.now()) {

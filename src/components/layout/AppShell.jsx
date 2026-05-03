@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { CloudOff } from "lucide-react";
 import WeatherIcon from "../WeatherIcon";
+import "./AppShell.css";
 
 const AppLoadingState = memo(() => {
   return (

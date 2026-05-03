@@ -14,6 +14,7 @@ import {
   Snowflake,
   Tornado,
 } from "lucide-react";
+import { toFiniteNumber } from "../utils/numbers";
 import "./WeatherIcon.css";
 
 const iconMap = {
@@ -81,7 +82,8 @@ const iconColors = {
 export default function WeatherIcon({ code, size = 24, className = "", animated = false }) {
   const weatherCode = Number(code);
   const normalizedCode = Number.isFinite(weatherCode) ? Math.trunc(weatherCode) : 0;
-  const iconSize = Number.isFinite(Number(size)) && Number(size) > 0 ? Number(size) : 24;
+  const parsedSize = toFiniteNumber(size);
+  const iconSize = parsedSize !== null && parsedSize > 0 ? parsedSize : 24;
   const safeClassName = typeof className === "string" ? className : "";
 
   const Icon = iconMap[normalizedCode] || iconMap[0];

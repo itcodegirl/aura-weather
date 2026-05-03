@@ -68,6 +68,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.hero-high-low-value.is-missing {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
 .hero-main {
   display: flex;
   align-items: flex-start;
@@ -231,6 +236,26 @@
   font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.stat-value.is-missing {
+  /* Visual cue that distinguishes "no data" from a real reading.
+     The em-dash already carries the meaning; the muted color and
+     normal font weight tell the user it is intentionally blank. */
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.hero-stats-note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(186, 212, 252, 0.34);
+  background: rgba(8, 17, 36, 0.4);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */

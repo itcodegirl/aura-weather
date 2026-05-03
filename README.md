@@ -41,13 +41,46 @@ It is designed as a portfolio project with real frontend concerns in scope:
 
 ```text
 src/
-  api/             # Fetch adapters and response normalization
-  domain/          # Weather classification and derived scene logic
-  hooks/           # Location, sync, weather, and view-model orchestration
-  components/      # Dashboard modules, layout, and UI primitives
-  services/        # Cross-cutting services such as saved-location sync
-  utils/           # Date, unit, and formatting helpers
+  api/                       # Open-Meteo + NWS fetch adapters
+    openMeteo.js             #   forecast, archive, AQI, geocode, alerts
+    transforms.js            #   raw → AppWeatherModel normalization
+    types.js                 #   model schema + skeleton factory
+  domain/                    # Pure weather classification logic
+    weatherCodes.js          #   WMO code → label/icon/gradient
+    weatherScene.js          #   forecast + loading + error → UI scene
+    meteorology.js           #   storm risk, pressure trend, comfort
+    aqi.js  wind.js  temperature.js
+  hooks/                     # React orchestration + persistence
+    useWeatherDashboardViewModel.js  # composes the dashboard hook bag
+    useWeather.js            #   location + saved-cities + sync
+    useWeatherData.js        #   forecast + supplemental fetch lifecycle
+    useClimateComparison.js  #   historical archive lifecycle
+    useLocation.js           #   geolocation + persisted/saved cities
+    useSavedLocationsSync.js #   pull/push cloud sync orchestration
+    useCitySearch.js         #   debounced abortable geocoder
+    useRainAnalysis.js  useDeferredMount.js  useDisplayPreferences.js
+    useLocalStorageState.js  useAppShellEffects.js
+    climateComparison.js  savedLocationsSyncHelpers.js   # pure helpers
+  components/                # React surface
+    layout/                  #   AppShell, AppHeader, StatusStack,
+                             #   WeatherDashboard, SupplementalWeatherPanels
+    header/                  #   Saved cities, sync panel, display settings
+    ui/                      #   Card primitives, DataTrustMeta, InfoDrawer
+    HeroCard, RainCard, ForecastCard, NowcastCard,
+    StormWatch, HourlyCard, AlertsCard, ExposureSection,
+    CitySearch, WeatherIcon, AppErrorBoundary
+  services/                  # Cross-cutting services
+    savedLocationsSync.js    #   sync key + jsonblob persistence
+  utils/                     # Pure helpers
+    numbers.js               #   strict toFiniteNumber (rejects null)
+    weatherUnits.js  meteorology.js  dates.js  dataTrust.js
+    sunlight.js  timeSeries.js  weatherCodes.js  temperature.js
 ```
+
+Each layer has a strict dependency direction:
+`components → hooks → api/services → utils/domain`. Components never
+fetch directly; hooks never compute UI gradients; the API layer
+never imports a React module.
 
 ## Running Locally
 
@@ -97,9 +130,9 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`47` tests)
+- `npm test` passes (`142` tests, including 10 React render tests via `@testing-library/react` + `jsdom`)
 - `npm run build` passes
-- `npm run test:e2e` passes (`13` Playwright checks, including smoke, unicode-escape leak guard, and visual regression)
+- `npm run test:e2e` passes (`14` Playwright checks, including smoke, missing-data placeholder guard, unicode-escape leak guard, and visual regression)
 - `npm run test:lighthouse` passes the local budget gate
 
 ### Current automated coverage
@@ -145,44 +178,141 @@ npm run test:lighthouse
 - Reduced-motion-safe card visibility and transitions
 - Updated mobile touch targets for smaller utility controls
 
+## Architecture Decisions
+
+Short notes on the non-obvious choices a reviewer might question.
+
+- **Forecast is always fetched in Fahrenheit / inch units; conversion is client-side.** Switching the °F/°C toggle must not trigger a refetch — it would invalidate the displayed timestamp and confuse users. A Playwright test asserts that toggling units does not refetch.
+- **Three independent fetch tracks.** Forecast, supplemental (AQI + alerts), and climate-archive run concurrently with separate AbortController + request-id pairs. A slow archive call cannot delay the hero card; an alerts feed outage cannot wipe the AQI reading.
+- **NWS alerts are U.S.-only by design.** A 400/404 from `api.weather.gov/alerts/active` is mapped to an explicit `unsupported` status (not `unavailable`) so the UI can say "Alerts unavailable for this region" instead of an ambiguous "no alerts".
+- **Strict numeric coercion at the API boundary.** `Number(null) === 0` would surface as a fake 0°F humidity / 0% rain chance / 0°F historical sample whenever Open-Meteo returns a missing data point. A single shared `toFiniteNumber` helper rejects nullish, empty-string, boolean, array, and object inputs explicitly. Eight unit tests lock the contract.
+- **Lazy supplemental panels.** The hero, exposure cards, and rain card render synchronously. Hourly chart, storm watch, alerts, forecast, and nowcast are mounted via `Suspense` after a `requestIdleCallback` (or 180ms fallback) so the first paint is just the data the user sees first.
+- **CSS lives next to its component.** App.css holds only global tokens, resets, animations, and one shared focus-visible rule used across header buttons and retry buttons. Every feature's CSS is imported by its owning component.
+
+## Data Trust Contract
+
+Aura makes one promise loudly: **a missing reading is shown as missing,
+never as zero.** A weather dashboard that silently turns a null humidity
+into "0%" or a missing dew point into "0°F" is worse than one that says
+"unavailable" — it converts a known unknown into a confidently wrong
+reading. The audit pass for this project found and closed every place
+where a `Number(null) === 0` coercion could surface as a fake reading.
+
+The contract is enforced at four layers:
+
+1. **API boundary** — `src/utils/numbers.js` exports a strict
+   `toFiniteNumber(value)` helper that rejects null, undefined,
+   empty/whitespace strings, booleans, and arrays/objects explicitly.
+   `transforms.js` and `openMeteo.js` route every nullable field
+   through it, so the normalized `AppWeatherModel` carries `null` for
+   missing fields — never `0`.
+2. **Per-element parsers** — `HourlyCard`, `ForecastCard`,
+   `NowcastCard`, and `useRainAnalysis` each parse Open-Meteo's
+   per-slot arrays through `toFiniteNumber` so a single null entry
+   becomes a chart gap rather than a fake `0°F` point. The
+   coordinate parser, the trust-meta age clock, and `convertTemp`
+   carry the same guarantee.
+3. **Component fallback rendering** — every consumer that displays a
+   value falls back to the em-dash placeholder (`—`) when its input
+   is non-finite. The hero card hides the unit suffix on the missing
+   path (no more `—°F`), and a small helper note on the card
+   explains *why* a value is missing instead of leaving the user to
+   guess.
+4. **Visual + screen-reader cue** — the `Stat` primitive auto-detects
+   the em-dash placeholder and applies an `.is-missing` modifier
+   (muted color, normal weight) plus an `aria-label="No data
+   available"` so assistive tech announces "no data available"
+   instead of speaking the literal "em dash" character.
+
+The contract is locked in by tests at every layer:
+
+- **Unit (`numbers.test.mjs`, 8 tests)** — `toFiniteNumber` rejects
+  null, undefined, empty strings, booleans, arrays, objects, and
+  `NaN`/`Infinity`.
+- **Integration (`transforms.test.mjs`, 6 tests)** —
+  `normalizeWeatherResponse` preserves null current readings end-to-end.
+- **API (`openMeteo.test.mjs`)** —
+  `fetchHistoricalTemperatureAverage` drops null and empty-string
+  archive samples instead of averaging them as 0°F.
+- **React render (`HeroCard.render.test.mjs`, 6 tests)** — the
+  rendered DOM contains no `0%`, `0 hPa`, or `—°F` leaks; every
+  missing value carries the `.is-missing` modifier and the "No data
+  available" announcement; the helper note appears when any hero
+  stat is missing.
+- **End-to-end (`weather-smoke.spec.js`)** — a Playwright check
+  overrides the forecast mock to return null humidity and pressure,
+  asserts the hero card renders `—` with `.is-missing` and explicitly
+  asserts `0%` / `0 hPa` are not in the rendered text.
+
+To reproduce the missing-data state on demand (for screenshots or
+manual QA), run `npm run dev` and open
+`http://127.0.0.1:5173/?mock=missing`. The dev-only hook in
+`src/dev/missingDataMock.js` patches `fetch` to return Open-Meteo /
+NWS responses where humidity, pressure, dew point, gust speed, and
+several daily highs are null. The current temperature stays real so
+the dashboard still looks like a working forecast — the point is
+that every other field degrades gracefully. The mock is gated on
+`import.meta.env.DEV` and is tree-shaken from production builds.
+
 ## Recent Hardening
 
+- **React render-test coverage** — `@testing-library/react` + `jsdom` now run inside the `node:test` runner via a tiny bootstrap that maps CSS imports to empty modules and transforms `.jsx` on the fly with esbuild (already a transitive dep). The HeroCard and Stat suites pin the missing-data trust contract at the React DOM level — the contract is now enforced unit + integration + render + e2e.
+- **`?mock=missing` dev mode** — `npm run dev` + `?mock=missing` patches `fetch` to return Open-Meteo / NWS payloads with several null fields so the trust-contract screenshot is reproducible on demand. Production builds tree-shake the mock entirely.
+- **Hero helper note** — when any hero stat is missing the card appends a short "Some readings are unavailable from the provider" line with `role="status"` so the user understands *why* a value is shown as `—`.
+- **`convertTemp` null guard** — the per-display temperature converter (`Math.round(fahrenheit)`) silently produced `0` for null input, which then surfaced as `0°F` even after the API normalization layer was correctly returning null. Routed through the strict `toFiniteNumber` so missing temperatures correctly become `NaN → "—"` downstream.
 - **Unicode-escape rendering bug** — JSX text leaking literal `°` on the hourly chart Y axis and `—` in the AQI/UV empty state was fixed and now gated by an automated regression test.
 - **Hourly chart "Now" alignment** — the active-hour indicator now snaps to the current hour band instead of skipping ahead to the next future timestamp, with a new `currentSlotToleranceMs` option in `findWindowStartIndex` and unit coverage to lock the behavior in.
-- **Architecture trim** — extracted a shared `CardFallback` UI primitive and a `useDeferredMount` hook to replace duplicated panel-loading code across `WeatherDashboard` and `SupplementalWeatherPanels`. Activated the previously-unused `usePanelPreload` hook so heavy lazy panels warm up during browser idle.
+- **Architecture trim** — extracted shared `CardFallback`, `useDeferredMount`, and `useClimateComparison` primitives to replace duplicated and oversized hook code. Pure helpers for climate comparison and saved-locations sync moved to dedicated modules with direct unit coverage. Activated the previously-unused `usePanelPreload` hook so heavy lazy panels warm up during browser idle.
+- **CSS co-location** — `App.css` shrank from 2,067 to roughly 500 lines as `DataTrustMeta`, `InfoDrawer`, `AppShell`, `StatusStack`, the bento dashboard layout, and the entire header surface moved next to their owning components.
+- **Scoped live regions** — `SyncAccountPanel` no longer wraps its full body in `aria-live="polite"`; only the error (`role="alert"`) and last-synced timestamp (`role="status"`) announce, and the truncated sync key advertises its full value via aria-label.
+- **Strict API number coercion** — `Number(null)` is `0`, which silently surfaced as fake `0%` humidity, `0 hPa` pressure, `0°F` dew point, and `0°F` historical samples whenever Open-Meteo returned partial data. A shared `toFiniteNumber` helper rejects nullish/empty/boolean/object inputs at the API boundary, then routes the same contract through every per-element parser in HourlyCard, ForecastCard, NowcastCard, and `useRainAnalysis`.
+- **In-flight async announcement** — async buttons (Use my location, Allow location, Retry, Sync now, Disconnect, Create cloud account) now expose `aria-busy` while their work is in flight, so screen-reader users get a signal even after tabbing away.
+- **Climate comparison nullish-input fix** — `buildClimateComparison` now rejects nullish temperatures explicitly instead of coercing them to zero, which previously could surface fake "65°F warmer than average" lines for partial archive responses.
 - **Status-stack collapse** — App.jsx no longer mounts two `role="status"` regions on every render.
+- **Per-panel error boundary** — a lazy chunk loading failure (HourlyChart, StormWatch) used to take down the whole app via the root error boundary. A new `PanelErrorBoundary` isolates per-panel render and dynamic-import errors so the rest of the dashboard keeps working.
+- **Null-coordinate guard** — `parseCoordinates(null, null)` no longer silently resolves to `(0, 0)` Null Island; the same strict numeric helper now protects geolocation parsing and saved-city storage.
+- **DataTrustMeta age guard** — a null `lastUpdatedAt` no longer computes a fake "Stale data (millions m old)" warning before the first response.
+- **Alert overflow signal** — when NWS returns more than four alerts the card now surfaces an "+ N more alerts not shown" footnote ordered by priority.
+- **prefers-reduced-data support** — when the user-agent reports `prefers-reduced-data: reduce`, the historical-archive call is suppressed automatically. The user-facing climate toggle is unchanged.
+- **Consumer-side null-coercion fix** — the API normalization layer correctly returns `null` for missing fields, but several card components still guarded with `Number.isFinite(Number(value))`, which is `true` for `null` (`Number(null) === 0`). HeroCard humidity, pressure, climate sample years, ExposureSection AQI/UV, and the hourly chart's current-temperature metric now route through the strict `toFiniteNumber` so missing readings render the `—` placeholder instead of a fake `0%` / `0 hPa` / `0°` value.
+- **Missing-data visual + a11y treatment** — the `—` placeholder now carries an `.is-missing` modifier (muted color, normal weight) so a sighted user can tell at a glance that a value is intentionally blank, and a wrapping `aria-label="No data available"` span reads correctly to assistive tech instead of speaking the literal "em dash" character.
+- **Hero unit-suffix fix** — readings like `"—°F"` and `"—°C"` no longer appear when a temperature is missing; the unit is hidden on the missing path.
 
 ## Known Limitations
 
-- NOAA / NWS severe alerts are U.S.-region only; unsupported regions fall back to explanatory messaging instead of a false all-clear.
-- Saved-location cloud sync is intentionally lightweight and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`.
-- The current Lighthouse budget now passes locally, but the app still carries a relatively large CSS surface and could be trimmed further for stronger real-world performance margins.
+- **U.S.-only severe alerts.** NOAA / NWS coverage stops at the U.S. border; non-U.S. locations fall back to explanatory messaging instead of a false all-clear.
+- **Lightweight cloud sync.** The optional sync flow uses a public jsonblob.com store and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`. It is not encrypted at rest and is not a substitute for an account system.
+- **Geolocation falls back fast.** If the browser's geolocation prompt does not resolve in 5 seconds the app drops to the Chicago default rather than blocking the dashboard. The user can re-trigger the prompt at any time from the header.
+- **Historical archive lag.** The Open-Meteo archive is updated daily and may not include the most recent week; on those days the climate-context panel shows "Climate context unavailable" instead of a stale comparison.
+- **No service worker / offline mode.** A dropped connection during a refresh keeps the previous reading on screen with a `Stale data` warning, but the app does not synthesize cached forecasts when fully offline.
+- **Lighthouse budget passes locally** but real-world performance varies with the network. The CSS and JS footprint shrunk substantially during the audit (App.css 2,067 → ~500 lines), but a service worker and image-pre-caching pass would still be the next wins.
 
 ## Portfolio / Case Study Notes
 
-If this project is presented in a portfolio, the strongest story is:
+The strongest narrative for this project is the **trust contract**: the audit found and fixed a class of `Number(null) === 0` bugs that silently rendered missing API readings as `0%` humidity, `0 hPa` pressure, `0°F` historical samples, `(0, 0)` Null-Island geolocation, and millions-of-minutes "Stale data" warnings. A single shared `toFiniteNumber` helper at the API boundary, with explicit fallback per call site, replaced six independent inline coercions. Every layer now has direct unit tests pinning the contract.
 
-- resilient client-side API composition instead of a single happy-path fetch
-- responsive dashboard work that now has smoke and visual regression protection
-- accessibility work that goes beyond color tweaks into keyboard flow, live status messaging, and baseline axe coverage
-- product decisions around trust cues, unsupported alert regions, location permission onboarding, and startup/sync recovery states
+Other strong stories:
 
-The weakest current story is still long-term performance optimization at scale. This repo is better as a frontend architecture and QA sample than as a claim of fully production-grade performance tuning, and there is still room to reduce CSS and JS weight further.
+- **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
+- **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
+- **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
+- **QA maturity** — 129 unit tests covering API normalization, climate comparison, location persistence, sync helpers, time-series snap, AQI/UV/weather-code lookup, and trust-meta age formatting; 13 Playwright checks for smoke, visual regression, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 
-- Use one desktop screenshot that shows the current conditions hero, exposure metrics, and risk panels together.
-- Use one mobile screenshot that proves the stacked layout stays readable without horizontal overflow.
-- If you write a case study, call out the unsupported-region alerts fallback, opt-in location onboarding, and the sync/search trust-state fixes instead of only showing polished visuals.
+- **Desktop hero shot** — current conditions hero, exposure metrics, and risk panels visible together so the bento composition is obvious.
+- **Mobile stack shot** — the dashboard at ≤420 px proving the layout stacks cleanly with no horizontal overflow.
+- **Trust-contract shot** — load `http://127.0.0.1:5173/?mock=missing` against the dev server to reproduce the missing-data state instantly. The hero card renders muted `—` placeholders for humidity, pressure, dew point, and several daily highs, with the helper note explaining "Some readings are unavailable from the provider." This is the strongest single signal of the trust narrative.
+- **Alert overflow shot** — five or more mocked alerts so the new "+ N more alerts not shown" footnote is visible.
+- **Empty/error states** — the unsupported-region alerts fallback, the refresh-error retry banner, and the permission-onboarding card. These say "the team thought about failure modes" louder than a polished happy-path shot.
 
 ## Recruiter Notes
 
-This project is strongest as a frontend implementation sample for:
+This is a frontend-only project (HTML5, CSS, JavaScript, React 19) with no backend, no component library, and no UI framework beyond Lucide icons. It is strongest as a sample of:
 
-- API integration and defensive client-side data handling
-- responsive dashboard composition
-- accessible interaction design
-- CSS systems work without a component library
-- QA maturity beyond a basic tutorial app, including regression coverage for async search, sync failures, and persistence cleanup
+- defensive client-side data handling with end-to-end nullish-rejection contracts
+- multi-API composition with independent fetch lifecycles
+- responsive, accessible dashboard layout written in plain CSS
+- QA breadth: unit, integration, E2E (Playwright + axe), visual regression, Lighthouse budgets
 
-It is not pretending to be a full production weather platform. The strongest recruiter signal now is the combination of resilient client logic, accessible/mobile hardening, and a QA setup that includes smoke, visual, and Lighthouse gates. The remaining gap is headroom: the budget passes, but there is still room to slim the CSS/JS footprint further.
+It is not a full production weather platform. The strongest recruiter signal is the combination of stability fixes (caught and fixed during an internal audit), accessible/mobile hardening, and the QA suite that locks the trust contract so the same bug class cannot regress.

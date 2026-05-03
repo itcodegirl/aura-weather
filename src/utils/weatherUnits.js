@@ -1,4 +1,5 @@
 import { normalizeTemperatureUnit as normalizeDomainTemperatureUnit } from "../domain/temperature.js";
+import { toFiniteNumber } from "./numbers.js";
 
 export { toFahrenheit, toCelsius, convertTemperature } from "../domain/temperature.js";
 export { WIND_SPEED_CONVERSION, formatWindSpeed } from "../domain/wind.js";
@@ -15,8 +16,10 @@ const PRECIP_LABEL_BY_UNIT = {
 };
 
 function normalizeCoordinate(value, min, max) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
+  // toFiniteNumber rejects null/undefined/empty/boolean/object — so a
+  // missing coords field cannot quietly resolve to (0, 0) Null Island.
+  const numeric = toFiniteNumber(value);
+  if (numeric === null) {
     return null;
   }
   if (numeric < min || numeric > max) {

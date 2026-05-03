@@ -1,6 +1,7 @@
 // src/api/openMeteo.js
 
 import { validateCoordinates } from "../utils/weatherUnits.js";
+import { toFiniteNumber } from "../utils/numbers.js";
 import { normalizeTimeZone, normalizeWeatherResponse } from "./transforms.js";
 
 const ENDPOINTS = {
@@ -160,10 +161,7 @@ function getDateInTimeZone(timeZone) {
   };
 }
 
-function toNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-}
+const toNumber = toFiniteNumber;
 
 function mapAlertSeverityScore(severity) {
   const normalized = typeof severity === "string" ? severity.trim().toLowerCase() : "";
@@ -307,9 +305,9 @@ export async function fetchHistoricalTemperatureAverage(
   for (let i = 0; i < times.length; i += 1) {
     if (!times[i]?.endsWith(targetSuffix)) continue;
 
-    const mean = toNumber(Number(meanSeries[i]));
-    const min = toNumber(Number(minSeries[i]));
-    const max = toNumber(Number(maxSeries[i]));
+    const mean = toNumber(meanSeries[i]);
+    const min = toNumber(minSeries[i]);
+    const max = toNumber(maxSeries[i]);
 
     let sample = mean;
     if (!Number.isFinite(sample) && Number.isFinite(min) && Number.isFinite(max)) {

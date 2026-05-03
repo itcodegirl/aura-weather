@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { findWindowStartIndex } from "../utils/timeSeries";
+import { toFiniteNumber } from "../utils/numbers";
 
 function getEmptyRainAnalysis() {
   return {
@@ -42,13 +43,15 @@ function analyzeRain(hourly) {
       const timestamp = new Date(timeString);
       if (!Number.isFinite(timestamp.getTime())) return null;
 
-      const probability = Number(hourlyProbabilities[idx + i]);
-      const amount = Number(hourlyAmounts[idx + i]);
+      // Missing precipitation readings should mean "no rain detected"
+      // (0% / 0 inches), so coerce nullish values explicitly to 0.
+      const probability = toFiniteNumber(hourlyProbabilities[idx + i]) ?? 0;
+      const amount = toFiniteNumber(hourlyAmounts[idx + i]) ?? 0;
 
       return {
         time: timestamp,
-        probability: Number.isFinite(probability) ? probability : 0,
-        amount: Number.isFinite(amount) ? amount : 0,
+        probability,
+        amount,
       };
     })
     .filter(Boolean)
@@ -75,8 +78,7 @@ function analyzeRain(hourly) {
   let soFarToday = 0;
   if (todayStartIdx !== -1) {
     for (let i = todayStartIdx; i < idx; i += 1) {
-      const amount = Number(hourlyAmounts[i]);
-      soFarToday += Number.isFinite(amount) ? amount : 0;
+      soFarToday += toFiniteNumber(hourlyAmounts[i]) ?? 0;
     }
   }
 
@@ -86,8 +88,8 @@ function analyzeRain(hourly) {
     const start = Math.max(0, idx - hoursBack);
     let sum = 0;
     for (let i = start; i < idx; i += 1) {
-      const amount = Number(hourlyAmounts[i]);
-      if (Number.isFinite(amount)) {
+      const amount = toFiniteNumber(hourlyAmounts[i]);
+      if (amount !== null) {
         sum += amount;
       }
     }

@@ -51,5 +51,22 @@ jobs:
       - name: E2E smoke tests
         run: npm run test:e2e
 
+      - name: Upload trust-contract screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trust-contract-screenshots
+          path: docs/screenshots/*.png
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
       - name: Lighthouse budgets
         run: npm run test:lighthouse

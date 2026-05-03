@@ -1,4 +1,5 @@
 import { memo, useId, useState } from "react";
+import { HelpCircle } from "lucide-react";
 import "./InfoDrawer.css";
 
 function InfoDrawer({
@@ -21,7 +22,7 @@ function InfoDrawer({
         aria-label={triggerLabel}
         onClick={() => setOpen((previous) => !previous)}
       >
-        ?
+        <HelpCircle size={14} aria-hidden="true" />
       </button>
       {open && (
         <div id={panelId} className="info-drawer-panel" role="note">

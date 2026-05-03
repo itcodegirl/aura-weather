@@ -6,6 +6,9 @@
 }
 
 .info-drawer-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 50%;

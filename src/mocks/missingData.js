@@ -18,7 +18,7 @@ function nullArray(length) {
 
 function buildHourlyTimeline(length) {
   const start = new Date();
-  start.setMinutes(0, 0, 0);
+  start.setUTCMinutes(0, 0, 0);
   return Array.from({ length }, (_, idx) =>
     new Date(start.getTime() + idx * HOUR_MS).toISOString()
   );
@@ -26,7 +26,7 @@ function buildHourlyTimeline(length) {
 
 function buildDailyTimeline(length) {
   const start = new Date();
-  start.setHours(0, 0, 0, 0);
+  start.setUTCHours(0, 0, 0, 0);
   return Array.from({ length }, (_, idx) =>
     new Date(start.getTime() + idx * 24 * HOUR_MS)
       .toISOString()

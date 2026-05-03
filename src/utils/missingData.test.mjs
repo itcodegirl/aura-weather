@@ -28,6 +28,13 @@ describe("missingData helpers", () => {
     assert.equal(toFiniteNumber("xyz", "fallback"), "fallback");
   });
 
+  test("toFiniteNumber treats whitespace-only strings as missing", () => {
+    assert.equal(toFiniteNumber(" "), null);
+    assert.equal(toFiniteNumber("  "), null);
+    assert.equal(toFiniteNumber("\t"), null);
+    assert.equal(toFiniteNumber("  ", 0), 0);
+  });
+
   test("hasFiniteValue distinguishes finite numbers from missing data", () => {
     assert.equal(hasFiniteValue(0), true);
     assert.equal(hasFiniteValue(123.4), true);

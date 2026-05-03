@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, join } from "node:path";
 import { transform } from "esbuild";
 
 const JSX_EXTENSIONS = new Set([".jsx", ".tsx"]);
@@ -38,9 +39,9 @@ export async function resolve(specifier, context, nextResolve) {
       ? fileURLToPath(context.parentURL)
       : null;
     if (parentPath) {
-      const parentDir = parentPath.replace(/\/[^/]*$/, "/");
+      const parentDir = dirname(parentPath);
       for (const ext of RESOLVE_EXTENSIONS) {
-        const candidate = `${parentDir}${specifier}${ext}`;
+        const candidate = join(parentDir, specifier + ext);
         if (await tryStat(candidate)) {
           return {
             url: pathToFileURL(candidate).href,
@@ -49,9 +50,8 @@ export async function resolve(specifier, context, nextResolve) {
           };
         }
       }
-      const indexBase = `${parentDir}${specifier}/index`;
       for (const ext of RESOLVE_EXTENSIONS) {
-        const candidate = `${indexBase}${ext}`;
+        const candidate = join(parentDir, specifier, "index" + ext);
         if (await tryStat(candidate)) {
           return {
             url: pathToFileURL(candidate).href,

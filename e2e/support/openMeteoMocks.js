@@ -80,7 +80,12 @@ function buildWeatherPayload(latitude, longitude) {
   return {
     latitude,
     longitude,
-    timezone: "America/Chicago",
+    // The hourly/nowcast time strings above are built with toISOString(),
+    // i.e. UTC wall-clock values. Declare UTC so the payload is internally
+    // consistent — real Open-Meteo always pairs its timestamps with the
+    // zone they are expressed in. (timezone=auto would instead return
+    // location-local naive strings; this fixture uses the UTC variant.)
+    timezone: "UTC",
     current: {
       temperature_2m: 67.4,
       relative_humidity_2m: 58,
@@ -261,33 +266,46 @@ export async function installOpenMeteoMocks(page) {
     });
   });
 
-  await page.route("https://nominatim.openstreetmap.org/reverse**", async (route) => {
+  // Reverse geocoding goes through BigDataCloud's reverse-geocode-client
+  // (see src/api/reverseGeocode.js), which reads `latitude`/`longitude`
+  // query params and a flat `{ city, locality, principalSubdivision,
+  // countryName }` body. The mock previously routed nominatim with a
+  // nested address shape, so it never intercepted the real request — the
+  // test silently depended on the live BigDataCloud API and broke when
+  // that provider's data for the fixture coordinates changed. Route the
+  // actual endpoint and shape so the label is deterministic offline.
+  await page.route("https://api.bigdatacloud.net/data/reverse-geocode-client**", async (route) => {
     const requestUrl = new URL(route.request().url());
-    const latitude = Number(requestUrl.searchParams.get("lat"));
-    const longitude = Number(requestUrl.searchParams.get("lon"));
+    const latitude = Number(requestUrl.searchParams.get("latitude"));
+    const longitude = Number(requestUrl.searchParams.get("longitude"));
 
     let city = "Current location";
-    let country = "";
+    let countryName = "";
     if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
       if (latitude > 40 && longitude < -70) {
         city = "Crystal Lake";
-        country = "United States";
+        countryName = "United States";
       } else if (latitude > 30 && longitude > 100) {
         city = "Tokyo";
-        country = "Japan";
+        countryName = "Japan";
       }
     }
 
+    // Model real reverse-geocode latency. Enrichment is a separate,
+    // typically-slower call than the forecast; a 0ms mock can resolve
+    // before the initial forecast settles and momentarily strand the
+    // dashboard in its loading state (a re-entrancy edge in the
+    // geolocation -> refetch flow worth hardening separately). A small
+    // delay keeps the label deterministic while matching production order.
+    await new Promise((resolve) => setTimeout(resolve, 250));
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        name: city,
-        display_name: `${city}, ${country}`.trim(),
-        address: {
-          city,
-          country,
-        },
+        city,
+        locality: city,
+        principalSubdivision: "",
+        countryName,
       }),
     });
   });

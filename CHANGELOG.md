@@ -66,6 +66,12 @@ portfolio-grade product. Format roughly follows
 
 ### Changed
 
+- **Saved-city touch targets on coarse pointers.** The compact chip,
+  "Start", and remove controls expand their tap area toward ~44px on
+  touch devices via a transparent pseudo-element (visible chrome
+  unchanged), with extra space between the adjacent Start / remove
+  controls so a control's hit area never overlaps its neighbour's.
+  Desktop pointer behavior is untouched.
 - **Build chunking.** `vite.config.js` now splits `react` /
   `react-dom` / `scheduler` into a `react-vendor` chunk and
   `lucide-react` into its own. The app entry chunk drops from ~311 kB
@@ -125,6 +131,32 @@ portfolio-grade product. Format roughly follows
 
 ### Fixed
 
+- **Timezone-correct "now" for remote cities.** Open-Meteo's
+  `timezone=auto` timestamps are the location's naive local clock.
+  Display labels round-trip those correctly, but every comparison
+  against the real device clock — the hourly "Now" marker + 24h window,
+  the nowcast start window, the 7-day "today" filter + Today/Tomorrow
+  labels, and the golden-hour wash — drifted by the device/location
+  offset when viewing another zone. A shared `getZonedNow(timeZone)`
+  reframes "now" into the location's wall clock (the same frame the
+  naive strings parse into); display formatters are intentionally
+  untouched. Unit tests cover the helper, timezone-aware `formatDayLabel`,
+  and the nowcast window contract.
+- **Shareable `?lat&lon` deep links.** The read-path that seeds the
+  initial location from the URL (`parseLocationFromUrl`) was documented
+  and unit-tested but never wired into `useWeather`, and the write-path
+  then overwrote the URL — so shared forecast links silently loaded the
+  persisted/default city instead. A new pure `resolveInitialLocationState`
+  honors a valid deep link over the persisted startup city without
+  overwriting it or auto-persisting the shared view; a link that matches
+  the startup city is treated as a normal saved-location open. Five unit
+  tests pin the precedence.
+- **e2e reverse-geocode mock.** The shared mock routed
+  `nominatim.openstreetmap.org` with a nested address shape while the app
+  calls BigDataCloud (flat `city`/`countryName`), so the "current
+  location" test silently hit the live API and broke when that provider's
+  data for the fixture coordinates changed. It now mocks the real endpoint
+  and shape, with modeled latency so the forecast settles first.
 - **HeroCard placeholder test.** The render-test assertion for the
   no-data body copy used a straight apostrophe while the component
   uses a typographic one, so it never matched and quietly failed the
@@ -150,6 +182,11 @@ portfolio-grade product. Format roughly follows
 
 ### Removed
 
+- **Dead `MetricStat` component + `utils/weatherCodes` shim.**
+  `IconMetricStat` / `DetailMetricStat` had zero consumers, and
+  `utils/weatherCodes.js` was a pure re-export of `domain/weatherCodes`
+  that nothing imported. Both removed; the remaining `utils/*` modules
+  keep their formatters and stay in use.
 - Static `theme-color="#0b1c3f"` is now a default that
   `useThemeColor` overrides at runtime; the meta tag itself remains
   for browsers that load HTML before JS.

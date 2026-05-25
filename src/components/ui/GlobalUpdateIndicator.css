@@ -10,7 +10,7 @@
   background: var(--surface-2);
   color: var(--text-dim);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   letter-spacing: var(--track-tight);
   white-space: nowrap;
   user-select: none;
@@ -113,7 +113,7 @@
 .global-update-state {
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
   padding: 0 var(--space-1-5);

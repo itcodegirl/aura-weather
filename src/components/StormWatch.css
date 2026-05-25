@@ -25,7 +25,7 @@
   gap: var(--space-2);
   font-family: var(--font-display);
   font-size: var(--section-title-size);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
   margin: 0;
   letter-spacing: 0;
 }
@@ -34,7 +34,7 @@
   margin: 0;
   color: var(--text-muted);
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   line-height: 1.35;
 }
 
@@ -77,7 +77,7 @@
   gap: var(--space-2);
   color: #d5e8ff;
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-default);
   text-transform: uppercase;
   margin: 0;
@@ -92,7 +92,7 @@
   background: var(--surface-1);
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -109,7 +109,7 @@
 
 .storm-level {
   font-size: var(--text-feature);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -118,7 +118,7 @@
   margin: -2px 0 0;
   color: var(--text-muted);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   line-height: 1.35;
 }
 
@@ -141,19 +141,19 @@
 .storm-detail-label {
   color: var(--text-muted);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .storm-detail-value {
   font-size: var(--text-base);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
 }
 
 .storm-detail-value[data-state="missing"],
 .storm-detail[data-state="missing"] .storm-detail-value {
   color: rgba(226, 232, 240, 0.6);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .storm-risk-meter {
@@ -211,7 +211,7 @@
   position: absolute;
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-tight);
 }
 

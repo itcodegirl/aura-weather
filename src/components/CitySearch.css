@@ -61,7 +61,7 @@
   background: none;
   color: var(--text-bright);
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .city-search-input::placeholder {
@@ -103,7 +103,7 @@
   background: rgba(11, 20, 38, 0.64);
   color: rgba(210, 228, 252, 0.9);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -157,7 +157,7 @@
   background: rgba(11, 21, 43, 0.72);
   color: rgba(214, 230, 252, 0.9);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -169,7 +169,7 @@
   padding: var(--space-3) var(--space-4);
   color: var(--text-muted);
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .city-search-state--error {
@@ -272,7 +272,7 @@
   text-overflow: ellipsis;
   color: var(--text-bright);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .city-search-result-meta {
@@ -282,7 +282,7 @@
   text-overflow: ellipsis;
   color: var(--text-dim);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */

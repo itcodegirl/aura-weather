@@ -33,7 +33,7 @@
   background: var(--surface-3);
   color: var(--text-bright);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-tight);
   transition:
     background var(--motion-fast) var(--ease-standard),
@@ -78,7 +78,7 @@
     0 8px 18px rgba(3, 8, 22, 0.2);
   color: var(--text-muted);
   font-size: var(--text-base);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -121,7 +121,7 @@
   font-family: var(--font-display);
   font-size: var(--text-feature);
   line-height: 1;
-  font-weight: 680;
+  font-weight: var(--weight-semibold);
 }
 
 .loading-dashboard-grid {
@@ -269,7 +269,7 @@
   font-size: var(--text-base);
   letter-spacing: var(--track-default);
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .error-card {
@@ -316,7 +316,7 @@
   background: var(--active-pill-bg);
   color: var(--active-pill-color);
   font-size: var(--text-md);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-medium) var(--ease-standard);
 }
 

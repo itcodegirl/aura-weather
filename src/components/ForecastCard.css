@@ -25,7 +25,7 @@
   gap: var(--space-2);
   font-family: var(--font-display);
   font-size: var(--section-title-size);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
   margin: 0;
   letter-spacing: 0;
   color: var(--text-bright);
@@ -35,7 +35,7 @@
   margin: 0;
   color: rgba(223, 235, 255, 0.88);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   letter-spacing: 0;
   line-height: 1.4;
 }
@@ -139,7 +139,7 @@
 
 .forecast-day {
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0;
   color: var(--text-bright);
 }
@@ -147,7 +147,7 @@
 .forecast-condition {
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -161,7 +161,7 @@
   border: 1px solid rgba(191, 215, 252, 0.22);
   background: rgba(8, 18, 38, 0.58);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -222,7 +222,7 @@
 .forecast-temp-label {
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -231,7 +231,7 @@
   font-family: var(--font-display);
   font-size: var(--text-2xl);
   line-height: 1;
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
   letter-spacing: 0;
   color: var(--text-bright);
   font-variant-numeric: tabular-nums;
@@ -240,7 +240,7 @@
 .forecast-temp-value.is-missing,
 .forecast-precip-empty.is-missing {
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .forecast-temp--low .forecast-temp-value {
@@ -269,7 +269,7 @@
   background: rgba(8, 19, 40, 0.52);
   color: var(--accent-bright);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.01em;
 }
 
@@ -280,7 +280,7 @@
 
 .forecast-precip-empty {
   color: var(--text-dim);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .forecast-row-chevron {
@@ -355,7 +355,7 @@
   margin: 0;
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -364,13 +364,13 @@
   margin: 0;
   color: var(--text-bright);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   line-height: 1.2;
 }
 
 .forecast-detail-value.is-missing {
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .forecast-detail-note {

@@ -17,7 +17,7 @@
   padding-left: 14px;
   color: rgba(230, 238, 250, 0.92);
   font-size: var(--text-sm);
-  font-weight: 720;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.09em;
   text-transform: uppercase;
   opacity: 1;
@@ -111,7 +111,7 @@
   background: rgba(10, 25, 52, 0.8);
   color: rgba(218, 244, 255, 0.94);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   transform: none;
@@ -134,10 +134,7 @@
     background:
       linear-gradient(165deg, rgba(17, 29, 52, 0.86), rgba(8, 16, 32, 0.74)),
       linear-gradient(130deg, rgba(139, 211, 255, 0.055), rgba(246, 196, 83, 0.04) 60%, transparent 86%);
-    box-shadow:
-      0 24px 58px rgba(3, 9, 24, 0.38),
-      0 10px 26px rgba(80, 119, 150, 0.1),
-      inset 0 1px 0 rgba(243, 248, 255, 0.12);
+    box-shadow: var(--card-shadow-hover);
   }
 
   .bento > section:hover::before {

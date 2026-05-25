@@ -6,7 +6,7 @@
   margin: 0;
   color: rgba(213, 225, 244, 0.92);
   font-size: var(--text-xs);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.04em;
 }
 
@@ -20,7 +20,7 @@
   background: rgba(12, 23, 42, 0.72);
   color: rgba(229, 240, 255, 0.96);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -32,7 +32,7 @@
 .data-stale-warning {
   color: #fecaca;
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

@@ -21,7 +21,7 @@
   background: var(--surface-3);
   color: rgba(218, 233, 255, 0.96);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   line-height: 1;
   transition:
     border-color var(--motion-fast) var(--ease-standard),
@@ -65,7 +65,7 @@
   margin: 0 0 var(--space-1);
   color: var(--text-bright);
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-tight);
   text-transform: uppercase;
 }

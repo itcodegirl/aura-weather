@@ -31,7 +31,7 @@
   background: var(--surface-1);
   color: var(--text-muted);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   letter-spacing: var(--track-tight);
 }
 
@@ -40,7 +40,7 @@
   align-items: center;
   color: var(--text-dim);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
 }
@@ -79,7 +79,7 @@
   margin: 0;
   color: rgba(206, 225, 252, 0.9);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -88,7 +88,7 @@
   margin: 0;
   color: var(--text-bright);
   font-size: var(--text-lg);
-  font-weight: 650;
+  font-weight: var(--weight-semibold);
   letter-spacing: 0;
   line-height: 1.2;
 }
@@ -110,7 +110,7 @@
   margin: 0;
   color: var(--text-bright);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   line-height: 1.45;
 }
 
@@ -128,7 +128,7 @@
   background: var(--surface-2);
   color: var(--text-bright);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-tight);
   transition:
     background var(--motion-fast) var(--ease-standard),
@@ -152,7 +152,7 @@
   border-color: rgba(186, 212, 252, 0.16);
   background: transparent;
   color: rgba(216, 230, 252, 0.86);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .location-setup-btn:hover {
@@ -189,7 +189,7 @@
   border: 1px solid;
   background: var(--surface-3);
   font-size: var(--text-sm);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   letter-spacing: var(--track-tight);
   box-shadow:
     inset 0 1px 0 rgba(229, 241, 255, 0.12),
@@ -274,7 +274,7 @@
   padding: var(--space-1-5) var(--space-3);
   min-height: 36px;
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   white-space: nowrap;
   transition:
     background var(--motion-fast) var(--ease-standard),
@@ -313,7 +313,7 @@
   padding: var(--space-1-5) var(--space-3);
   min-height: 36px;
   font-size: var(--text-xs);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   white-space: nowrap;
   transition:
     background var(--motion-fast) var(--ease-standard),

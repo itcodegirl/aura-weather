@@ -16,7 +16,7 @@
   margin: 2px 0 -4px;
   padding-left: 14px;
   color: rgba(230, 238, 250, 0.92);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 720;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -110,7 +110,7 @@
   border: 1px solid rgba(130, 228, 255, 0.36);
   background: rgba(10, 25, 52, 0.8);
   color: rgba(218, 244, 255, 0.94);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -129,7 +129,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .bento > section:hover {
-    transform: translateY(-2px);
+    transform: translateY(var(--lift-2));
     border-color: rgba(198, 218, 243, 0.34);
     background:
       linear-gradient(165deg, rgba(17, 29, 52, 0.86), rgba(8, 16, 32, 0.74)),
@@ -169,7 +169,7 @@
   }
 
   .bento-group-label {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 
   .bento-hero {
@@ -235,7 +235,7 @@
 @media (max-width: 420px) {
   .bento-group-label {
     padding-left: 13px;
-    font-size: 10px;
+    font-size: var(--text-2xs);
     letter-spacing: 0.1em;
   }
 

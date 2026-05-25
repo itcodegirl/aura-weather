@@ -5,14 +5,14 @@
 
 .source-health-card {
   display: grid;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .source-health-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .source-health-kicker,
@@ -25,7 +25,7 @@
 
 .source-health-kicker {
   color: rgba(205, 224, 253, 0.74);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
@@ -34,23 +34,23 @@
 .source-health-title {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin: 4px 0 0;
-  color: #f2f8ff;
-  font-size: 18px;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+  color: var(--text-bright);
+  font-size: var(--text-xl);
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: 0;
 }
 
 .source-health-title svg {
-  color: #a8f3ff;
+  color: var(--accent-bright);
 }
 
 .source-health-summary {
   max-width: 320px;
   color: rgba(215, 230, 251, 0.78);
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   text-align: right;
 }
@@ -58,7 +58,7 @@
 .source-health-list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-2-5);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -91,17 +91,17 @@
 
 .source-health-name {
   overflow-wrap: anywhere;
-  color: #eff7ff;
-  font-size: 13px;
+  color: var(--text-bright);
+  font-size: var(--text-base);
   font-weight: 700;
   line-height: 1.2;
 }
 
 .source-health-provider {
-  margin-top: 2px;
+  margin-top: var(--space-px);
   overflow-wrap: anywhere;
   color: rgba(209, 226, 249, 0.72);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.3;
 }
 
@@ -110,7 +110,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
@@ -119,12 +119,12 @@
   display: inline-flex;
   align-items: center;
   min-height: 22px;
-  padding: 0 8px;
+  padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
   border: var(--border-default);
   background: rgba(210, 223, 246, 0.12);
-  color: #edf5ff;
-  font-size: 10px;
+  color: var(--text-bright);
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--track-tight);
   text-transform: uppercase;
@@ -134,7 +134,7 @@
 .source-health-detail {
   min-width: 0;
   color: rgba(219, 233, 253, 0.74);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.3;
   text-align: right;
   overflow-wrap: anywhere;
@@ -201,7 +201,7 @@
 @media (max-width: 640px) {
   .source-health-header {
     display: grid;
-    gap: 6px;
+    gap: var(--space-1-5);
   }
 
   .source-health-summary {
@@ -217,7 +217,7 @@
    */
   .source-health-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .source-health-state {
@@ -231,11 +231,11 @@
   }
 
   .source-health-item {
-    padding: 10px;
+    padding: var(--space-2-5);
   }
 
   .source-health-title {
-    font-size: 16px;
+    font-size: var(--text-lg);
   }
 
   .source-health-state {

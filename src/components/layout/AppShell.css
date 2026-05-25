@@ -20,19 +20,19 @@
 
 .panel-boundary-fallback {
   flex-direction: column;
-  gap: 12px;
-  padding: 24px;
+  gap: var(--space-3);
+  padding: var(--space-6);
 }
 
 .panel-boundary-retry {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   min-height: 36px;
-  padding: 0 16px;
+  padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
   border: var(--border-strong);
   background: var(--surface-3);
-  color: #e3efff;
-  font-size: 12px;
+  color: var(--text-bright);
+  font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: var(--track-tight);
   transition:
@@ -49,7 +49,7 @@
 
 .panel-boundary-retry:focus-visible {
   border-color: var(--focus-outline);
-  box-shadow: 0 0 0 3px rgba(64, 196, 255, 0.2);
+  box-shadow: var(--focus-ring);
 }
 
 .panel-boundary-retry:active {
@@ -69,7 +69,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-pill);
   border: var(--border-default);
   background: var(--surface-2);
@@ -77,7 +77,7 @@
     inset 0 1px 0 rgba(232, 242, 255, 0.12),
     0 8px 18px rgba(3, 8, 22, 0.2);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 700;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
@@ -99,7 +99,7 @@
 
 .loading-dashboard {
   width: min(92vw, 760px);
-  padding: 18px;
+  padding: var(--space-5);
   border-radius: var(--radius);
   border: var(--card-border);
   background: linear-gradient(165deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.12));
@@ -111,15 +111,15 @@
 .loading-dashboard-header {
   display: flex;
   align-items: center;
-  gap: 13px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .loading-dashboard-brand {
-  margin: 0 0 3px;
-  color: #f8fbff;
+  margin: 0 0 var(--space-1);
+  color: var(--text-bright);
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: var(--text-feature);
   line-height: 1;
   font-weight: 680;
 }
@@ -127,7 +127,7 @@
 .loading-dashboard-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .loader-weather-icon {
@@ -140,8 +140,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px;
+  gap: var(--space-4);
+  padding: var(--space-5);
   min-height: 128px;
   border-radius: var(--radius-sm);
   border: var(--subcard-border);
@@ -215,7 +215,7 @@
 .loading-skeleton-bars {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--space-2);
   height: 56px;
 }
 
@@ -266,7 +266,7 @@
 .loader-text {
   margin: 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-base);
   letter-spacing: var(--track-default);
   text-transform: uppercase;
   font-weight: 700;
@@ -283,45 +283,45 @@
 }
 
 .error-card-icon {
-  margin: 0 auto 10px;
+  margin: 0 auto var(--space-2-5);
   color: #d9ecff;
 }
 
 .error-card h1 {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: var(--text-feature);
   line-height: 1.08;
   letter-spacing: 0;
 }
 
 .error-card p {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--text-md);
 }
 
 .error-card-actions {
-  margin-top: 18px;
+  margin-top: var(--space-5);
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .error-retry {
   min-height: 44px;
   min-width: 124px;
-  padding: 0 18px;
+  padding: 0 var(--space-5);
   border-radius: var(--radius-pill);
   background: var(--active-pill-bg);
   color: var(--active-pill-color);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 700;
   transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-medium) var(--ease-standard);
 }
 
 .error-card > .error-retry {
-  margin-top: 18px;
+  margin-top: var(--space-5);
 }
 
 /* Secondary "Reload app" style — visually subordinate to the primary
@@ -350,7 +350,7 @@
 @media (max-width: 760px) {
   .loading-dashboard {
     width: min(94vw, 420px);
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .loading-dashboard-grid {
@@ -358,7 +358,7 @@
   }
 
   .loading-skeleton {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .loading-skeleton--hero {
@@ -372,22 +372,22 @@
 
 @media (max-width: 420px) {
   .loading-card-title {
-    padding: 7px 10px;
-    font-size: 11px;
+    padding: var(--space-2) var(--space-2-5);
+    font-size: var(--text-xs);
   }
 
   .loading-dashboard {
     width: min(94vw, 340px);
-    padding: 14px;
+    padding: var(--space-4);
   }
 
   .loading-dashboard-brand {
-    font-size: 23px;
+    font-size: var(--text-3xl);
   }
 
   .loading-skeleton {
     min-height: 108px;
-    padding: 14px;
+    padding: var(--space-4);
   }
 
   .loading-skeleton--hero {

@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   grid-column: span 12;
-  gap: 18px;
+  gap: var(--space-5);
   min-height: auto;
 }
 
@@ -10,21 +10,21 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .storm-header-main {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--space-1-5);
 }
 
 .storm-title {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   font-family: var(--font-display);
-  font-size: var(--section-title-lg-size);
+  font-size: var(--section-title-size);
   font-weight: 650;
   margin: 0;
   letter-spacing: 0;
@@ -33,7 +33,7 @@
 .storm-lede {
   margin: 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 600;
   line-height: 1.35;
 }
@@ -46,17 +46,17 @@
 .storm-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .storm-module {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
   min-height: 196px;
-  padding: 15px;
-  border-radius: calc(var(--radius-sm) + 2px);
+  padding: var(--space-4);
+  border-radius: var(--radius-control);
   border: var(--subcard-border);
   background:
     linear-gradient(165deg, rgba(12, 24, 48, 0.56), rgba(7, 15, 32, 0.48)),
@@ -68,15 +68,15 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .storm-module .storm-module-header {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
   color: #d5e8ff;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
@@ -86,12 +86,12 @@
 .storm-module-kicker {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-pill);
   border: var(--border-soft);
   background: var(--surface-1);
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
@@ -100,7 +100,7 @@
 .storm-module-subtitle-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .storm-help-drawer .info-drawer-panel {
@@ -108,7 +108,7 @@
 }
 
 .storm-level {
-  font-size: 26px;
+  font-size: var(--text-feature);
   font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -117,7 +117,7 @@
 .storm-module-summary {
   margin: -2px 0 0;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 600;
   line-height: 1.35;
 }
@@ -125,13 +125,13 @@
 .storm-term-hint {
   margin: 0;
   color: rgba(209, 224, 248, 0.86);
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.35;
 }
 
 .storm-detail {
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: var(--space-2-5);
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -140,12 +140,12 @@
 
 .storm-detail-label {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
 .storm-detail-value {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -158,8 +158,8 @@
 
 .storm-risk-meter {
   display: flex;
-  gap: 4px;
-  margin: 4px 0;
+  gap: var(--space-1);
+  margin: var(--space-1) 0;
 }
 
 .storm-risk-pip {
@@ -186,7 +186,7 @@
   width: 100%;
   height: 46px;
   margin: 0;
-  padding: 4px;
+  padding: var(--space-1);
   border-radius: var(--radius-xs);
   background: var(--surface-1);
   border: var(--border-soft);
@@ -210,7 +210,7 @@
 .wind-compass-label {
   position: absolute;
   color: var(--text-dim);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: var(--track-tight);
 }
@@ -252,7 +252,7 @@
   transition: transform var(--motion-slow) var(--ease-emphasis);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.32));
   pointer-events: none;
-  color: #f8fbff;
+  color: var(--text-bright);
 }
 
 .comfort-scale {
@@ -302,7 +302,7 @@
    */
   .storm-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .storm-module {
@@ -312,42 +312,42 @@
 
 @media (max-width: 420px) {
   .storm-title {
-    font-size: 17px;
+    font-size: var(--text-xl);
   }
 
   .storm-lede {
-    font-size: 12px;
+    font-size: var(--text-sm);
   }
 
   .storm-subtitle {
-    padding: 4px 8px;
-    font-size: 9px;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-2xs);
     letter-spacing: 0.1em;
   }
 
   .storm-module {
-    padding: 12px;
-    gap: 10px;
+    padding: var(--space-3);
+    gap: var(--space-2-5);
   }
 
   .storm-module .storm-module-header {
-    font-size: 11px;
+    font-size: var(--text-xs);
     letter-spacing: 0.09em;
   }
 
   .storm-module-kicker {
-    font-size: 9px;
-    padding: 3px 7px;
+    font-size: var(--text-2xs);
+    padding: var(--space-1) var(--space-2);
   }
 
   .storm-level {
-    font-size: 23px;
+    font-size: var(--text-3xl);
   }
 
   .storm-module-summary,
   .storm-detail-label,
   .storm-detail-value {
-    font-size: 12px;
+    font-size: var(--text-sm);
   }
 }
 

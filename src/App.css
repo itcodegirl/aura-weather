@@ -1,11 +1,132 @@
 ﻿:root {
+  /* ================================================================
+   * AURA DESIGN TOKENS — single source of truth.
+   * Components consume these semantic tokens; raw rgba()/px literals
+   * in component CSS are a migration smell, not the house style.
+   * ================================================================ */
+
+  /* — Typography ---------------------------------------------------- */
   --font-sans: "Manrope", "Segoe UI", sans-serif;
   --font-display: "Space Grotesk", "Manrope", sans-serif;
 
-  --text: #f5f8ff;
+  /* Type scale (px). 10px is the floor — never ship 8/9px text. */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-feature: 30px;
+  --text-feature-lg: 36px;
+  --hero-unit-size: 28px;
+  --section-title-size: clamp(18px, 1.2vw, 20px);
+
+  /* Letter-spacing (tracking) scale */
+  --track-tight: 0.02em;
+  --track-default: 0.08em;
+  --track-loose: 0.14em;
+
+  /* Text colors */
+  --text: #f5f8ff;          /* body text */
+  --text-bright: #f4f9ff;   /* emphasized values & headings */
   --text-muted: rgba(230, 236, 255, 0.82);
   --text-dim: rgba(211, 223, 248, 0.86);
 
+  /* — Accent / brand ------------------------------------------------ */
+  --accent: #8bd3ff;
+  --accent-strong: #57c7e6;
+  --accent-bright: #bdf0ff;   /* bright cyan for accent text/icons */
+  --accent-warm: #f6c453;
+  --accent-green: #8bdca8;
+  --accent-rose: #f1a0a8;
+  --atmo-lavender: rgba(168, 154, 214, 0.12);
+  --atmo-sky: rgba(111, 172, 214, 0.14);
+  --atmo-haze: rgba(215, 226, 241, 0.08);
+
+  /* — Surfaces (ascending elevation / opacity) ---------------------- */
+  --surface-1: rgba(12, 21, 40, 0.58);
+  --surface-2: rgba(14, 24, 45, 0.68);
+  --surface-3: rgba(17, 29, 53, 0.76);
+  --surface-strong: rgba(21, 35, 62, 0.86);
+  /* Legacy surface aliases kept where the semantics genuinely differ */
+  --bg-card: rgba(11, 19, 37, 0.68);
+  --bg-card-hover: rgba(16, 29, 55, 0.76);
+  --panel: rgba(9, 17, 34, 0.78);
+  --panel-soft: rgba(12, 22, 42, 0.66);
+  --subcard-bg: var(--surface-1);
+
+  /* — Borders ------------------------------------------------------- */
+  --border-base: 203, 219, 246;   /* bare RGB triple for rgba(...) */
+  --border-soft: 1px solid rgba(var(--border-base), 0.14);
+  --border-default: 1px solid rgba(var(--border-base), 0.2);
+  --border-strong: 1px solid rgba(var(--border-base), 0.32);
+  /* Legacy border names mapped onto the new ladder */
+  --border: var(--border-default);
+  --card-border: 1px solid rgba(var(--border-base), 0.22);
+  --subcard-border: var(--border-soft);
+
+  /* — Radius ladder ------------------------------------------------- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-control: 12px;
+  --card-radius: 16px;
+  --radius: 18px;
+  --radius-pill: 999px;
+
+  /* — Spacing scale (4px backbone + essential 2/6/10 half-steps) ---- */
+  --space-px: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --card-padding: 24px;
+  --subcard-padding: 12px;
+
+  /* — Elevation / shadow -------------------------------------------- */
+  --shadow: 0 18px 44px rgba(3, 8, 25, 0.28);
+  --card-shadow:
+    0 22px 54px rgba(2, 8, 24, 0.34),
+    0 4px 14px rgba(7, 20, 46, 0.2),
+    inset 0 1px 0 rgba(229, 240, 255, 0.1);
+  --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
+  --card-backdrop-blur: 10px;
+
+  /* — Interaction --------------------------------------------------- */
+  --lift-1: -1px;   /* control hover lift */
+  --lift-2: -2px;   /* card hover lift */
+  --press-scale: 0.985;
+  --press-scale-firm: 0.96;
+  --focus-outline: rgba(130, 228, 255, 0.7);
+  --focus-ring: 0 0 0 3px rgba(125, 211, 255, 0.5);
+
+  /* — Primary "active pill" button ---------------------------------- */
+  --active-pill-bg: linear-gradient(165deg, rgba(190, 232, 255, 0.96), rgba(123, 199, 255, 0.92));
+  --active-pill-color: #051022;
+  --active-pill-shadow: 0 10px 24px rgba(86, 162, 222, 0.34);
+
+  /* — Severity palette (ok / warn / high / critical) ---------------- */
+  --severity-ok-bg: rgba(139, 220, 168, 0.16);
+  --severity-ok-border: rgba(139, 220, 168, 0.42);
+  --severity-ok-fg: #bff0d2;
+  --severity-warn-bg: rgba(246, 196, 83, 0.16);
+  --severity-warn-border: rgba(246, 196, 83, 0.44);
+  --severity-warn-fg: #ffe1a8;
+  --severity-high-bg: rgba(245, 150, 70, 0.18);
+  --severity-high-border: rgba(245, 150, 70, 0.46);
+  --severity-high-fg: #ffcea6;
+  --severity-critical-bg: rgba(240, 100, 100, 0.2);
+  --severity-critical-border: rgba(240, 100, 100, 0.5);
+  --severity-critical-fg: #ffd0d4;
+
+  /* — Layout -------------------------------------------------------- */
   --content-max-width: 1460px;
   --content-gutter: 2.4rem;
   --bp-desktop: 1200px;
@@ -15,56 +136,17 @@
   --bp-mobile: 640px;
   --bp-mobile-small: 560px;
   --bp-compact: 420px;
-
-  --radius: 18px;
-  --radius-sm: 10px;
-  --radius-pill: 999px;
-  --card-radius: 16px;
-  --card-padding: 24px;
-
-  --border: 1px solid rgba(211, 224, 246, 0.2);
-  --card-border: 1px solid rgba(203, 219, 246, 0.22);
-  --shadow: 0 18px 44px rgba(3, 8, 25, 0.28);
-  --card-shadow:
-    0 22px 54px rgba(2, 8, 24, 0.34),
-    0 4px 14px rgba(7, 20, 46, 0.2),
-    inset 0 1px 0 rgba(229, 240, 255, 0.1);
-  --card-backdrop-blur: 10px;
-
-  --bg-card: rgba(11, 19, 37, 0.68);
-  --bg-card-hover: rgba(16, 29, 55, 0.76);
-  --panel: rgba(9, 17, 34, 0.78);
-  --panel-soft: rgba(12, 22, 42, 0.66);
-  --subcard-bg: rgba(11, 20, 38, 0.62);
-  --subcard-border: 1px solid rgba(196, 213, 241, 0.15);
-  --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
-
-  --accent: #8bd3ff;
-  --accent-strong: #57c7e6;
-  --accent-warm: #f6c453;
-  --accent-green: #8bdca8;
-  --accent-rose: #f1a0a8;
-  --atmo-lavender: rgba(168, 154, 214, 0.12);
-  --atmo-sky: rgba(111, 172, 214, 0.14);
-  --atmo-haze: rgba(215, 226, 241, 0.08);
-
-  --hero-temp-size: 92px;
-  --hero-unit-size: 28px;
   --header-control-height: 48px;
-  --section-title-size: clamp(18px, 1.2vw, 20px);
-  --section-title-lg-size: clamp(19px, 1.3vw, 21px);
 
+  /* — Motion -------------------------------------------------------- */
   --card-enter-duration: 520ms;
   --card-enter-stagger: 70ms;
-  --card-hover-shift: -4px;
   --motion-fast: 160ms;
   --motion-medium: 240ms;
   --motion-slow: 420ms;
   --motion-reveal: 460ms;
   --motion-label-reveal: 420ms;
   --motion-background-fade: 1.1s;
-  --motion-subtle: 200ms;
-  --motion-subtle-slow: 220ms;
   --motion-spinner: 800ms;
   --motion-weather-float: 7000ms;
   --motion-weather-float-sun: 6000ms;
@@ -72,8 +154,6 @@
   --motion-weather-cloud: 9000ms;
   --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-emphasis: cubic-bezier(0.22, 1, 0.36, 1);
-  --press-scale: 0.985;
-  --focus-ring: 0 0 0 4px rgba(34, 211, 238, 0.4);
 }
 
 * {
@@ -152,9 +232,9 @@ a:focus-visible,
   left: 12px;
   display: inline-block;
   padding: 10px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
-  font-size: 14px;
+  font-size: var(--text-md);
   color: #030712;
   background: #f8fafc;
   transform: translateY(-150%);
@@ -323,9 +403,9 @@ a:focus-visible,
 .header-secondary-action:focus-visible,
 .error-retry:focus-visible,
 .app-status-retry:focus-visible {
-  border-color: rgba(130, 228, 255, 0.66);
+  border-color: var(--focus-outline);
   box-shadow:
-    0 0 0 3px rgba(64, 196, 255, 0.2),
+    var(--focus-ring),
     0 8px 18px rgba(4, 12, 28, 0.24),
     inset 0 1px 0 rgba(229, 241, 255, 0.16);
 }
@@ -342,7 +422,7 @@ a:focus-visible,
 .rain-history-heading,
 .storm-module-header {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: var(--text-sm);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 700;
@@ -413,8 +493,6 @@ a:focus-visible,
 
 @media (max-width: 560px) {
   :root {
-    --card-backdrop-blur: 10px;
-    --hero-temp-size: 58px;
     --hero-unit-size: 22px;
     --card-padding: 20px;
   }

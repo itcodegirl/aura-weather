@@ -115,23 +115,6 @@
   }
 }
 
-/* Touch-device tap-target expansions */
-@media (pointer: coarse) {
-  .city-search-clear {
-    width: 44px;
-    height: 44px;
-  }
-
-  .city-search-result {
-    padding: 13px 14px;
-    min-height: 48px;
-  }
-
-  .city-search-dropdown {
-    max-height: min(320px, calc(100dvh - 160px));
-  }
-}
-
 .city-search-dropdown {
   position: absolute;
   inset: calc(100% + 10px) 0 auto;
@@ -329,7 +312,7 @@
 
   .city-search-dropdown {
     inset: calc(100% + 8px) 0 auto;
-    max-height: min(280px, calc(100vh - 150px));
+    max-height: min(280px, calc(100dvh - 150px));
   }
 
   .city-search-group {
@@ -349,6 +332,37 @@
   .city-search-state,
   .city-search-empty-hint {
     font-size: 12px;
+  }
+}
+
+/* Touch-device tap-target expansions — placed after all base rules and
+   viewport-width breakpoints so the cascade doesn't override them. */
+@media (pointer: coarse) {
+  /* 44×44 minimum — overrides any viewport-width reset above */
+  .city-search-clear {
+    width: 44px;
+    height: 44px;
+  }
+
+  .city-search-result {
+    padding: 13px 14px;
+    min-height: 48px;
+  }
+
+  /* dvh tracks iOS Safari's collapsing toolbar; 100vh ignores it */
+  .city-search-dropdown {
+    max-height: min(320px, calc(100dvh - 160px));
+  }
+}
+
+/* Narrow coarse devices: restore tighter padding while keeping height minimum */
+@media (pointer: coarse) and (max-width: 420px) {
+  .city-search-result {
+    padding: 10px 12px;
+  }
+
+  .city-search-dropdown {
+    max-height: min(280px, calc(100dvh - 140px));
   }
 }
 

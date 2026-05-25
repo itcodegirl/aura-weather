@@ -679,18 +679,26 @@
 
   /* Saved-city touch targets — increase hit area on phones */
   .saved-city-chip {
-    min-height: 40px;
+    min-height: 44px;
     padding: 0 12px;
   }
 
   .saved-city-remove {
-    width: 36px;
-    height: 36px;
+    /* Visual size stays compact; ::before extends the touch target to 44×44 */
+    position: relative;
+    width: 28px;
+    height: 28px;
     font-size: 16px;
   }
 
+  .saved-city-remove::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+
   .saved-city-startup {
-    min-height: 36px;
+    min-height: 44px;
     padding: 0 10px;
   }
 

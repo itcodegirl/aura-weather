@@ -233,6 +233,7 @@ a:focus-visible,
 
 .app {
   position: relative;
+  min-height: 100vh;     /* fallback for browsers without dvh */
   min-height: 100dvh;
   overflow: hidden;
   isolation: isolate;
@@ -517,7 +518,7 @@ a:focus-visible,
   :root {
     --card-enter-duration: 340ms;
     --card-enter-stagger: 45ms;
-    /* Reduce triple-layer shadow to single layer — measurable FPS gain on
+    /* Reduce triple-layer shadow to 2-layer — measurable FPS gain on
        low-end Android when scrolling through many stacked cards */
     --card-shadow:
       0 12px 28px rgba(2, 8, 24, 0.28),

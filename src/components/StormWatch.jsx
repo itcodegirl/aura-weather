@@ -397,6 +397,7 @@ function StormWatch({
   style,
   isRefreshing = false,
 }) {
+  const titleId = useId();
   const stormRiskSummaryId = useId();
   const overviewCape = toFiniteNumber(weather?.hourly?.cape?.[0]);
   const hasOverviewCape = overviewCape !== null;
@@ -429,13 +430,14 @@ function StormWatch({
     <section
       className="bento-storm storm-watch glass"
       style={style}
+      aria-labelledby={titleId}
       data-refreshing={isRefreshing ? "true" : undefined}
       data-storm-active={hasActiveStormSignal ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
       <header className="storm-header">
         <div className="storm-header-main">
-          <h3 className="storm-title">
+          <h3 id={titleId} className="storm-title">
             <TitleIcon size={16} aria-hidden="true" />
             <span>{titleText}</span>
           </h3>

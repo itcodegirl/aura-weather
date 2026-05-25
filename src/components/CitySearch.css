@@ -115,6 +115,23 @@
   }
 }
 
+/* Touch-device tap-target expansions */
+@media (pointer: coarse) {
+  .city-search-clear {
+    width: 44px;
+    height: 44px;
+  }
+
+  .city-search-result {
+    padding: 13px 14px;
+    min-height: 48px;
+  }
+
+  .city-search-dropdown {
+    max-height: min(320px, calc(100dvh - 160px));
+  }
+}
+
 .city-search-dropdown {
   position: absolute;
   inset: calc(100% + 10px) 0 auto;
@@ -296,7 +313,7 @@
 
 @media (max-width: 420px) {
   .city-search-input-wrap {
-    min-height: 42px;
+    min-height: 44px;
     padding: 0 11px;
   }
 

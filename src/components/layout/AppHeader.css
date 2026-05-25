@@ -210,6 +210,39 @@
   box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.34);
 }
 
+/*
+ * Touch ergonomics: the saved-city controls are intentionally compact,
+ * but on touch devices a 22-28px button is smaller than a comfortable
+ * fingertip target. Grow the *tap* area toward ~44px with a transparent
+ * pseudo-element (the visible chrome is unchanged) and add a little more
+ * space between the adjacent Start / remove controls. The expansion is
+ * vertical-biased so a control's hit area never overlaps its neighbour's.
+ */
+@media (pointer: coarse) {
+  .saved-city-chip-wrap {
+    gap: 8px;
+  }
+
+  .saved-city-chip,
+  .saved-city-startup,
+  .saved-city-remove {
+    position: relative;
+  }
+
+  .saved-city-chip::after {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
+
+  .saved-city-startup::after,
+  .saved-city-remove::after {
+    content: "";
+    position: absolute;
+    inset: -11px -3px;
+  }
+}
+
 .sync-account-shell {
   width: 100%;
   max-width: 620px;

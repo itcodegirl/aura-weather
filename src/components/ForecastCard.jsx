@@ -2,7 +2,7 @@ import { CalendarDays, ChevronDown, Droplets } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { formatWindSpeed, windDirectionName } from "../domain/wind";
 import { getWeather } from "../domain/weatherCodes";
-import { formatDayLabel, parseLocalDate } from "../utils/dates";
+import { formatDayLabel, getZonedNow, parseLocalDate } from "../utils/dates";
 import { formatSunClock } from "../utils/sunlight";
 import { convertTemp } from "../utils/temperature";
 import {
@@ -67,7 +67,7 @@ function formatForecastTemp(value, unit) {
   };
 }
 
-function buildForecastDays(weatherDaily) {
+function buildForecastDays(weatherDaily, timeZone) {
   if (!weatherDaily || typeof weatherDaily !== "object") {
     return [];
   }
@@ -102,7 +102,11 @@ function buildForecastDays(weatherDaily) {
     ? weatherDaily.windDirectionDominant
     : [];
 
-  const today = new Date();
+  // Anchor "today" to the forecast location's calendar day, not the
+  // device's. Open-Meteo daily dates are the location's local days, so a
+  // device in a later zone would otherwise drop the location's current
+  // day from the list. See getZonedNow in utils/dates.
+  const today = getZonedNow(timeZone);
   today.setHours(0, 0, 0, 0);
 
   return times
@@ -188,9 +192,10 @@ function DayRow({
   rangeGradient,
   isExpanded,
   onToggle,
+  timeZone,
 }) {
   const info = getWeather(day.conditionCode);
-  const label = formatDayLabel(day.date);
+  const label = formatDayLabel(day.date, { timeZone });
   const high = formatForecastTemp(day.temperatureMax, unit);
   const low = formatForecastTemp(day.temperatureMin, unit);
   const rainChance = day.rainChanceMax;
@@ -375,7 +380,7 @@ function DayRow({
 const FORECAST_EMPTY_MESSAGE =
   "The 7-day outlook isn't available right now. Current conditions are still live above.";
 
-function buildWeekSummary(days, weekMin, weekMax, unit) {
+function buildWeekSummary(days, weekMin, weekMax, unit, timeZone) {
   if (!Array.isArray(days) || days.length === 0) {
     return FORECAST_EMPTY_MESSAGE;
   }
@@ -395,7 +400,7 @@ function buildWeekSummary(days, weekMin, weekMax, unit) {
     wettestDay.rainChanceMax === null
       ? "Rain chance unavailable"
       : wettestDay.rainChanceMax >= 25
-      ? `${formatDayLabel(wettestDay.date)} peaks at ${wettestDay.rainChanceMax}% rain chance`
+      ? `${formatDayLabel(wettestDay.date, { timeZone })} peaks at ${wettestDay.rainChanceMax}% rain chance`
       : "Rain chances stay mostly low";
   const weekMinText = formatForecastTemp(weekMin, unit).text;
   const weekMaxText = formatForecastTemp(weekMax, unit).text;
@@ -411,9 +416,10 @@ function ForecastCard({
   isRefreshing = false,
 }) {
   const [expandedDate, setExpandedDate] = useState(null);
+  const timeZone = weather?.meta?.timezone;
   const days = useMemo(
-    () => buildForecastDays(weather?.daily),
-    [weather?.daily]
+    () => buildForecastDays(weather?.daily, timeZone),
+    [weather?.daily, timeZone]
   );
   const { weekMin, weekMax } = useMemo(() => {
     const validWeekMins = days
@@ -434,8 +440,8 @@ function ForecastCard({
     [weekMin, weekMax]
   );
   const weekSummary = useMemo(
-    () => buildWeekSummary(days, weekMin, weekMax, unit),
-    [days, weekMin, weekMax, unit]
+    () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone),
+    [days, weekMin, weekMax, unit, timeZone]
   );
   const handleToggleDay = useCallback((date) => {
     setExpandedDate((currentDate) => (currentDate === date ? null : date));
@@ -502,6 +508,7 @@ function ForecastCard({
             rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
+            timeZone={timeZone}
           />
         ))}
       </ul>
@@ -518,6 +525,7 @@ const MemoizedDayRow = memo(
     prevProps.rangeGradient === nextProps.rangeGradient &&
     prevProps.isExpanded === nextProps.isExpanded &&
     prevProps.onToggle === nextProps.onToggle &&
+    prevProps.timeZone === nextProps.timeZone &&
     prevProps.day.date === nextProps.day.date &&
     prevProps.day.conditionCode === nextProps.day.conditionCode &&
     prevProps.day.temperatureMax === nextProps.day.temperatureMax &&

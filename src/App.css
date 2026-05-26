@@ -455,4 +455,84 @@ a:focus-visible,
   }
 }
 
+/*
+ * Windows High Contrast Mode (WCAG 1.4.11 – Non-text Contrast).
+ * In forced-colors mode, browsers map most CSS colours to system
+ * colour tokens, which is usually correct. The rules below restore
+ * the structural borders and interactive signals that the design
+ * communicated purely through colour, so users in WHCM retain the
+ * same affordances as everyone else.
+ */
+@media (forced-colors: active) {
+  /* Card and panel structural borders — rgba borders become transparent
+     in WHCM; replace with a ButtonBorder token so the bounding box
+     of each card remains visible. */
+  .glass {
+    border: 1px solid ButtonBorder;
+  }
+
+  /* All buttons inherit border: none from the global reset. Restore a
+     visible ButtonBorder so they read as interactive controls. */
+  button {
+    border: 1px solid ButtonBorder;
+  }
+
+  /* Focus ring: box-shadow is zeroed in forced-colors mode. The
+     outline is already set on :focus-visible above; reinforce it with
+     the Highlight system token so it meets the WHCM highlight colour. */
+  button:focus-visible,
+  input:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid Highlight;
+    box-shadow: none;
+  }
+
+  /* Severity and signal badges rely on background-colour to communicate
+     their level. Add ButtonBorder so the badge shape is perceivable even
+     when its background is replaced by Canvas. */
+  [class*="severity-badge"],
+  [class*="forecast-signal-chip"],
+  [class*="alerts-priority"],
+  .eyebrow-pill {
+    border: 1px solid ButtonBorder;
+  }
+
+  /* Storm risk pips: active pips and inactive pips share the same
+     border; the active ones keep their Highlight background. */
+  .storm-risk-pip {
+    border: 1px solid ButtonBorder;
+  }
+  .storm-risk-pip[style*="rgba(255,255,255,0.1)"] {
+    background: ButtonFace;
+  }
+
+  /* Comfort scale: the gradient carries the dry–humid meaning.
+     In WHCM give the track a ButtonBorder outline and use the Highlight
+     token for the marker so position is still readable. */
+  .comfort-gradient {
+    background: ButtonFace;
+    border: 1px solid ButtonBorder;
+  }
+
+  .comfort-marker {
+    background: Highlight;
+    outline: 2px solid ButtonBorder;
+  }
+
+  /* Skip link: ensure it contrasts against whatever Canvas colour the
+     user has chosen. */
+  .skip-link {
+    forced-color-adjust: none;
+    background: Canvas;
+    color: CanvasText;
+    border: 2px solid ButtonBorder;
+    outline: none;
+  }
+
+  .skip-link:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+}
 

@@ -267,7 +267,7 @@ function RainCard({
           </p>
         </div>
       ) : isDry ? (
-        <div className="card-empty">
+        <div className="card-empty" role="status">
           <div className="card-empty__icon">
             <WeatherIcon code={0} size={36} />
           </div>

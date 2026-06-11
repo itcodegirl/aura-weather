@@ -1,8 +1,8 @@
 {
   "categories": {
-    "performance": 0.5,
-    "accessibility": 0.9,
+    "performance": 0.85,
+    "accessibility": 0.95,
     "best-practices": 0.9,
-    "seo": 0.85
+    "seo": 0.9
   }
 }

@@ -205,3 +205,90 @@ describe("SavedCitiesStrip focus-management after remove", () => {
     );
   });
 });
+
+const LONDON = {
+  lat: 51.5072,
+  lon: -0.1276,
+  name: "London",
+  country: "United Kingdom",
+};
+
+describe("SavedCitiesStrip reordering", () => {
+  function renderStrip({ savedCities, moveSavedCity }) {
+    return render(
+      React.createElement(SavedCitiesStrip, {
+        savedCities,
+        location: { lat: 0, lon: 0 },
+        loadSavedCity: () => {},
+        forgetSavedCity: () => {},
+        restoreSavedCity: () => {},
+        moveSavedCity,
+      })
+    );
+  }
+
+  test("hides move controls when only one city is saved", () => {
+    const view = renderStrip({ savedCities: [TOKYO], moveSavedCity: () => {} });
+
+    assert.equal(
+      view.queryByRole("button", {
+        name: "Move Tokyo later in your saved cities",
+      }),
+      null,
+      "a single chip has nowhere to move, so the arrows should not render"
+    );
+  });
+
+  test("clicking a move arrow reports the city and direction", async () => {
+    const moves = [];
+    const view = renderStrip({
+      savedCities: [TOKYO, LONDON],
+      moveSavedCity: (city, offset) => {
+        moves.push([city.name, offset]);
+      },
+    });
+
+    await act(async () => {
+      view
+        .getByRole("button", { name: "Move Tokyo later in your saved cities" })
+        .click();
+    });
+
+    assert.deepEqual(moves, [["Tokyo", 1]]);
+    assert.match(
+      view.getByRole("status", { name: "" }).textContent ||
+        view.container.ownerDocument.body.textContent,
+      /Tokyo moved to position 2 of 2/,
+      "the reorder should be announced for assistive tech"
+    );
+  });
+
+  test("bound moves no-op via aria-disabled instead of dropping focus with disabled", async () => {
+    const moves = [];
+    const view = renderStrip({
+      savedCities: [TOKYO, LONDON],
+      moveSavedCity: (city, offset) => {
+        moves.push([city.name, offset]);
+      },
+    });
+
+    const moveEarlier = view.getByRole("button", {
+      name: "Move Tokyo earlier in your saved cities",
+    });
+    assert.equal(
+      moveEarlier.getAttribute("aria-disabled"),
+      "true",
+      "the first chip's move-earlier arrow should advertise aria-disabled"
+    );
+    assert.equal(
+      moveEarlier.hasAttribute("disabled"),
+      false,
+      "the native disabled attribute would eject keyboard focus to <body> when a chip reaches an end slot"
+    );
+
+    await act(async () => {
+      moveEarlier.click();
+    });
+    assert.deepEqual(moves, [], "out-of-range moves must not fire the callback");
+  });
+});

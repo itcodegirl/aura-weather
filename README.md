@@ -20,7 +20,7 @@ The portfolio story is simple: **Aura never turns missing provider data into fak
 - Compare today's temperature against historical Open-Meteo archive context when available.
 - See NOAA/NWS severe-alert coverage with explicit unsupported-region messaging.
 - Restore a last-known forecast on offline starts without pretending stale data is fresh.
-- Save cities, switch between them quickly, set any saved city as startup, and optionally sync saved locations.
+- Save cities, switch between them quickly, reorder them, set any saved city as startup, and optionally sync saved locations.
 - Toggle Fahrenheit/Celsius locally without refetching forecast data.
 - Install the app shell as a PWA after a first successful production visit.
 
@@ -143,7 +143,6 @@ If `VITE_AURA_SYNC_API_BASE` is not set, sync still works when the stored accoun
 
 ## Future Improvements
 
-- Add richer saved-city controls such as drag reordering once usage patterns justify the extra UI weight.
 - Tune production performance against live provider latency, not only the deterministic demo route.
 - Expand the case study with side-by-side mobile/desktop annotations of the trust-contract state.
 
@@ -161,9 +160,9 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`412` tests across 89 suites, including React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`422` tests across 90 suites, including React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
-- `npm run test:e2e -- --workers=1` passes (`31` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
+- `npm run test:e2e -- --workers=1` passes (`34` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
 - GitHub Actions runs lint, tests, render tests, build, serial Playwright, and Lighthouse budgets on pull requests
 
@@ -345,6 +344,9 @@ bug, the contract, and the test pyramid.
 
 ## Recent Hardening
 
+- **Saved-city reordering** - each chip now has move-earlier/move-later arrows (keyboard- and screen-reader-friendly: `aria-disabled` at the ends keeps focus stable, and a live region announces the new position). The order persists locally and rides the existing cloud-sync push.
+- **Honest Lighthouse budgets** - the CI performance gate moved from 0.5 to 0.85 (accessibility 0.95, SEO 0.9) now that the deterministic demo route scores 98/100/96/100 locally.
+- **Dead code removed** - the unused Nominatim reverse-geocode adapter (the app geocodes through BigDataCloud) is gone from the API layer.
 - **Committed README screenshots** - `docs/screenshots/*.png` was gitignored while the README embedded those paths, so every image was broken on GitHub. The PNGs are now committed and regenerated deterministically via `npm run screenshots`.
 - **Native social card + PWA install screenshots** - `og-image.png` is now a real 1200×630 dashboard render (hero + exposure gauges) captured by `e2e/social-pwa-assets.spec.js`, and the manifest ships wide/narrow `screenshots` so Android install prompts show the app instead of a bare icon.
 - **Location-timezone forecast days** - the 7-day forecast now resolves "today" in the forecast location's timezone instead of the viewer's. Previously, viewing a city west of you across the date line (e.g. Honolulu from Tokyo) silently dropped the location's current day from the outlook, and Today/Tomorrow labels could shift by one day.

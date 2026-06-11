@@ -343,7 +343,11 @@ function HourlyCard({
         titleTag="h3"
         titleClassName="chart-title"
         icon={<LineIcon size={16} />}
-        subtitle="Next 24h"
+        subtitle={
+          // An API window shorter than a full day must not be
+          // labelled as 24 hours of coverage.
+          data.length === 24 ? "Next 24h" : `Next ${data.length}h`
+        }
         subtitleClassName="chart-subtitle eyebrow-pill"
       />
       <p className="chart-lede">{chartLede}</p>

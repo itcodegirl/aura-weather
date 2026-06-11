@@ -225,4 +225,44 @@ describe("weather snapshot cache", () => {
 
     assert.equal(snapshot, null);
   });
+
+  test("does not restore snapshots stamped in the future (clock moved)", () => {
+    installWindow();
+    const nowMs = Date.now();
+    // Clamping a future timestamp's age to zero would make a
+    // corrupt/clock-skewed snapshot read as perpetually fresh.
+    const futureCachedAt = nowMs + 10 * 60 * 1000;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("future"),
+      cachedAt: futureCachedAt,
+    });
+
+    const snapshot = readCachedWeatherSnapshot(
+      { latitude: 41.8781, longitude: -87.6298 },
+      { nowMs }
+    );
+
+    assert.equal(snapshot, null);
+  });
+
+  test("tolerates small clock jitter on freshly written snapshots", () => {
+    installWindow();
+    const nowMs = Date.now();
+    const slightlyAhead = nowMs + 30 * 1000;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("jitter"),
+      cachedAt: slightlyAhead,
+    });
+
+    const snapshot = readCachedWeatherSnapshot(
+      { latitude: 41.8781, longitude: -87.6298 },
+      { nowMs }
+    );
+
+    assert.notEqual(snapshot, null);
+  });
 });

@@ -4,6 +4,11 @@ const CACHE_KEY = "aura-weather-last-known-forecast-v1";
 const CACHE_VERSION = 1;
 const MAX_CACHED_LOCATIONS = 8;
 const MAX_SNAPSHOT_AGE_MS = 12 * 60 * 60 * 1000;
+// Snapshots stamped meaningfully in the future mean the device clock
+// moved (or the payload is corrupt); clamping their age to zero would
+// present them as perpetually fresh. A small slack absorbs ordinary
+// clock jitter.
+const FUTURE_SNAPSHOT_SLACK_MS = 5 * 60 * 1000;
 
 function getStorage() {
   try {
@@ -138,7 +143,11 @@ function isFreshSnapshot(snapshot, nowMs = Date.now()) {
 
   const cachedAt = toFiniteNumber(snapshot.cachedAt);
   const now = toFiniteNumber(nowMs) ?? Date.now();
-  const ageMs = Math.max(0, now - cachedAt);
+  const rawAgeMs = now - cachedAt;
+  if (rawAgeMs < -FUTURE_SNAPSHOT_SLACK_MS) {
+    return false;
+  }
+  const ageMs = Math.max(0, rawAgeMs);
   return ageMs <= MAX_SNAPSHOT_AGE_MS;
 }
 

@@ -62,7 +62,11 @@ function StatusStack({
   }, []);
 
   const handleRetry = useCallback(() => {
-    if (isRetryCoolingDown || typeof onRetry !== "function") {
+    // isBackgroundLoading means a forecast request is already in
+    // flight; firing another would abort it and restart the clock for
+    // no benefit. The cooldown alone could not cover a slow request
+    // that outlives the 1400ms timer.
+    if (isRetryCoolingDown || isBackgroundLoading || typeof onRetry !== "function") {
       return;
     }
 
@@ -73,7 +77,7 @@ function StatusStack({
       setIsRetryCoolingDown(false);
       retryTimerRef.current = null;
     }, 1400);
-  }, [isRetryCoolingDown, onRetry]);
+  }, [isRetryCoolingDown, isBackgroundLoading, onRetry]);
 
   const hasRuntimeStatus = showRuntimeStatus && Boolean(
     locationNotice ||
@@ -261,10 +265,10 @@ function StatusStack({
             type="button"
             className="app-status-retry"
             onClick={handleRetry}
-            disabled={isRetryCoolingDown}
-            aria-busy={isRetryCoolingDown || undefined}
+            disabled={isRetryCoolingDown || isBackgroundLoading}
+            aria-busy={isRetryCoolingDown || isBackgroundLoading || undefined}
           >
-            {isRetryCoolingDown ? "Retrying..." : "Retry"}
+            {isRetryCoolingDown || isBackgroundLoading ? "Retrying..." : "Retry"}
           </button>
         </div>
       )}

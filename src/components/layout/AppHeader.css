@@ -155,7 +155,7 @@
   min-height: 24px;
   padding: 0 8px;
   border-radius: var(--radius-pill);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -262,7 +262,7 @@
   border: 1px solid rgba(178, 209, 252, 0.28);
   background: rgba(8, 18, 39, 0.62);
   color: rgba(210, 227, 252, 0.9);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -760,7 +760,7 @@
 
   .tagline {
     letter-spacing: 0.13em;
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .app-header-primary {
@@ -796,7 +796,7 @@
   .saved-city-startup {
     min-height: 22px;
     padding: 0 7px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .saved-city-remove {

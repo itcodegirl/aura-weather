@@ -133,7 +133,7 @@
   align-items: center;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: var(--track-default);
   text-transform: uppercase;

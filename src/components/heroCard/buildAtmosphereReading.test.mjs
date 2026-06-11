@@ -58,6 +58,19 @@ describe("buildAtmosphereReading", () => {
     assert.match(result.text, /Tornado Warning/);
   });
 
+  test("critical normalized alerts are treated as severe hero signals", () => {
+    const weather = buildBaseWeather({
+      alerts: [
+        { priority: "critical", event: "Flash Flood Warning" },
+      ],
+    });
+
+    const result = buildAtmosphereReading({ weather, nowMs: FIXED_NOW });
+
+    assert.equal(result.tone, "alert");
+    assert.match(result.text, /Flash Flood Warning/);
+  });
+
   test("imminent rain surfaces a clock and probability", () => {
     const weather = buildBaseWeather({
       hourly: {

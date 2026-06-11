@@ -16,6 +16,7 @@ import {
   getSunlightPhase,
 } from "../../utils/sunlight.js";
 import { getZonedNow } from "../../utils/dates.js";
+import { formatDisplayCountry } from "../../utils/locationDisplay.js";
 import { buildAtmosphereReading } from "./buildAtmosphereReading.js";
 
 const FALLBACK_LOCATION_NAME = "Current location";
@@ -36,7 +37,7 @@ function pickLocationName(location) {
 }
 
 function pickLocationCountry(location) {
-  return trimString(location?.country);
+  return formatDisplayCountry(location?.country);
 }
 
 function todayLocaleString(nowMs, timeZone) {

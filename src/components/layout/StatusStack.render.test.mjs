@@ -63,9 +63,7 @@ describe("StatusStack", () => {
       })
     );
 
-    assert.ok(
-      screen.getByText("App update ready. Refresh when you have a moment.")
-    );
+    assert.ok(screen.getByText("App update ready."));
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     fireEvent.click(screen.getByRole("button", { name: "Later" }));
@@ -86,11 +84,7 @@ describe("StatusStack", () => {
       })
     );
 
-    assert.ok(
-      screen.getByText(
-        "Offline shell ready. Aura can reopen if the network drops and clearly label saved forecasts."
-      )
-    );
+    assert.ok(screen.getByText("Offline shell ready."));
 
     fireEvent.click(screen.getByRole("button", { name: "Got it" }));
 
@@ -113,12 +107,32 @@ describe("StatusStack", () => {
       })
     );
 
-    assert.ok(screen.getByText("Install Aura for faster daily access."));
+    assert.ok(screen.getByText("Install Aura for faster access."));
 
     fireEvent.click(screen.getByRole("button", { name: "Install" }));
     fireEvent.click(screen.getByRole("button", { name: "Later" }));
 
     assert.equal(installCount, 1);
     assert.equal(dismissCount, 1);
+  });
+
+  test("defers the install prompt while an app update notice is visible", () => {
+    render(
+      React.createElement(StatusStack, {
+        serviceWorkerUpdateAvailable: true,
+        installPromptAvailable: true,
+        onRefreshServiceWorkerUpdate() {},
+        onDismissServiceWorkerUpdate() {},
+        onInstallApp() {},
+        onDismissInstallPrompt() {},
+      })
+    );
+
+    assert.ok(screen.getByText("App update ready."));
+    assert.equal(
+      screen.queryByText("Install Aura for faster access."),
+      null,
+      "install prompt should wait behind the higher-priority update notice"
+    );
   });
 });

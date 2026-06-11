@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { Siren } from "lucide-react";
 import { MetricCard } from "./ui";
 import { getAqiStatus, getUvStatus } from "../domain/exposure";
 import { toFiniteNumber } from "../utils/numbers";
@@ -10,10 +11,27 @@ const METRIC_LABEL_IDS = {
   uvIndex: "metric-uv-index",
 };
 
+function formatAlertWindow(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) {
+    return "";
+  }
+
+  return parsed.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function ExposureSection({
   aqi,
   aqiStatus = "idle",
   uvIndex,
+  alert = null,
   style,
   isRefreshing = false,
 }) {
@@ -41,6 +59,20 @@ function ExposureSection({
   const uvSupportText = hasUvData
     ? `Peak UV is ${uvValue.toFixed(1)} on an 11+ scale.`
     : "Today's UV index is unavailable right now. Current conditions are still live.";
+  const hasAlert = alert && typeof alert === "object";
+  const alertEvent =
+    hasAlert && typeof alert.event === "string" && alert.event.trim()
+      ? alert.event.trim()
+      : "Severe weather alert";
+  const alertHeadline =
+    hasAlert && typeof alert.headline === "string" && alert.headline.trim()
+      ? alert.headline.trim()
+      : "Severe weather conditions may affect this location.";
+  const alertPriority =
+    hasAlert && typeof alert.priority === "string" && alert.priority.trim()
+      ? alert.priority.trim().toLowerCase()
+      : "moderate";
+  const alertEndsAt = hasAlert ? formatAlertWindow(alert.endsAt) : "";
   /*
    * Section header status: when both readings are present, the gauges
    * + status pills already convey the data state — no badge needed.
@@ -98,6 +130,34 @@ function ExposureSection({
           helpText="UV index estimates sunburn risk. 0 to 2 is low, 3 to 5 is moderate, 6 to 7 is high, 8 to 10 is very high, and 11+ is extreme."
         />
       </div>
+      {hasAlert ? (
+        <article
+          className={`exposure-alert exposure-alert--${alertPriority}`}
+          aria-label={`Active weather alert: ${alertEvent}`}
+        >
+          <div className="exposure-alert-icon" aria-hidden="true">
+            <Siren size={18} />
+          </div>
+          <div className="exposure-alert-copy">
+            <div className="exposure-alert-topline">
+              <span className="exposure-alert-kicker">Active alert</span>
+              <span className="exposure-alert-priority">
+                {alertPriority}
+              </span>
+            </div>
+            <p className="exposure-alert-title">{alertEvent}</p>
+            <p className="exposure-alert-summary">{alertHeadline}</p>
+          </div>
+          <div className="exposure-alert-meta">
+            {alertEndsAt ? (
+              <span className="exposure-alert-time">
+                Until {alertEndsAt}
+              </span>
+            ) : null}
+            <span className="exposure-alert-action">Details below</span>
+          </div>
+        </article>
+      ) : null}
     </section>
   );
 }

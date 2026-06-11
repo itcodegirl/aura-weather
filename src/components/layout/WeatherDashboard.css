@@ -230,6 +230,15 @@
     grid-column: auto;
     min-height: 0;
   }
+
+  /* Defer paint for cards that are reliably below the fold on mobile.
+     contain-intrinsic-block-size hints keep scrollbar proportions stable. */
+  .bento-nowcast    { content-visibility: auto; contain-intrinsic-block-size: 340px; }
+  .bento-chart      { content-visibility: auto; contain-intrinsic-block-size: 320px; }
+  .bento-forecast   { content-visibility: auto; contain-intrinsic-block-size: 520px; }
+  .bento-alerts     { content-visibility: auto; contain-intrinsic-block-size: 280px; }
+  .bento-storm      { content-visibility: auto; contain-intrinsic-block-size: 440px; }
+  .bento-source-health { content-visibility: auto; contain-intrinsic-block-size: 220px; }
 }
 
 @media (max-width: 420px) {

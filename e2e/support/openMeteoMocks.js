@@ -309,6 +309,7 @@ export async function installOpenMeteoMocks(page) {
       }),
     });
   });
+
 }
 
 export async function mockDeniedGeolocation(context) {

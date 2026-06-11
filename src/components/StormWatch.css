@@ -310,6 +310,18 @@
   }
 }
 
+@media (max-width: 560px) {
+  /* Single-column stacking matches the comment at the 760px rule above */
+  .storm-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .storm-lede {
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 420px) {
   .storm-title {
     font-size: 17px;

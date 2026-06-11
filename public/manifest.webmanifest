@@ -10,7 +10,7 @@
   "display": "standalone",
   "background_color": "#081225",
   "theme_color": "#0b1c3f",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "categories": ["weather", "productivity"],
   "icons": [
     {

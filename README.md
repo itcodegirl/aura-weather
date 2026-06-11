@@ -161,7 +161,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`413` tests across 90 suites, including React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`412` tests across 89 suites, including React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (`31` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -226,6 +226,8 @@ npm run test:lighthouse
 - Live status messaging for loading and refresh states
 - Reduced-motion-safe card visibility and transitions
 - Updated mobile touch targets for smaller utility controls and dense rain/hourly timelines
+- Keyboard-operable hourly sample explorer at every viewport (focus-revealed on desktop, roving tabindex, arrow-key navigation)
+- Escape closes expanded forecast-day details and restores focus to the trigger
 
 ## Architecture Decisions
 
@@ -343,9 +345,12 @@ bug, the contract, and the test pyramid.
 
 ## Recent Hardening
 
-- **Timezone-correct "now" for remote cities** - Open-Meteo returns the location's naive local timestamps; the hero already framed its day label in that zone, but the hourly "Now" marker + 24h window, the nowcast "starts in N min" window, the 7-day "today" filter / Today–Tomorrow labels, and the golden-hour wash all compared against the *device* clock. Viewing a city in another zone misplaced them. A shared `getZonedNow(timeZone)` helper reframes "now" into the location's wall clock; display labels were already correct and are untouched.
+- **Location-timezone forecast days** - the 7-day forecast now resolves "today" in the forecast location's timezone instead of the viewer's. Previously, viewing a city west of you across the date line (e.g. Honolulu from Tokyo) silently dropped the location's current day from the outlook, and Today/Tomorrow labels could shift by one day.
+- **Keyboard hourly explorer** - the hourly sample strip is no longer touch-only. On larger screens it reveals on focus (like the skip link), exposes a single roving tab stop, and Arrow/Home/End keys walk the samples; selecting a sample highlights the matching chart point. Invalid `role="list"` semantics on the strip were corrected to `role="group"`.
+- **Escape-to-collapse forecast rows** - expanded forecast day details close on Escape and return focus to the trigger, matching the InfoDrawer dismiss gesture.
+- **Honest social cards** - `og:image`/`twitter:image` were relative URLs (blank cards on most platforms); they are now absolute with declared dimensions, `og:url`, and a card type that matches the image's aspect ratio. The PWA manifest stops locking installed apps to portrait since tablet/desktop layouts exist.
+- **Timezone-correct "now" beyond the forecast** - the hourly "Now" marker + 24h window, the nowcast "starts in N min" window, and the hero golden-hour wash previously compared forecast times against the *device* clock, misplacing them when viewing a city in another zone. A shared `getZonedNow(timeZone)` helper reframes "now" into the location's wall clock; display labels were already correct and are untouched.
 - **Shareable forecast deep links** - `?lat&lon&name` links now actually load that place on cold start. The read-path (`parseLocationFromUrl`) was documented and the write-path already mirrored the active city into the URL, but the seed was never wired, so shared links silently fell back to the default city. A deep link now wins over the persisted startup city without overwriting or auto-persisting it.
-- **Comfortable mobile touch targets** - the compact saved-city chip, "Start", and remove controls grow their tap area toward ~44px on touch devices via a transparent pseudo-element (visible chrome unchanged), with extra space between the adjacent controls so neighbours are not mis-tapped.
 - **Saved-city-first sync** - Cloud Sync no longer appears on a fresh first load with no saved cities. It becomes available once the user saves a city, and remains visible for connected/error states so recovery controls are not hidden.
 - **Saved-city search suggestions** - focusing the empty city search now opens saved cities as selectable combobox options, preserving keyboard and pointer selection behavior.
 - **Shorter setup copy** - first-load location onboarding and follow-up location prompts now use compact copy so the mobile header moves users into the forecast faster.
@@ -400,7 +405,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — 413 Node tests covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, current-location recovery, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; 31 Playwright smoke/flow checks for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — 412 Node tests covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; 31 Playwright smoke/flow checks for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

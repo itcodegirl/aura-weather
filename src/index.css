@@ -1,6 +1,14 @@
 :root {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  /*
+   * Stop mobile WebKit/Blink from auto-inflating font sizes when the
+   * device rotates to landscape ("text boosting"). Aura's typography is
+   * already tuned per breakpoint, so the boost only breaks the intended
+   * hierarchy and shifts layout. 100% = honour the authored sizes.
+   */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {

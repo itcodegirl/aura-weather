@@ -48,7 +48,6 @@
   --atmo-sky: rgba(111, 172, 214, 0.14);
   --atmo-haze: rgba(215, 226, 241, 0.08);
 
-  --hero-temp-size: 92px;
   --hero-unit-size: 28px;
   --header-control-height: 48px;
   --section-title-size: clamp(18px, 1.2vw, 20px);
@@ -126,6 +125,12 @@
   --severity-ok-fg: #bbf7d0;
   --severity-ok-border: rgba(34, 197, 94, 0.40);
   --severity-ok-bg: rgba(5, 46, 22, 0.34);
+
+  /* Neutral/info rung — default tone for the shared .severity-badge
+     (e.g. nowcast minimal/partial/missing risk states). */
+  --severity-info-fg: #dbeafe;
+  --severity-info-border: rgba(147, 197, 253, 0.42);
+  --severity-info-bg: rgba(30, 64, 175, 0.22);
 }
 
 * {
@@ -178,6 +183,15 @@ button {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  /*
+   * App-like touch feel: a long-press on a control should activate it,
+   * not pop the iOS callout menu or flash a text-selection highlight.
+   * Pairs with the transparent tap highlight above. Labels in Aura's
+   * controls are never content the user needs to select/copy.
+   */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 button:focus-visible,
@@ -434,6 +448,62 @@ a:focus-visible,
 }
 
 /*
+ * Shared severity badge — the 5-rung risk pill used by NowcastCard and
+ * RainCard (JSX renders `<span class="severity-badge severity-badge--{tone}">`).
+ * Tones map onto the --severity-* palette above; the base rule is the
+ * neutral/info default so a tone modifier is never required for the pill
+ * to read as a styled badge.
+ */
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 22px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--severity-info-border);
+  background: var(--severity-info-bg);
+  color: var(--severity-info-fg);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--track-default);
+  text-transform: uppercase;
+}
+
+.severity-badge--critical,
+.severity-badge--high {
+  border-color: var(--severity-critical-border);
+  background: var(--severity-critical-bg);
+  color: var(--severity-critical-fg);
+}
+
+.severity-badge--moderate {
+  border-color: var(--severity-high-border);
+  background: var(--severity-high-bg);
+  color: var(--severity-high-fg);
+}
+
+.severity-badge--low {
+  border-color: var(--severity-warn-border);
+  background: var(--severity-warn-bg);
+  color: var(--severity-warn-fg);
+}
+
+.severity-badge--minimal {
+  border-color: var(--severity-ok-border);
+  background: var(--severity-ok-bg);
+  color: var(--severity-ok-fg);
+}
+
+.severity-badge--partial,
+.severity-badge--missing {
+  /* default = info; explicit so JSX modifier classes always win */
+  border-color: var(--severity-info-border);
+  background: var(--severity-info-bg);
+  color: var(--severity-info-fg);
+}
+
+/*
  * AppShell loader/error rules and StatusStack rules have been moved to
  * src/components/layout/AppShell.css and StatusStack.css respectively.
  * They are imported by their owning components.
@@ -493,7 +563,6 @@ a:focus-visible,
 @media (max-width: 560px) {
   :root {
     --card-backdrop-blur: 10px;
-    --hero-temp-size: 58px;
     --hero-unit-size: 22px;
     --card-padding: 20px;
   }
@@ -534,6 +603,87 @@ a:focus-visible,
   }
 }
 
+/*
+ * Windows High Contrast Mode (WCAG 1.4.11 – Non-text Contrast).
+ * In forced-colors mode, browsers map most CSS colours to system
+ * colour tokens, which is usually correct. The rules below restore
+ * the structural borders and interactive signals that the design
+ * communicated purely through colour, so users in WHCM retain the
+ * same affordances as everyone else.
+ */
+@media (forced-colors: active) {
+  /* Card and panel structural borders — rgba borders become transparent
+     in WHCM; replace with a ButtonBorder token so the bounding box
+     of each card remains visible. */
+  .glass {
+    border: 1px solid ButtonBorder;
+  }
+
+  /* All buttons inherit border: none from the global reset. Restore a
+     visible ButtonBorder so they read as interactive controls. */
+  button {
+    border: 1px solid ButtonBorder;
+  }
+
+  /* Focus ring: box-shadow is zeroed in forced-colors mode. The
+     outline is already set on :focus-visible above; reinforce it with
+     the Highlight system token so it meets the WHCM highlight colour. */
+  button:focus-visible,
+  input:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid Highlight;
+    box-shadow: none;
+  }
+
+  /* Severity and signal badges rely on background-colour to communicate
+     their level. Add ButtonBorder so the badge shape is perceivable even
+     when its background is replaced by Canvas. */
+  [class*="severity-badge"],
+  [class*="forecast-signal-chip"],
+  [class*="alerts-priority"],
+  .eyebrow-pill {
+    border: 1px solid ButtonBorder;
+  }
+
+  /* Storm risk pips: active pips and inactive pips share the same
+     border; the active ones keep their Highlight background. */
+  .storm-risk-pip {
+    border: 1px solid ButtonBorder;
+  }
+  .storm-risk-pip[style*="rgba(255,255,255,0.1)"] {
+    background: ButtonFace;
+  }
+
+  /* Comfort scale: the gradient carries the dry–humid meaning.
+     In WHCM give the track a ButtonBorder outline and use the Highlight
+     token for the marker so position is still readable. */
+  .comfort-gradient {
+    background: ButtonFace;
+    border: 1px solid ButtonBorder;
+  }
+
+  .comfort-marker {
+    background: Highlight;
+    outline: 2px solid ButtonBorder;
+  }
+
+  /* Skip link: ensure it contrasts against whatever Canvas colour the
+     user has chosen. */
+  .skip-link {
+    forced-color-adjust: none;
+    background: Canvas;
+    color: CanvasText;
+    border: 2px solid ButtonBorder;
+    outline: none;
+  }
+
+  .skip-link:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
 /* Touch devices: shorter animations + lighter visuals for better scroll FPS */
 @media (hover: none) {
   :root {
@@ -549,26 +699,55 @@ a:focus-visible,
   }
 }
 
-/* Notch/home-bar safe area — add padding to bottom of content area */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
+/*
+ * Notch / home-bar / status-bar safe areas. The page is served with
+ * `viewport-fit=cover` and `apple-mobile-web-app-status-bar-style:
+ * black-translucent`, so in an installed PWA the web view extends
+ * under the status bar (top) and, in landscape, under the notch and
+ * rounded corners (left/right). We pad the content column on all four
+ * edges so the header is never clipped by the status bar and no card
+ * runs under a notch — while keeping the decorative background full-
+ * bleed. The horizontal insets are added on top of --content-gutter
+ * via padding-inline (which is 0 by default), and the vertical insets
+ * are folded into each breakpoint's existing padding so the base
+ * spacing rhythm is preserved when the inset is 0.
+ */
+@supports (padding-top: env(safe-area-inset-top)) {
   .app-inner {
+    padding-top: calc(30px + env(safe-area-inset-top));
     padding-bottom: max(44px, calc(44px + env(safe-area-inset-bottom)));
+    padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+  }
+
+  @media (max-width: 1200px) {
+    .app-inner {
+      padding-top: calc(24px + env(safe-area-inset-top));
+    }
   }
 
   @media (max-width: 860px) {
     .app-inner {
+      padding-top: calc(20px + env(safe-area-inset-top));
       padding-bottom: max(30px, calc(30px + env(safe-area-inset-bottom)));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .app-inner {
+      padding-top: calc(18px + env(safe-area-inset-top));
     }
   }
 
   @media (max-width: 640px) {
     .app-inner {
+      padding-top: calc(14px + env(safe-area-inset-top));
       padding-bottom: max(24px, calc(24px + env(safe-area-inset-bottom)));
     }
   }
 
   @media (max-width: 420px) {
     .app-inner {
+      padding-top: calc(12px + env(safe-area-inset-top));
       padding-bottom: max(20px, calc(20px + env(safe-area-inset-bottom)));
     }
   }

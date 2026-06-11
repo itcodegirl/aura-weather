@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { HelpCircle } from "lucide-react";
 import "./InfoDrawer.css";
 
@@ -12,6 +12,7 @@ function InfoDrawer({
   const panelId = useId();
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
+  const panelRef = useRef(null);
   const triggerLabel = typeof label === "string" && label.trim() ? label : "More info";
 
   const close = useCallback(() => {
@@ -21,6 +22,16 @@ function InfoDrawer({
   const handleToggle = useCallback(() => {
     setOpen((previous) => !previous);
   }, []);
+
+  // When the panel opens, move focus into it so screen reader users
+  // hear the content immediately rather than having to navigate there
+  // manually. useLayoutEffect runs synchronously after the DOM is
+  // painted — the panel node exists by the time focus() is called.
+  useLayoutEffect(() => {
+    if (open) {
+      panelRef.current?.focus({ preventScroll: true });
+    }
+  }, [open]);
 
   // Escape closes the panel and returns focus to the trigger so a
   // keyboard user does not lose their place. We also dismiss on any
@@ -68,7 +79,14 @@ function InfoDrawer({
         <HelpCircle size={14} aria-hidden="true" />
       </button>
       {open && (
-        <div id={panelId} className="info-drawer-panel" role="note">
+        <div
+          id={panelId}
+          ref={panelRef}
+          className="info-drawer-panel"
+          role="note"
+          tabIndex={-1}
+          aria-label={title || triggerLabel}
+        >
           {title && <p className="info-drawer-title">{title}</p>}
           <p className="info-drawer-copy">{children}</p>
         </div>

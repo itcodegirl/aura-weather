@@ -12,6 +12,22 @@
   "theme_color": "#0b1c3f",
   "orientation": "any",
   "categories": ["weather", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshots/aura-wide.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Aura Weather desktop dashboard with current conditions, exposure metrics, and hourly outlook"
+    },
+    {
+      "src": "/screenshots/aura-narrow.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Aura Weather mobile dashboard with current conditions"
+    }
+  ],
   "icons": [
     {
       "src": "/favicon.svg",

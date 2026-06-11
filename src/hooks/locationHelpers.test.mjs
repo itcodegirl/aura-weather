@@ -4,7 +4,13 @@ import assert from "node:assert/strict";
 import {
   hasMatchingCoordinates,
   toLocationPayload,
+  resolveInitialLocationState,
 } from "./locationHelpers.js";
+import {
+  DEFAULT_LOCATION,
+  LOCATION_FALLBACK_NOTICE,
+  SAVED_LOCATION_NOTICE,
+} from "./useLocation.js";
 
 describe("toLocationPayload", () => {
   test("returns a normalized payload for valid coordinates", () => {
@@ -77,5 +83,65 @@ describe("hasMatchingCoordinates", () => {
       hasMatchingCoordinates({ lat: 0, lon: 0 }, undefined),
       false
     );
+  });
+});
+
+describe("resolveInitialLocationState", () => {
+  const persisted = {
+    lat: 41.8781,
+    lon: -87.6298,
+    name: "Chicago",
+    country: "United States",
+  };
+  const shared = {
+    lat: 35.6762,
+    lon: 139.6503,
+    name: "Tokyo",
+    country: "Japan",
+  };
+
+  test("falls back to the default location with the setup prompt", () => {
+    const state = resolveInitialLocationState();
+    assert.equal(state.location, DEFAULT_LOCATION);
+    assert.equal(state.startupLocation, null);
+    assert.equal(state.notice, LOCATION_FALLBACK_NOTICE);
+    assert.equal(state.hasPersistedLocation, false);
+  });
+
+  test("uses the persisted startup location when there is no URL link", () => {
+    const state = resolveInitialLocationState({ persistedLocation: persisted });
+    assert.equal(state.location, persisted);
+    assert.equal(state.startupLocation, persisted);
+    assert.equal(state.notice, SAVED_LOCATION_NOTICE);
+    assert.equal(state.hasPersistedLocation, true);
+  });
+
+  test("a deep link wins over the persisted city without clobbering startup", () => {
+    const state = resolveInitialLocationState({
+      urlLocation: shared,
+      persistedLocation: persisted,
+    });
+    assert.equal(state.location, shared);
+    // The user's own startup city is preserved as the home base.
+    assert.equal(state.startupLocation, persisted);
+    assert.equal(state.notice, null);
+    assert.equal(state.hasPersistedLocation, true);
+  });
+
+  test("a deep link for a first-time visitor seeds no startup city", () => {
+    const state = resolveInitialLocationState({ urlLocation: shared });
+    assert.equal(state.location, shared);
+    assert.equal(state.startupLocation, null);
+    assert.equal(state.hasPersistedLocation, false);
+  });
+
+  test("a link matching the startup city is treated as a normal open", () => {
+    const state = resolveInitialLocationState({
+      urlLocation: { ...persisted, name: "Chicago" },
+      persistedLocation: persisted,
+    });
+    assert.equal(state.location, persisted);
+    assert.equal(state.notice, SAVED_LOCATION_NOTICE);
+    assert.equal(state.hasPersistedLocation, true);
   });
 });

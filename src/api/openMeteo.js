@@ -9,7 +9,6 @@ const ENDPOINTS = {
   archive: "https://archive-api.open-meteo.com/v1/archive",
   aqi: "https://air-quality-api.open-meteo.com/v1/air-quality",
   geocode: "https://geocoding-api.open-meteo.com/v1/search",
-  reverseGeocode: "https://nominatim.openstreetmap.org/reverse",
   alerts: "https://api.weather.gov/alerts/active",
 };
 const GEOCODE_RESULTS_LIMIT = 5;
@@ -21,15 +20,12 @@ const DEFAULT_PRECIPITATION_UNIT = "inch";
 const DEFAULT_TIMEZONE = "UTC";
 const FORECAST_RETRY_DELAYS_MS = [250, 700];
 const GEOCODE_RETRY_DELAYS_MS = [200];
-const REVERSE_GEOCODE_RETRY_DELAYS_MS = [250];
 const SUPPLEMENTAL_RETRY_DELAYS_MS = [300];
-const REVERSE_GEOCODE_CACHE_PRECISION = 3;
 export const ALERTS_STATUS = {
   ready: "ready",
   unsupported: "unsupported",
   unavailable: "unavailable",
 };
-const reverseGeocodeCache = new Map();
 
 function isAbortError(error) {
   return error?.name === "AbortError";
@@ -245,54 +241,6 @@ function getDateInTimeZone(timeZone) {
 }
 
 const toNumber = toFiniteNumber;
-
-function toReverseGeocodeCacheKey(lat, lon) {
-  return `${lat.toFixed(REVERSE_GEOCODE_CACHE_PRECISION)}:${lon.toFixed(REVERSE_GEOCODE_CACHE_PRECISION)}`;
-}
-
-function normalizePlacePart(value) {
-  if (typeof value !== "string") {
-    return "";
-  }
-  return value.trim();
-}
-
-function pickReverseGeocodeName(payload) {
-  const address =
-    payload?.address && typeof payload.address === "object"
-      ? payload.address
-      : {};
-  const candidate =
-    address.city ||
-    address.town ||
-    address.village ||
-    address.municipality ||
-    address.city_district ||
-    address.suburb ||
-    address.county ||
-    address.state_district ||
-    address.state ||
-    payload?.name ||
-    (typeof payload?.display_name === "string"
-      ? payload.display_name.split(",")[0]
-      : "");
-
-  return normalizePlacePart(candidate);
-}
-
-function normalizeReverseGeocodeResult(payload) {
-  const name = pickReverseGeocodeName(payload);
-  const country = normalizePlacePart(payload?.address?.country);
-
-  if (!name && !country) {
-    return null;
-  }
-
-  return {
-    name,
-    country,
-  };
-}
 
 function mapAlertSeverityScore(severity) {
   const normalized = typeof severity === "string" ? severity.trim().toLowerCase() : "";
@@ -510,52 +458,6 @@ export async function geocodeCity(name, options = {}) {
     }
   );
   return Array.isArray(data?.results) ? data.results : [];
-}
-
-/**
- * Converts coordinates into a friendly place label for device-location success.
- */
-export async function reverseGeocodeCoordinates(lat, lon, options = {}) {
-  const coordinates = validateCoordinates(lat, lon);
-  const cacheKey = toReverseGeocodeCacheKey(
-    coordinates.latitude,
-    coordinates.longitude
-  );
-  const cached = reverseGeocodeCache.get(cacheKey);
-
-  if (cached) {
-    return cached;
-  }
-
-  const params = new URLSearchParams({
-    lat: String(coordinates.latitude),
-    lon: String(coordinates.longitude),
-    format: "jsonv2",
-    addressdetails: "1",
-    zoom: "10",
-  });
-  if (typeof options.language === "string" && options.language.trim()) {
-    params.set("accept-language", options.language.trim());
-  }
-
-  const payload = await fetchJsonWithRetry(
-    `${ENDPOINTS.reverseGeocode}?${params}`,
-    {
-      signal: options.signal,
-      retryDelaysMs:
-        options.retryDelaysMs ?? REVERSE_GEOCODE_RETRY_DELAYS_MS,
-      headers: {
-        Accept: "application/json",
-      },
-    }
-  );
-
-  const result = normalizeReverseGeocodeResult(payload);
-  if (result) {
-    reverseGeocodeCache.set(cacheKey, result);
-  }
-
-  return result;
 }
 
 /**

@@ -229,6 +229,18 @@
   }
 }
 
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the 420px tier drops the risk badge to 9px, below comfortable phone
+ * reading size. Pointer-scoped and tied to the same width tier so
+ * desktop density and the visual baselines are unaffected.
+ */
+@media (pointer: coarse) and (max-width: 420px) {
+  .nowcast-risk-badge {
+    font-size: 10px;
+  }
+}
+
 
 
 

@@ -70,6 +70,20 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime) {
   const nowIdx = paired.findIndex((entry) => entry.time >= now.getTime());
   const currentIdx = nowIdx === -1 ? paired.length - 1 : nowIdx;
 
+  // A single usable sample compares against itself (delta 0), which
+  // used to read as a confident "Stable" trend computed from no trend
+  // data at all. Surface the current reading but say the trend is
+  // uncomputable.
+  if (paired.length < 2) {
+    return {
+      current: paired[currentIdx]?.value ?? null,
+      delta: 0,
+      direction: "steady",
+      interpretation: "Not enough data",
+      sparkline: paired.map((entry) => entry.value),
+    };
+  }
+
   const sixHoursAgo =
     paired[Math.max(0, currentIdx - 6)]?.value ?? paired[0]?.value;
   const current = paired[currentIdx]?.value ?? paired[paired.length - 1]?.value;

@@ -16,15 +16,31 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* Allow the block to shrink inside the space-between hero-meta row so
+     a long place name wraps instead of pushing the high/low pill off
+     the right edge. */
+  min-width: 0;
 }
 
 .hero-location {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
   color: var(--text-muted);
   font-size: 16px;
   font-weight: 600;
+}
+
+/* Keep the pin icon from being squeezed, and let an unusually long
+   single-token location name break rather than overflow horizontally. */
+.hero-location svg {
+  flex-shrink: 0;
+}
+
+.hero-location span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .hero-date {
@@ -236,48 +252,32 @@
   border-color: rgba(148, 163, 184, 0.24);
 }
 
-.hero-sunlight {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.hero-sun-chip {
+/*
+ * Inline sunrise · sunset · daylight summary. Each segment aligns its
+ * icon with its value and stays on one line, so the daylight duration
+ * reads as "15 hr 09 min" instead of breaking after "15 hr". The line
+ * wraps between segments when space is tight, never mid-value.
+ */
+.hero-sunlight-line {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  min-height: 72px;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--subcard-bg);
-  border: var(--subcard-border);
-  box-shadow: var(--subcard-shadow);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-.hero-sun-chip--daylight {
-  background:
-    linear-gradient(165deg, rgba(20, 33, 64, 0.52), rgba(10, 20, 42, 0.44)),
-    var(--subcard-bg);
-}
-
-.hero-sun-label {
+.hero-sunlight-segment {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  gap: 5px;
+  white-space: nowrap;
 }
 
-.hero-sun-value {
-  color: #edf5ff;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
+.hero-sunlight-separator {
+  color: rgba(196, 213, 241, 0.5);
 }
 
 .hero-stats {
@@ -326,6 +326,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Keep a value and its unit on one line ("10 mph", not "10" / "mph") so
+   the metric grid reads evenly. Scoped to the hero grid; values here are
+   short enough that nowrap never overflows the cell. */
+.hero-stats .stat-value {
+  white-space: nowrap;
+}
+
 .stat-value.is-missing {
   /* Visual cue that distinguishes "no data" from a real reading.
      The em-dash already carries the meaning; the muted color and
@@ -348,14 +355,6 @@
 
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
 @media (max-width: 1200px) {
-  .hero-sunlight {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero-sun-chip--daylight {
-    grid-column: span 2;
-  }
-
   .hero-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -450,31 +449,9 @@
     min-height: auto;
     padding: 10px;
   }
-
-  .hero-sunlight {
-    gap: 8px;
-  }
-
-  .hero-sun-chip {
-    padding: 9px 10px;
-    min-height: 66px;
-  }
-
-  .hero-sun-value {
-    font-size: 15px;
-  }
 }
 
 @media (max-width: 560px) {
-  /* Keep 2-column sunlight grid — avoids stacking 3 chips into a ~200px tower */
-  .hero-sunlight {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero-sun-chip--daylight {
-    grid-column: span 2;
-  }
-
   .hero-icon {
     width: 102px;
   }
@@ -515,17 +492,10 @@
     font-size: 18px;
   }
 
-  .hero-sun-chip {
-    min-height: 60px;
-    gap: 4px;
-  }
-
-  .hero-sun-label,
   .stat-label {
     font-size: 10px;
   }
 
-  .hero-sun-value,
   .stat-value {
     font-size: 15px;
   }

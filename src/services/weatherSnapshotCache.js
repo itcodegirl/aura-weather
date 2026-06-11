@@ -4,6 +4,11 @@ const CACHE_KEY = "aura-weather-last-known-forecast-v1";
 const CACHE_VERSION = 1;
 const MAX_CACHED_LOCATIONS = 8;
 const MAX_SNAPSHOT_AGE_MS = 12 * 60 * 60 * 1000;
+// Snapshots stamped meaningfully in the future mean the device clock
+// moved (or the payload is corrupt); clamping their age to zero would
+// present them as perpetually fresh. A small slack absorbs ordinary
+// clock jitter.
+const FUTURE_SNAPSHOT_SLACK_MS = 5 * 60 * 1000;
 
 function getStorage() {
   try {
@@ -131,15 +136,19 @@ function hasUsableSnapshotShape(snapshot) {
   );
 }
 
-function isFreshSnapshot(snapshot, nowMs = Date.now()) {
+function isFreshSnapshot(snapshot, nowMs = Date.now(), maxAgeMs = MAX_SNAPSHOT_AGE_MS) {
   if (!hasUsableSnapshotShape(snapshot)) {
     return false;
   }
 
   const cachedAt = toFiniteNumber(snapshot.cachedAt);
   const now = toFiniteNumber(nowMs) ?? Date.now();
-  const ageMs = Math.max(0, now - cachedAt);
-  return ageMs <= MAX_SNAPSHOT_AGE_MS;
+  const rawAgeMs = now - cachedAt;
+  if (rawAgeMs < -FUTURE_SNAPSHOT_SLACK_MS) {
+    return false;
+  }
+  const ageMs = Math.max(0, rawAgeMs);
+  return ageMs <= maxAgeMs;
 }
 
 export function readCachedWeatherSnapshot(coordinates, options = {}) {
@@ -148,10 +157,15 @@ export function readCachedWeatherSnapshot(coordinates, options = {}) {
     return null;
   }
 
+  // Callers can widen the freshness window (options.maxAgeMs) for
+  // degraded paths — offline starts and failed refreshes — where an
+  // honestly-labelled old forecast beats an error screen. The default
+  // stays conservative so the happy path never renders stale numbers.
+  const maxAgeMs = toFiniteNumber(options.maxAgeMs) ?? MAX_SNAPSHOT_AGE_MS;
   const payload = readCachePayload();
   const snapshot = payload?.snapshots?.[key] ?? null;
 
-  if (!isFreshSnapshot(snapshot, options.nowMs)) {
+  if (!isFreshSnapshot(snapshot, options.nowMs, maxAgeMs)) {
     return null;
   }
 

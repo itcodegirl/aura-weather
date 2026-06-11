@@ -270,3 +270,91 @@
     transform: none;
   }
 }
+
+/*
+ * Data-source disclosure ("Where this data comes from"). A low-key
+ * <details> beneath the bento that holds the Source Health panel
+ * without hogging a full grid card on every load. Default closed.
+ * Renders the label, an optional hint, and a rotating chevron; the
+ * native marker is suppressed.
+ */
+.data-status-disclosure {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(186, 212, 252, 0.22);
+  background: rgba(8, 17, 36, 0.34);
+}
+
+.data-status-disclosure[open] {
+  background: rgba(8, 17, 36, 0.5);
+  border-style: solid;
+}
+
+.data-status-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: inherit;
+  transition: color var(--motion-fast) var(--ease-standard);
+}
+
+.data-status-summary::-webkit-details-marker {
+  display: none;
+}
+
+.data-status-summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+
+.data-status-disclosure[open] .data-status-summary::after {
+  transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.data-status-summary:hover,
+.data-status-summary:focus-visible {
+  color: #f3f8ff;
+}
+
+.data-status-summary:focus-visible {
+  outline: 2px solid rgba(130, 228, 255, 0.66);
+  outline-offset: 2px;
+}
+
+.data-status-summary-label {
+  letter-spacing: 0.1em;
+}
+
+.data-status-summary-hint {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.data-status-disclosure .source-health-card {
+  margin: 0 14px 14px;
+  animation: none;
+}
+
+@media (max-width: 640px) {
+  .data-status-summary-hint {
+    display: none;
+  }
+}

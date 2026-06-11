@@ -338,6 +338,17 @@
 /* Touch-device tap-target expansions — placed after all base rules and
    viewport-width breakpoints so the cascade doesn't override them. */
 @media (pointer: coarse) {
+  /*
+   * iOS Safari auto-zooms the page when a text field smaller than 16px
+   * receives focus, which yanks the layout sideways and leaves the
+   * dropdown misaligned. Pin the search field to 16px on touch devices
+   * so focusing it never triggers that zoom. Pointer-scoped so the
+   * tighter desktop sizing is untouched.
+   */
+  .city-search-input {
+    font-size: 16px;
+  }
+
   /* 44×44 minimum — overrides any viewport-width reset above */
   .city-search-clear {
     width: 44px;

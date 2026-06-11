@@ -18,6 +18,7 @@ function HeaderControls({
   setStartupCity,
   restoreSavedCity,
   forgetSavedCity,
+  moveSavedCity,
   syncConnected,
   syncAccount,
   syncState,
@@ -209,6 +210,7 @@ function HeaderControls({
           setStartupCity={handleSetStartupCity}
           restoreSavedCity={restoreSavedCity}
           forgetSavedCity={forgetSavedCity}
+          moveSavedCity={moveSavedCity}
         />
         {shouldShowSyncPanel ? (
           <SyncAccountPanel

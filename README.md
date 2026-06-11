@@ -20,7 +20,7 @@ The portfolio story is simple: **Aura never turns missing provider data into fak
 - Compare today's temperature against historical Open-Meteo archive context when available.
 - See NOAA/NWS severe-alert coverage with explicit unsupported-region messaging.
 - Restore a last-known forecast on offline starts without pretending stale data is fresh.
-- Save cities, switch between them quickly, set any saved city as startup, and optionally sync saved locations.
+- Save cities, switch between them quickly, reorder them, set any saved city as startup, and optionally sync saved locations.
 - Toggle Fahrenheit/Celsius locally without refetching forecast data.
 - Install the app shell as a PWA after a first successful production visit.
 
@@ -143,7 +143,6 @@ If `VITE_AURA_SYNC_API_BASE` is not set, sync still works when the stored accoun
 
 ## Future Improvements
 
-- Add richer saved-city controls such as drag reordering once usage patterns justify the extra UI weight.
 - Tune production performance against live provider latency, not only the deterministic demo route.
 - Expand the case study with side-by-side mobile/desktop annotations of the trust-contract state.
 
@@ -161,9 +160,9 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`249` tests across 55 suites, including React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`437` tests across 92 suites, including React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
-- `npm run test:e2e -- --workers=1` passes (`28` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
+- `npm run test:e2e -- --workers=1` passes (`34` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
 - GitHub Actions runs lint, tests, render tests, build, serial Playwright, and Lighthouse budgets on pull requests
 
@@ -345,10 +344,20 @@ bug, the contract, and the test pyramid.
 
 ## Recent Hardening
 
+- **Self-refreshing dashboard** - the app now refetches on its own when the tab becomes visible again or connectivity returns, if the data is stale (30+ min), erroring, or restored from cache. A tab left open overnight no longer presents yesterday's forecast as current, and recovery from a dropped connection no longer requires a manual retry. Same-city refreshes keep current data visible behind the "Refreshing" pill.
+- **Derived-metric honesty** - missing inputs can no longer produce confident derived claims: null rain chance shows "Partial data" instead of a fake "Steady" all-clear, a one-sample pressure window says "Not enough data" instead of "Stable", a week with no recorded lows omits its range instead of inventing a 0° bound, and a short hourly window is captioned by its real coverage instead of "Next 24h".
+- **Recovery clarity** - forecast timeouts get timeout-specific copy, blocked location permission is explained distinctly from a GPS timeout, the Retry button disables while a request is in flight, and clock-skewed cache snapshots are rejected instead of reading as perpetually fresh.
+- **Saved-city reordering** - each chip now has move-earlier/move-later arrows (keyboard- and screen-reader-friendly: `aria-disabled` at the ends keeps focus stable, and a live region announces the new position). The order persists locally and rides the existing cloud-sync push.
+- **Honest Lighthouse budgets** - the CI performance gate moved from 0.5 to 0.85 (accessibility 0.95, SEO 0.9) now that the deterministic demo route scores 98/100/96/100 locally.
+- **Dead code removed** - the unused Nominatim reverse-geocode adapter (the app geocodes through BigDataCloud) is gone from the API layer.
+- **Committed README screenshots** - `docs/screenshots/*.png` was gitignored while the README embedded those paths, so every image was broken on GitHub. The PNGs are now committed and regenerated deterministically via `npm run screenshots`.
+- **Native social card + PWA install screenshots** - `og-image.png` is now a real 1200×630 dashboard render (hero + exposure gauges) captured by `e2e/social-pwa-assets.spec.js`, and the manifest ships wide/narrow `screenshots` so Android install prompts show the app instead of a bare icon.
 - **Location-timezone forecast days** - the 7-day forecast now resolves "today" in the forecast location's timezone instead of the viewer's. Previously, viewing a city west of you across the date line (e.g. Honolulu from Tokyo) silently dropped the location's current day from the outlook, and Today/Tomorrow labels could shift by one day.
 - **Keyboard hourly explorer** - the hourly sample strip is no longer touch-only. On larger screens it reveals on focus (like the skip link), exposes a single roving tab stop, and Arrow/Home/End keys walk the samples; selecting a sample highlights the matching chart point. Invalid `role="list"` semantics on the strip were corrected to `role="group"`.
 - **Escape-to-collapse forecast rows** - expanded forecast day details close on Escape and return focus to the trigger, matching the InfoDrawer dismiss gesture.
 - **Honest social cards** - `og:image`/`twitter:image` were relative URLs (blank cards on most platforms); they are now absolute with declared dimensions, `og:url`, and a card type that matches the image's aspect ratio. The PWA manifest stops locking installed apps to portrait since tablet/desktop layouts exist.
+- **Timezone-correct "now" beyond the forecast** - the hourly "Now" marker + 24h window, the nowcast "starts in N min" window, and the hero golden-hour wash previously compared forecast times against the *device* clock, misplacing them when viewing a city in another zone. A shared `getZonedNow(timeZone)` helper reframes "now" into the location's wall clock; display labels were already correct and are untouched.
+- **Shareable forecast deep links** - `?lat&lon&name` links now actually load that place on cold start. The read-path (`parseLocationFromUrl`) was documented and the write-path already mirrored the active city into the URL, but the seed was never wired, so shared links silently fell back to the default city. A deep link now wins over the persisted startup city without overwriting or auto-persisting it.
 - **Saved-city-first sync** - Cloud Sync no longer appears on a fresh first load with no saved cities. It becomes available once the user saves a city, and remains visible for connected/error states so recovery controls are not hidden.
 - **Saved-city search suggestions** - focusing the empty city search now opens saved cities as selectable combobox options, preserving keyboard and pointer selection behavior.
 - **Shorter setup copy** - first-load location onboarding and follow-up location prompts now use compact copy so the mobile header moves users into the forecast faster.
@@ -403,7 +412,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — 244 Node tests covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; 15 Playwright smoke/flow checks for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — 412 Node tests covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; 31 Playwright smoke/flow checks for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

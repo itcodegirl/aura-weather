@@ -181,6 +181,12 @@
   color: #b9f5ff;
 }
 
+.forecast-signal-chip--limited {
+  color: rgba(203, 218, 240, 0.62);
+  border: 1px dashed rgba(176, 200, 235, 0.34);
+  background: rgba(13, 24, 46, 0.4);
+}
+
 .forecast-signal-chip--steady {
   border-color: rgba(186, 211, 249, 0.25);
   color: rgba(220, 233, 255, 0.9);
@@ -581,6 +587,39 @@
 
   .forecast-detail-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * The signal chip carries the day's trend (WARM / COOL / WET / STEADY).
+ * Its base size is 9px, dropping to 8px on the narrowest phones — too
+ * small to scan comfortably one-handed. Lift it to a 10px floor on
+ * touch devices. Pointer-scoped so desktop density is preserved; placed
+ * last so it overrides the width-tier sizing above.
+ */
+@media (pointer: coarse) {
+  .forecast-signal-chip {
+    font-size: 10px;
+  }
+}
+
+/*
+ * Same 10px touch floor for the day-row micro-labels: the 560px tier
+ * drops the condition line and the HIGH/LOW captions to 9px with
+ * 0.12em tracking, which reads as letter soup at arm's length on a
+ * phone. Floor the size and ease the tracking on coarse pointers only,
+ * scoped to the same width tier that shrank them, so fine-pointer
+ * density and the committed visual baselines are unaffected.
+ */
+@media (pointer: coarse) and (max-width: 560px) {
+  .forecast-condition,
+  .forecast-temp-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .bento-forecast .forecast-subtitle {
+    font-size: 10px;
   }
 }
 

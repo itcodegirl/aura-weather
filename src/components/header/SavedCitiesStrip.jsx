@@ -11,9 +11,13 @@ function SavedCitiesStrip({
   setStartupCity,
   forgetSavedCity,
   restoreSavedCity,
+  moveSavedCity,
 }) {
   const safeSavedCities = Array.isArray(savedCities) ? savedCities : [];
   const [pendingUndo, setPendingUndo] = useState(null);
+  // Screen-reader feedback for reorder actions. Visually the chip just
+  // changes place; assistive tech needs the new position spoken.
+  const [orderNotice, setOrderNotice] = useState("");
   const undoTimeoutRef = useRef(null);
   // Focus-management: after a chip is removed, the focused remove button
   // unmounts and the browser drops focus to document.body. Move focus to
@@ -81,6 +85,29 @@ function SavedCitiesStrip({
     [setStartupCity]
   );
 
+  // Bound moves are guarded here (not via the disabled attribute) so
+  // the arrow buttons keep a stable tab order and never drop focus to
+  // <body> when a chip reaches the first or last slot mid-interaction.
+  const handleMoveSavedCity = useCallback(
+    (event, city, offset, index, total) => {
+      event.stopPropagation();
+      const targetIndex = index + offset;
+      if (
+        typeof moveSavedCity !== "function" ||
+        targetIndex < 0 ||
+        targetIndex >= total
+      ) {
+        return;
+      }
+
+      moveSavedCity(city, offset);
+      setOrderNotice(
+        `${city.name} moved to position ${targetIndex + 1} of ${total}.`
+      );
+    },
+    [moveSavedCity]
+  );
+
   const handleUndo = useCallback(() => {
     if (!pendingUndo || typeof restoreSavedCity !== "function") {
       setPendingUndo(null);
@@ -111,8 +138,11 @@ function SavedCitiesStrip({
           role="list"
           aria-label="Saved cities"
         >
-          {safeSavedCities.map((city) => {
+          {safeSavedCities.map((city, index) => {
             const key = `${city.lat}:${city.lon}:${city.name}`;
+            const total = safeSavedCities.length;
+            const isFirst = index === 0;
+            const isLast = index === total - 1;
             // Strict equality through toFiniteNumber so a null/undefined
             // active location does not coerce to 0 and falsely match a
             // saved city with null lat/lon.
@@ -153,6 +183,38 @@ function SavedCitiesStrip({
                 >
                   {city.name}
                 </button>
+                {total > 1 && (
+                  <>
+                    {/*
+                     * aria-disabled (not disabled) at the ends: the
+                     * buttons stay in the tab order and keep focus
+                     * after a chip lands in the first or last slot;
+                     * the click handler no-ops out-of-range moves.
+                     */}
+                    <button
+                      type="button"
+                      className="saved-city-move"
+                      onClick={(event) =>
+                        handleMoveSavedCity(event, city, -1, index, total)
+                      }
+                      aria-label={`Move ${city.name} earlier in your saved cities`}
+                      aria-disabled={isFirst || undefined}
+                    >
+                      {"‹"}
+                    </button>
+                    <button
+                      type="button"
+                      className="saved-city-move"
+                      onClick={(event) =>
+                        handleMoveSavedCity(event, city, 1, index, total)
+                      }
+                      aria-label={`Move ${city.name} later in your saved cities`}
+                      aria-disabled={isLast || undefined}
+                    >
+                      {"›"}
+                    </button>
+                  </>
+                )}
                 {isStartup ? (
                   <span className="saved-city-startup-badge">Startup</span>
                 ) : (
@@ -181,6 +243,12 @@ function SavedCitiesStrip({
           })}
         </div>
       )}
+      {/* Persistent live region so reorder announcements are reliable;
+          it sits outside the role=list container, which may only have
+          listitem children. */}
+      <span className="sr-only" role="status" aria-live="polite">
+        {orderNotice}
+      </span>
       {pendingUndo && (
         <div
           className="saved-city-undo"

@@ -60,6 +60,20 @@ describe("meteorology utils", () => {
     assert.equal(steady.interpretation, "Stable");
   });
 
+  test("calculatePressureTrend refuses to call a single sample 'Stable'", () => {
+    // One usable reading compares against itself (delta 0), which used
+    // to present as a confident "Stable" trend computed from no trend
+    // data. The current value is still surfaced; the trend is not.
+    const times = buildHourlyIsoTimes(8, 0);
+    const singleSample = calculatePressureTrend(
+      [1012, null, null, null, null, null, null, null],
+      times
+    );
+    assert.equal(singleSample.current, 1012);
+    assert.equal(singleSample.interpretation, "Not enough data");
+    assert.equal(singleSample.direction, "steady");
+  });
+
   test("calculatePressureTrend returns defaults for invalid input", () => {
     const empty = calculatePressureTrend([], []);
     assert.deepEqual(empty, {

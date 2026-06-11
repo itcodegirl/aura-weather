@@ -175,24 +175,67 @@ async function findBuildDependencies(cache, entryAssetUrls) {
   return [...discoveredAssetUrls];
 }
 
+// How long a navigation waits on the network before the cached shell
+// takes over. Healthy connections answer well inside this window; on
+// lie-fi the fetch can hang for 30s+ before the browser gives up,
+// which reads as "the app is broken" when a fully cached shell was
+// sitting right there.
+const NAVIGATION_NETWORK_TIMEOUT_MS = 3500;
+
+async function getCachedNavigationFallback(request) {
+  const cache = await caches.open(APP_SHELL_CACHE);
+  const requestPath = new URL(request.url).pathname;
+  return (
+    (await matchCachedRequest(cache, request)) ||
+    (await cache.match(requestPath)) ||
+    (await cache.match("/")) ||
+    (await cache.match("/index.html")) ||
+    null
+  );
+}
+
 async function networkFirstNavigation(request) {
-  try {
+  const networkPromise = (async () => {
     const response = await fetch(request);
     await Promise.all([
       cacheResponse(APP_SHELL_CACHE, request, response),
       cacheResponse(APP_SHELL_CACHE, "/", response),
     ]);
     return response;
+  })();
+
+  let timeoutId;
+  const timeoutPromise = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve(null), NAVIGATION_NETWORK_TIMEOUT_MS);
+  });
+
+  try {
+    const networkResponse = await Promise.race([
+      // A fast rejection (e.g. airplane mode) should fall through to
+      // the cache immediately rather than waiting out the timeout.
+      networkPromise.catch(() => null),
+      timeoutPromise,
+    ]);
+    if (networkResponse) {
+      return networkResponse;
+    }
+
+    const cachedResponse = await getCachedNavigationFallback(request);
+    if (cachedResponse) {
+      // The slow network fetch keeps running and settles into the
+      // cache for next time; swallow its eventual rejection so it
+      // never surfaces as an unhandled-rejection console error.
+      networkPromise.catch(() => {});
+      return cachedResponse;
+    }
+
+    // Nothing cached (first visit, or the cache was evicted): the
+    // slow network response is still the best answer available.
+    return await networkPromise;
   } catch {
-    const cache = await caches.open(APP_SHELL_CACHE);
-    const requestPath = new URL(request.url).pathname;
-    return (
-      (await matchCachedRequest(cache, request)) ||
-      (await cache.match(requestPath)) ||
-      (await cache.match("/")) ||
-      (await cache.match("/index.html")) ||
-      Response.error()
-    );
+    return (await getCachedNavigationFallback(request)) || Response.error();
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

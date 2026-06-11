@@ -1,5 +1,6 @@
 import { findWindowStartIndex } from "../../utils/timeSeries.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
+import { getZonedNow } from "../../utils/dates.js";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
 const NOWCAST_STEP_MINUTES = 15;
@@ -20,7 +21,7 @@ function normalizeAmount(value) {
   return parsed === null ? null : Math.max(parsed, 0);
 }
 
-export function analyzeNowcast(nowcast) {
+export function analyzeNowcast(nowcast, options = {}) {
   if (!Array.isArray(nowcast?.time) || nowcast.time.length === 0) {
     return {
       hasData: false,
@@ -44,7 +45,13 @@ export function analyzeNowcast(nowcast) {
     ? nowcast.conditionCode
     : [];
 
+  // The 15-minute timestamps are the location's naive wall clock, so the
+  // window must be anchored to the location's "now". Tests inject an
+  // explicit `now`; the card passes the location's IANA zone.
+  const referenceNow =
+    toFiniteNumber(options.now) ?? getZonedNow(options.timeZone).getTime();
   const normalizedStartIdx = findWindowStartIndex(time, {
+    now: referenceNow,
     windowSize: NOWCAST_WINDOW_SIZE,
   });
 

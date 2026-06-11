@@ -224,7 +224,13 @@ function CitySearch({ onSelect, savedCities, recentCities }, ref) {
           className="city-search-input"
           aria-label="Search for a city"
           aria-expanded={showDropdown}
-          aria-controls={showDropdown ? dropdownId : undefined}
+          aria-controls={
+            showDropdown
+              ? hasResultOptions
+                ? resultsId
+                : dropdownId
+              : undefined
+          }
           aria-describedby={shouldShowStatus ? statusId : undefined}
           aria-busy={loading || undefined}
           aria-invalid={Boolean(error) || undefined}

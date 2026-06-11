@@ -5,7 +5,165 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Production hardening audit (2026-06)
+## [Unreleased] — Restore lost severity-badge & data-status styling (2026-06)
+
+### Fixed
+
+- **Severity badges rendered unstyled.** A past token-consolidation
+  pass dropped the shared `.severity-badge` rules and the
+  `--severity-info-*` tokens from the CSS, but NowcastCard and RainCard
+  still emit `class="severity-badge severity-badge--{tone}"`. The
+  immediate-risk and rain-risk badges had been rendering as bare inline
+  text (no pill, no severity colour) on every viewport; the committed
+  visual baselines had silently captured the broken state. Restored the
+  full 5-rung badge family and the neutral/info tokens it defaults to.
+- **Data-source disclosure unstyled / "fromForecast" run-together.**
+  The `.data-status-disclosure` rules were likewise missing, so the
+  "Where this data comes from" summary lost its chevron and its hint
+  ran straight into the label ("…comes from​Forecast, air quality…").
+  Restored the disclosure, summary, label, hint, and chevron styling
+  (the hint is hidden on phones at ≤640px, as designed).
+
+## [Unreleased] — Mobile UX audit: safe-area, iOS input zoom, layout stability (2026-06)
+
+### Fixed
+
+- **Safe-area insets now cover all four edges.** Handling previously
+  applied only to the bottom home-bar. With `viewport-fit=cover` and a
+  black-translucent status bar, an installed PWA also extends under the
+  status bar (top) and, in landscape, under the notch and rounded
+  corners (left/right). The content column is now padded on every edge
+  so the header is never clipped and no card runs under a notch; the
+  decorative background stays full-bleed and layout is unchanged where
+  the inset resolves to 0.
+- **No more iOS focus-zoom on text inputs.** iOS Safari zooms the
+  viewport when a sub-16px field is focused. The city-search (15px) and
+  sync-account key (12px) fields are pinned to 16px inside
+  `@media (pointer: coarse)`, suppressing the zoom on touch devices
+  while the denser desktop sizing is preserved.
+
+### Changed
+
+- **Responsive-typography and long-name layout stability.**
+  `text-size-adjust: 100%` stops mobile WebKit/Blink from inflating
+  fonts in landscape, and the hero location row gained `min-width: 0` /
+  `overflow-wrap` guards plus a non-shrinking pin icon so an unusually
+  long place name wraps instead of pushing the high/low pill off-screen.
+
+## [Earlier] — Real-world reliability: auto-refresh, derived-metric honesty (2026-06)
+
+### Added
+
+- **Automatic refresh on natural opportunities.** The dashboard never
+  refetched on its own: a tab left open overnight kept showing
+  yesterday's forecast, and a dropped connection left the error banner
+  up after connectivity returned. Two listeners now close that gap —
+  `online` and `visibilitychange` trigger a refetch when the app is
+  visible, online, and either erroring, showing a restored cache, or
+  holding live data older than 30 minutes (minimum 60s between
+  automatic attempts). The decision logic is a pure, unit-tested
+  policy (`weatherRefreshPolicy.js`, 9 tests); same-coordinate
+  refreshes keep current data visible behind the existing
+  "Refreshing" pill, so the screen never blanks.
+- **Timeout-specific error copy.** A 10-second forecast timeout
+  surfaced as the generic "unavailable"; `TimeoutError` now reads
+  "Open-Meteo forecast timed out. Check your connection and retry."
+- **Blocked-permission location notice.** Denying the geolocation
+  prompt produced the same notice as a GPS timeout, hiding the fact
+  that the browser will silently swallow further prompts. Permission
+  denial (code 1) now explains the blocked state and how to recover.
+
+### Fixed
+
+- **Fake 0° week bound.** A week whose minimum temperatures were all
+  missing fell back to `weekMin = 0`, leaking a literal fake "0°" into
+  the 7-day summary ("Stable week · 0° to 74°") — a direct violation
+  of the data-trust contract. Missing bounds are now `null`, the
+  summary omits the range, and the Warm Peak / Cool Dip comparisons
+  gained finite guards so a null bound can no longer coerce to 0 and
+  hand out fake badges. Render test pins the contract.
+- **Fake "Steady" badge from missing rain data.** A day whose rain
+  chance was null fell through to the confident "Steady" signal — a
+  fake all-clear. It now shows a visibly distinct "Partial data" chip.
+- **Fake "Stable" pressure trend from one sample.** A single usable
+  pressure reading compared against itself (delta 0) and presented as
+  a confident "Stable" trend. One-sample windows now read "Not enough
+  data" while still surfacing the current reading.
+- **Forecast labels frozen across midnight.** "Today"/"Tomorrow" rows
+  were computed once per data fetch; a tab open past the location's
+  midnight kept yesterday's labels until a refetch. ForecastCard now
+  derives a day-granular `todayIso` from the shared minute tick, so
+  rows relabel at the location's midnight without per-minute
+  re-renders.
+- **Future-dated snapshots read as perpetually fresh.** The cache age
+  clamp (`Math.max(0, now - cachedAt)`) made a clock-skewed or corrupt
+  snapshot look brand new forever. Snapshots stamped more than 5
+  minutes in the future are now rejected (2 new tests).
+- **Hourly window honesty.** An API response with fewer than 24 hourly
+  slots was still captioned "Next 24h"; the subtitle now reports the
+  actual covered window ("Next 18h").
+- **Retry race.** The error-banner Retry button only had a 1400ms
+  cooldown; a tap after the cooldown but during a still-running
+  request aborted and restarted it. Retry now also disables while a
+  request is in flight.
+
+## [Earlier] — Saved-city reordering, honest budgets, dead-code removal (2026-06)
+
+### Added
+
+- **Saved-city reordering.** Each saved-city chip gained
+  move-earlier / move-later arrows. The buttons use `aria-disabled`
+  (not `disabled`) at the list ends so keyboard focus never drops to
+  `<body>` when a chip reaches the first or last slot, and an sr-only
+  live region announces the new position ("Tokyo moved to position 2
+  of 4"). The order is persisted through the same normalize/dedupe
+  path as every other saved-cities write and rides the existing
+  cloud-sync auto-push. Covered by new unit tests (`moveSavedCity`
+  reorder/clamp/no-op contracts) and render tests (single-chip
+  hidden state, callback wiring, aria-disabled bound behavior).
+
+### Changed
+
+- **Lighthouse budgets raised to honest levels.** The CI gate
+  allowed a performance score as low as 50/100 — loose enough to
+  hide a serious regression. With the deterministic `?mock=missing`
+  route scoring 98/100/96/100 locally, the budgets moved to
+  performance 0.85, accessibility 0.95, best-practices 0.9, SEO 0.9.
+
+### Removed
+
+- **Dead Nominatim reverse-geocode adapter.** `reverseGeocodeCoordinates`
+  (plus its cache, retry config, and payload normalizers) lived in
+  `src/api/openMeteo.js` but had no callers — the app resolves device
+  coordinates through BigDataCloud (`src/api/reverseGeocode.js`).
+  Removing it also removes the misleading suggestion that the app
+  talks to nominatim.openstreetmap.org.
+
+## [Earlier] — Social cards, PWA screenshots, committed README images (2026-06)
+
+### Fixed
+
+- **README screenshots render on GitHub.** `docs/screenshots/*.png`
+  was gitignored while the README embedded those paths and claimed
+  the screenshots were committed — every image in the README was
+  broken on github.com. The PNGs are now committed and regenerated
+  deterministically (`npm run screenshots`: provider mocks, frozen
+  clock, Arial-pinned fonts).
+
+### Added
+
+- **Real 1200×630 social card.** `public/og-image.png` was a 343×361
+  asset; it is now a native 2:1 dashboard render (hero conditions +
+  exposure gauges) captured by the new
+  `e2e/social-pwa-assets.spec.js`, and the Twitter card type returns
+  to `summary_large_image` with matching declared dimensions.
+- **PWA manifest screenshots.** `manifest.webmanifest` now ships
+  `screenshots` entries (1280×800 wide, 390×844 narrow) so supported
+  platforms show a rich install prompt instead of a bare icon. Assets
+  live in `public/screenshots/` and regenerate with the same
+  deterministic pipeline.
+
+## [Earlier] — Production hardening audit (2026-06)
 
 ### Fixed
 
@@ -72,6 +230,18 @@ portfolio-grade product. Format roughly follows
 
 ### Added
 
+- **Current-location recovery regression test.** A new
+  `useWeather.render.test.mjs` drives the full grant-location flow with
+  a reverse-geocode that resolves *before* the forecast — the ordering
+  that a 0ms e2e mock momentarily stranded in global loading — and
+  asserts the dashboard lands on the resolved place with live weather
+  and `loading === false`. Under the render harness the hook state
+  machine recovers correctly, confirming the stall was a browser/Playwright
+  timing artifact (already mitigated by latency-modeling the reverse-geocode
+  mock) rather than a logic defect; the test now guards that recovery
+  contract against future fetch-lifecycle regressions. No production code
+  was changed: there is no reproducible state-machine fault to fix, so a
+  speculative change to the fetch lifecycle was deliberately avoided.
 - **No-JS fallback.** `index.html` now renders a short, styled
   `<noscript>` notice explaining the dashboard needs JavaScript,
   instead of leaving a blank `<div id="root">`.
@@ -129,6 +299,12 @@ portfolio-grade product. Format roughly follows
 
 ### Changed
 
+- **Saved-city touch targets on coarse pointers.** The compact chip,
+  "Start", and remove controls expand their tap area toward ~44px on
+  touch devices via a transparent pseudo-element (visible chrome
+  unchanged), with extra space between the adjacent Start / remove
+  controls so a control's hit area never overlaps its neighbour's.
+  Desktop pointer behavior is untouched.
 - **Build chunking.** `vite.config.js` now splits `react` /
   `react-dom` / `scheduler` into a `react-vendor` chunk and
   `lucide-react` into its own. The app entry chunk drops from ~311 kB
@@ -188,6 +364,32 @@ portfolio-grade product. Format roughly follows
 
 ### Fixed
 
+- **Timezone-correct "now" for remote cities.** Open-Meteo's
+  `timezone=auto` timestamps are the location's naive local clock.
+  Display labels round-trip those correctly, but every comparison
+  against the real device clock — the hourly "Now" marker + 24h window,
+  the nowcast start window, the 7-day "today" filter + Today/Tomorrow
+  labels, and the golden-hour wash — drifted by the device/location
+  offset when viewing another zone. A shared `getZonedNow(timeZone)`
+  reframes "now" into the location's wall clock (the same frame the
+  naive strings parse into); display formatters are intentionally
+  untouched. Unit tests cover the helper, timezone-aware `formatDayLabel`,
+  and the nowcast window contract.
+- **Shareable `?lat&lon` deep links.** The read-path that seeds the
+  initial location from the URL (`parseLocationFromUrl`) was documented
+  and unit-tested but never wired into `useWeather`, and the write-path
+  then overwrote the URL — so shared forecast links silently loaded the
+  persisted/default city instead. A new pure `resolveInitialLocationState`
+  honors a valid deep link over the persisted startup city without
+  overwriting it or auto-persisting the shared view; a link that matches
+  the startup city is treated as a normal saved-location open. Five unit
+  tests pin the precedence.
+- **e2e reverse-geocode mock.** The shared mock routed
+  `nominatim.openstreetmap.org` with a nested address shape while the app
+  calls BigDataCloud (flat `city`/`countryName`), so the "current
+  location" test silently hit the live API and broke when that provider's
+  data for the fixture coordinates changed. It now mocks the real endpoint
+  and shape, with modeled latency so the forecast settles first.
 - **HeroCard placeholder test.** The render-test assertion for the
   no-data body copy used a straight apostrophe while the component
   uses a typographic one, so it never matched and quietly failed the
@@ -213,6 +415,11 @@ portfolio-grade product. Format roughly follows
 
 ### Removed
 
+- **Dead `MetricStat` component + `utils/weatherCodes` shim.**
+  `IconMetricStat` / `DetailMetricStat` had zero consumers, and
+  `utils/weatherCodes.js` was a pure re-export of `domain/weatherCodes`
+  that nothing imported. Both removed; the remaining `utils/*` modules
+  keep their formatters and stay in use.
 - Static `theme-color="#0b1c3f"` is now a default that
   `useThemeColor` overrides at runtime; the meta tag itself remains
   for browsers that load HTML before JS.

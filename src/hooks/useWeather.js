@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
   CURRENT_LOCATION_NAME,
   CURRENT_LOCATION_NOTICE,
-  DEFAULT_LOCATION,
   useLocation,
   persistLocation,
   clearPersistedLocation,
@@ -12,14 +11,15 @@ import {
   upsertSavedCity,
   upsertRecentCity,
   removeSavedCity,
-  LOCATION_FALLBACK_NOTICE,
-  SAVED_LOCATION_NOTICE,
+  moveSavedCity as moveSavedCityInStorage,
 } from "./useLocation";
 import { useSavedLocationsSync } from "./useSavedLocationsSync";
 import { useWeatherData } from "./useWeatherData";
+import { parseLocationFromUrl } from "./useUrlLocationSync";
 import {
   hasMatchingCoordinates,
   toLocationPayload,
+  resolveInitialLocationState,
 } from "./locationHelpers";
 
 function buildCurrentLocationNotice(placeName) {
@@ -33,22 +33,16 @@ function buildCurrentLocationNotice(placeName) {
 }
 
 function getInitialLocationState() {
-  const persistedLocation = getPersistedLocation();
-  if (persistedLocation) {
-    return {
-      location: persistedLocation,
-      startupLocation: persistedLocation,
-      notice: SAVED_LOCATION_NOTICE,
-      hasPersistedLocation: true,
-    };
-  }
-
-  return {
-    location: DEFAULT_LOCATION,
-    startupLocation: null,
-    notice: LOCATION_FALLBACK_NOTICE,
-    hasPersistedLocation: false,
-  };
+  // A shared/bookmarked ?lat&lon deep link takes precedence over the
+  // persisted startup city so opening someone else's forecast link
+  // actually lands on that place. resolveInitialLocationState keeps the
+  // precedence (and the "don't clobber my startup city" rule) pure and
+  // unit-tested; the write-path in useUrlLocationSync mirrors the
+  // resolved location straight back, so the seed and URL stay in sync.
+  return resolveInitialLocationState({
+    urlLocation: parseLocationFromUrl(),
+    persistedLocation: getPersistedLocation(),
+  });
 }
 
 export function useWeather(options = {}) {
@@ -297,6 +291,17 @@ export function useWeather(options = {}) {
     setLocationNotice(removedSavedLocationNotice);
     locationNoticeRef.current = removedSavedLocationNotice;
   }, []);
+
+  // Reorders the persisted list; the saved-locations sync effect picks
+  // the new order up like any other savedCities change and pushes it.
+  const moveSavedCity = useCallback((city, offset) => {
+    const updatedSavedCities = moveSavedCityInStorage(
+      city?.lat,
+      city?.lon,
+      offset
+    );
+    setSavedCities(updatedSavedCities);
+  }, []);
   const {
     syncConnected,
     syncAccount,
@@ -338,6 +343,7 @@ export function useWeather(options = {}) {
     setStartupCity,
     restoreSavedCity,
     forgetSavedCity,
+    moveSavedCity,
     syncConnected,
     syncAccount,
     syncState,

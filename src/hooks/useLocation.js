@@ -10,6 +10,8 @@ export const DEFAULT_LOCATION = {
 };
 export const LOCATION_FALLBACK_NOTICE =
   "Showing Chicago until you choose a location";
+export const LOCATION_PERMISSION_BLOCKED_NOTICE =
+  "Location access is blocked for this site. Showing Chicago - search for a city, or allow location in your browser settings.";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 export const LOCATION_UNSUPPORTED_NOTICE =
   "Location access is unavailable in this browser. Search for a city instead.";
@@ -312,6 +314,35 @@ export function removeSavedCity(lat, lon) {
   return persistSavedCities(remainingCities);
 }
 
+/**
+ * Moves a saved city one slot earlier (offset < 0) or later (offset > 0)
+ * in the persisted list. Out-of-range moves and unknown coordinates are
+ * no-ops that return the current list unchanged.
+ */
+export function moveSavedCity(lat, lon, offset) {
+  const coordinates = parseCoordinates(lat, lon);
+  const step = offset < 0 ? -1 : offset > 0 ? 1 : 0;
+  if (!coordinates || step === 0) {
+    return getSavedCities();
+  }
+
+  const cities = getSavedCities();
+  const fromIndex = cities.findIndex(
+    (city) =>
+      city.lat === coordinates.latitude && city.lon === coordinates.longitude
+  );
+  const toIndex = fromIndex + step;
+  if (fromIndex < 0 || toIndex < 0 || toIndex >= cities.length) {
+    return cities;
+  }
+
+  const nextCities = [...cities];
+  const [movedCity] = nextCities.splice(fromIndex, 1);
+  nextCities.splice(toIndex, 0, movedCity);
+
+  return persistSavedCities(nextCities);
+}
+
 export function clearPersistedLocation() {
   try {
     if (typeof window === "undefined" || !window.localStorage) return;
@@ -423,7 +454,7 @@ export function useLocation(onResolved) {
         }
       };
 
-      const fallback = () => {
+      const fallback = (noticeOverride) => {
         clearFallbackTimer();
         clearReverseGeocodeRequest();
         if (requestId !== activeRequestRef.current || !isMountedRef.current) {
@@ -437,7 +468,7 @@ export function useLocation(onResolved) {
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
           DEFAULT_LOCATION.country,
-          fallbackNotice
+          noticeOverride ?? fallbackNotice
         );
       };
 
@@ -555,8 +586,17 @@ export function useLocation(onResolved) {
               }
             }
           },
-          () => {
+          (geoError) => {
             if (requestId !== activeRequestRef.current || !isMountedRef.current) {
+              return;
+            }
+
+            // PERMISSION_DENIED (code 1) needs a different recovery
+            // path than a GPS timeout: the browser will silently
+            // swallow further prompts until the user changes the site
+            // permission, so say that instead of the generic notice.
+            if (geoError?.code === 1) {
+              fallback(LOCATION_PERMISSION_BLOCKED_NOTICE);
               return;
             }
 

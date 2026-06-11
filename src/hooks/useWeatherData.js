@@ -12,6 +12,7 @@ import {
 } from "../utils/weatherUnits";
 import { toFiniteNumber } from "../utils/numbers";
 import { useClimateComparison } from "./useClimateComparison";
+import { shouldAutoRefreshWeather } from "./weatherRefreshPolicy.js";
 import {
   readCachedWeatherSnapshot,
   writeCachedWeatherSnapshot,
@@ -28,6 +29,12 @@ const DEFAULT_TRUST_META = {
   cacheCapturedAt: null,
   cacheRestoredAt: null,
 };
+
+// When the network is down or the refresh failed, a snapshot older
+// than the default 12h freshness window is still better than the
+// global error screen — the trust pill labels exactly how old it is.
+// Two days is the ceiling: beyond that a forecast is misinformation.
+const DEGRADED_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
 // Forecast data is always fetched in Fahrenheit / inch units and converted
 // client-side. Switching units in the UI must not trigger a refetch.
@@ -71,6 +78,13 @@ function isBrowserOffline() {
 function getForecastFailureMessage(error) {
   if (isBrowserOffline()) {
     return "Browser is offline.";
+  }
+
+  // AbortSignal.timeout rejects with a TimeoutError (not AbortError),
+  // so a slow network gets an actionable message instead of the
+  // generic "unavailable".
+  if (error?.name === "TimeoutError") {
+    return "Open-Meteo forecast timed out. Check your connection and retry.";
   }
 
   const status = toFiniteNumber(error?.status);
@@ -291,24 +305,35 @@ export function useWeatherData(location, options = {}) {
 
     const requestWindSpeedUnit = getApiWindSpeedUnit();
     const cachedSnapshot = readCachedWeatherSnapshot(coordinates);
+    // Degraded paths (offline start, failed refresh) accept an older
+    // snapshot than the happy path would ever render. Resolved lazily
+    // so the wider read only happens when the fresh one came up empty.
+    const readDegradedSnapshot = () =>
+      cachedSnapshot ??
+      readCachedWeatherSnapshot(coordinates, {
+        maxAgeMs: DEGRADED_SNAPSHOT_MAX_AGE_MS,
+      });
 
     abortInFlightRequest();
     resetClimateComparison();
 
-    if (isBrowserOffline() && cachedSnapshot) {
-      setWeather(cachedSnapshot.weather);
-      setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
-      lastFetchedCoordsRef.current = {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-      };
-      setError(getForecastFailureMessage());
-      setLoading(false);
-      void requestClimateComparison({
-        coordinates,
-        weatherData: cachedSnapshot.weather,
-      });
-      return;
+    if (isBrowserOffline()) {
+      const offlineSnapshot = readDegradedSnapshot();
+      if (offlineSnapshot) {
+        setWeather(offlineSnapshot.weather);
+        setTrustMeta(buildCachedTrustMeta(offlineSnapshot));
+        lastFetchedCoordsRef.current = {
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+        };
+        setError(getForecastFailureMessage());
+        setLoading(false);
+        void requestClimateComparison({
+          coordinates,
+          weatherData: offlineSnapshot.weather,
+        });
+        return;
+      }
     }
 
     const controller = new AbortController();
@@ -385,9 +410,10 @@ export function useWeatherData(location, options = {}) {
         !isAbortError(requestError) &&
         isMountedRef.current
       ) {
-        if (cachedSnapshot) {
-          setWeather(cachedSnapshot.weather);
-          setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
+        const fallbackSnapshot = readDegradedSnapshot();
+        if (fallbackSnapshot) {
+          setWeather(fallbackSnapshot.weather);
+          setTrustMeta(buildCachedTrustMeta(fallbackSnapshot));
           lastFetchedCoordsRef.current = {
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
@@ -395,7 +421,7 @@ export function useWeatherData(location, options = {}) {
           setError(getForecastFailureMessage(requestError));
           void requestClimateComparison({
             coordinates,
-            weatherData: cachedSnapshot.weather,
+            weatherData: fallbackSnapshot.weather,
           });
         } else {
           setError(getForecastFailureMessage(requestError));
@@ -474,6 +500,67 @@ export function useWeatherData(location, options = {}) {
 
     void requestWeatherData();
   }, [requestWeatherData]);
+
+  // ---- Automatic refresh on natural opportunities -------------------
+  // The dashboard previously never refetched on its own: a tab left
+  // open overnight kept showing yesterday's forecast, and a connection
+  // drop left the error banner up even after connectivity returned.
+  // Two listeners close that gap; the decision logic itself lives in
+  // weatherRefreshPolicy.js. Same-coordinate refreshes keep the current
+  // data visible behind the existing "Refreshing" pill, so this never
+  // blanks the screen.
+  const refreshSnapshotRef = useRef({ weatherFetchedAt: null, forecastStatus: "idle", hasError: false });
+  useEffect(() => {
+    refreshSnapshotRef.current = {
+      weatherFetchedAt: trustMeta.weatherFetchedAt,
+      forecastStatus: trustMeta.forecastStatus,
+      hasError: Boolean(error),
+    };
+  }, [trustMeta.weatherFetchedAt, trustMeta.forecastStatus, error]);
+  const lastAutoRefreshAttemptRef = useRef(null);
+
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const attemptAutoRefresh = () => {
+      const snapshot = refreshSnapshotRef.current;
+      const isVisible =
+        typeof document === "undefined" ||
+        document.visibilityState !== "hidden";
+      const decision = shouldAutoRefreshWeather({
+        nowMs: Date.now(),
+        weatherFetchedAt: snapshot.weatherFetchedAt,
+        forecastStatus: snapshot.forecastStatus,
+        hasError: snapshot.hasError,
+        isOffline: isBrowserOffline(),
+        isVisible,
+        lastAttemptAt: lastAutoRefreshAttemptRef.current,
+      });
+
+      if (!decision) {
+        return;
+      }
+
+      lastAutoRefreshAttemptRef.current = Date.now();
+      void requestWeatherData();
+    };
+
+    const handleOnline = () => attemptAutoRefresh();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        attemptAutoRefresh();
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [enabled, requestWeatherData]);
 
   // Project climate state back into trustMeta so existing consumers keep
   // working without prop-shape churn.

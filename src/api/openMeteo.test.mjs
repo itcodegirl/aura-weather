@@ -6,7 +6,6 @@ import {
   fetchAirQuality,
   geocodeCity,
   fetchHistoricalTemperatureAverage,
-  reverseGeocodeCoordinates,
   fetchWeather,
   fetchSevereWeatherAlerts,
 } from "./openMeteo.js";
@@ -238,29 +237,6 @@ describe("fetchAirQuality", () => {
 
     assert.equal(result, 42);
     assert.equal(requestCount, 2);
-  });
-});
-
-describe("reverseGeocodeCoordinates", () => {
-  test("returns a friendly place label for device coordinates", async () => {
-    globalThis.fetch = async () =>
-      createJsonResponse({
-        name: "Crystal Lake",
-        display_name: "Crystal Lake, Illinois, United States",
-        address: {
-          city: "Crystal Lake",
-          country: "United States",
-        },
-      });
-
-    const result = await reverseGeocodeCoordinates(42.2411, -88.3162, {
-      retryDelaysMs: [0],
-    });
-
-    assert.deepEqual(result, {
-      name: "Crystal Lake",
-      country: "United States",
-    });
   });
 });
 

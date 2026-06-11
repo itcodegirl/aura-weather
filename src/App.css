@@ -413,6 +413,27 @@ a:focus-visible,
 }
 
 /*
+ * Shared "eyebrow pill" — the small uppercase pill used as a
+ * contextual subtitle next to card titles (forecast, hourly chart,
+ * stormwatch, alerts, etc.). Card CSS files used to redeclare this
+ * pattern with subtle differences in padding, border alpha, and
+ * letter-spacing. Now they all reach for one rule.
+ */
+.eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: var(--border-default);
+  background: var(--surface-1);
+  color: rgba(224, 236, 255, 0.9);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--track-loose);
+  text-transform: uppercase;
+}
+
+/*
  * AppShell loader/error rules and StatusStack rules have been moved to
  * src/components/layout/AppShell.css and StatusStack.css respectively.
  * They are imported by their owning components.

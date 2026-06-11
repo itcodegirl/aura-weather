@@ -17,6 +17,19 @@ export const AUTO_REFRESH_STALE_AFTER_MS = 30 * 60 * 1000;
 // tab switching cannot hammer the provider.
 export const AUTO_REFRESH_MIN_INTERVAL_MS = 60 * 1000;
 
+// A tab that stays visible never fires visibilitychange or online, so
+// event-only triggers would leave a dashboard on a second monitor
+// serving its first fetch forever. A minute-level check closes that
+// gap by running the same policy on a cadence.
+export const AUTO_REFRESH_POLL_INTERVAL_MS = 60 * 1000;
+
+// The poll keeps retrying while an error or restored cache is showing
+// (those states return true regardless of data age), so it gets a
+// calmer floor than the event triggers: recovery attempts every five
+// minutes instead of every minute against a provider that is already
+// struggling.
+export const AUTO_REFRESH_POLL_MIN_INTERVAL_MS = 5 * 60 * 1000;
+
 /**
  * Decides whether an automatic forecast refresh should fire.
  *

@@ -1,12 +1,11 @@
 import { lazy, memo, Suspense, useCallback, useState } from "react";
 import HeroCard from "../HeroCard";
-import RainCard from "../RainCard";
 import ExposureSection from "../ExposureSection";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
-import { PRELOAD_HEAVY_PANELS } from "../lazyPanels";
+import { PRELOAD_HEAVY_PANELS, RainPanel } from "../lazyPanels";
 import "./WeatherDashboard.css";
 const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
 // Data-status is a diagnostic surface most users never open. Defer
@@ -52,7 +51,14 @@ function WeatherDashboard({
   trustMeta,
   prefersReducedData = false,
 }) {
-  const showSupplementalPanels = useDeferredMount(Boolean(weather));
+  const showRainPanel = useDeferredMount(Boolean(weather), {
+    idleTimeout: 1800,
+    fallbackDelay: 900,
+  });
+  const showSupplementalPanels = useDeferredMount(Boolean(weather), {
+    idleTimeout: 2800,
+    fallbackDelay: 1800,
+  });
   // Once a user opens data-status we keep the panel mounted so the
   // toggle no longer pays for a network round-trip; the chunk is
   // cached after first reveal.
@@ -65,6 +71,8 @@ function WeatherDashboard({
 
   usePanelPreload(PRELOAD_HEAVY_PANELS, {
     enabled: !prefersReducedData,
+    idleTimeout: 5000,
+    fallbackDelay: 4200,
   });
 
   const aqiStatus = trustMeta?.aqiStatus ?? "idle";
@@ -144,13 +152,33 @@ function WeatherDashboard({
         className="bento-rain"
         style={CARD_STYLE_VARIABLES[2]}
       >
-        <RainCard
-          weather={weather}
-          unit={unit}
-          dataUnit={weatherDataUnit}
-          style={CARD_STYLE_VARIABLES[2]}
-          isRefreshing={isBackgroundLoading}
-        />
+        {showRainPanel ? (
+          <Suspense
+            fallback={(
+              <CardFallback
+                className="bento-rain"
+                style={CARD_STYLE_VARIABLES[2]}
+                title="Loading rain outlook..."
+                isRefreshing={isBackgroundLoading}
+              />
+            )}
+          >
+            <RainPanel
+              weather={weather}
+              unit={unit}
+              dataUnit={weatherDataUnit}
+              style={CARD_STYLE_VARIABLES[2]}
+              isRefreshing={isBackgroundLoading}
+            />
+          </Suspense>
+        ) : (
+          <CardFallback
+            className="bento-rain"
+            style={CARD_STYLE_VARIABLES[2]}
+            title="Loading rain outlook..."
+            isRefreshing={isBackgroundLoading}
+          />
+        )}
       </PanelErrorBoundary>
       {showSupplementalPanels ? (
         <Suspense

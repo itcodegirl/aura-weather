@@ -345,6 +345,8 @@ bug, the contract, and the test pyramid.
 
 ## Recent Hardening
 
+- **Committed README screenshots** - `docs/screenshots/*.png` was gitignored while the README embedded those paths, so every image was broken on GitHub. The PNGs are now committed and regenerated deterministically via `npm run screenshots`.
+- **Native social card + PWA install screenshots** - `og-image.png` is now a real 1200×630 dashboard render (hero + exposure gauges) captured by `e2e/social-pwa-assets.spec.js`, and the manifest ships wide/narrow `screenshots` so Android install prompts show the app instead of a bare icon.
 - **Location-timezone forecast days** - the 7-day forecast now resolves "today" in the forecast location's timezone instead of the viewer's. Previously, viewing a city west of you across the date line (e.g. Honolulu from Tokyo) silently dropped the location's current day from the outlook, and Today/Tomorrow labels could shift by one day.
 - **Keyboard hourly explorer** - the hourly sample strip is no longer touch-only. On larger screens it reveals on focus (like the skip link), exposes a single roving tab stop, and Arrow/Home/End keys walk the samples; selecting a sample highlights the matching chart point. Invalid `role="list"` semantics on the strip were corrected to `role="group"`.
 - **Escape-to-collapse forecast rows** - expanded forecast day details close on Escape and return focus to the trigger, matching the InfoDrawer dismiss gesture.

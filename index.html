@@ -42,17 +42,20 @@
       property="og:image"
       content="https://aura-weather-platform.netlify.app/og-image.png"
     />
-    <meta property="og:image:alt" content="Aura weather dashboard preview" />
+    <meta
+      property="og:image:alt"
+      content="Aura Weather dashboard showing current conditions and the hourly outlook"
+    />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="343" />
-    <meta property="og:image:height" content="361" />
-
     <!--
-      "summary" rather than "summary_large_image": the committed
-      og-image is roughly square (343x361), which the large card would
-      crop to 2:1. Revisit if a 1200x630 hero render is added.
+      og-image.png is a 1200x630 dashboard render captured by
+      e2e/social-pwa-assets.spec.js (regenerate via `npm run
+      screenshots`), so the large-card crop is native, not letterboxed.
     -->
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Aura - Atmospheric Intelligence" />
     <meta
       name="twitter:description"

@@ -420,3 +420,15 @@
     transform: none;
   }
 }
+
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the notice eyebrow sits at 9px base, below comfortable phone reading
+ * size. Pointer-scoped and placed last so it wins the sizing above
+ * without affecting desktop density or the visual baselines.
+ */
+@media (pointer: coarse) {
+  .location-notice-label {
+    font-size: 10px;
+  }
+}

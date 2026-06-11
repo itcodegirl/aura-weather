@@ -363,4 +363,23 @@
   }
 }
 
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor).
+ * Compass cardinal letters sit at 9px at every width; the 420px tier
+ * drops the eyebrow and module kickers to 9px too. Pointer-scoped so
+ * desktop density and the visual baselines are unaffected.
+ */
+@media (pointer: coarse) {
+  .wind-compass-label {
+    font-size: 10px;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 420px) {
+  .storm-subtitle,
+  .storm-module-kicker {
+    font-size: 10px;
+  }
+}
+
 

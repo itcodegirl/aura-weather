@@ -60,3 +60,15 @@
     font-size: 8px;
   }
 }
+
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the source badge sits at 9px base and 8px on the narrowest phones.
+ * Pointer-scoped and placed last so it wins the width-tier sizing
+ * above without affecting desktop density or the visual baselines.
+ */
+@media (pointer: coarse) {
+  .data-source-badge {
+    font-size: 10px;
+  }
+}

@@ -1,5 +1,6 @@
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase } from "../../utils/sunlight.js";
+import { getZonedNow } from "../../utils/dates.js";
 
 /*
  * Picks one short sentence to surface above the hero temperature.
@@ -96,9 +97,17 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   }
 
   // 3. High UV warrants a sunscreen note. Only surface during daylight.
+  // Reframe "now" into the location's wall clock so the daylight gate
+  // and golden-hour phase below line up with Open-Meteo's naive
+  // sunrise/sunset timestamps. The clock labels rendered below still use
+  // the naive strings directly, which already display the location's
+  // wall-clock time correctly. See getZonedNow in utils/dates.
   const sunrise = weather.daily?.sunrise?.[0];
   const sunset = weather.daily?.sunset?.[0];
-  const nowDate = Number.isFinite(nowMs) ? new Date(nowMs) : null;
+  const zonedNowMs = Number.isFinite(nowMs)
+    ? getZonedNow(weather?.meta?.timezone, nowMs).getTime()
+    : nowMs;
+  const nowDate = Number.isFinite(zonedNowMs) ? new Date(zonedNowMs) : null;
   const sunriseDate = sunrise ? new Date(sunrise) : null;
   const sunsetDate = sunset ? new Date(sunset) : null;
   const isDaylight =
@@ -159,7 +168,7 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   }
 
   // 6. Golden hour — quiet seasonal beat.
-  const phase = getSunlightPhase(sunrise, sunset, nowMs, {
+  const phase = getSunlightPhase(sunrise, sunset, zonedNowMs, {
     toleranceMinutes: 30,
   });
   if (phase === "sunset" && sunsetDate) {

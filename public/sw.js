@@ -2,7 +2,7 @@
 // existing installs evict the previous shell on next activation.
 // v3 adds best-effort precache (atomic addAll → per-URL add) so a
 // single missing asset can no longer break offline install.
-const CACHE_VERSION = "aura-weather-v3";
+const CACHE_VERSION = "aura-weather-v4";
 const APP_SHELL_CACHE = `${CACHE_VERSION}-app-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 // CRITICAL_APP_SHELL_URLS must succeed for offline to be useful — if
@@ -16,6 +16,10 @@ const OPTIONAL_APP_SHELL_URLS = [
   "/atmosphere-ring.svg",
   "/apple-touch-icon.png",
   "/og-image.png",
+  "/fonts/manrope-v20-latin.woff2",
+  "/fonts/manrope-v20-latin-ext.woff2",
+  "/fonts/space-grotesk-v22-latin.woff2",
+  "/fonts/space-grotesk-v22-latin-ext.woff2",
 ];
 const RUNTIME_CACHE_MAX_ENTRIES = 80;
 const CACHEABLE_DESTINATIONS = new Set([

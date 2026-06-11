@@ -5,7 +5,70 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Production polish pass (2026-05)
+## [Unreleased] — Production hardening audit (2026-06)
+
+### Fixed
+
+- **Location-timezone forecast days.** The 7-day forecast filtered
+  and labelled days against the *viewer's* calendar date, while
+  Open-Meteo daily entries are calendar dates in the *location's*
+  timezone (`timezone=auto`). Viewing a city west of you across the
+  date line (e.g. Honolulu from Tokyo) dropped the location's current
+  day from the forecast entirely, and "Today"/"Tomorrow" labels could
+  shift by one day. A new `getIsoDateInTimeZone` helper resolves
+  "today" in the forecast's `meta.timezone` (with a safe local
+  fallback), and `formatDayLabel` accepts the timezone plus an
+  injectable clock for tests. Five new unit tests pin the contract
+  across Honolulu/Tokyo/Chicago date-line cases.
+- **Social-card metadata.** `og:image` / `twitter:image` were
+  relative paths, which most crawlers resolve to nothing — shares
+  rendered as blank cards. Both are now absolute URLs with declared
+  type and dimensions, plus `og:url` and `og:site_name`. The Twitter
+  card type now matches the committed image's near-square aspect
+  (`summary`, not `summary_large_image`, which would crop it to 2:1).
+- **Triple-announced pressure trend.** The StormWatch sparkline
+  carried the same text as `aria-label`, `<title>`, and `<desc>`,
+  so some screen readers announced the trend three times. The
+  `aria-label` alone now names the graphic.
+
+### Added
+
+- **Keyboard access to hourly samples.** The hourly sample explorer
+  (previously touch-only, `display: none` above 640px) is now the
+  keyboard counterpart to the hover-only SVG points at every viewport:
+  visually collapsed on larger screens until a sample button receives
+  focus (the same reveal-on-focus contract as the skip link), with a
+  roving tabindex so the strip is a single Tab stop and
+  Arrow/Home/End keys move both focus and selection. Selecting a
+  sample also enlarges the matching chart point (radius, not
+  transform, so the cue survives `prefers-reduced-motion`). The
+  strip's invalid `role="list"` (button children, no listitems)
+  became `role="group"`, and the dead per-circle `aria-label`s inside
+  the `role="img"` SVG — never announced, descendants of an image are
+  presentational — were removed in favor of the existing summary +
+  explorer. Two new render tests pin the group role and the roving
+  tabindex.
+- **Escape collapses forecast details.** An expanded 7-day forecast
+  row now closes on Escape and returns focus to its trigger,
+  matching the dismiss gesture of InfoDrawer.
+- **Supplemental-API preconnects.** `air-quality-api.open-meteo.com`
+  and `api.weather.gov` are fetched immediately after the first
+  forecast response, so they upgraded from `dns-prefetch` to full
+  `preconnect` (DNS + TCP + TLS ahead of need); deferred/opt-in hosts
+  (archive, reverse geocoding) stay `dns-prefetch`.
+
+### Changed
+
+- **Manifest orientation unlocked.** `orientation` changed from
+  `portrait-primary` to `any` — the dashboard ships explicit tablet
+  and desktop layouts, so the installed app no longer fights a
+  rotated tablet or desktop window.
+- **Polite live regions announce atomically.** The city-search idle
+  hint and the display-settings announcement now set
+  `aria-atomic="true"` so partial text updates are not read
+  mid-sentence.
+
+## [Earlier] — Production polish pass (2026-05)
 
 ### Added
 

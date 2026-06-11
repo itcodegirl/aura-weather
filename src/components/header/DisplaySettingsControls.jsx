@@ -139,7 +139,7 @@ function DisplaySettingsControls({
           Clear startup city
         </button>
       ) : null}
-      <p className="sr-only" role="status" aria-live="polite">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {announcement}
       </p>
     </div>

@@ -309,6 +309,46 @@ export async function installOpenMeteoMocks(page) {
       }),
     });
   });
+
+  // The reverse geocoder the app actually calls is BigDataCloud
+  // (src/api/reverseGeocode.js); the Nominatim route above covers the
+  // unused legacy adapter in openMeteo.js. Without this mock the
+  // "current location" smoke test depended on the live BigDataCloud
+  // response for the test coordinates, which drifted upstream from
+  // "Crystal Lake" to "Township of Hampshire" and broke CI.
+  await page.route(
+    "https://api.bigdatacloud.net/data/reverse-geocode-client**",
+    async (route) => {
+      const requestUrl = new URL(route.request().url());
+      const latitude = Number(requestUrl.searchParams.get("latitude"));
+      const longitude = Number(requestUrl.searchParams.get("longitude"));
+
+      let city = "";
+      let country = "";
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        if (latitude > 40 && longitude < -70) {
+          city = "Crystal Lake";
+          country = "United States";
+        } else if (latitude > 30 && longitude > 100) {
+          city = "Tokyo";
+          country = "Japan";
+        }
+      }
+
+      // An empty city resolves to null in reverseGeocode(), which keeps
+      // the generic "Current location" label — the same fallback the
+      // app uses when the live provider has no usable name.
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          city,
+          locality: city,
+          countryName: country,
+        }),
+      });
+    }
+  );
 }
 
 export async function mockDeniedGeolocation(context) {

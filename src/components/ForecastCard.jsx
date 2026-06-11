@@ -1,8 +1,12 @@
 import { CalendarDays, ChevronDown, Droplets } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { formatWindSpeed, windDirectionName } from "../domain/wind";
 import { getWeather } from "../domain/weatherCodes";
-import { formatDayLabel, getZonedNow, parseLocalDate } from "../utils/dates";
+import {
+  formatDayLabel,
+  getIsoDateInTimeZone,
+  parseLocalDate,
+} from "../utils/dates";
 import { formatSunClock } from "../utils/sunlight";
 import { convertTemp } from "../utils/temperature";
 import {
@@ -102,12 +106,12 @@ function buildForecastDays(weatherDaily, timeZone) {
     ? weatherDaily.windDirectionDominant
     : [];
 
-  // Anchor "today" to the forecast location's calendar day, not the
-  // device's. Open-Meteo daily dates are the location's local days, so a
-  // device in a later zone would otherwise drop the location's current
-  // day from the list. See getZonedNow in utils/dates.
-  const today = getZonedNow(timeZone);
-  today.setHours(0, 0, 0, 0);
+  // Daily entries are calendar dates in the *location's* timezone
+  // (the forecast is requested with timezone=auto). Filtering against
+  // the viewer's local "today" dropped the location's current day
+  // entirely when the viewer was a calendar day ahead across the date
+  // line (e.g. reading a Honolulu forecast from Tokyo).
+  const todayIso = getIsoDateInTimeZone(timeZone);
 
   return times
     .map((date, index) => ({
@@ -129,8 +133,8 @@ function buildForecastDays(weatherDaily, timeZone) {
     .filter((day) => {
       const dayDate = parseLocalDate(day.date);
       if (!dayDate || Number.isNaN(dayDate.getTime())) return false;
-      dayDate.setHours(0, 0, 0, 0);
-      return dayDate >= today;
+      // Validated ISO dates compare correctly as strings.
+      return day.date.trim() >= todayIso;
     })
     .slice(0, 7);
 }
@@ -189,11 +193,12 @@ function DayRow({
   weekMin,
   weekMax,
   unit,
+  timeZone,
   rangeGradient,
   isExpanded,
   onToggle,
-  timeZone,
 }) {
+  const triggerRef = useRef(null);
   const info = getWeather(day.conditionCode);
   const label = formatDayLabel(day.date, { timeZone });
   const high = formatForecastTemp(day.temperatureMax, unit);
@@ -217,13 +222,27 @@ function DayRow({
   const sunriseLabel = formatSunClock(day.sunrise);
   const sunsetLabel = formatSunClock(day.sunset);
 
+  // Escape collapses the open detail panel and returns focus to the
+  // trigger, matching the dismiss behavior of InfoDrawer so keyboard
+  // users get one consistent close gesture across disclosures.
+  const handleRowKeyDown = (event) => {
+    if (event.key !== "Escape" || !isExpanded) {
+      return;
+    }
+    event.stopPropagation();
+    onToggle(day.date);
+    triggerRef.current?.focus();
+  };
+
   return (
     <li
       className={`forecast-row${isExpanded ? " is-expanded" : ""}`}
       role="listitem"
+      onKeyDown={handleRowKeyDown}
     >
       <button
         type="button"
+        ref={triggerRef}
         className="forecast-row-trigger"
         aria-expanded={isExpanded}
         aria-controls={detailPanelId}
@@ -505,10 +524,10 @@ function ForecastCard({
             weekMin={weekMin}
             weekMax={weekMax}
             unit={unit}
+            timeZone={timeZone}
             rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
-            timeZone={timeZone}
           />
         ))}
       </ul>
@@ -520,12 +539,12 @@ const MemoizedDayRow = memo(
   DayRow,
   (prevProps, nextProps) =>
     prevProps.unit === nextProps.unit &&
+    prevProps.timeZone === nextProps.timeZone &&
     prevProps.weekMin === nextProps.weekMin &&
     prevProps.weekMax === nextProps.weekMax &&
     prevProps.rangeGradient === nextProps.rangeGradient &&
     prevProps.isExpanded === nextProps.isExpanded &&
     prevProps.onToggle === nextProps.onToggle &&
-    prevProps.timeZone === nextProps.timeZone &&
     prevProps.day.date === nextProps.day.date &&
     prevProps.day.conditionCode === nextProps.day.conditionCode &&
     prevProps.day.temperatureMax === nextProps.day.temperatureMax &&
@@ -543,6 +562,7 @@ export default memo(
   ForecastCard,
   (prevProps, nextProps) =>
     prevProps.weather?.daily === nextProps.weather?.daily &&
+    prevProps.weather?.meta?.timezone === nextProps.weather?.meta?.timezone &&
     prevProps.unit === nextProps.unit &&
     prevProps.style === nextProps.style &&
     prevProps.isRefreshing === nextProps.isRefreshing

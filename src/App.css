@@ -126,6 +126,12 @@
   --severity-ok-fg: #bbf7d0;
   --severity-ok-border: rgba(34, 197, 94, 0.40);
   --severity-ok-bg: rgba(5, 46, 22, 0.34);
+
+  /* Neutral/info rung — default tone for the shared .severity-badge
+     (e.g. nowcast minimal/partial/missing risk states). */
+  --severity-info-fg: #dbeafe;
+  --severity-info-border: rgba(147, 197, 253, 0.42);
+  --severity-info-bg: rgba(30, 64, 175, 0.22);
 }
 
 * {
@@ -419,6 +425,62 @@ a:focus-visible,
 .storm-level {
   font-family: var(--font-display);
   letter-spacing: 0;
+}
+
+/*
+ * Shared severity badge — the 5-rung risk pill used by NowcastCard and
+ * RainCard (JSX renders `<span class="severity-badge severity-badge--{tone}">`).
+ * Tones map onto the --severity-* palette above; the base rule is the
+ * neutral/info default so a tone modifier is never required for the pill
+ * to read as a styled badge.
+ */
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 22px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--severity-info-border);
+  background: var(--severity-info-bg);
+  color: var(--severity-info-fg);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--track-default);
+  text-transform: uppercase;
+}
+
+.severity-badge--critical,
+.severity-badge--high {
+  border-color: var(--severity-critical-border);
+  background: var(--severity-critical-bg);
+  color: var(--severity-critical-fg);
+}
+
+.severity-badge--moderate {
+  border-color: var(--severity-high-border);
+  background: var(--severity-high-bg);
+  color: var(--severity-high-fg);
+}
+
+.severity-badge--low {
+  border-color: var(--severity-warn-border);
+  background: var(--severity-warn-bg);
+  color: var(--severity-warn-fg);
+}
+
+.severity-badge--minimal {
+  border-color: var(--severity-ok-border);
+  background: var(--severity-ok-bg);
+  color: var(--severity-ok-fg);
+}
+
+.severity-badge--partial,
+.severity-badge--missing {
+  /* default = info; explicit so JSX modifier classes always win */
+  border-color: var(--severity-info-border);
+  background: var(--severity-info-bg);
+  color: var(--severity-info-fg);
 }
 
 /*

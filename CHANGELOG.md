@@ -5,6 +5,25 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Restore lost severity-badge & data-status styling (2026-06)
+
+### Fixed
+
+- **Severity badges rendered unstyled.** A past token-consolidation
+  pass dropped the shared `.severity-badge` rules and the
+  `--severity-info-*` tokens from the CSS, but NowcastCard and RainCard
+  still emit `class="severity-badge severity-badge--{tone}"`. The
+  immediate-risk and rain-risk badges had been rendering as bare inline
+  text (no pill, no severity colour) on every viewport; the committed
+  visual baselines had silently captured the broken state. Restored the
+  full 5-rung badge family and the neutral/info tokens it defaults to.
+- **Data-source disclosure unstyled / "fromForecast" run-together.**
+  The `.data-status-disclosure` rules were likewise missing, so the
+  "Where this data comes from" summary lost its chevron and its hint
+  ran straight into the label ("…comes from​Forecast, air quality…").
+  Restored the disclosure, summary, label, hint, and chevron styling
+  (the hint is hidden on phones at ≤640px, as designed).
+
 ## [Unreleased] — Mobile UX audit: safe-area, iOS input zoom, layout stability (2026-06)
 
 ### Fixed

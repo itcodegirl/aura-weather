@@ -44,10 +44,14 @@ function ExposureSection({
   /*
    * Section header status: when both readings are present, the gauges
    * + status pills already convey the data state — no badge needed.
-   * Only surface a header indicator when ONE reading is missing, so
-   * the user knows the section is partially populated.
+   * Surface a header indicator when one or both readings are missing
+   * so the user knows the section is partially or fully unavailable.
    */
-  const sectionStatusText = hasFullExposureData ? "" : "One reading missing";
+  const sectionStatusText = hasFullExposureData
+    ? ""
+    : hasAqiData || hasUvData
+      ? "One reading missing"
+      : "Both readings unavailable";
 
   return (
     <section

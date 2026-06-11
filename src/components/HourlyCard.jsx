@@ -273,7 +273,10 @@ function HourlyCard({
 
   const minTemp = Math.floor(chartMetrics.safeMinTemp - 2);
   const maxTemp = Math.ceil(chartMetrics.safeMaxTemp + 2);
-  const geometry = buildChartGeometry(data, minTemp, maxTemp);
+  const geometry = useMemo(
+    () => buildChartGeometry(data, minTemp, maxTemp),
+    [data, minTemp, maxTemp]
+  );
   const nowPoint = geometry?.points?.[0] ?? null;
   const hourlySamples = geometry?.points ?? [];
   const selectedSample =

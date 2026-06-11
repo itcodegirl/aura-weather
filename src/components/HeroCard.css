@@ -258,6 +258,34 @@
   gap: 12px;
 }
 
+/*
+ * Inline sunrise · sunset · daylight summary. Each segment aligns its
+ * icon with its value and stays on one line, so the daylight duration
+ * reads as "15 hr 09 min" instead of breaking after "15 hr". The line
+ * wraps between segments when space is tight, never mid-value.
+ */
+.hero-sunlight-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-sunlight-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.hero-sunlight-separator {
+  color: rgba(196, 213, 241, 0.5);
+}
+
 .hero-sun-chip {
   display: flex;
   flex-direction: column;
@@ -340,6 +368,13 @@
   font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* Keep a value and its unit on one line ("10 mph", not "10" / "mph") so
+   the metric grid reads evenly. Scoped to the hero grid; values here are
+   short enough that nowrap never overflows the cell. */
+.hero-stats .stat-value {
+  white-space: nowrap;
 }
 
 .stat-value.is-missing {

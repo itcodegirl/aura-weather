@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { forceLazyPanelsToPaint } from "./support/visualCapture.js";
 
 /**
  * Captures the missing-data trust-contract screenshot for the README /
@@ -19,6 +20,7 @@ test.describe("trust contract screenshots", () => {
     await expect(
       page.getByText("Some readings are unavailable from the provider")
     ).toBeVisible();
+    await forceLazyPanelsToPaint(page);
 
     await page.screenshot({
       path: "docs/screenshots/trust-contract-desktop.png",
@@ -32,6 +34,7 @@ test.describe("trust contract screenshots", () => {
     await expect(
       page.getByRole("heading", { name: "Current Conditions" })
     ).toBeVisible();
+    await forceLazyPanelsToPaint(page);
 
     await page.screenshot({
       path: "docs/screenshots/trust-contract-mobile.png",

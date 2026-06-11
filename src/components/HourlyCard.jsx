@@ -209,6 +209,9 @@ function HourlyCard({
   const topColor = chartTopColor || palette[0];
   const bottomColor = chartBottomColor || palette[2] || palette[1];
   const chartSummary = useMemo(() => getHourlySummary(data, unit), [data, unit]);
+  const hasUsableTemperatureSamples = data.some((entry) =>
+    Number.isFinite(entry?.temp)
+  );
 
   const chartMetrics = useMemo(() => {
     const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
@@ -238,7 +241,7 @@ function HourlyCard({
       : `Range ${Math.round(chartMetrics.safeMinTemp)}\u00B0 to ${Math.round(chartMetrics.safeMaxTemp)}\u00B0`;
   }, [chartMetrics, unit]);
 
-  if (!data.length) {
+  if (!data.length || !hasUsableTemperatureSamples) {
     return (
       <section
         className="bento-chart hourly-chart glass"

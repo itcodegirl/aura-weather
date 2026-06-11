@@ -3,6 +3,7 @@ import {
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks";
+import { forceLazyPanelsToPaint } from "./support/visualCapture";
 
 const SNAPSHOT_VIEWPORTS = [
   { name: "desktop", width: 1366, height: 900 },
@@ -44,6 +45,7 @@ async function installFixedClock(page) {
 }
 
 async function applyVisualOverrides(page) {
+  await forceLazyPanelsToPaint(page);
   await page.addStyleTag({
     content: `
       *, *::before, *::after {

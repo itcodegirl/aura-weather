@@ -3,6 +3,7 @@ import {
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks.js";
+import { forceLazyPanelsToPaint } from "./support/visualCapture.js";
 
 /**
  * Captures the dashboard screenshots that the README references for
@@ -47,6 +48,7 @@ async function freezeTime(page) {
 }
 
 async function disableMotionAndPinFont(page) {
+  await forceLazyPanelsToPaint(page);
   await page.addStyleTag({
     content: `
       *, *::before, *::after {

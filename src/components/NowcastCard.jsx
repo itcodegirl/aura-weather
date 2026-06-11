@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useId, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { toFiniteNumber as toStrictFiniteNumber } from "../utils/numbers";
 import { analyzeNowcast } from "./nowcast/analyzeNowcast.js";
@@ -10,6 +10,7 @@ function NowcastCard({
   style,
   isRefreshing = false,
 }) {
+  const titleId = useId();
   const nowcast = useMemo(
     () => analyzeNowcast(weather?.nowcast, { timeZone: weather?.meta?.timezone }),
     [weather?.nowcast, weather?.meta?.timezone]
@@ -80,14 +81,15 @@ function NowcastCard({
     <section
       className="bento-nowcast nowcast-card glass"
       style={style}
+      aria-labelledby={titleId}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
       <header className="nowcast-header">
         <div className="nowcast-title-wrap">
           <div className="nowcast-title-row">
-            <h3 className="nowcast-title">
-              <CloudRain size={16} />
+            <h3 id={titleId} className="nowcast-title">
+              <CloudRain size={16} aria-hidden="true" />
               <span>Nowcast</span>
             </h3>
             <InfoDrawer

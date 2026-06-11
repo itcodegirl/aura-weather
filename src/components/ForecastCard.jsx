@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronDown, Droplets } from "lucide-react";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useId, useMemo, useRef, useState } from "react";
 import { formatWindSpeed, windDirectionName } from "../domain/wind";
 import { getWeather } from "../domain/weatherCodes";
 import {
@@ -434,6 +434,7 @@ function ForecastCard({
   style,
   isRefreshing = false,
 }) {
+  const titleId = useId();
   const [expandedDate, setExpandedDate] = useState(null);
   const timeZone = weather?.meta?.timezone;
   const days = useMemo(
@@ -473,10 +474,12 @@ function ForecastCard({
         style={style}
         data-refreshing={isRefreshing ? "true" : undefined}
         aria-busy={isRefreshing || undefined}
+        aria-labelledby={titleId}
       >
         <CardHeader
           headerClassName="forecast-header"
           title="7-Day Forecast"
+          titleId={titleId}
           titleTag="h3"
           titleClassName="forecast-title"
           icon={<CalendarDays size={16} />}
@@ -503,10 +506,12 @@ function ForecastCard({
       style={style}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
+      aria-labelledby={titleId}
     >
       <CardHeader
         headerClassName="forecast-header"
         title="7-Day Forecast"
+        titleId={titleId}
         titleTag="h3"
         titleClassName="forecast-title"
         icon={<CalendarDays size={16} />}

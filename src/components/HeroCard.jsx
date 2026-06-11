@@ -321,7 +321,7 @@ function HeroCard({
             </ul>
           )}
 
-          <p
+          <div
             className="hero-sunlight-line"
             role="group"
             aria-label={`Sunrise ${sunriseLabel}, sunset ${sunsetLabel}, ${daylightLabel} of daylight`}
@@ -340,7 +340,7 @@ function HeroCard({
               <Sun size={13} aria-hidden="true" />
               <span>{daylightLabel}</span>
             </span>
-          </p>
+          </div>
         </div>
 
         <div className="hero-stats" role="group" aria-label="Current readings">

@@ -218,8 +218,9 @@ function PressureTrend({ trend }) {
         role="img"
         aria-label={trendLabel}
       >
-        <title>{trendLabel}</title>
-        <desc>{trendLabel}</desc>
+        {/* aria-label alone carries the accessible name; duplicating it
+            in <title> + <desc> made some screen readers announce the
+            same trend three times. */}
         <polyline
           points={points}
           fill="none"

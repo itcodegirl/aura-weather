@@ -31,24 +31,51 @@
       content="A polished weather dashboard with real-time atmospheric insights, adaptive gradients, and portfolio-ready UI craftsmanship."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:site_name" content="Aura Weather" />
+    <meta property="og:url" content="https://aura-weather-platform.netlify.app/" />
+    <!--
+      Social crawlers resolve og:image without a base URL, so the image
+      reference must be absolute — a relative path renders as a blank
+      card on most platforms.
+    -->
+    <meta
+      property="og:image"
+      content="https://aura-weather-platform.netlify.app/og-image.png"
+    />
     <meta property="og:image:alt" content="Aura weather dashboard preview" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="343" />
+    <meta property="og:image:height" content="361" />
 
-    <meta name="twitter:card" content="summary_large_image" />
+    <!--
+      "summary" rather than "summary_large_image": the committed
+      og-image is roughly square (343x361), which the large card would
+      crop to 2:1. Revisit if a 1200x630 hero render is added.
+    -->
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Aura - Atmospheric Intelligence" />
     <meta
       name="twitter:description"
       content="A polished weather dashboard with real-time atmospheric insights and adaptive visuals."
     />
-    <meta name="twitter:image" content="/og-image.png" />
+    <meta
+      name="twitter:image"
+      content="https://aura-weather-platform.netlify.app/og-image.png"
+    />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://api.open-meteo.com" crossorigin />
     <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin />
+    <!--
+      AQI and NWS alerts are fetched immediately after the first
+      forecast response, so a full preconnect (DNS + TCP + TLS) saves a
+      round-trip on first load. Archive and reverse-geocode hosts stay
+      dns-prefetch only — those calls are deferred or opt-in.
+    -->
+    <link rel="preconnect" href="https://air-quality-api.open-meteo.com" crossorigin />
+    <link rel="preconnect" href="https://api.weather.gov" crossorigin />
     <link rel="dns-prefetch" href="https://archive-api.open-meteo.com" />
-    <link rel="dns-prefetch" href="https://air-quality-api.open-meteo.com" />
-    <link rel="dns-prefetch" href="https://api.weather.gov" />
     <link rel="dns-prefetch" href="https://api.bigdatacloud.net" />
     <link
       rel="preload"

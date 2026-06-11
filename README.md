@@ -226,6 +226,8 @@ npm run test:lighthouse
 - Live status messaging for loading and refresh states
 - Reduced-motion-safe card visibility and transitions
 - Updated mobile touch targets for smaller utility controls and dense rain/hourly timelines
+- Keyboard-operable hourly sample explorer at every viewport (focus-revealed on desktop, roving tabindex, arrow-key navigation)
+- Escape closes expanded forecast-day details and restores focus to the trigger
 
 ## Architecture Decisions
 
@@ -343,6 +345,10 @@ bug, the contract, and the test pyramid.
 
 ## Recent Hardening
 
+- **Location-timezone forecast days** - the 7-day forecast now resolves "today" in the forecast location's timezone instead of the viewer's. Previously, viewing a city west of you across the date line (e.g. Honolulu from Tokyo) silently dropped the location's current day from the outlook, and Today/Tomorrow labels could shift by one day.
+- **Keyboard hourly explorer** - the hourly sample strip is no longer touch-only. On larger screens it reveals on focus (like the skip link), exposes a single roving tab stop, and Arrow/Home/End keys walk the samples; selecting a sample highlights the matching chart point. Invalid `role="list"` semantics on the strip were corrected to `role="group"`.
+- **Escape-to-collapse forecast rows** - expanded forecast day details close on Escape and return focus to the trigger, matching the InfoDrawer dismiss gesture.
+- **Honest social cards** - `og:image`/`twitter:image` were relative URLs (blank cards on most platforms); they are now absolute with declared dimensions, `og:url`, and a card type that matches the image's aspect ratio. The PWA manifest stops locking installed apps to portrait since tablet/desktop layouts exist.
 - **Saved-city-first sync** - Cloud Sync no longer appears on a fresh first load with no saved cities. It becomes available once the user saves a city, and remains visible for connected/error states so recovery controls are not hidden.
 - **Saved-city search suggestions** - focusing the empty city search now opens saved cities as selectable combobox options, preserving keyboard and pointer selection behavior.
 - **Shorter setup copy** - first-load location onboarding and follow-up location prompts now use compact copy so the mobile header moves users into the forecast faster.

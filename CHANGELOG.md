@@ -5,6 +5,32 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Mobile UX audit: safe-area, iOS input zoom, layout stability (2026-06)
+
+### Fixed
+
+- **Safe-area insets now cover all four edges.** Handling previously
+  applied only to the bottom home-bar. With `viewport-fit=cover` and a
+  black-translucent status bar, an installed PWA also extends under the
+  status bar (top) and, in landscape, under the notch and rounded
+  corners (left/right). The content column is now padded on every edge
+  so the header is never clipped and no card runs under a notch; the
+  decorative background stays full-bleed and layout is unchanged where
+  the inset resolves to 0.
+- **No more iOS focus-zoom on text inputs.** iOS Safari zooms the
+  viewport when a sub-16px field is focused. The city-search (15px) and
+  sync-account key (12px) fields are pinned to 16px inside
+  `@media (pointer: coarse)`, suppressing the zoom on touch devices
+  while the denser desktop sizing is preserved.
+
+### Changed
+
+- **Responsive-typography and long-name layout stability.**
+  `text-size-adjust: 100%` stops mobile WebKit/Blink from inflating
+  fonts in landscape, and the hero location row gained `min-width: 0` /
+  `overflow-wrap` guards plus a non-shrinking pin icon so an unusually
+  long place name wraps instead of pushing the high/low pill off-screen.
+
 ## [Unreleased] — Saved-city reordering, honest budgets, dead-code removal (2026-06)
 
 ### Added

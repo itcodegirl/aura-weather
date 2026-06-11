@@ -1,10 +1,3 @@
-export {
-  classifyStormRisk,
-  calculatePressureTrend,
-  classifyComfort,
-} from "../domain/meteorology.js";
-export { windDirectionName, classifyWind } from "../domain/wind.js";
-
 const NO_DATA_STATUS = {
   label: "",
   color: "rgba(148, 163, 184, 0.92)",

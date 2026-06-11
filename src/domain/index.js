@@ -1,4 +1,4 @@
-export * from "./aqi.js";
+export * from "./exposure.js";
 export * from "./meteorology.js";
 export * from "./temperature.js";
 export * from "./weatherCodes.js";

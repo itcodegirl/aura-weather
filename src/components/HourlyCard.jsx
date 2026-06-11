@@ -278,6 +278,49 @@ function HourlyCard({
   const selectedSampleWeather = selectedSample
     ? getWeather(selectedSample.code)
     : null;
+  // Roving tabindex: the strip exposes one tab stop (the displayed
+  // sample) and arrow keys move both focus and selection, so keyboard
+  // users are not forced through up to 24 individual tab stops.
+  const tabStopSampleKey = selectedSample
+    ? String(selectedSample.time.getTime())
+    : null;
+
+  const handleStripKeyDown = (event) => {
+    if (!hourlySamples.length) {
+      return;
+    }
+
+    const sampleKeys = hourlySamples.map((point) =>
+      String(point.time.getTime())
+    );
+    const activeKey =
+      event.target instanceof HTMLElement
+        ? event.target.dataset.sampleKey
+        : null;
+    const activeIndex = Math.max(0, sampleKeys.indexOf(activeKey));
+
+    let nextIndex = null;
+    if (event.key === "ArrowRight") {
+      nextIndex = Math.min(sampleKeys.length - 1, activeIndex + 1);
+    } else if (event.key === "ArrowLeft") {
+      nextIndex = Math.max(0, activeIndex - 1);
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = sampleKeys.length - 1;
+    }
+
+    if (nextIndex === null) {
+      return;
+    }
+
+    event.preventDefault();
+    const nextKey = sampleKeys[nextIndex];
+    setSelectedSampleKey(nextKey);
+    event.currentTarget
+      .querySelector(`[data-sample-key="${nextKey}"]`)
+      ?.focus();
+  };
 
   return (
     <section
@@ -392,30 +435,37 @@ function HourlyCard({
               // "dash". Matches the separator the rest of the app uses
               // for inline metadata (see HeroCard sunlight line).
               const tooltip = `${point.label} \u00B7 ${point.temp}\u00B0${unit} \u00B7 ${info.label}`;
+              const pointKey = String(point.time.getTime());
+              const isUserSelectedPoint = selectedSampleKey === pointKey;
               return (
                 <g
-                  key={`point-${point.time.getTime()}`}
+                  key={`point-${pointKey}`}
                   className="hourly-point-group"
                 >
-                  {/* Visible point \u2014 kept small for chart density. */}
+                  {/* Visible point \u2014 kept small for chart density.
+                      Grows when the matching explorer sample is
+                      selected so keyboard/touch selection is mirrored
+                      on the chart itself (radius, not transform, so the
+                      cue survives prefers-reduced-motion). */}
                   <circle
                     className="hourly-point"
                     cx={point.x}
                     cy={point.y}
-                    r="3.2"
+                    r={isUserSelectedPoint ? 4.8 : 3.2}
                     fill={topColor}
                   />
                   {/* Larger transparent hit area so hover and touch are
                       easy to land on. The native <title> drives the OS
-                      tooltip and the aria-label is announced when the
-                      element is focused. */}
+                      tooltip; assistive tech gets the same values
+                      through the chart summary and the sample explorer
+                      (descendants of role="img" are presentational, so
+                      a per-circle aria-label would never be announced). */}
                   <circle
                     className="hourly-point-hit"
                     cx={point.x}
                     cy={point.y}
                     r="14"
                     fill="transparent"
-                    aria-label={tooltip}
                   >
                     <title>{tooltip}</title>
                   </circle>
@@ -427,7 +477,20 @@ function HourlyCard({
       </div>
 
       {hourlySamples.length ? (
-        <div className="hourly-touch-explorer" aria-label="Hourly samples">
+        /*
+         * The explorer is the keyboard-accessible counterpart to the
+         * hover-only SVG points. On small screens it is always visible
+         * (touch has no hover); on larger screens it stays visually
+         * collapsed until a sample button receives focus, so keyboard
+         * users can read individual hours without changing the desktop
+         * composition. role="group" (not role="list") because the
+         * children are interactive buttons, not list items.
+         */
+        <div
+          className="hourly-touch-explorer"
+          role="group"
+          aria-label="Hourly samples"
+        >
           {/*
            * The selected-sample card displays the currently-shown
            * sample. Previously this paragraph had aria-live=polite
@@ -444,7 +507,7 @@ function HourlyCard({
               <span>{selectedSampleWeather?.label || "Weather sample"}</span>
             </p>
           ) : null}
-          <div className="hourly-touch-strip" role="list" aria-label="Hourly temperature samples">
+          <div className="hourly-touch-strip" onKeyDown={handleStripKeyDown}>
             {hourlySamples.map((point) => {
               const key = String(point.time.getTime());
               const info = getWeather(point.code);
@@ -465,6 +528,8 @@ function HourlyCard({
                   className={`hourly-touch-sample ${isSelected ? "is-selected" : ""}`.trim()}
                   aria-current={isUserSelection ? "true" : undefined}
                   aria-label={`Show ${point.label}, ${point.temp} degrees ${unit}, ${info.label}`}
+                  data-sample-key={key}
+                  tabIndex={key === tabStopSampleKey ? 0 : -1}
                   onClick={() => setSelectedSampleKey(key)}
                 >
                   <span>{point.label}</span>

@@ -156,6 +156,49 @@ describe("HourlyCard touch-sample announcement contract", () => {
     );
   });
 
+  test("sample strip uses role=group, not role=list — its children are buttons, not list items", () => {
+    const { container } = renderPopulated();
+    const explorer = container.querySelector(".hourly-touch-explorer");
+    if (!explorer) return;
+
+    assert.equal(explorer.getAttribute("role"), "group");
+    assert.equal(
+      container.querySelector('.hourly-touch-strip[role="list"]'),
+      null,
+      "role=list with direct button children is invalid ARIA (list requires listitem children)"
+    );
+  });
+
+  test("roving tabindex: exactly one sample is a tab stop, arrows move selection", () => {
+    const { container } = renderPopulated();
+    const samples = [...container.querySelectorAll(".hourly-touch-sample")];
+    if (samples.length < 2) return;
+
+    const tabStops = samples.filter((button) => button.tabIndex === 0);
+    assert.equal(
+      tabStops.length,
+      1,
+      "the strip should expose a single tab stop so keyboard users are not forced through every hour"
+    );
+    assert.ok(
+      samples.filter((button) => button.tabIndex === -1).length >= 1,
+      "remaining samples should be reachable by arrow keys, not Tab"
+    );
+
+    fireEvent.keyDown(tabStops[0], { key: "ArrowRight" });
+    const updatedSamples = [...container.querySelectorAll(".hourly-touch-sample")];
+    assert.equal(
+      updatedSamples[1].getAttribute("aria-current"),
+      "true",
+      "ArrowRight should select the next sample (selection follows focus)"
+    );
+    assert.equal(
+      updatedSamples[1].tabIndex,
+      0,
+      "the newly selected sample becomes the strip's tab stop"
+    );
+  });
+
   test("svg-point tooltip uses middle-dot separators, not ASCII hyphens", () => {
     const { container } = renderPopulated();
     const titles = container.querySelectorAll(".hourly-point-hit title");

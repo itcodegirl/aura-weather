@@ -136,7 +136,7 @@ function hasUsableSnapshotShape(snapshot) {
   );
 }
 
-function isFreshSnapshot(snapshot, nowMs = Date.now()) {
+function isFreshSnapshot(snapshot, nowMs = Date.now(), maxAgeMs = MAX_SNAPSHOT_AGE_MS) {
   if (!hasUsableSnapshotShape(snapshot)) {
     return false;
   }
@@ -148,7 +148,7 @@ function isFreshSnapshot(snapshot, nowMs = Date.now()) {
     return false;
   }
   const ageMs = Math.max(0, rawAgeMs);
-  return ageMs <= MAX_SNAPSHOT_AGE_MS;
+  return ageMs <= maxAgeMs;
 }
 
 export function readCachedWeatherSnapshot(coordinates, options = {}) {
@@ -157,10 +157,15 @@ export function readCachedWeatherSnapshot(coordinates, options = {}) {
     return null;
   }
 
+  // Callers can widen the freshness window (options.maxAgeMs) for
+  // degraded paths — offline starts and failed refreshes — where an
+  // honestly-labelled old forecast beats an error screen. The default
+  // stays conservative so the happy path never renders stale numbers.
+  const maxAgeMs = toFiniteNumber(options.maxAgeMs) ?? MAX_SNAPSHOT_AGE_MS;
   const payload = readCachePayload();
   const snapshot = payload?.snapshots?.[key] ?? null;
 
-  if (!isFreshSnapshot(snapshot, options.nowMs)) {
+  if (!isFreshSnapshot(snapshot, options.nowMs, maxAgeMs)) {
     return null;
   }
 

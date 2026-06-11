@@ -129,6 +129,12 @@
   position: relative;
   min-height: 32px;
   padding: 0 10px;
+  /* Long city names ellipsize instead of stretching the chip row past
+     the header width on narrow phones. */
+  max-width: 188px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   color: rgba(224, 237, 255, 0.92);
@@ -263,11 +269,15 @@
     background var(--motion-fast) var(--ease-standard);
 }
 
-/* Extend tap target to ≥44×44 px without altering visual size (WCAG 2.5.5) */
+/* Extend tap target vertically to 44 px (WCAG 2.5.5). The horizontal
+   halo stops at the 3px intra-row gap: remove paints last in the wrap,
+   so a wider halo would sit on top of the startup/move buttons and win
+   taps aimed at them — a destructive action must never capture a press
+   meant for a neighbouring control. Width stays ≥24 px (WCAG 2.5.8). */
 .saved-city-remove::before {
   content: "";
   position: absolute;
-  inset: -10px;
+  inset: -10px -3px;
 }
 
 .saved-city-remove:hover {
@@ -832,7 +842,8 @@
   }
 
   .saved-city-remove {
-    /* Visual size stays compact; ::before extends the touch target to 44×44 */
+    /* Visual size stays compact; ::before extends the touch target to
+       44px tall (horizontal halo stays inside the 3px gap — see base rule) */
     position: relative;
     width: 28px;
     height: 28px;
@@ -842,7 +853,7 @@
   .saved-city-remove::before {
     content: "";
     position: absolute;
-    inset: -8px;
+    inset: -8px -3px;
   }
 
   .saved-city-startup {
@@ -954,6 +965,8 @@
     min-height: 28px;
     padding: 0 8px;
     font-size: 10px;
+    /* Tighter cap so name + reorder/startup/remove controls fit a 360px row */
+    max-width: min(48vw, 150px);
   }
 
   /* Re-extend tap target after visual regression (base inset -6px only gives 40 px here) */
@@ -979,9 +992,10 @@
     font-size: 12px;
   }
 
-  /* Re-extend tap target: tablet set inset -8 px (for 28 px), but visual is back to 24 px */
+  /* Re-extend tap target: tablet set inset -8 px (for 28 px), but visual
+     is back to 24 px. Horizontal halo stays inside the gap (see base rule). */
   .saved-city-remove::before {
-    inset: -10px;
+    inset: -10px -3px;
   }
 
   .sync-account-panel {

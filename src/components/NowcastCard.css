@@ -128,7 +128,7 @@
    so the element was removed from NowcastCard.jsx. Selector deleted to
    avoid dead CSS. */
 
-/* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
+/* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 480, 420. */
 @media (max-width: 980px) {
   .nowcast-summary {
     font-size: var(--text-2xl);
@@ -176,6 +176,19 @@
   }
 }
 
+@media (max-width: 480px) {
+  /* At 480px the 3 chips are ~96px each — too narrow for multi-word labels.
+     Switch to 2-column grid with the 3rd chip spanning full width. */
+  .nowcast-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .nowcast-chip:last-child {
+    grid-column: span 2;
+  }
+}
+
 @media (max-width: 420px) {
   .nowcast-title {
     font-size: var(--text-lg);
@@ -202,6 +215,7 @@
   }
 
   .nowcast-chip {
+<<<<<<< HEAD
     padding: var(--space-2) var(--space-2);
     gap: var(--space-px);
   }
@@ -213,6 +227,19 @@
 
   .nowcast-chip-value {
     font-size: var(--text-base);
+=======
+    padding: 8px 10px;
+    gap: 3px;
+  }
+
+  .nowcast-chip-label {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  .nowcast-chip-value {
+    font-size: 14px;
+>>>>>>> origin/main
   }
 }
 

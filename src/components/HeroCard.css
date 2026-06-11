@@ -447,8 +447,13 @@
   }
 
   .hero-guidance-item {
+<<<<<<< HEAD
     min-height: 82px;
     padding: var(--space-2-5);
+=======
+    min-height: auto;
+    padding: 10px;
+>>>>>>> origin/main
   }
 
   .hero-sunlight {
@@ -466,20 +471,22 @@
 }
 
 @media (max-width: 560px) {
+  /* Keep 2-column sunlight grid — avoids stacking 3 chips into a ~200px tower */
   .hero-sunlight {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hero-sun-chip--daylight {
-    grid-column: auto;
+    grid-column: span 2;
   }
 
   .hero-icon {
     width: 102px;
   }
 
+  /* 2×2 stat grid halves vertical height vs 4×1 stack */
   .hero-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -531,6 +538,12 @@
   .stat {
     gap: var(--space-2-5);
     padding: var(--space-2-5);
+  }
+
+  /* Tighten the stats section separator on very small phones */
+  .hero-stats {
+    gap: 8px;
+    padding-top: 14px;
   }
 }
 

@@ -1,3 +1,8 @@
+/* Mobile settings toggle — hidden at desktop, shown at ≤760px as a glass pill */
+.mobile-settings-toggle {
+  display: none;
+}
+
 .app-header {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -598,7 +603,12 @@
 
 @media (max-width: 760px) {
   .app-header {
+<<<<<<< HEAD
     padding: var(--space-3);
+=======
+    padding: 12px;
+    margin-bottom: 18px;
+>>>>>>> origin/main
   }
 
   .app-header-actions {
@@ -618,14 +628,89 @@
     flex-wrap: wrap;
   }
 
+  /* Secondary panel is collapsed by default on mobile; toggled by .mobile-settings-toggle */
   .app-header-secondary {
+    display: none;
+  }
+
+  .app-header-secondary.is-mobile-open {
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
     width: 100%;
+<<<<<<< HEAD
     gap: var(--space-2);
+=======
+    gap: 8px;
+    animation: settings-reveal var(--motion-medium) var(--ease-emphasis) both;
+>>>>>>> origin/main
   }
 
+  /* Mobile settings toggle button */
+  .mobile-settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(198, 218, 255, 0.24);
+    background: rgba(8, 17, 38, 0.56);
+    box-shadow: inset 0 1px 0 rgba(226, 238, 255, 0.08);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    transition:
+      background var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard);
+  }
+
+  .mobile-settings-toggle.is-open {
+    color: var(--active-pill-color);
+    background: var(--active-pill-bg);
+    border-color: transparent;
+    box-shadow: var(--active-pill-shadow);
+  }
+
+  .mobile-settings-toggle:hover {
+    color: #f8fbff;
+    border-color: rgba(174, 227, 255, 0.44);
+  }
+
+  .mobile-settings-toggle.is-open:hover {
+    color: var(--active-pill-color);
+  }
+
+  /* Saved-city touch targets — increase hit area on phones */
+  .saved-city-chip {
+    min-height: 44px;
+    padding: 0 12px;
+  }
+
+  .saved-city-remove {
+    /* Visual size stays compact; ::before extends the touch target to 44×44 */
+    position: relative;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .saved-city-remove::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+
+  .saved-city-startup {
+    min-height: 44px;
+    padding: 0 10px;
+  }
+
+  /* Settings toggle is the old class (no longer in JSX) — keep hidden */
   .settings-toggle {
     display: none;
   }
@@ -662,10 +747,11 @@
 
   .current-location-btn,
   .toggle-pill-btn,
+  .mobile-settings-toggle,
   .settings-toggle,
   .unit-btn,
   .header-secondary-action {
-    min-height: 40px;
+    min-height: 44px;
   }
 }
 
@@ -673,6 +759,7 @@
   .app-header {
     padding: var(--space-2-5);
     gap: 10px 12px;
+    margin-bottom: 12px;
   }
 
   .brand {
@@ -694,10 +781,16 @@
     padding: 0 var(--space-3);
   }
 
+<<<<<<< HEAD
   .settings-toggle {
     min-width: 82px;
     padding: 0 var(--space-3);
     margin-left: 0;
+=======
+  .mobile-settings-toggle {
+    padding: 0 12px;
+    min-width: 44px;
+>>>>>>> origin/main
   }
 
   .app-header-secondary {

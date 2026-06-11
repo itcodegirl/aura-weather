@@ -21,7 +21,12 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+<<<<<<< HEAD
   gap: var(--space-2-5);
+=======
+  gap: 10px;
+  min-width: 0;
+>>>>>>> origin/main
 }
 
 .metric-head-side {
@@ -273,6 +278,34 @@
 
   .metric-head-side {
     gap: var(--space-1);
+  }
+}
+
+@media (max-width: 420px) {
+  .metric-gauge-svg {
+    max-width: 118px;
+    height: 72px;
+  }
+
+  .metric-gauge-value {
+    font-size: 26px;
+  }
+
+  .exposure-panel .metric-gauge-svg {
+    max-width: 112px;
+    height: 68px;
+  }
+
+  .exposure-panel .metric-gauge-value {
+    font-size: 24px;
+  }
+
+  .metric-label {
+    font-size: 11px;
+  }
+
+  .metric-support {
+    font-size: 12px;
   }
 }
 

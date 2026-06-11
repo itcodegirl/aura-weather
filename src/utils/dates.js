@@ -121,15 +121,20 @@ export function getZonedNow(timeZone, now = Date.now()) {
  *
  * Pass `timeZone` (IANA name from the forecast's `meta.timezone`) so
  * "Today"/"Tomorrow" are resolved against the location's calendar day
- * rather than the viewer's. `now` is injectable for tests.
+ * rather than the viewer's. `now` is injectable for tests, and callers
+ * that already track the location's current date (e.g. via a clock
+ * tick) can pass `todayIso` directly so every row shares one answer.
  */
-export function formatDayLabel(isoDate, { timeZone, now = new Date() } = {}) {
+export function formatDayLabel(
+  isoDate,
+  { timeZone, now = new Date(), todayIso: todayIsoOverride } = {}
+) {
   const date = parseLocalDate(isoDate);
   if (!date) {
     return "\u2014";
   }
 
-  const todayIso = getIsoDateInTimeZone(timeZone, now);
+  const todayIso = todayIsoOverride ?? getIsoDateInTimeZone(timeZone, now);
   const todayDate = parseLocalDate(todayIso);
   const tomorrowDate = new Date(todayDate);
   tomorrowDate.setDate(tomorrowDate.getDate() + 1);

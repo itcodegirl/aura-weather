@@ -86,6 +86,24 @@ describe("dates utils", () => {
     );
   });
 
+  test("formatDayLabel honors a precomputed todayIso override", () => {
+    // Callers tracking the location's calendar day via a clock tick
+    // (ForecastCard) pass todayIso directly so all rows share one
+    // answer and relabel together at the location's midnight.
+    assert.equal(
+      formatDayLabel("2026-04-21", { todayIso: "2026-04-21" }),
+      "Today"
+    );
+    assert.equal(
+      formatDayLabel("2026-04-22", { todayIso: "2026-04-21" }),
+      "Tomorrow"
+    );
+    assert.equal(
+      formatDayLabel("2026-04-21", { todayIso: "2026-04-22" }),
+      "Tue"
+    );
+  });
+
   test("formatDayLabel and formatShortDate return fallback for invalid values", () => {
     assert.equal(formatDayLabel("bad-input"), "\u2014");
     assert.equal(formatShortDate("bad-input"), "\u2014");

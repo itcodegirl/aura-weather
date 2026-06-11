@@ -160,7 +160,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`422` tests across 90 suites, including React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`437` tests across 92 suites, including React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (`34` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -344,6 +344,9 @@ bug, the contract, and the test pyramid.
 
 ## Recent Hardening
 
+- **Self-refreshing dashboard** - the app now refetches on its own when the tab becomes visible again or connectivity returns, if the data is stale (30+ min), erroring, or restored from cache. A tab left open overnight no longer presents yesterday's forecast as current, and recovery from a dropped connection no longer requires a manual retry. Same-city refreshes keep current data visible behind the "Refreshing" pill.
+- **Derived-metric honesty** - missing inputs can no longer produce confident derived claims: null rain chance shows "Partial data" instead of a fake "Steady" all-clear, a one-sample pressure window says "Not enough data" instead of "Stable", a week with no recorded lows omits its range instead of inventing a 0° bound, and a short hourly window is captioned by its real coverage instead of "Next 24h".
+- **Recovery clarity** - forecast timeouts get timeout-specific copy, blocked location permission is explained distinctly from a GPS timeout, the Retry button disables while a request is in flight, and clock-skewed cache snapshots are rejected instead of reading as perpetually fresh.
 - **Saved-city reordering** - each chip now has move-earlier/move-later arrows (keyboard- and screen-reader-friendly: `aria-disabled` at the ends keeps focus stable, and a live region announces the new position). The order persists locally and rides the existing cloud-sync push.
 - **Honest Lighthouse budgets** - the CI performance gate moved from 0.5 to 0.85 (accessibility 0.95, SEO 0.9) now that the deterministic demo route scores 98/100/96/100 locally.
 - **Dead code removed** - the unused Nominatim reverse-geocode adapter (the app geocodes through BigDataCloud) is gone from the API layer.

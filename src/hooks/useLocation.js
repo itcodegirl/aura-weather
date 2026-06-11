@@ -10,6 +10,8 @@ export const DEFAULT_LOCATION = {
 };
 export const LOCATION_FALLBACK_NOTICE =
   "Showing Chicago until you choose a location";
+export const LOCATION_PERMISSION_BLOCKED_NOTICE =
+  "Location access is blocked for this site. Showing Chicago - search for a city, or allow location in your browser settings.";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 export const LOCATION_UNSUPPORTED_NOTICE =
   "Location access is unavailable in this browser. Search for a city instead.";
@@ -452,7 +454,7 @@ export function useLocation(onResolved) {
         }
       };
 
-      const fallback = () => {
+      const fallback = (noticeOverride) => {
         clearFallbackTimer();
         clearReverseGeocodeRequest();
         if (requestId !== activeRequestRef.current || !isMountedRef.current) {
@@ -466,7 +468,7 @@ export function useLocation(onResolved) {
           DEFAULT_LOCATION.lon,
           DEFAULT_LOCATION.name,
           DEFAULT_LOCATION.country,
-          fallbackNotice
+          noticeOverride ?? fallbackNotice
         );
       };
 
@@ -584,8 +586,17 @@ export function useLocation(onResolved) {
               }
             }
           },
-          () => {
+          (geoError) => {
             if (requestId !== activeRequestRef.current || !isMountedRef.current) {
+              return;
+            }
+
+            // PERMISSION_DENIED (code 1) needs a different recovery
+            // path than a GPS timeout: the browser will silently
+            // swallow further prompts until the user changes the site
+            // permission, so say that instead of the generic notice.
+            if (geoError?.code === 1) {
+              fallback(LOCATION_PERMISSION_BLOCKED_NOTICE);
               return;
             }
 

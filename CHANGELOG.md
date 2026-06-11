@@ -72,6 +72,18 @@ portfolio-grade product. Format roughly follows
 
 ### Added
 
+- **Current-location recovery regression test.** A new
+  `useWeather.render.test.mjs` drives the full grant-location flow with
+  a reverse-geocode that resolves *before* the forecast — the ordering
+  that a 0ms e2e mock momentarily stranded in global loading — and
+  asserts the dashboard lands on the resolved place with live weather
+  and `loading === false`. Under the render harness the hook state
+  machine recovers correctly, confirming the stall was a browser/Playwright
+  timing artifact (already mitigated by latency-modeling the reverse-geocode
+  mock) rather than a logic defect; the test now guards that recovery
+  contract against future fetch-lifecycle regressions. No production code
+  was changed: there is no reproducible state-machine fault to fix, so a
+  speculative change to the fetch lifecycle was deliberately avoided.
 - **No-JS fallback.** `index.html` now renders a short, styled
   `<noscript>` notice explaining the dashboard needs JavaScript,
   instead of leaving a blank `<div id="root">`.

@@ -590,5 +590,18 @@
   }
 }
 
+/*
+ * The signal chip carries the day's trend (WARM / COOL / WET / STEADY).
+ * Its base size is 9px, dropping to 8px on the narrowest phones — too
+ * small to scan comfortably one-handed. Lift it to a 10px floor on
+ * touch devices. Pointer-scoped so desktop density is preserved; placed
+ * last so it overrides the width-tier sizing above.
+ */
+@media (pointer: coarse) {
+  .forecast-signal-chip {
+    font-size: 10px;
+  }
+}
+
 
 

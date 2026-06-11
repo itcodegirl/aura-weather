@@ -8,6 +8,14 @@ function isAbortError(error) {
   return error?.name === "AbortError";
 }
 
+function isBrowserOffline() {
+  return (
+    typeof navigator !== "undefined" &&
+    typeof navigator.onLine === "boolean" &&
+    navigator.onLine === false
+  );
+}
+
 /**
  * Owns the historical-archive request lifecycle and exposes
  * comparison + status state. Consumers call requestClimateComparison
@@ -65,6 +73,16 @@ export function useClimateComparison(options = {}) {
       requestIdRef.current = requestId;
 
       abortClimateRequest();
+
+      // Offline, the archive request can only fail — resolve straight
+      // to "unavailable" instead of spending a fetch plus its retry
+      // cycle to learn the same thing.
+      if (isBrowserOffline()) {
+        setClimateComparison(null);
+        setClimateLastUpdatedAt(null);
+        setClimateStatus("unavailable");
+        return;
+      }
 
       const controller = new AbortController();
       requestRef.current = controller;

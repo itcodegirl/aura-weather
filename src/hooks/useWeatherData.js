@@ -30,6 +30,12 @@ const DEFAULT_TRUST_META = {
   cacheRestoredAt: null,
 };
 
+// When the network is down or the refresh failed, a snapshot older
+// than the default 12h freshness window is still better than the
+// global error screen — the trust pill labels exactly how old it is.
+// Two days is the ceiling: beyond that a forecast is misinformation.
+const DEGRADED_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
+
 // Forecast data is always fetched in Fahrenheit / inch units and converted
 // client-side. Switching units in the UI must not trigger a refetch.
 const WEATHER_SOURCE_UNIT = "F";
@@ -299,24 +305,35 @@ export function useWeatherData(location, options = {}) {
 
     const requestWindSpeedUnit = getApiWindSpeedUnit();
     const cachedSnapshot = readCachedWeatherSnapshot(coordinates);
+    // Degraded paths (offline start, failed refresh) accept an older
+    // snapshot than the happy path would ever render. Resolved lazily
+    // so the wider read only happens when the fresh one came up empty.
+    const readDegradedSnapshot = () =>
+      cachedSnapshot ??
+      readCachedWeatherSnapshot(coordinates, {
+        maxAgeMs: DEGRADED_SNAPSHOT_MAX_AGE_MS,
+      });
 
     abortInFlightRequest();
     resetClimateComparison();
 
-    if (isBrowserOffline() && cachedSnapshot) {
-      setWeather(cachedSnapshot.weather);
-      setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
-      lastFetchedCoordsRef.current = {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-      };
-      setError(getForecastFailureMessage());
-      setLoading(false);
-      void requestClimateComparison({
-        coordinates,
-        weatherData: cachedSnapshot.weather,
-      });
-      return;
+    if (isBrowserOffline()) {
+      const offlineSnapshot = readDegradedSnapshot();
+      if (offlineSnapshot) {
+        setWeather(offlineSnapshot.weather);
+        setTrustMeta(buildCachedTrustMeta(offlineSnapshot));
+        lastFetchedCoordsRef.current = {
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+        };
+        setError(getForecastFailureMessage());
+        setLoading(false);
+        void requestClimateComparison({
+          coordinates,
+          weatherData: offlineSnapshot.weather,
+        });
+        return;
+      }
     }
 
     const controller = new AbortController();
@@ -393,9 +410,10 @@ export function useWeatherData(location, options = {}) {
         !isAbortError(requestError) &&
         isMountedRef.current
       ) {
-        if (cachedSnapshot) {
-          setWeather(cachedSnapshot.weather);
-          setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
+        const fallbackSnapshot = readDegradedSnapshot();
+        if (fallbackSnapshot) {
+          setWeather(fallbackSnapshot.weather);
+          setTrustMeta(buildCachedTrustMeta(fallbackSnapshot));
           lastFetchedCoordsRef.current = {
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
@@ -403,7 +421,7 @@ export function useWeatherData(location, options = {}) {
           setError(getForecastFailureMessage(requestError));
           void requestClimateComparison({
             coordinates,
-            weatherData: cachedSnapshot.weather,
+            weatherData: fallbackSnapshot.weather,
           });
         } else {
           setError(getForecastFailureMessage(requestError));

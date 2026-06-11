@@ -178,6 +178,15 @@ button {
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  /*
+   * App-like touch feel: a long-press on a control should activate it,
+   * not pop the iOS callout menu or flash a text-selection highlight.
+   * Pairs with the transparent tap highlight above. Labels in Aura's
+   * controls are never content the user needs to select/copy.
+   */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 button:focus-visible,

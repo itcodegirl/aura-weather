@@ -181,6 +181,12 @@
   color: #b9f5ff;
 }
 
+.forecast-signal-chip--limited {
+  color: rgba(203, 218, 240, 0.62);
+  border: 1px dashed rgba(176, 200, 235, 0.34);
+  background: rgba(13, 24, 46, 0.4);
+}
+
 .forecast-signal-chip--steady {
   border-color: rgba(186, 211, 249, 0.25);
   color: rgba(220, 233, 255, 0.9);

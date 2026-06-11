@@ -5,7 +5,64 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Saved-city reordering, honest budgets, dead-code removal (2026-06)
+## [Unreleased] — Real-world reliability: auto-refresh, derived-metric honesty (2026-06)
+
+### Added
+
+- **Automatic refresh on natural opportunities.** The dashboard never
+  refetched on its own: a tab left open overnight kept showing
+  yesterday's forecast, and a dropped connection left the error banner
+  up after connectivity returned. Two listeners now close that gap —
+  `online` and `visibilitychange` trigger a refetch when the app is
+  visible, online, and either erroring, showing a restored cache, or
+  holding live data older than 30 minutes (minimum 60s between
+  automatic attempts). The decision logic is a pure, unit-tested
+  policy (`weatherRefreshPolicy.js`, 9 tests); same-coordinate
+  refreshes keep current data visible behind the existing
+  "Refreshing" pill, so the screen never blanks.
+- **Timeout-specific error copy.** A 10-second forecast timeout
+  surfaced as the generic "unavailable"; `TimeoutError` now reads
+  "Open-Meteo forecast timed out. Check your connection and retry."
+- **Blocked-permission location notice.** Denying the geolocation
+  prompt produced the same notice as a GPS timeout, hiding the fact
+  that the browser will silently swallow further prompts. Permission
+  denial (code 1) now explains the blocked state and how to recover.
+
+### Fixed
+
+- **Fake 0° week bound.** A week whose minimum temperatures were all
+  missing fell back to `weekMin = 0`, leaking a literal fake "0°" into
+  the 7-day summary ("Stable week · 0° to 74°") — a direct violation
+  of the data-trust contract. Missing bounds are now `null`, the
+  summary omits the range, and the Warm Peak / Cool Dip comparisons
+  gained finite guards so a null bound can no longer coerce to 0 and
+  hand out fake badges. Render test pins the contract.
+- **Fake "Steady" badge from missing rain data.** A day whose rain
+  chance was null fell through to the confident "Steady" signal — a
+  fake all-clear. It now shows a visibly distinct "Partial data" chip.
+- **Fake "Stable" pressure trend from one sample.** A single usable
+  pressure reading compared against itself (delta 0) and presented as
+  a confident "Stable" trend. One-sample windows now read "Not enough
+  data" while still surfacing the current reading.
+- **Forecast labels frozen across midnight.** "Today"/"Tomorrow" rows
+  were computed once per data fetch; a tab open past the location's
+  midnight kept yesterday's labels until a refetch. ForecastCard now
+  derives a day-granular `todayIso` from the shared minute tick, so
+  rows relabel at the location's midnight without per-minute
+  re-renders.
+- **Future-dated snapshots read as perpetually fresh.** The cache age
+  clamp (`Math.max(0, now - cachedAt)`) made a clock-skewed or corrupt
+  snapshot look brand new forever. Snapshots stamped more than 5
+  minutes in the future are now rejected (2 new tests).
+- **Hourly window honesty.** An API response with fewer than 24 hourly
+  slots was still captioned "Next 24h"; the subtitle now reports the
+  actual covered window ("Next 18h").
+- **Retry race.** The error-banner Retry button only had a 1400ms
+  cooldown; a tap after the cooldown but during a still-running
+  request aborted and restarted it. Retry now also disables while a
+  request is in flight.
+
+## [Earlier] — Saved-city reordering, honest budgets, dead-code removal (2026-06)
 
 ### Added
 

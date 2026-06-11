@@ -13,6 +13,7 @@ import {
   MISSING_VALUE_PLACEHOLDER,
   toFiniteNumber as toStrictFiniteNumber,
 } from "../utils/numbers";
+import { useTimeNow } from "../hooks/useTimeNow";
 import { CardHeader } from "./ui";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
@@ -40,11 +41,27 @@ function getDaySignal(day, weekMin, weekMax) {
   if (rainChance >= 60) {
     return { label: "Rain Watch", tone: "wet" };
   }
-  if (Number.isFinite(day.temperatureMax) && day.temperatureMax >= weekMax - 1) {
+  // weekMin/weekMax are null when the whole week lacks that reading;
+  // without the finite guards the null would coerce to 0 in the
+  // comparison and hand out fake Warm Peak / Cool Dip badges.
+  if (
+    Number.isFinite(weekMax) &&
+    Number.isFinite(day.temperatureMax) &&
+    day.temperatureMax >= weekMax - 1
+  ) {
     return { label: "Warm Peak", tone: "warm" };
   }
-  if (Number.isFinite(day.temperatureMin) && day.temperatureMin <= weekMin + 1) {
+  if (
+    Number.isFinite(weekMin) &&
+    Number.isFinite(day.temperatureMin) &&
+    day.temperatureMin <= weekMin + 1
+  ) {
     return { label: "Cool Dip", tone: "cool" };
+  }
+  // "Steady" is a claim about the day; a missing rain chance cannot
+  // support it. Saying so beats a fake all-clear.
+  if (rainChance === null) {
+    return { label: "Partial data", tone: "limited" };
   }
   return { label: "Steady", tone: "steady" };
 }
@@ -71,7 +88,7 @@ function formatForecastTemp(value, unit) {
   };
 }
 
-function buildForecastDays(weatherDaily, timeZone) {
+function buildForecastDays(weatherDaily, timeZone, todayIsoOverride) {
   if (!weatherDaily || typeof weatherDaily !== "object") {
     return [];
   }
@@ -111,7 +128,7 @@ function buildForecastDays(weatherDaily, timeZone) {
   // the viewer's local "today" dropped the location's current day
   // entirely when the viewer was a calendar day ahead across the date
   // line (e.g. reading a Honolulu forecast from Tokyo).
-  const todayIso = getIsoDateInTimeZone(timeZone);
+  const todayIso = todayIsoOverride ?? getIsoDateInTimeZone(timeZone);
 
   return times
     .map((date, index) => ({
@@ -194,13 +211,14 @@ function DayRow({
   weekMax,
   unit,
   timeZone,
+  todayIso,
   rangeGradient,
   isExpanded,
   onToggle,
 }) {
   const triggerRef = useRef(null);
   const info = getWeather(day.conditionCode);
-  const label = formatDayLabel(day.date, { timeZone });
+  const label = formatDayLabel(day.date, { timeZone, todayIso });
   const high = formatForecastTemp(day.temperatureMax, unit);
   const low = formatForecastTemp(day.temperatureMin, unit);
   const rainChance = day.rainChanceMax;
@@ -399,7 +417,7 @@ function DayRow({
 const FORECAST_EMPTY_MESSAGE =
   "The 7-day outlook isn't available right now. Current conditions are still live above.";
 
-function buildWeekSummary(days, weekMin, weekMax, unit, timeZone) {
+function buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso) {
   if (!Array.isArray(days) || days.length === 0) {
     return FORECAST_EMPTY_MESSAGE;
   }
@@ -419,13 +437,17 @@ function buildWeekSummary(days, weekMin, weekMax, unit, timeZone) {
     wettestDay.rainChanceMax === null
       ? "Rain chance unavailable"
       : wettestDay.rainChanceMax >= 25
-      ? `${formatDayLabel(wettestDay.date, { timeZone })} peaks at ${wettestDay.rainChanceMax}% rain chance`
+      ? `${formatDayLabel(wettestDay.date, { timeZone, todayIso })} peaks at ${wettestDay.rainChanceMax}% rain chance`
       : "Rain chances stay mostly low";
-  const weekMinText = formatForecastTemp(weekMin, unit).text;
-  const weekMaxText = formatForecastTemp(weekMax, unit).text;
-  const weekRangeText = `${weekMinText} to ${weekMaxText}`;
+  const summaryParts = [trendText];
+  if (Number.isFinite(weekMin) && Number.isFinite(weekMax)) {
+    const weekMinText = formatForecastTemp(weekMin, unit).text;
+    const weekMaxText = formatForecastTemp(weekMax, unit).text;
+    summaryParts.push(`${weekMinText} to ${weekMaxText}`);
+  }
+  summaryParts.push(wettestLabel);
 
-  return `${trendText} \u00b7 ${weekRangeText} \u00b7 ${wettestLabel}`;
+  return summaryParts.join(" \u00b7 ");
 }
 
 function ForecastCard({
@@ -437,9 +459,18 @@ function ForecastCard({
   const titleId = useId();
   const [expandedDate, setExpandedDate] = useState(null);
   const timeZone = weather?.meta?.timezone;
+  // Minute tick -> day-granular todayIso. Rows therefore relabel at the
+  // location's midnight (a tab left open overnight used to keep
+  // yesterday's "Today"), while the string stays stable within a day so
+  // memoized rows do not re-render per tick.
+  const nowMs = useTimeNow(60_000);
+  const todayIso = useMemo(
+    () => getIsoDateInTimeZone(timeZone, new Date(nowMs)),
+    [timeZone, nowMs]
+  );
   const days = useMemo(
-    () => buildForecastDays(weather?.daily, timeZone),
-    [weather?.daily, timeZone]
+    () => buildForecastDays(weather?.daily, timeZone, todayIso),
+    [weather?.daily, timeZone, todayIso]
   );
   const { weekMin, weekMax } = useMemo(() => {
     const validWeekMins = days
@@ -448,8 +479,10 @@ function ForecastCard({
     const validWeekMaxs = days
       .map((day) => day.temperatureMax)
       .filter((value) => Number.isFinite(value));
-    const nextWeekMin = validWeekMins.length ? Math.min(...validWeekMins) : 0;
-    const nextWeekMax = validWeekMaxs.length ? Math.max(...validWeekMaxs) : nextWeekMin;
+    // null (not 0) when a whole week lacks a reading: the previous 0
+    // fallback leaked into the summary as a fake "0\u00B0" bound.
+    const nextWeekMin = validWeekMins.length ? Math.min(...validWeekMins) : null;
+    const nextWeekMax = validWeekMaxs.length ? Math.max(...validWeekMaxs) : null;
     return {
       weekMin: nextWeekMin,
       weekMax: nextWeekMax,
@@ -460,8 +493,8 @@ function ForecastCard({
     [weekMin, weekMax]
   );
   const weekSummary = useMemo(
-    () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone),
-    [days, weekMin, weekMax, unit, timeZone]
+    () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso),
+    [days, weekMin, weekMax, unit, timeZone, todayIso]
   );
   const handleToggleDay = useCallback((date) => {
     setExpandedDate((currentDate) => (currentDate === date ? null : date));
@@ -530,6 +563,7 @@ function ForecastCard({
             weekMax={weekMax}
             unit={unit}
             timeZone={timeZone}
+            todayIso={todayIso}
             rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
@@ -545,6 +579,7 @@ const MemoizedDayRow = memo(
   (prevProps, nextProps) =>
     prevProps.unit === nextProps.unit &&
     prevProps.timeZone === nextProps.timeZone &&
+    prevProps.todayIso === nextProps.todayIso &&
     prevProps.weekMin === nextProps.weekMin &&
     prevProps.weekMax === nextProps.weekMax &&
     prevProps.rangeGradient === nextProps.rangeGradient &&

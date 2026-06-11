@@ -603,5 +603,25 @@
   }
 }
 
+/*
+ * Same 10px touch floor for the day-row micro-labels: the 560px tier
+ * drops the condition line and the HIGH/LOW captions to 9px with
+ * 0.12em tracking, which reads as letter soup at arm's length on a
+ * phone. Floor the size and ease the tracking on coarse pointers only,
+ * scoped to the same width tier that shrank them, so fine-pointer
+ * density and the committed visual baselines are unaffected.
+ */
+@media (pointer: coarse) and (max-width: 560px) {
+  .forecast-condition,
+  .forecast-temp-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .bento-forecast .forecast-subtitle {
+    font-size: 10px;
+  }
+}
+
 
 

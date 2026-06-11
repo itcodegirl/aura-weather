@@ -1,19 +1,4 @@
-import {
-  convertTemperature,
-  toFahrenheit,
-  toCelsius,
-  normalizeTemperatureUnit,
-  formatTemperature,
-} from "../domain/temperature.js";
 import { MISSING_VALUE_PLACEHOLDER, toFiniteNumber } from "./numbers.js";
-
-export {
-  convertTemperature,
-  toFahrenheit,
-  toCelsius,
-  normalizeTemperatureUnit,
-  formatTemperature,
-};
 
 // The Open-Meteo forecast comes back in Fahrenheit; convertTemp turns
 // that into the user's chosen display unit. Returns NaN (not 0) for

@@ -180,6 +180,7 @@ export function useWeatherData(location, options = {}) {
     requestId,
     controller,
     coordinates,
+    baseWeather,
     weatherFetchedAt,
   }) => {
     const supplementalTasks = [
@@ -237,34 +238,31 @@ export function useWeatherData(location, options = {}) {
             : ALERTS_STATUS.unavailable,
       };
 
-      setWeather((currentWeather) => {
-        if (!currentWeather) {
-          return currentWeather;
-        }
+      // The requestId guard above proves the weather state still holds
+      // this request's base snapshot (every other writer bumps the id
+      // first), so the merge is computed as a plain value. The cache
+      // write must stay outside the setState updater: updaters have to
+      // be pure — StrictMode invokes them twice — and a persistence
+      // side effect inside one runs twice with them.
+      const nextWeather = { ...baseWeather, aqi: nextAqi };
 
-        const nextWeather = { ...currentWeather };
-        nextWeather.aqi = nextAqi;
+      if (alertsPayload) {
+        nextWeather.alerts = Array.isArray(alertsPayload?.alerts)
+          ? alertsPayload.alerts
+          : [];
+        nextWeather.alertsStatus =
+          typeof alertsPayload?.status === "string"
+            ? alertsPayload.status
+            : ALERTS_STATUS.unavailable;
+      }
 
-        if (alertsPayload) {
-          nextWeather.alerts = Array.isArray(alertsPayload?.alerts)
-            ? alertsPayload.alerts
-            : [];
-          nextWeather.alertsStatus =
-            typeof alertsPayload?.status === "string"
-              ? alertsPayload.status
-              : ALERTS_STATUS.unavailable;
-        }
-
-        writeCachedWeatherSnapshot({
-          coordinates,
-          weather: nextWeather,
-          trustMeta: nextTrustMeta,
-        });
-
-        return nextWeather;
-      });
-
+      setWeather(nextWeather);
       setTrustMeta(nextTrustMeta);
+      writeCachedWeatherSnapshot({
+        coordinates,
+        weather: nextWeather,
+        trustMeta: nextTrustMeta,
+      });
     } finally {
       if (inFlightRequestRef.current === controller) {
         inFlightRequestRef.current = null;
@@ -274,6 +272,11 @@ export function useWeatherData(location, options = {}) {
 
   const requestWeatherData = useCallback(async () => {
     if (!enabled) {
+      // Invalidate any queued continuation from a prior request so a
+      // late supplemental merge cannot resurrect state after this
+      // reset clears it. This was previously guarded only by a null
+      // check inside the setWeather updater.
+      requestIdRef.current += 1;
       abortInFlightRequest();
       resetClimateComparison();
       lastFetchedCoordsRef.current = null;
@@ -381,6 +384,7 @@ export function useWeatherData(location, options = {}) {
         requestId,
         controller,
         coordinates,
+        baseWeather,
         weatherFetchedAt: fetchedAt,
       });
       void requestClimateComparison({

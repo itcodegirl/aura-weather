@@ -427,6 +427,27 @@ a:focus-visible,
 }
 
 /*
+ * Shared "eyebrow pill" — the small uppercase pill used as a
+ * contextual subtitle next to card titles (forecast, hourly chart,
+ * stormwatch, alerts, etc.). Card CSS files used to redeclare this
+ * pattern with subtle differences in padding, border alpha, and
+ * letter-spacing. Now they all reach for one rule.
+ */
+.eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: var(--border-default);
+  background: var(--surface-1);
+  color: rgba(224, 236, 255, 0.9);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--track-loose);
+  text-transform: uppercase;
+}
+
+/*
  * Shared severity badge — the 5-rung risk pill used by NowcastCard and
  * RainCard (JSX renders `<span class="severity-badge severity-badge--{tone}">`).
  * Tones map onto the --severity-* palette above; the base rule is the

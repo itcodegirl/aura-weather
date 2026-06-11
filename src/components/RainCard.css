@@ -40,7 +40,10 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  border-radius: var(--radius-pill);
+  /* Match the header unit/time toggles (14px shell / 11px buttons) so a
+     single-character label like "%" reads as a segmented control rather
+     than a stark circle. The 44x44 hit target below is unchanged. */
+  border-radius: 14px;
   background: var(--surface-3);
   border: var(--border-soft);
   transition:
@@ -63,7 +66,7 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 11px;
   border: 1px solid transparent;
   color: var(--text-muted);
   font-size: 12px;

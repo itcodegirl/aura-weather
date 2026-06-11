@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   AUTO_REFRESH_MIN_INTERVAL_MS,
+  AUTO_REFRESH_POLL_INTERVAL_MS,
+  AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
   AUTO_REFRESH_STALE_AFTER_MS,
   shouldAutoRefreshWeather,
 } from "./weatherRefreshPolicy.js";
@@ -81,5 +83,54 @@ describe("shouldAutoRefreshWeather", () => {
   test("rejects nonsense clocks instead of guessing", () => {
     assert.equal(decide({ nowMs: null }), false);
     assert.equal(decide({ nowMs: "soon" }), false);
+  });
+
+  // ---- visible-tab cadence (poll) contracts -------------------------
+  // The poll runs this same policy once a minute with a calmer floor,
+  // so a continuously visible tab refreshes ~every staleness window
+  // while a failing provider is only re-tried every five minutes.
+
+  test("poll floor is calmer than the event floor", () => {
+    assert.ok(AUTO_REFRESH_POLL_MIN_INTERVAL_MS > AUTO_REFRESH_MIN_INTERVAL_MS);
+    assert.ok(AUTO_REFRESH_POLL_INTERVAL_MS < AUTO_REFRESH_POLL_MIN_INTERVAL_MS);
+  });
+
+  test("stale data on a visible tab refreshes under the poll floor", () => {
+    assert.equal(
+      decide({
+        weatherFetchedAt: NOW - AUTO_REFRESH_STALE_AFTER_MS,
+        minAttemptIntervalMs: AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+      }),
+      true
+    );
+  });
+
+  test("an erroring provider is not re-tried before the poll floor elapses", () => {
+    assert.equal(
+      decide({
+        hasError: true,
+        lastAttemptAt: NOW - AUTO_REFRESH_POLL_MIN_INTERVAL_MS + 1,
+        minAttemptIntervalMs: AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+      }),
+      false
+    );
+    assert.equal(
+      decide({
+        hasError: true,
+        lastAttemptAt: NOW - AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+        minAttemptIntervalMs: AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+      }),
+      true
+    );
+  });
+
+  test("fresh data stays untouched between poll ticks", () => {
+    assert.equal(
+      decide({
+        weatherFetchedAt: NOW - AUTO_REFRESH_STALE_AFTER_MS + 60_000,
+        minAttemptIntervalMs: AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+      }),
+      false
+    );
   });
 });

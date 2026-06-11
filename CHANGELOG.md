@@ -5,6 +5,23 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased] — Visible-tab refresh cadence (2026-06)
+
+### Added
+
+- **Visible-tab refresh cadence.** The auto-refresh shipped earlier was
+  event-only (`online`, `visibilitychange`) — correct for tab switchers,
+  but a dashboard that never loses focus (second monitor, kiosk, an
+  installed PWA left open) fired neither event and still served its
+  first fetch forever. A minute-level check now runs the same
+  `weatherRefreshPolicy` decision, so a continuously visible tab
+  refreshes once its forecast ages past the 30-minute threshold. The
+  standing check carries a calmer 5-minute floor between failure
+  retries (events keep their 60-second floor), is suppressed entirely
+  under `prefers-reduced-data`, and never installs on the
+  `?mock=missing` demo route. Four new policy tests pin the cadence
+  contracts.
+
 ## [Unreleased] — Restore lost severity-badge & data-status styling (2026-06)
 
 ### Fixed

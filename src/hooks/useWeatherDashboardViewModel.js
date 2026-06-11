@@ -61,6 +61,10 @@ export function useWeatherDashboardViewModel() {
   const weatherState = useWeather({
     climateEnabled,
     weatherEnabled: !isMissingMock,
+    // The visible-tab refresh cadence is background spend; reduced-data
+    // users keep the event-driven refresh triggers (tab return,
+    // reconnect) but skip the standing poll.
+    backgroundRefreshEnabled: !prefersReducedData,
   });
   const mockState = useMemo(
     () => (isMissingMock ? buildMissingMockViewModel() : null),

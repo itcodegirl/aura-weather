@@ -12,7 +12,11 @@ import {
 } from "../utils/weatherUnits";
 import { toFiniteNumber } from "../utils/numbers";
 import { useClimateComparison } from "./useClimateComparison";
-import { shouldAutoRefreshWeather } from "./weatherRefreshPolicy.js";
+import {
+  AUTO_REFRESH_POLL_INTERVAL_MS,
+  AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+  shouldAutoRefreshWeather,
+} from "./weatherRefreshPolicy.js";
 import {
   readCachedWeatherSnapshot,
   writeCachedWeatherSnapshot,
@@ -127,7 +131,11 @@ function buildCachedTrustMeta(snapshot, restoredAt = Date.now()) {
 }
 
 export function useWeatherData(location, options = {}) {
-  const { climateEnabled = true, enabled = true } = options;
+  const {
+    climateEnabled = true,
+    enabled = true,
+    backgroundRefreshEnabled = true,
+  } = options;
   const locationLat = location?.lat;
   const locationLon = location?.lon;
   const weatherDataUnit = WEATHER_SOURCE_UNIT;
@@ -487,10 +495,10 @@ export function useWeatherData(location, options = {}) {
   // The dashboard previously never refetched on its own: a tab left
   // open overnight kept showing yesterday's forecast, and a connection
   // drop left the error banner up even after connectivity returned.
-  // Two listeners close that gap; the decision logic itself lives in
-  // weatherRefreshPolicy.js. Same-coordinate refreshes keep the current
-  // data visible behind the existing "Refreshing" pill, so this never
-  // blanks the screen.
+  // Two listeners plus a minute-level visible-tab check close that
+  // gap; the decision logic itself lives in weatherRefreshPolicy.js.
+  // Same-coordinate refreshes keep the current data visible behind the
+  // existing "Refreshing" pill, so this never blanks the screen.
   const refreshSnapshotRef = useRef({ weatherFetchedAt: null, forecastStatus: "idle", hasError: false });
   useEffect(() => {
     refreshSnapshotRef.current = {
@@ -506,7 +514,7 @@ export function useWeatherData(location, options = {}) {
       return undefined;
     }
 
-    const attemptAutoRefresh = () => {
+    const attemptAutoRefresh = ({ minAttemptIntervalMs } = {}) => {
       const snapshot = refreshSnapshotRef.current;
       const isVisible =
         typeof document === "undefined" ||
@@ -519,6 +527,7 @@ export function useWeatherData(location, options = {}) {
         isOffline: isBrowserOffline(),
         isVisible,
         lastAttemptAt: lastAutoRefreshAttemptRef.current,
+        ...(minAttemptIntervalMs !== undefined ? { minAttemptIntervalMs } : {}),
       });
 
       if (!decision) {
@@ -538,11 +547,28 @@ export function useWeatherData(location, options = {}) {
 
     window.addEventListener("online", handleOnline);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    // Visible-tab cadence: a dashboard that never loses focus (second
+    // monitor, kiosk, installed PWA left open) fires neither listener
+    // above, so a minute check runs the same policy with a calmer
+    // retry floor. Suppressed for prefers-reduced-data users — they
+    // keep the event-driven correctness without background spend.
+    const pollTimerId = backgroundRefreshEnabled
+      ? setInterval(
+          () =>
+            attemptAutoRefresh({
+              minAttemptIntervalMs: AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+            }),
+          AUTO_REFRESH_POLL_INTERVAL_MS
+        )
+      : null;
     return () => {
       window.removeEventListener("online", handleOnline);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (pollTimerId !== null) {
+        clearInterval(pollTimerId);
+      }
     };
-  }, [enabled, requestWeatherData]);
+  }, [backgroundRefreshEnabled, enabled, requestWeatherData]);
 
   // Project climate state back into trustMeta so existing consumers keep
   // working without prop-shape churn.

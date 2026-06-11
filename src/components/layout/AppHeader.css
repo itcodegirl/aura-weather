@@ -924,3 +924,16 @@
     background: rgba(4, 11, 25, 0.9);
   }
 }
+
+/*
+ * iOS Safari zooms the viewport when a sub-16px input is focused. The
+ * sync-account key field sits at 12px (11px on compact phones) for
+ * density, so pin it to 16px on touch devices to suppress the zoom.
+ * Placed last and pointer-scoped so it wins over the width-based
+ * sizing without affecting desktop. Mirrors the same fix on the city
+ * search field. */
+@media (pointer: coarse) {
+  .sync-account-input {
+    font-size: 16px;
+  }
+}

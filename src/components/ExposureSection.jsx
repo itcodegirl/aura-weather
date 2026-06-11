@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { MetricCard } from "./ui";
-import { getAqiStatus, getUvStatus } from "../utils/meteorology";
+import { getAqiStatus, getUvStatus } from "../domain/exposure";
 import { toFiniteNumber } from "../utils/numbers";
 import "./MetricPanels.css";
 

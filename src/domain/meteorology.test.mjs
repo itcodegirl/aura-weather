@@ -5,9 +5,8 @@ import {
   calculatePressureTrend,
   classifyComfort,
   classifyStormRisk,
-  classifyWind,
-  windDirectionName,
 } from "./meteorology.js";
+import { classifyWind, windDirectionName } from "./wind.js";
 
 function buildHourlyIsoTimes(count, hourOffsetFromNow = 0) {
   const now = Date.now();

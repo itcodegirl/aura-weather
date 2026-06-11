@@ -1,9 +1,9 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeWeatherResponse } from "./weatherApi.js";
+import { normalizeWeatherResponse } from "./transforms.js";
 
-describe("weatherApi model normalization", () => {
+describe("normalizeWeatherResponse model mapping", () => {
   test("maps Open-Meteo response into app-domain weather model", () => {
     const normalized = normalizeWeatherResponse({
       latitude: 41.88,

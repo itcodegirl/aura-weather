@@ -246,7 +246,7 @@ function DayRow({
         className="forecast-row-trigger"
         aria-expanded={isExpanded}
         aria-controls={detailPanelId}
-        aria-label={`${label}: ${info.label}. High ${high.ariaText}, low ${low.ariaText}. ${isExpanded ? "Hide" : "Show"} details.`}
+        aria-label={`${isExpanded ? "Hide" : "Show"} forecast details for ${label}`}
         onClick={() => onToggle(day.date)}
       >
         <div className="forecast-day-wrap">
@@ -259,27 +259,30 @@ function DayRow({
           </div>
         </div>
 
-        <div className="forecast-icon" aria-hidden="true">
+        <div className="forecast-icon" role="img" aria-label={info.label}>
           <WeatherIcon code={day.conditionCode} size={22} />
         </div>
 
         <div
           className="forecast-temps"
-          aria-hidden="true"
+          role="group"
+          aria-label={`High ${high.ariaText}, low ${low.ariaText}`}
         >
           <div className="forecast-temp forecast-temp--high">
             <span className="forecast-temp-label">High</span>
             <span
               className={`forecast-temp-value ${high.isMissing ? "is-missing" : ""}`.trim()}
+              aria-label={high.isMissing ? "High unavailable" : undefined}
             >
               {high.text}
             </span>
           </div>
-          <span className="forecast-temp-divider" />
+          <span className="forecast-temp-divider" aria-hidden="true" />
           <div className="forecast-temp forecast-temp--low">
             <span className="forecast-temp-label">Low</span>
             <span
               className={`forecast-temp-value ${low.isMissing ? "is-missing" : ""}`.trim()}
+              aria-label={low.isMissing ? "Low unavailable" : undefined}
             >
               {low.text}
             </span>
@@ -469,9 +472,9 @@ function ForecastCard({
       <section
         className="bento-forecast forecast-card glass"
         style={style}
-        aria-labelledby={titleId}
         data-refreshing={isRefreshing ? "true" : undefined}
         aria-busy={isRefreshing || undefined}
+        aria-labelledby={titleId}
       >
         <CardHeader
           headerClassName="forecast-header"
@@ -501,9 +504,9 @@ function ForecastCard({
     <section
       className="bento-forecast forecast-card glass"
       style={style}
-      aria-labelledby={titleId}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
+      aria-labelledby={titleId}
     >
       <CardHeader
         headerClassName="forecast-header"

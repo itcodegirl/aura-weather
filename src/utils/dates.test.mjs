@@ -7,7 +7,18 @@ import {
   getIsoDateInTimeZone,
   parseLocalDate,
   formatHour,
+  getZonedNow,
 } from "./dates.js";
+
+function isoDateInZone(timeZone, when = new Date()) {
+  // en-CA renders YYYY-MM-DD, which parseLocalDate accepts.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(when);
+}
 
 function toIsoLocalDate(value) {
   const year = value.getFullYear();
@@ -105,5 +116,47 @@ describe("dates utils", () => {
 
   test("formatHour returns fallback for invalid input", () => {
     assert.equal(formatHour("not-a-date"), "\u2014");
+  });
+
+  test("getZonedNow returns the device clock when no timeZone is given", () => {
+    const now = Date.UTC(2026, 3, 21, 23, 0, 0);
+    const zoned = getZonedNow(undefined, now);
+    assert.equal(zoned.getTime(), now);
+  });
+
+  test("getZonedNow falls back to the device clock for an unknown zone", () => {
+    const now = Date.UTC(2026, 3, 21, 23, 0, 0);
+    const zoned = getZonedNow("Not/AZone", now);
+    assert.equal(zoned.getTime(), now);
+  });
+
+  test("getZonedNow reframes the instant into the target zone's wall clock", () => {
+    // 2026-04-21 23:00 UTC is 08:00 on the 22nd in Tokyo (UTC+9) and
+    // 18:00 on the 21st in Chicago (UTC-5). The returned Date carries
+    // those wall-clock parts as device-local components, matching how
+    // Open-Meteo's naive timestamps parse \u2014 so getHours/getDate are
+    // assertable regardless of the test machine's own zone.
+    const now = Date.UTC(2026, 3, 21, 23, 0, 0);
+
+    const tokyo = getZonedNow("Asia/Tokyo", now);
+    assert.equal(tokyo.getHours(), 8);
+    assert.equal(tokyo.getDate(), 22);
+
+    const chicago = getZonedNow("America/Chicago", now);
+    assert.equal(chicago.getHours(), 18);
+    assert.equal(chicago.getDate(), 21);
+  });
+
+  test("formatDayLabel anchors Today/Tomorrow to the supplied timeZone", () => {
+    // Use each zone's actual current calendar day so the assertion holds
+    // no matter which zone the test runner is in.
+    const tokyoToday = isoDateInZone("Asia/Tokyo");
+    assert.equal(formatDayLabel(tokyoToday, { timeZone: "Asia/Tokyo" }), "Today");
+
+    const chicagoToday = isoDateInZone("America/Chicago");
+    assert.equal(
+      formatDayLabel(chicagoToday, { timeZone: "America/Chicago" }),
+      "Today"
+    );
   });
 });

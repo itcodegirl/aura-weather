@@ -57,6 +57,65 @@ export function getIsoDateInTimeZone(timeZone, now = new Date()) {
 }
 
 /**
+ * Returns a Date whose *device-local* wall-clock equals the current
+ * wall-clock time in `timeZone`. This is the only frame in which it is
+ * safe to compare against Open-Meteo's naive forecast timestamps.
+ *
+ * Open-Meteo (with `timezone=auto`) returns timestamps like
+ * "2024-04-19T15:00" with no offset, which `new Date()` interprets in
+ * the *device's* zone. Display formatters round-trip that correctly
+ * (naive -> device -> device preserves the wall clock), but any
+ * comparison against the real clock (`Date.now()`) is wrong by the
+ * device/location offset \u2014 e.g. the hourly "Now" marker, the nowcast
+ * window, and the 7-day "today" filter all drift when you view a city
+ * in another zone. Reframing "now" into the location's wall clock,
+ * expressed as a device-local Date, makes those comparisons line up
+ * with how the forecast strings were parsed.
+ *
+ * Passing an explicit `now` keeps this pure (no clock read), so it is
+ * safe to call from a useMemo factory. Omitting it reads the clock and
+ * must only be called from a non-reactive helper.
+ */
+export function getZonedNow(timeZone, now = Date.now()) {
+  const base = new Date(now);
+  if (!Number.isFinite(base.getTime())) {
+    return new Date();
+  }
+  if (typeof timeZone !== "string" || !timeZone.trim()) {
+    return base;
+  }
+
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timeZone.trim(),
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(base);
+
+    const lookup = {};
+    for (const part of parts) {
+      if (part.type !== "literal") {
+        lookup[part.type] = part.value;
+      }
+    }
+
+    // Some engines emit "24" for midnight; normalize to "00".
+    const hour = lookup.hour === "24" ? "00" : lookup.hour;
+    const iso = `${lookup.year}-${lookup.month}-${lookup.day}T${hour}:${lookup.minute}:${lookup.second}`;
+    const zoned = new Date(iso);
+    return Number.isFinite(zoned.getTime()) ? zoned : base;
+  } catch {
+    // Unknown IANA zone \u2014 fall back to the device clock rather than throw.
+    return base;
+  }
+}
+
+/**
  * Formats a date string (ISO) as a human-readable day label.
  * Returns "Today", "Tomorrow", or abbreviated weekday name.
  *

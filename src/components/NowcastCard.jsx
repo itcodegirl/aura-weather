@@ -11,7 +11,10 @@ function NowcastCard({
   isRefreshing = false,
 }) {
   const titleId = useId();
-  const nowcast = useMemo(() => analyzeNowcast(weather?.nowcast), [weather?.nowcast]);
+  const nowcast = useMemo(
+    () => analyzeNowcast(weather?.nowcast, { timeZone: weather?.meta?.timezone }),
+    [weather?.nowcast, weather?.meta?.timezone]
+  );
   const {
     nowcastRiskTone,
     nowcastRiskLabel,

@@ -1049,3 +1049,20 @@
     font-size: 16px;
   }
 }
+
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the startup badge/button text sits at 9px base (8px on the
+ * narrowest tier), the sync hint at 9px, and the 420px tier drops the
+ * brand tagline to 9px — all below comfortable phone reading size.
+ * Pointer-scoped and placed last so it wins the width-tier sizing
+ * above without affecting desktop density or the visual baselines.
+ */
+@media (pointer: coarse) {
+  .saved-city-startup-badge,
+  .saved-city-startup,
+  .sync-account-toggle-hint,
+  .tagline {
+    font-size: 10px;
+  }
+}

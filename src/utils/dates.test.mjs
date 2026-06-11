@@ -1,7 +1,13 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { formatDayLabel, formatShortDate, parseLocalDate, formatHour } from "./dates.js";
+import {
+  formatDayLabel,
+  formatShortDate,
+  getIsoDateInTimeZone,
+  parseLocalDate,
+  formatHour,
+} from "./dates.js";
 
 function toIsoLocalDate(value) {
   const year = value.getFullYear();
@@ -32,6 +38,41 @@ describe("dates utils", () => {
 
     assert.equal(formatDayLabel(toIsoLocalDate(today)), "Today");
     assert.equal(formatDayLabel(toIsoLocalDate(tomorrow)), "Tomorrow");
+  });
+
+  test("getIsoDateInTimeZone resolves the calendar date in the requested timezone", () => {
+    // 2026-04-21T03:00Z is still April 20 in Chicago (UTC-5) but
+    // already April 21 in Tokyo (UTC+9).
+    const now = new Date("2026-04-21T03:00:00Z");
+    assert.equal(getIsoDateInTimeZone("America/Chicago", now), "2026-04-20");
+    assert.equal(getIsoDateInTimeZone("Asia/Tokyo", now), "2026-04-21");
+  });
+
+  test("getIsoDateInTimeZone falls back to the local date for missing or invalid timezones", () => {
+    const now = new Date("2026-04-21T12:00:00");
+    assert.equal(getIsoDateInTimeZone(undefined, now), toIsoLocalDate(now));
+    assert.equal(getIsoDateInTimeZone("Not/AZone", now), toIsoLocalDate(now));
+    assert.equal(getIsoDateInTimeZone("   ", now), toIsoLocalDate(now));
+  });
+
+  test("formatDayLabel resolves Today/Tomorrow in the location's timezone, not the viewer's", () => {
+    // At 03:00 UTC the viewer may already be on April 21, but Honolulu
+    // (UTC-10) is still on April 20 — its forecast for "2026-04-20"
+    // must read "Today", and "2026-04-21" must read "Tomorrow".
+    const now = new Date("2026-04-21T03:00:00Z");
+    assert.equal(
+      formatDayLabel("2026-04-20", { timeZone: "Pacific/Honolulu", now }),
+      "Today"
+    );
+    assert.equal(
+      formatDayLabel("2026-04-21", { timeZone: "Pacific/Honolulu", now }),
+      "Tomorrow"
+    );
+    // Tokyo is already a day ahead at the same instant.
+    assert.equal(
+      formatDayLabel("2026-04-21", { timeZone: "Asia/Tokyo", now }),
+      "Today"
+    );
   });
 
   test("formatDayLabel and formatShortDate return fallback for invalid values", () => {

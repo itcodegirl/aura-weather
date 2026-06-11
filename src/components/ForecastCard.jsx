@@ -1,8 +1,12 @@
 import { CalendarDays, ChevronDown, Droplets } from "lucide-react";
-import { memo, useCallback, useId, useMemo, useState } from "react";
+import { memo, useCallback, useId, useMemo, useRef, useState } from "react";
 import { formatWindSpeed, windDirectionName } from "../domain/wind";
 import { getWeather } from "../domain/weatherCodes";
-import { formatDayLabel, parseLocalDate } from "../utils/dates";
+import {
+  formatDayLabel,
+  getIsoDateInTimeZone,
+  parseLocalDate,
+} from "../utils/dates";
 import { formatSunClock } from "../utils/sunlight";
 import { convertTemp } from "../utils/temperature";
 import {
@@ -67,7 +71,7 @@ function formatForecastTemp(value, unit) {
   };
 }
 
-function buildForecastDays(weatherDaily) {
+function buildForecastDays(weatherDaily, timeZone) {
   if (!weatherDaily || typeof weatherDaily !== "object") {
     return [];
   }
@@ -102,8 +106,12 @@ function buildForecastDays(weatherDaily) {
     ? weatherDaily.windDirectionDominant
     : [];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Daily entries are calendar dates in the *location's* timezone
+  // (the forecast is requested with timezone=auto). Filtering against
+  // the viewer's local "today" dropped the location's current day
+  // entirely when the viewer was a calendar day ahead across the date
+  // line (e.g. reading a Honolulu forecast from Tokyo).
+  const todayIso = getIsoDateInTimeZone(timeZone);
 
   return times
     .map((date, index) => ({
@@ -125,8 +133,8 @@ function buildForecastDays(weatherDaily) {
     .filter((day) => {
       const dayDate = parseLocalDate(day.date);
       if (!dayDate || Number.isNaN(dayDate.getTime())) return false;
-      dayDate.setHours(0, 0, 0, 0);
-      return dayDate >= today;
+      // Validated ISO dates compare correctly as strings.
+      return day.date.trim() >= todayIso;
     })
     .slice(0, 7);
 }
@@ -185,12 +193,14 @@ function DayRow({
   weekMin,
   weekMax,
   unit,
+  timeZone,
   rangeGradient,
   isExpanded,
   onToggle,
 }) {
+  const triggerRef = useRef(null);
   const info = getWeather(day.conditionCode);
-  const label = formatDayLabel(day.date);
+  const label = formatDayLabel(day.date, { timeZone });
   const high = formatForecastTemp(day.temperatureMax, unit);
   const low = formatForecastTemp(day.temperatureMin, unit);
   const rainChance = day.rainChanceMax;
@@ -212,13 +222,27 @@ function DayRow({
   const sunriseLabel = formatSunClock(day.sunrise);
   const sunsetLabel = formatSunClock(day.sunset);
 
+  // Escape collapses the open detail panel and returns focus to the
+  // trigger, matching the dismiss behavior of InfoDrawer so keyboard
+  // users get one consistent close gesture across disclosures.
+  const handleRowKeyDown = (event) => {
+    if (event.key !== "Escape" || !isExpanded) {
+      return;
+    }
+    event.stopPropagation();
+    onToggle(day.date);
+    triggerRef.current?.focus();
+  };
+
   return (
     <li
       className={`forecast-row${isExpanded ? " is-expanded" : ""}`}
       role="listitem"
+      onKeyDown={handleRowKeyDown}
     >
       <button
         type="button"
+        ref={triggerRef}
         className="forecast-row-trigger"
         aria-expanded={isExpanded}
         aria-controls={detailPanelId}
@@ -372,7 +396,7 @@ function DayRow({
 const FORECAST_EMPTY_MESSAGE =
   "The 7-day outlook isn't available right now. Current conditions are still live above.";
 
-function buildWeekSummary(days, weekMin, weekMax, unit) {
+function buildWeekSummary(days, weekMin, weekMax, unit, timeZone) {
   if (!Array.isArray(days) || days.length === 0) {
     return FORECAST_EMPTY_MESSAGE;
   }
@@ -392,7 +416,7 @@ function buildWeekSummary(days, weekMin, weekMax, unit) {
     wettestDay.rainChanceMax === null
       ? "Rain chance unavailable"
       : wettestDay.rainChanceMax >= 25
-      ? `${formatDayLabel(wettestDay.date)} peaks at ${wettestDay.rainChanceMax}% rain chance`
+      ? `${formatDayLabel(wettestDay.date, { timeZone })} peaks at ${wettestDay.rainChanceMax}% rain chance`
       : "Rain chances stay mostly low";
   const weekMinText = formatForecastTemp(weekMin, unit).text;
   const weekMaxText = formatForecastTemp(weekMax, unit).text;
@@ -409,9 +433,10 @@ function ForecastCard({
 }) {
   const titleId = useId();
   const [expandedDate, setExpandedDate] = useState(null);
+  const timeZone = weather?.meta?.timezone;
   const days = useMemo(
-    () => buildForecastDays(weather?.daily),
-    [weather?.daily]
+    () => buildForecastDays(weather?.daily, timeZone),
+    [weather?.daily, timeZone]
   );
   const { weekMin, weekMax } = useMemo(() => {
     const validWeekMins = days
@@ -432,8 +457,8 @@ function ForecastCard({
     [weekMin, weekMax]
   );
   const weekSummary = useMemo(
-    () => buildWeekSummary(days, weekMin, weekMax, unit),
-    [days, weekMin, weekMax, unit]
+    () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone),
+    [days, weekMin, weekMax, unit, timeZone]
   );
   const handleToggleDay = useCallback((date) => {
     setExpandedDate((currentDate) => (currentDate === date ? null : date));
@@ -501,6 +526,7 @@ function ForecastCard({
             weekMin={weekMin}
             weekMax={weekMax}
             unit={unit}
+            timeZone={timeZone}
             rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
@@ -515,6 +541,7 @@ const MemoizedDayRow = memo(
   DayRow,
   (prevProps, nextProps) =>
     prevProps.unit === nextProps.unit &&
+    prevProps.timeZone === nextProps.timeZone &&
     prevProps.weekMin === nextProps.weekMin &&
     prevProps.weekMax === nextProps.weekMax &&
     prevProps.rangeGradient === nextProps.rangeGradient &&
@@ -537,6 +564,7 @@ export default memo(
   ForecastCard,
   (prevProps, nextProps) =>
     prevProps.weather?.daily === nextProps.weather?.daily &&
+    prevProps.weather?.meta?.timezone === nextProps.weather?.meta?.timezone &&
     prevProps.unit === nextProps.unit &&
     prevProps.style === nextProps.style &&
     prevProps.isRefreshing === nextProps.isRefreshing

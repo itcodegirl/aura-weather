@@ -215,8 +215,7 @@
   }
 
   .nowcast-chip {
-<<<<<<< HEAD
-    padding: var(--space-2) var(--space-2);
+    padding: var(--space-2) var(--space-2-5);
     gap: var(--space-px);
   }
 
@@ -226,20 +225,7 @@
   }
 
   .nowcast-chip-value {
-    font-size: var(--text-base);
-=======
-    padding: 8px 10px;
-    gap: 3px;
-  }
-
-  .nowcast-chip-label {
-    font-size: 10px;
-    letter-spacing: 0.06em;
-  }
-
-  .nowcast-chip-value {
-    font-size: 14px;
->>>>>>> origin/main
+    font-size: var(--text-md);
   }
 }
 

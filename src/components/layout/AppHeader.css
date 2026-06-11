@@ -603,12 +603,8 @@
 
 @media (max-width: 760px) {
   .app-header {
-<<<<<<< HEAD
     padding: var(--space-3);
-=======
-    padding: 12px;
     margin-bottom: 18px;
->>>>>>> origin/main
   }
 
   .app-header-actions {
@@ -638,12 +634,8 @@
     flex-wrap: wrap;
     align-items: stretch;
     width: 100%;
-<<<<<<< HEAD
     gap: var(--space-2);
-=======
-    gap: 8px;
     animation: settings-reveal var(--motion-medium) var(--ease-emphasis) both;
->>>>>>> origin/main
   }
 
   /* Mobile settings toggle button */
@@ -781,16 +773,9 @@
     padding: 0 var(--space-3);
   }
 
-<<<<<<< HEAD
-  .settings-toggle {
-    min-width: 82px;
-    padding: 0 var(--space-3);
-    margin-left: 0;
-=======
   .mobile-settings-toggle {
-    padding: 0 12px;
+    padding: 0 var(--space-3);
     min-width: 44px;
->>>>>>> origin/main
   }
 
   .app-header-secondary {

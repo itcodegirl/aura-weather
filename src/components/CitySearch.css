@@ -296,13 +296,8 @@
 
 @media (max-width: 420px) {
   .city-search-input-wrap {
-<<<<<<< HEAD
-    min-height: 42px;
-    padding: 0 var(--space-3);
-=======
     min-height: 44px;
-    padding: 0 11px;
->>>>>>> origin/main
+    padding: 0 var(--space-3);
   }
 
   .city-search-input {

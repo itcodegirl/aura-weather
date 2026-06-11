@@ -447,13 +447,8 @@
   }
 
   .hero-guidance-item {
-<<<<<<< HEAD
-    min-height: 82px;
-    padding: var(--space-2-5);
-=======
     min-height: auto;
-    padding: 10px;
->>>>>>> origin/main
+    padding: var(--space-2-5);
   }
 
   .hero-sunlight {

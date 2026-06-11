@@ -21,12 +21,8 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-<<<<<<< HEAD
   gap: var(--space-2-5);
-=======
-  gap: 10px;
   min-width: 0;
->>>>>>> origin/main
 }
 
 .metric-head-side {

@@ -48,7 +48,6 @@
   --atmo-sky: rgba(111, 172, 214, 0.14);
   --atmo-haze: rgba(215, 226, 241, 0.08);
 
-  --hero-temp-size: 92px;
   --hero-unit-size: 28px;
   --header-control-height: 48px;
   --section-title-size: clamp(18px, 1.2vw, 20px);
@@ -472,7 +471,6 @@ a:focus-visible,
 @media (max-width: 560px) {
   :root {
     --card-backdrop-blur: 10px;
-    --hero-temp-size: 58px;
     --hero-unit-size: 22px;
     --card-padding: 20px;
   }

@@ -107,6 +107,7 @@ async function main() {
         "test",
         "e2e/readme-screenshots.spec.js",
         "e2e/trust-contract-screenshot.spec.js",
+        "e2e/social-pwa-assets.spec.js",
       ],
       { env }
     );

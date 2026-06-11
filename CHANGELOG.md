@@ -5,7 +5,31 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Production hardening audit (2026-06)
+## [Unreleased] — Social cards, PWA screenshots, committed README images (2026-06)
+
+### Fixed
+
+- **README screenshots render on GitHub.** `docs/screenshots/*.png`
+  was gitignored while the README embedded those paths and claimed
+  the screenshots were committed — every image in the README was
+  broken on github.com. The PNGs are now committed and regenerated
+  deterministically (`npm run screenshots`: provider mocks, frozen
+  clock, Arial-pinned fonts).
+
+### Added
+
+- **Real 1200×630 social card.** `public/og-image.png` was a 343×361
+  asset; it is now a native 2:1 dashboard render (hero conditions +
+  exposure gauges) captured by the new
+  `e2e/social-pwa-assets.spec.js`, and the Twitter card type returns
+  to `summary_large_image` with matching declared dimensions.
+- **PWA manifest screenshots.** `manifest.webmanifest` now ships
+  `screenshots` entries (1280×800 wide, 390×844 narrow) so supported
+  platforms show a rich install prompt instead of a bare icon. Assets
+  live in `public/screenshots/` and regenerate with the same
+  deterministic pipeline.
+
+## [Earlier] — Production hardening audit (2026-06)
 
 ### Fixed
 

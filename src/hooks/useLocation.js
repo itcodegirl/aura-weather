@@ -312,6 +312,35 @@ export function removeSavedCity(lat, lon) {
   return persistSavedCities(remainingCities);
 }
 
+/**
+ * Moves a saved city one slot earlier (offset < 0) or later (offset > 0)
+ * in the persisted list. Out-of-range moves and unknown coordinates are
+ * no-ops that return the current list unchanged.
+ */
+export function moveSavedCity(lat, lon, offset) {
+  const coordinates = parseCoordinates(lat, lon);
+  const step = offset < 0 ? -1 : offset > 0 ? 1 : 0;
+  if (!coordinates || step === 0) {
+    return getSavedCities();
+  }
+
+  const cities = getSavedCities();
+  const fromIndex = cities.findIndex(
+    (city) =>
+      city.lat === coordinates.latitude && city.lon === coordinates.longitude
+  );
+  const toIndex = fromIndex + step;
+  if (fromIndex < 0 || toIndex < 0 || toIndex >= cities.length) {
+    return cities;
+  }
+
+  const nextCities = [...cities];
+  const [movedCity] = nextCities.splice(fromIndex, 1);
+  nextCities.splice(toIndex, 0, movedCity);
+
+  return persistSavedCities(nextCities);
+}
+
 export function clearPersistedLocation() {
   try {
     if (typeof window === "undefined" || !window.localStorage) return;

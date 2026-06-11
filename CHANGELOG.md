@@ -5,7 +5,39 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Social cards, PWA screenshots, committed README images (2026-06)
+## [Unreleased] — Saved-city reordering, honest budgets, dead-code removal (2026-06)
+
+### Added
+
+- **Saved-city reordering.** Each saved-city chip gained
+  move-earlier / move-later arrows. The buttons use `aria-disabled`
+  (not `disabled`) at the list ends so keyboard focus never drops to
+  `<body>` when a chip reaches the first or last slot, and an sr-only
+  live region announces the new position ("Tokyo moved to position 2
+  of 4"). The order is persisted through the same normalize/dedupe
+  path as every other saved-cities write and rides the existing
+  cloud-sync auto-push. Covered by new unit tests (`moveSavedCity`
+  reorder/clamp/no-op contracts) and render tests (single-chip
+  hidden state, callback wiring, aria-disabled bound behavior).
+
+### Changed
+
+- **Lighthouse budgets raised to honest levels.** The CI gate
+  allowed a performance score as low as 50/100 — loose enough to
+  hide a serious regression. With the deterministic `?mock=missing`
+  route scoring 98/100/96/100 locally, the budgets moved to
+  performance 0.85, accessibility 0.95, best-practices 0.9, SEO 0.9.
+
+### Removed
+
+- **Dead Nominatim reverse-geocode adapter.** `reverseGeocodeCoordinates`
+  (plus its cache, retry config, and payload normalizers) lived in
+  `src/api/openMeteo.js` but had no callers — the app resolves device
+  coordinates through BigDataCloud (`src/api/reverseGeocode.js`).
+  Removing it also removes the misleading suggestion that the app
+  talks to nominatim.openstreetmap.org.
+
+## [Earlier] — Social cards, PWA screenshots, committed README images (2026-06)
 
 ### Fixed
 

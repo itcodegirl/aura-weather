@@ -11,6 +11,7 @@ import {
   upsertSavedCity,
   upsertRecentCity,
   removeSavedCity,
+  moveSavedCity as moveSavedCityInStorage,
 } from "./useLocation";
 import { useSavedLocationsSync } from "./useSavedLocationsSync";
 import { useWeatherData } from "./useWeatherData";
@@ -290,6 +291,17 @@ export function useWeather(options = {}) {
     setLocationNotice(removedSavedLocationNotice);
     locationNoticeRef.current = removedSavedLocationNotice;
   }, []);
+
+  // Reorders the persisted list; the saved-locations sync effect picks
+  // the new order up like any other savedCities change and pushes it.
+  const moveSavedCity = useCallback((city, offset) => {
+    const updatedSavedCities = moveSavedCityInStorage(
+      city?.lat,
+      city?.lon,
+      offset
+    );
+    setSavedCities(updatedSavedCities);
+  }, []);
   const {
     syncConnected,
     syncAccount,
@@ -331,6 +343,7 @@ export function useWeather(options = {}) {
     setStartupCity,
     restoreSavedCity,
     forgetSavedCity,
+    moveSavedCity,
     syncConnected,
     syncAccount,
     syncState,

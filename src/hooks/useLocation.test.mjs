@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   clearPersistedLocation,
+  moveSavedCity,
   getPersistedLocation,
   getRecentCities,
   getSavedCities,
@@ -97,6 +98,49 @@ describe("location persistence helpers", () => {
     assert.equal(recentCities[0].name, "Los Angeles");
     assert.equal(recentCities[1].name, "Tokyo");
     assert.deepEqual(getSavedCities(), []);
+  });
+
+  test("moveSavedCity reorders the persisted list and clamps at the ends", () => {
+    installWindow();
+
+    upsertSavedCity(35.6762, 139.6503, "Tokyo", "Japan");
+    upsertSavedCity(51.5072, -0.1276, "London", "United Kingdom");
+    upsertSavedCity(41.8781, -87.6298, "Chicago", "United States");
+    // Newest-first inserts: [Chicago, London, Tokyo]
+
+    const movedLater = moveSavedCity(51.5072, -0.1276, 1);
+    assert.deepEqual(
+      movedLater.map((city) => city.name),
+      ["Chicago", "Tokyo", "London"]
+    );
+
+    const movedEarlier = moveSavedCity(51.5072, -0.1276, -1);
+    assert.deepEqual(
+      movedEarlier.map((city) => city.name),
+      ["Chicago", "London", "Tokyo"]
+    );
+
+    // Out-of-range moves are no-ops that keep the current order.
+    const stillFirst = moveSavedCity(41.8781, -87.6298, -1);
+    assert.equal(stillFirst[0].name, "Chicago");
+    const stillLast = moveSavedCity(35.6762, 139.6503, 1);
+    assert.equal(stillLast[2].name, "Tokyo");
+
+    // The new order is persisted, not just returned.
+    assert.deepEqual(
+      getSavedCities().map((city) => city.name),
+      ["Chicago", "London", "Tokyo"]
+    );
+  });
+
+  test("moveSavedCity ignores unknown coordinates and zero offsets", () => {
+    installWindow();
+
+    upsertSavedCity(35.6762, 139.6503, "Tokyo", "Japan");
+
+    assert.equal(moveSavedCity(0.1, 0.1, 1).length, 1);
+    assert.equal(moveSavedCity("bad", "bad", 1).length, 1);
+    assert.equal(moveSavedCity(35.6762, 139.6503, 0)[0].name, "Tokyo");
   });
 
   test("removes a saved city by coordinates", () => {

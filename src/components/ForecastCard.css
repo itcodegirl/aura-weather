@@ -160,7 +160,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(191, 215, 252, 0.22);
   background: rgba(8, 18, 38, 0.58);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -481,7 +481,7 @@
 
   .bento-forecast .forecast-subtitle {
     padding: 4px 9px;
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .forecast-row {
@@ -506,7 +506,7 @@
 
   .forecast-condition,
   .forecast-temp-label {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .forecast-day-meta {
@@ -516,7 +516,7 @@
   .forecast-signal-chip {
     min-height: 16px;
     padding: 1px 6px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .forecast-temp-value {

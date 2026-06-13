@@ -210,7 +210,7 @@
 .wind-compass-label {
   position: absolute;
   color: var(--text-dim);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: var(--track-tight);
 }
@@ -333,7 +333,7 @@
 
   .storm-subtitle {
     padding: 4px 8px;
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0.1em;
   }
 
@@ -348,7 +348,7 @@
   }
 
   .storm-module-kicker {
-    font-size: 9px;
+    font-size: 10px;
     padding: 3px 7px;
   }
 

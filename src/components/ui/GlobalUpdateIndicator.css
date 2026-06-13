@@ -112,7 +112,7 @@
 
 .global-update-state {
   color: var(--text-dim);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: var(--track-loose);
   text-transform: uppercase;

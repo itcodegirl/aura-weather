@@ -112,3 +112,57 @@ describe("ForecastCard missing daily readings", () => {
     assert.ok(screen.getByText("Gusts 27 mph"));
   });
 });
+
+describe("ForecastCard derived-signal honesty", () => {
+  test("a missing rain chance yields 'Partial data', not a fake 'Steady' all-clear", () => {
+    // Three days so the null-rain day sits mid-range: in a single-day
+    // week the day is automatically its own Warm Peak / Cool Dip.
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const isoDates = [0, 1, 2].map((offset) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + offset);
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${date.getFullYear()}-${month}-${day}`;
+    });
+    const { container } = renderForecastWithDaily({
+      time: isoDates,
+      conditionCode: [2, 2, 2],
+      temperatureMax: [70, 74, 66],
+      temperatureMin: [55, 52, 58],
+      rainChanceMax: [null, 20, 20],
+    });
+
+    const chips = Array.from(
+      container.querySelectorAll(".forecast-signal-chip")
+    ).map((chip) => chip.textContent);
+    // Row order matches the daily array; only the first day lacks rain
+    // data. Days with real readings may still legitimately be "Steady".
+    assert.equal(
+      chips[0],
+      "Partial data",
+      "'Steady' is a claim about the day; missing rain data cannot support it"
+    );
+  });
+
+  test("a week with no temperature mins never invents a 0° bound in the summary", () => {
+    const { container } = renderForecastWithDaily({
+      temperatureMax: [74],
+      temperatureMin: [null],
+    });
+
+    const summary = container.querySelector(".forecast-summary");
+    assert.ok(summary, "expected the week summary to render");
+    assert.equal(
+      summary.textContent.includes("0°"),
+      false,
+      `the old weekMin=0 fallback leaked a fake 0° reading; got: ${summary.textContent}`
+    );
+    assert.equal(
+      summary.textContent.includes("— to —"),
+      false,
+      "an unavailable range should be omitted, not rendered as placeholder noise"
+    );
+  });
+});

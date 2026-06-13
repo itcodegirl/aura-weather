@@ -2,12 +2,11 @@
 #
 # Security headers kept to the non-breaking set on purpose. A real
 # Content-Security-Policy is worth adding, but it needs browser
-# validation first: index.html uses an inline `onload` attribute on
-# the deferred-font <link>, and the app talks to several third-party
-# origins — connect-src would need the open-meteo.com family,
-# api.weather.gov, api.bigdatacloud.net (reverse geocoding), plus
-# Google Fonts for style/font-src. A too-strict policy would silently
-# break those. That's a follow-up, not a blind change.
+# validation first: the app talks to several third-party origins —
+# connect-src would need the open-meteo.com family, api.weather.gov,
+# and api.bigdatacloud.net (reverse geocoding). Fonts are now
+# self-hosted so font-src can stay same-origin. That's a follow-up,
+# not a blind change.
 
 /*
   X-Content-Type-Options: nosniff
@@ -17,8 +16,12 @@
   X-DNS-Prefetch-Control: on
 
 # Vite emits content-hashed asset filenames, so they can be cached
-# aggressively and immutably.
+# aggressively and immutably. Self-hosted font files use stable names
+# (no content hash), but they are versioned in the filename and never
+# mutated in place, so immutable caching is safe here too.
 /assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 
 # The service worker and the app manifest must stay revalidated so a

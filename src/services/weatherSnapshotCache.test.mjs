@@ -225,4 +225,124 @@ describe("weather snapshot cache", () => {
 
     assert.equal(snapshot, null);
   });
+
+  test("does not restore snapshots stamped in the future (clock moved)", () => {
+    installWindow();
+    const nowMs = Date.now();
+    // Clamping a future timestamp's age to zero would make a
+    // corrupt/clock-skewed snapshot read as perpetually fresh.
+    const futureCachedAt = nowMs + 10 * 60 * 1000;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("future"),
+      cachedAt: futureCachedAt,
+    });
+
+    const snapshot = readCachedWeatherSnapshot(
+      { latitude: 41.8781, longitude: -87.6298 },
+      { nowMs }
+    );
+
+    assert.equal(snapshot, null);
+  });
+
+  test("tolerates small clock jitter on freshly written snapshots", () => {
+    installWindow();
+    const nowMs = Date.now();
+    const slightlyAhead = nowMs + 30 * 1000;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("jitter"),
+      cachedAt: slightlyAhead,
+    });
+
+    const snapshot = readCachedWeatherSnapshot(
+      { latitude: 41.8781, longitude: -87.6298 },
+      { nowMs }
+    );
+
+    assert.notEqual(snapshot, null);
+  });
+
+  test("serves a stale-but-labelled snapshot when maxAgeMs is widened", () => {
+    installWindow();
+    const nowMs = Date.now();
+    const staleCachedAt =
+      nowMs - weatherSnapshotCacheInternals.MAX_SNAPSHOT_AGE_MS - 60_000;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("stale-but-usable"),
+      cachedAt: staleCachedAt,
+    });
+
+    const snapshot = readCachedWeatherSnapshot(
+      { latitude: 41.8781, longitude: -87.6298 },
+      { nowMs, maxAgeMs: 48 * 60 * 60 * 1000 }
+    );
+
+    assert.equal(snapshot.weather.label, "stale-but-usable");
+    assert.equal(snapshot.cachedAt, staleCachedAt);
+  });
+
+  test("still rejects snapshots beyond a widened maxAgeMs ceiling", () => {
+    installWindow();
+    const nowMs = Date.now();
+    const widenedMaxAgeMs = 48 * 60 * 60 * 1000;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("too-old"),
+      cachedAt: nowMs - widenedMaxAgeMs - 1,
+    });
+
+    const snapshot = readCachedWeatherSnapshot(
+      { latitude: 41.8781, longitude: -87.6298 },
+      { nowMs, maxAgeMs: widenedMaxAgeMs }
+    );
+
+    assert.equal(snapshot, null);
+  });
+
+  test("still rejects future-stamped snapshots when maxAgeMs is widened", () => {
+    installWindow();
+    const nowMs = Date.now();
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("future-wide"),
+      cachedAt: nowMs + 10 * 60 * 1000,
+    });
+
+    assert.equal(
+      readCachedWeatherSnapshot(
+        { latitude: 41.8781, longitude: -87.6298 },
+        { nowMs, maxAgeMs: 48 * 60 * 60 * 1000 }
+      ),
+      null
+    );
+  });
+
+  test("falls back to the default window when maxAgeMs is not a finite number", () => {
+    installWindow();
+    const nowMs = Date.now();
+    const staleCachedAt =
+      nowMs - weatherSnapshotCacheInternals.MAX_SNAPSHOT_AGE_MS - 1;
+
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: 41.8781, longitude: -87.6298 },
+      weather: buildWeather("stale"),
+      cachedAt: staleCachedAt,
+    });
+
+    assert.equal(
+      readCachedWeatherSnapshot(
+        { latitude: 41.8781, longitude: -87.6298 },
+        { nowMs, maxAgeMs: "two-days" }
+      ),
+      null
+    );
+  });
 });

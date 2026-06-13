@@ -62,7 +62,11 @@ function StatusStack({
   }, []);
 
   const handleRetry = useCallback(() => {
-    if (isRetryCoolingDown || typeof onRetry !== "function") {
+    // isBackgroundLoading means a forecast request is already in
+    // flight; firing another would abort it and restart the clock for
+    // no benefit. The cooldown alone could not cover a slow request
+    // that outlives the 1400ms timer.
+    if (isRetryCoolingDown || isBackgroundLoading || typeof onRetry !== "function") {
       return;
     }
 
@@ -73,18 +77,27 @@ function StatusStack({
       setIsRetryCoolingDown(false);
       retryTimerRef.current = null;
     }, 1400);
-  }, [isRetryCoolingDown, onRetry]);
+  }, [isRetryCoolingDown, isBackgroundLoading, onRetry]);
 
-  const hasRuntimeStatus = showRuntimeStatus && Boolean(
-    locationNotice ||
-    isBackgroundLoading ||
-    showRefreshError ||
-    serviceWorkerUpdateAvailable ||
-    serviceWorkerOfflineReady ||
-    installPromptAvailable
-  );
   const hasSetupPrompts = showSetupPrompts && Boolean(
     showLocationSetupPrompt || showPermissionOnboarding
+  );
+  const showLocationNotice = showRuntimeStatus && Boolean(locationNotice) && !hasSetupPrompts;
+  const showLoadingStatus = showRuntimeStatus && isBackgroundLoading;
+  const showUpdateStatus = showRuntimeStatus && serviceWorkerUpdateAvailable;
+  const showOfflineReadyStatus = showRuntimeStatus && serviceWorkerOfflineReady;
+  const showInstallStatus = showRuntimeStatus
+    && installPromptAvailable
+    && !serviceWorkerUpdateAvailable
+    && !serviceWorkerOfflineReady;
+  const showRefreshErrorStatus = showRuntimeStatus && showRefreshError;
+  const hasRuntimeStatus = Boolean(
+    showLocationNotice ||
+    showLoadingStatus ||
+    showRefreshErrorStatus ||
+    showUpdateStatus ||
+    showOfflineReadyStatus ||
+    showInstallStatus
   );
   const hasStatusStack = hasRuntimeStatus || hasSetupPrompts;
   const isShowingCachedForecast = cacheStatus === "restored";
@@ -105,20 +118,14 @@ function StatusStack({
 
   return (
     <div className={`status-stack ${className}`.trim()}>
-      {showRuntimeStatus && locationNotice && !showPermissionOnboarding && !showLocationSetupPrompt && (
-        <p className="location-notice" role="status" aria-live="polite">
-          <span className="location-notice-label">Location</span>
-          <span className="location-notice-text">{locationNotice}</span>
-        </p>
-      )}
       {showSetupPrompts && showPermissionOnboarding && (
         <section className="permission-onboarding" aria-label="Location onboarding">
           <p className="permission-onboarding-kicker">First-time setup</p>
           <h2 className="permission-onboarding-title">Start with Chicago, switch anytime</h2>
           <p className="permission-onboarding-copy">
             {isGeolocationSupported
-              ? "Aura opens on Chicago so the dashboard is useful immediately. Use your location for local conditions or search any city when you're ready."
-              : "Aura opens on Chicago so the dashboard is useful immediately. Browser location is unavailable here, so search any city for local conditions when you're ready."}
+              ? "Chicago is loaded as a useful starting point. Use your location for local conditions or search any city when you're ready."
+              : "Chicago is loaded as a useful starting point. Browser location is unavailable here, so search any city when you're ready."}
           </p>
           <div className="permission-onboarding-actions">
             {isGeolocationSupported ? (
@@ -179,93 +186,103 @@ function StatusStack({
           </div>
         </section>
       )}
-      {showRuntimeStatus && isBackgroundLoading && (
-        <p className="app-status app-status--loading" role="status" aria-live="polite">
-          Updating weather for your current settings...
-        </p>
-      )}
-      {showRuntimeStatus && serviceWorkerUpdateAvailable && (
-        <div className="app-status app-status--update" role="status" aria-live="polite">
-          <span className="app-status-message">
-            App update ready. Refresh when you have a moment.
-          </span>
-          <span className="app-status-actions">
-            <button
-              type="button"
-              className="app-status-action app-status-action--primary"
-              onClick={onRefreshServiceWorkerUpdate}
-              disabled={isServiceWorkerRefreshing}
-              aria-busy={isServiceWorkerRefreshing || undefined}
-            >
-              {isServiceWorkerRefreshing ? "Refreshing..." : "Refresh"}
-            </button>
-            <button
-              type="button"
-              className="app-status-action"
-              onClick={onDismissServiceWorkerUpdate}
-              disabled={isServiceWorkerRefreshing}
-            >
-              Later
-            </button>
-          </span>
-        </div>
-      )}
-      {showRuntimeStatus && serviceWorkerOfflineReady && (
-        <div className="app-status app-status--ready" role="status" aria-live="polite">
-          <span className="app-status-message">
-            Offline shell ready. Aura can reopen if the network drops and clearly label saved forecasts.
-          </span>
-          <span className="app-status-actions">
-            <button
-              type="button"
-              className="app-status-action"
-              onClick={onDismissServiceWorkerOfflineReady}
-            >
-              Got it
-            </button>
-          </span>
-        </div>
-      )}
-      {showRuntimeStatus && installPromptAvailable && (
-        <div className="app-status app-status--install" role="status" aria-live="polite">
-          <span className="app-status-message">
-            Install Aura for faster daily access.
-          </span>
-          <span className="app-status-actions">
-            <button
-              type="button"
-              className="app-status-action app-status-action--primary"
-              onClick={onInstallApp}
-              disabled={isInstallPromptOpening}
-              aria-busy={isInstallPromptOpening || undefined}
-            >
-              {isInstallPromptOpening ? "Opening..." : "Install"}
-            </button>
-            <button
-              type="button"
-              className="app-status-action"
-              onClick={onDismissInstallPrompt}
-              disabled={isInstallPromptOpening}
-            >
-              Later
-            </button>
-          </span>
-        </div>
-      )}
-      {showRuntimeStatus && showRefreshError && (
-        <div className="app-status app-status--error" role="alert">
-          <span className="app-status-message">
-            {refreshErrorMessage}
-          </span>
-          <button
-            type="button"
-            className="app-status-retry"
-            onClick={handleRetry}
-            disabled={isRetryCoolingDown}
-            aria-busy={isRetryCoolingDown || undefined}
-          >
-            {isRetryCoolingDown ? "Retrying..." : "Retry"}
-          </button>
+      {hasRuntimeStatus && (
+        <div className="runtime-status-tray" aria-label="App notices">
+          {showLocationNotice && (
+            <p className="location-notice" role="status" aria-live="polite">
+              <span className="location-notice-label">Location</span>
+              <span className="location-notice-text">{locationNotice}</span>
+            </p>
+          )}
+          {showLoadingStatus && (
+            <p className="app-status app-status--loading" role="status" aria-live="polite">
+              Updating weather...
+            </p>
+          )}
+          {showUpdateStatus && (
+            <div className="app-status app-status--update" role="status" aria-live="polite">
+              <span className="app-status-message">
+                App update ready.
+              </span>
+              <span className="app-status-actions">
+                <button
+                  type="button"
+                  className="app-status-action app-status-action--primary"
+                  onClick={onRefreshServiceWorkerUpdate}
+                  disabled={isServiceWorkerRefreshing}
+                  aria-busy={isServiceWorkerRefreshing || undefined}
+                >
+                  {isServiceWorkerRefreshing ? "Refreshing..." : "Refresh"}
+                </button>
+                <button
+                  type="button"
+                  className="app-status-action"
+                  onClick={onDismissServiceWorkerUpdate}
+                  disabled={isServiceWorkerRefreshing}
+                >
+                  Later
+                </button>
+              </span>
+            </div>
+          )}
+          {showOfflineReadyStatus && (
+            <div className="app-status app-status--ready" role="status" aria-live="polite">
+              <span className="app-status-message">
+                Offline shell ready.
+              </span>
+              <span className="app-status-actions">
+                <button
+                  type="button"
+                  className="app-status-action"
+                  onClick={onDismissServiceWorkerOfflineReady}
+                >
+                  Got it
+                </button>
+              </span>
+            </div>
+          )}
+          {showInstallStatus && (
+            <div className="app-status app-status--install" role="status" aria-live="polite">
+              <span className="app-status-message">
+                Install Aura for faster access.
+              </span>
+              <span className="app-status-actions">
+                <button
+                  type="button"
+                  className="app-status-action app-status-action--primary"
+                  onClick={onInstallApp}
+                  disabled={isInstallPromptOpening}
+                  aria-busy={isInstallPromptOpening || undefined}
+                >
+                  {isInstallPromptOpening ? "Opening..." : "Install"}
+                </button>
+                <button
+                  type="button"
+                  className="app-status-action"
+                  onClick={onDismissInstallPrompt}
+                  disabled={isInstallPromptOpening}
+                >
+                  Later
+                </button>
+              </span>
+            </div>
+          )}
+          {showRefreshErrorStatus && (
+            <div className="app-status app-status--error" role="alert">
+              <span className="app-status-message">
+                {refreshErrorMessage}
+              </span>
+              <button
+                type="button"
+                className="app-status-retry"
+                onClick={handleRetry}
+                disabled={isRetryCoolingDown || isBackgroundLoading}
+                aria-busy={isRetryCoolingDown || isBackgroundLoading || undefined}
+              >
+                {isRetryCoolingDown || isBackgroundLoading ? "Retrying..." : "Retry"}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

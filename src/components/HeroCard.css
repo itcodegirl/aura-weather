@@ -16,15 +16,31 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* Allow the block to shrink inside the space-between hero-meta row so
+     a long place name wraps instead of pushing the high/low pill off
+     the right edge. */
+  min-width: 0;
 }
 
 .hero-location {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
   color: var(--text-muted);
   font-size: 16px;
   font-weight: 600;
+}
+
+/* Keep the pin icon from being squeezed, and let an unusually long
+   single-token location name break rather than overflow horizontally. */
+.hero-location svg {
+  flex-shrink: 0;
+}
+
+.hero-location span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .hero-date {
@@ -236,48 +252,62 @@
   border-color: rgba(148, 163, 184, 0.24);
 }
 
-.hero-sunlight {
+.hero-daylight-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(198, 215, 242, 0.16);
+  background:
+    linear-gradient(135deg, rgba(139, 211, 255, 0.08), rgba(246, 196, 83, 0.08)),
+    rgba(8, 17, 36, 0.42);
 }
 
-.hero-sun-chip {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 10px 12px;
-  min-height: 72px;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  background: var(--subcard-bg);
-  border: var(--subcard-border);
+.hero-daylight-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: rgba(11, 20, 38, 0.58);
+  border: 1px solid rgba(198, 215, 242, 0.12);
   box-shadow: var(--subcard-shadow);
 }
 
-.hero-sun-chip--daylight {
-  background:
-    linear-gradient(165deg, rgba(20, 33, 64, 0.52), rgba(10, 20, 42, 0.44)),
-    var(--subcard-bg);
+.hero-daylight-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  color: #fde68a;
+  background: rgba(246, 196, 83, 0.12);
 }
 
-.hero-sun-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
+.hero-daylight-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.hero-daylight-label {
+  color: rgba(211, 223, 248, 0.78);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: var(--track-default);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
 }
 
-.hero-sun-value {
-  color: #edf5ff;
-  font-size: 16px;
-  font-weight: 700;
+.hero-daylight-value {
+  color: #f8fbff;
+  font-size: 13px;
+  font-weight: 760;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .hero-stats {
@@ -326,6 +356,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Keep a value and its unit on one line ("10 mph", not "10" / "mph") so
+   the metric grid reads evenly. Scoped to the hero grid; values here are
+   short enough that nowrap never overflows the cell. */
+.hero-stats .stat-value {
+  white-space: nowrap;
+}
+
 .stat-value.is-missing {
   /* Visual cue that distinguishes "no data" from a real reading.
      The em-dash already carries the meaning; the muted color and
@@ -348,14 +385,6 @@
 
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
 @media (max-width: 1200px) {
-  .hero-sunlight {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero-sun-chip--daylight {
-    grid-column: span 2;
-  }
-
   .hero-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -450,31 +479,9 @@
     min-height: auto;
     padding: 10px;
   }
-
-  .hero-sunlight {
-    gap: 8px;
-  }
-
-  .hero-sun-chip {
-    padding: 9px 10px;
-    min-height: 66px;
-  }
-
-  .hero-sun-value {
-    font-size: 15px;
-  }
 }
 
 @media (max-width: 560px) {
-  /* Keep 2-column sunlight grid — avoids stacking 3 chips into a ~200px tower */
-  .hero-sunlight {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero-sun-chip--daylight {
-    grid-column: span 2;
-  }
-
   .hero-icon {
     width: 102px;
   }
@@ -515,17 +522,10 @@
     font-size: 18px;
   }
 
-  .hero-sun-chip {
-    min-height: 60px;
-    gap: 4px;
-  }
-
-  .hero-sun-label,
   .stat-label {
     font-size: 10px;
   }
 
-  .hero-sun-value,
   .stat-value {
     font-size: 15px;
   }

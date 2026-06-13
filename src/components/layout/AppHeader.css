@@ -126,8 +126,15 @@
 }
 
 .saved-city-chip {
+  position: relative;
   min-height: 32px;
   padding: 0 10px;
+  /* Long city names ellipsize instead of stretching the chip row past
+     the header width on narrow phones. */
+  max-width: 188px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   color: rgba(224, 237, 255, 0.92);
@@ -138,6 +145,13 @@
     background var(--motion-fast) var(--ease-standard),
     color var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard);
+}
+
+/* Extend tap target to ≥44 px without altering visual size (WCAG 2.5.5) */
+.saved-city-chip::before {
+  content: "";
+  position: absolute;
+  inset: -6px -2px;
 }
 
 .saved-city-chip.is-active,
@@ -170,6 +184,7 @@
 }
 
 .saved-city-startup {
+  position: relative;
   color: rgba(224, 237, 255, 0.8);
   border: 1px solid rgba(181, 210, 252, 0.18);
   background: rgba(7, 16, 35, 0.34);
@@ -177,6 +192,13 @@
     color var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard),
     background var(--motion-fast) var(--ease-standard);
+}
+
+/* Extend tap target to ≥44 px without altering visual size (WCAG 2.5.5) */
+.saved-city-startup::before {
+  content: "";
+  position: absolute;
+  inset: -10px -4px;
 }
 
 .saved-city-startup:hover {
@@ -192,7 +214,50 @@
   box-shadow: 0 0 0 2px rgba(246, 196, 83, 0.18);
 }
 
+.saved-city-move {
+  position: relative;
+  width: 20px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  color: rgba(206, 226, 255, 0.78);
+  font-size: 14px;
+  line-height: 1;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard);
+}
+
+/* Extend tap target toward ≥44 px without widening the dense chip row
+   (WCAG 2.5.5); horizontal inset stays small so neighbouring controls
+   keep distinct touch zones. */
+.saved-city-move::before {
+  content: "";
+  position: absolute;
+  inset: -10px -2px;
+}
+
+.saved-city-move:hover {
+  color: #f2f8ff;
+  background: rgba(73, 124, 214, 0.3);
+}
+
+.saved-city-move:focus-visible {
+  color: #f2f8ff;
+  background: rgba(73, 124, 214, 0.34);
+  box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.34);
+}
+
+.saved-city-move[aria-disabled="true"] {
+  color: rgba(206, 226, 255, 0.28);
+  cursor: default;
+}
+
+.saved-city-move[aria-disabled="true"]:hover {
+  background: transparent;
+}
+
 .saved-city-remove {
+  position: relative;
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -204,6 +269,17 @@
     background var(--motion-fast) var(--ease-standard);
 }
 
+/* Extend tap target vertically to 44 px (WCAG 2.5.5). The horizontal
+   halo stops at the 3px intra-row gap: remove paints last in the wrap,
+   so a wider halo would sit on top of the startup/move buttons and win
+   taps aimed at them — a destructive action must never capture a press
+   meant for a neighbouring control. Width stays ≥24 px (WCAG 2.5.8). */
+.saved-city-remove::before {
+  content: "";
+  position: absolute;
+  inset: -10px -3px;
+}
+
 .saved-city-remove:hover {
   color: #fca5a5;
   background: rgba(127, 29, 29, 0.3);
@@ -213,6 +289,88 @@
   color: #fecaca;
   background: rgba(127, 29, 29, 0.34);
   box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.34);
+}
+
+/* Undo bar — replaces the strip slot for 6s after a saved city is
+   removed. Reuses the chip-wrap glass-pill language with one prominent
+   recovery action so deletion never feels irreversible. */
+.saved-city-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 6px 4px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(181, 210, 252, 0.26);
+  background: rgba(8, 17, 36, 0.6);
+  box-shadow: inset 0 1px 0 rgba(228, 240, 255, 0.08);
+  animation: settings-reveal var(--motion-medium) var(--ease-emphasis) both;
+}
+
+.saved-city-undo-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.saved-city-undo-text strong {
+  color: #f7fbff;
+  font-weight: 700;
+}
+
+.saved-city-undo-action {
+  flex-shrink: 0;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  color: var(--active-pill-color);
+  background: var(--active-pill-bg);
+  box-shadow: var(--active-pill-shadow);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.saved-city-undo-action:hover {
+  transform: translateY(var(--lift-1));
+}
+
+.saved-city-undo-action:active {
+  transform: scale(var(--press-scale));
+}
+
+.saved-city-undo-dismiss {
+  position: relative;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: rgba(214, 230, 252, 0.86);
+  font-size: 16px;
+  line-height: 1;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard);
+}
+
+/* Extend tap target to ≥44×44 px without altering visual size (WCAG 2.5.5) */
+.saved-city-undo-dismiss::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.saved-city-undo-dismiss:hover {
+  color: #f7fbff;
+  background: rgba(160, 190, 240, 0.16);
 }
 
 .sync-account-shell {
@@ -684,7 +842,8 @@
   }
 
   .saved-city-remove {
-    /* Visual size stays compact; ::before extends the touch target to 44×44 */
+    /* Visual size stays compact; ::before extends the touch target to
+       44px tall (horizontal halo stays inside the 3px gap — see base rule) */
     position: relative;
     width: 28px;
     height: 28px;
@@ -694,12 +853,28 @@
   .saved-city-remove::before {
     content: "";
     position: absolute;
-    inset: -8px;
+    inset: -8px -3px;
   }
 
   .saved-city-startup {
     min-height: 44px;
     padding: 0 10px;
+  }
+
+  /* Undo bar spans the strip slot; action grows to a thumb-sized pill */
+  .saved-city-undo {
+    width: 100%;
+    min-height: 48px;
+    padding: 4px 8px 4px 14px;
+  }
+
+  .saved-city-undo-text {
+    flex: 1 1 auto;
+  }
+
+  .saved-city-undo-action {
+    min-height: 44px;
+    padding: 0 16px;
   }
 
   /* Settings toggle is the old class (no longer in JSX) — keep hidden */
@@ -790,6 +965,13 @@
     min-height: 28px;
     padding: 0 8px;
     font-size: 10px;
+    /* Tighter cap so name + reorder/startup/remove controls fit a 360px row */
+    max-width: min(48vw, 150px);
+  }
+
+  /* Re-extend tap target after visual regression (base inset -6px only gives 40 px here) */
+  .saved-city-chip::before {
+    inset: -8px -2px;
   }
 
   .saved-city-startup-badge,
@@ -799,10 +981,21 @@
     font-size: 10px;
   }
 
+  /* Re-extend tap target after visual regression (base inset -10px only gives 42 px here) */
+  .saved-city-startup::before {
+    inset: -11px -4px;
+  }
+
   .saved-city-remove {
     width: 24px;
     height: 24px;
     font-size: 12px;
+  }
+
+  /* Re-extend tap target: tablet set inset -8 px (for 28 px), but visual
+     is back to 24 px. Horizontal halo stays inside the gap (see base rule). */
+  .saved-city-remove::before {
+    inset: -10px -3px;
   }
 
   .sync-account-panel {
@@ -841,5 +1034,35 @@
 @media (prefers-contrast: more) {
   .app-header {
     background: rgba(4, 11, 25, 0.9);
+  }
+}
+
+/*
+ * iOS Safari zooms the viewport when a sub-16px input is focused. The
+ * sync-account key field sits at 12px (11px on compact phones) for
+ * density, so pin it to 16px on touch devices to suppress the zoom.
+ * Placed last and pointer-scoped so it wins over the width-based
+ * sizing without affecting desktop. Mirrors the same fix on the city
+ * search field. */
+@media (pointer: coarse) {
+  .sync-account-input {
+    font-size: 16px;
+  }
+}
+
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the startup badge/button text sits at 9px base (8px on the
+ * narrowest tier), the sync hint at 9px, and the 420px tier drops the
+ * brand tagline to 9px — all below comfortable phone reading size.
+ * Pointer-scoped and placed last so it wins the width-tier sizing
+ * above without affecting desktop density or the visual baselines.
+ */
+@media (pointer: coarse) {
+  .saved-city-startup-badge,
+  .saved-city-startup,
+  .sync-account-toggle-hint,
+  .tagline {
+    font-size: 10px;
   }
 }

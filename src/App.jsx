@@ -57,6 +57,7 @@ function App() {
     setStartupCity,
     restoreSavedCity,
     forgetSavedCity,
+    moveSavedCity,
     syncConnected,
     syncAccount,
     syncState,
@@ -153,6 +154,7 @@ function App() {
         setStartupCity={setStartupCity}
         restoreSavedCity={restoreSavedCity}
         forgetSavedCity={forgetSavedCity}
+        moveSavedCity={moveSavedCity}
         syncConnected={syncConnected}
         syncAccount={syncAccount}
         syncState={syncState}

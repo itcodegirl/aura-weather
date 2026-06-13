@@ -4,6 +4,7 @@ import { memo, useId, useMemo, useState } from "react";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
+import { getZonedNow } from "../utils/dates";
 import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber } from "../utils/numbers";
 import { CardHeader } from "./ui";
@@ -14,7 +15,7 @@ function toDisplayTemperature(value, unit) {
   return Number.isFinite(converted) ? Math.round(converted) : Number.NaN;
 }
 
-function buildHourlyData(hourly, unit) {
+function buildHourlyData(hourly, unit, timeZone) {
   if (
     !Array.isArray(hourly?.time) ||
     !Array.isArray(hourly.temperature) ||
@@ -25,6 +26,10 @@ function buildHourlyData(hourly, unit) {
   }
 
   const idx = findWindowStartIndex(hourly.time, {
+    // Open-Meteo's hourly timestamps are the location's naive wall clock.
+    // Compare against the location's "now" (not the device's) so the
+    // window + Now marker stay aligned when viewing another time zone.
+    now: getZonedNow(timeZone).getTime(),
     windowSize: 24,
     // Snap "Now" to the current hour band rather than the next future
     // entry, so the Now indicator aligns with the active hour.
@@ -189,10 +194,10 @@ function HourlyCard({
   const chartSummaryId = `${chartId}-summary`;
   const chartGradientId = `${chartId}-temp-gradient`.replace(/:/g, "");
   const [selectedSampleKey, setSelectedSampleKey] = useState(null);
-  const data = useMemo(() => buildHourlyData(weather?.hourly, unit), [
-    weather?.hourly,
-    unit,
-  ]);
+  const data = useMemo(
+    () => buildHourlyData(weather?.hourly, unit, weather?.meta?.timezone),
+    [weather?.hourly, unit, weather?.meta?.timezone]
+  );
   const palette = useMemo(() => {
     const hourlyCodes = data
       .map((entry) => entry.code)
@@ -204,6 +209,9 @@ function HourlyCard({
   const topColor = chartTopColor || palette[0];
   const bottomColor = chartBottomColor || palette[2] || palette[1];
   const chartSummary = useMemo(() => getHourlySummary(data, unit), [data, unit]);
+  const hasUsableTemperatureSamples = data.some((entry) =>
+    Number.isFinite(entry?.temp)
+  );
 
   const chartMetrics = useMemo(() => {
     const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
@@ -233,7 +241,7 @@ function HourlyCard({
       : `Range ${Math.round(chartMetrics.safeMinTemp)}\u00B0 to ${Math.round(chartMetrics.safeMaxTemp)}\u00B0`;
   }, [chartMetrics, unit]);
 
-  if (!data.length) {
+  if (!data.length || !hasUsableTemperatureSamples) {
     return (
       <section
         className="bento-chart hourly-chart glass"
@@ -338,7 +346,11 @@ function HourlyCard({
         titleTag="h3"
         titleClassName="chart-title"
         icon={<LineIcon size={16} />}
-        subtitle="Next 24h"
+        subtitle={
+          // An API window shorter than a full day must not be
+          // labelled as 24 hours of coverage.
+          data.length === 24 ? "Next 24h" : `Next ${data.length}h`
+        }
         subtitleClassName="chart-subtitle eyebrow-pill"
       />
       <p className="chart-lede">{chartLede}</p>

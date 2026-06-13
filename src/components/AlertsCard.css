@@ -217,4 +217,18 @@
   }
 }
 
+/*
+ * The priority badge encodes alert severity (CRITICAL / HIGH / MODERATE
+ * / LOW). At 9px it is at the low edge of comfortable reading on a phone
+ * held at arm's length, so lift it to a 10px floor on touch devices.
+ * Pointer-scoped (not width-scoped) so the denser desktop sizing is
+ * untouched — the same rationale Aura already uses for 44px touch
+ * targets. Placed last so it wins the cascade.
+ */
+@media (pointer: coarse) {
+  .alerts-priority {
+    font-size: 10px;
+  }
+}
+
 

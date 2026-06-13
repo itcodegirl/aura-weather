@@ -74,6 +74,30 @@ describe("HourlyCard aria wiring", () => {
       "the aria description should not be empty text"
     );
   });
+
+  test("all-null hourly temperatures render the unavailable state, not an empty chart frame", () => {
+    const now = new Date();
+    const hours = Array.from({ length: 6 }, (_, i) =>
+      new Date(now.getTime() + i * 60 * 60 * 1000).toISOString()
+    );
+    const { container } = renderHourly({
+      hourly: {
+        time: hours,
+        temperature: [null, null, null, null, null, null],
+        conditionCode: [null, null, null, null, null, null],
+      },
+    });
+
+    assert.ok(
+      screen.getByText("Hourly chart unavailable"),
+      "all-null temperature series should use the explicit empty state"
+    );
+    assert.equal(
+      container.querySelector(".hourly-svg"),
+      null,
+      "must not render a decorative chart shell when there are no usable points"
+    );
+  });
 });
 
 function renderPopulated() {

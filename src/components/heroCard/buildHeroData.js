@@ -15,6 +15,8 @@ import {
   formatDaylightLengthLabel,
   getSunlightPhase,
 } from "../../utils/sunlight.js";
+import { getZonedNow } from "../../utils/dates.js";
+import { formatDisplayCountry } from "../../utils/locationDisplay.js";
 import { buildAtmosphereReading } from "./buildAtmosphereReading.js";
 
 const FALLBACK_LOCATION_NAME = "Current location";
@@ -35,7 +37,7 @@ function pickLocationName(location) {
 }
 
 function pickLocationCountry(location) {
-  return trimString(location?.country);
+  return formatDisplayCountry(location?.country);
 }
 
 function todayLocaleString(nowMs, timeZone) {
@@ -348,7 +350,14 @@ export function buildHeroData({
   const daylightLabel = formatDaylightLengthLabel(sunriseValue, sunsetValue, {
     fallback: MISSING_VALUE_PLACEHOLDER,
   });
-  const sunlightPhase = getSunlightPhase(sunriseValue, sunsetValue, nowMs);
+  // The golden-hour phase compares "now" against the location's naive
+  // sunrise/sunset timestamps, so it must use the location's wall clock
+  // (not the device's) to avoid mistiming the warm wash for remote
+  // cities. The date label below intentionally keeps the real nowMs —
+  // todayLocaleString formats that instant *into* the location's zone.
+  const zonedNowMs =
+    nowMs == null ? null : getZonedNow(weather?.meta?.timezone, nowMs).getTime();
+  const sunlightPhase = getSunlightPhase(sunriseValue, sunsetValue, zonedNowMs);
   const atmosphereReading = buildAtmosphereReading({ weather, nowMs, unit });
 
   const { hasClimateComparison, climateMessage } = buildClimateMessage({

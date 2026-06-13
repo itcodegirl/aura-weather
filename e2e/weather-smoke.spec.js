@@ -24,7 +24,7 @@ test("loads the dashboard with fallback location and core controls", async ({ pa
   await expect(page.locator(".hero-location")).toContainText("Chicago, United States");
   await expect(
     page.getByText(
-      "Aura opens on Chicago so the dashboard is useful immediately. Use your location for local conditions or search any city when you're ready."
+      "Chicago is loaded as a useful starting point. Use your location for local conditions or search any city when you're ready."
     )
   ).toBeVisible();
   await expect(

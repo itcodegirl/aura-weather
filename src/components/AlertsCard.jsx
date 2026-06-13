@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useId, useMemo } from "react";
 import { Siren } from "lucide-react";
 import "./AlertsCard.css";
 
@@ -23,6 +23,7 @@ function AlertsCard({
   style,
   isRefreshing = false,
 }) {
+  const titleId = useId();
   const totalAlertCount = Array.isArray(alerts) ? alerts.length : 0;
   const visibleAlerts = useMemo(() => {
     return Array.isArray(alerts) ? alerts.slice(0, VISIBLE_ALERT_LIMIT) : [];
@@ -86,12 +87,13 @@ function AlertsCard({
     <section
       className="bento-alerts alerts-card glass"
       style={style}
+      aria-labelledby={titleId}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
       <header className="alerts-header">
-        <h3 className="alerts-title">
-          <Siren size={16} />
+        <h3 id={titleId} className="alerts-title">
+          <Siren size={16} aria-hidden="true" />
           <span>Severe Alerts</span>
         </h3>
         <span className="alerts-subtitle">{emptyState.subtitle}</span>

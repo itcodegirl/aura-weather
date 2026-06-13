@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { getAqiStatus, getUvStatus } from "./meteorology.js";
+import { getAqiStatus, getUvStatus } from "./exposure.js";
 
 describe("getAqiStatus", () => {
   test("returns no-data status for null/undefined", () => {

@@ -282,7 +282,21 @@ describe("buildHeroData", () => {
       unit: "F",
     });
     assert.equal(data.safeLocationName, "Chicago");
-    assert.equal(data.safeLocationCountry, "USA");
+    assert.equal(data.safeLocationCountry, "United States");
+  });
+
+  test("uses display country names instead of raw official provider labels", () => {
+    const data = buildHeroData({
+      weather: baseWeather,
+      location: {
+        ...baseLocation,
+        name: "Township of Palos",
+        country: "United States of America (the)",
+      },
+      unit: "F",
+    });
+
+    assert.equal(data.safeLocationCountry, "United States");
   });
 
   test("builds a 'warmer than average' climate message in Fahrenheit", () => {

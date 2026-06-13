@@ -1,10 +1,11 @@
-import { memo, useCallback, useId, useState } from "react";
+import { lazy, memo, Suspense, useCallback, useId, useState } from "react";
 import { Settings2 } from "lucide-react";
 import CitySearch from "./CitySearch";
 import DisplaySettingsControls from "./header/DisplaySettingsControls";
 import SavedCitiesStrip from "./header/SavedCitiesStrip";
-import SyncAccountPanel from "./header/SyncAccountPanel";
 import { toFiniteNumber } from "../utils/numbers";
+
+const SyncAccountPanel = lazy(() => import("./header/SyncAccountPanel"));
 
 function HeaderControls({
   citySearchRef,
@@ -18,6 +19,7 @@ function HeaderControls({
   setStartupCity,
   restoreSavedCity,
   forgetSavedCity,
+  moveSavedCity,
   syncConnected,
   syncAccount,
   syncState,
@@ -209,17 +211,20 @@ function HeaderControls({
           setStartupCity={handleSetStartupCity}
           restoreSavedCity={restoreSavedCity}
           forgetSavedCity={forgetSavedCity}
+          moveSavedCity={moveSavedCity}
         />
         {shouldShowSyncPanel ? (
-          <SyncAccountPanel
-            syncConnected={syncConnected}
-            syncAccount={syncAccount}
-            syncState={syncState}
-            onCreateSyncAccount={handleCreateSyncAccount}
-            onConnectSyncAccount={handleConnectSyncAccount}
-            onDisconnectSyncAccount={handleDisconnectSyncAccount}
-            onSyncNow={handleSyncNow}
-          />
+          <Suspense fallback={null}>
+            <SyncAccountPanel
+              syncConnected={syncConnected}
+              syncAccount={syncAccount}
+              syncState={syncState}
+              onCreateSyncAccount={handleCreateSyncAccount}
+              onConnectSyncAccount={handleConnectSyncAccount}
+              onDisconnectSyncAccount={handleDisconnectSyncAccount}
+              onSyncNow={handleSyncNow}
+            />
+          </Suspense>
         ) : null}
       </div>
 

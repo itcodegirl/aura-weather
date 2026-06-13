@@ -137,3 +137,16 @@
     display: none;
   }
 }
+
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the LIVE/CACHED state pill sits at 9px base, below comfortable phone
+ * reading size on the 421-760px tiers where it is still visible.
+ * Pointer-scoped so desktop density and the visual baselines are
+ * unaffected.
+ */
+@media (pointer: coarse) {
+  .global-update-state {
+    font-size: 10px;
+  }
+}

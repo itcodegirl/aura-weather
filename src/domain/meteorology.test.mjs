@@ -5,9 +5,8 @@ import {
   calculatePressureTrend,
   classifyComfort,
   classifyStormRisk,
-  classifyWind,
-  windDirectionName,
 } from "./meteorology.js";
+import { classifyWind, windDirectionName } from "./wind.js";
 
 function buildHourlyIsoTimes(count, hourOffsetFromNow = 0) {
   const now = Date.now();
@@ -59,6 +58,20 @@ describe("meteorology utils", () => {
     );
     assert.equal(steady.direction, "steady");
     assert.equal(steady.interpretation, "Stable");
+  });
+
+  test("calculatePressureTrend refuses to call a single sample 'Stable'", () => {
+    // One usable reading compares against itself (delta 0), which used
+    // to present as a confident "Stable" trend computed from no trend
+    // data. The current value is still surfaced; the trend is not.
+    const times = buildHourlyIsoTimes(8, 0);
+    const singleSample = calculatePressureTrend(
+      [1012, null, null, null, null, null, null, null],
+      times
+    );
+    assert.equal(singleSample.current, 1012);
+    assert.equal(singleSample.interpretation, "Not enough data");
+    assert.equal(singleSample.direction, "steady");
   });
 
   test("calculatePressureTrend returns defaults for invalid input", () => {

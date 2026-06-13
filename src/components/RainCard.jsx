@@ -49,6 +49,7 @@ function RainCard({
   isRefreshing = false,
 }) {
   const timelineId = useId();
+  const titleId = `${timelineId}-title`;
   const timelineSummaryId = `${timelineId}-summary`;
   const timelineDetailsId = `${timelineId}-details`;
   const [mode, setMode] = useState("chance");
@@ -218,12 +219,14 @@ function RainCard({
     <section
       className="bento-rain rain-card glass"
       style={style}
+      aria-labelledby={titleId}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
       <CardHeader
         headerClassName="rain-header"
         title="Rain Outlook"
+        titleId={titleId}
         titleTag="h3"
         titleClassName="rain-title"
         icon={<CloudRain size={16} />}
@@ -264,7 +267,7 @@ function RainCard({
           </p>
         </div>
       ) : isDry ? (
-        <div className="card-empty">
+        <div className="card-empty" role="status">
           <div className="card-empty__icon">
             <WeatherIcon code={0} size={36} />
           </div>

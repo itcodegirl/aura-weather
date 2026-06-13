@@ -13,9 +13,15 @@ import {
 import { toFiniteNumber } from "../utils/numbers";
 import { useClimateComparison } from "./useClimateComparison";
 import {
+  AUTO_REFRESH_POLL_INTERVAL_MS,
+  AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+  shouldAutoRefreshWeather,
+} from "./weatherRefreshPolicy.js";
+import {
   readCachedWeatherSnapshot,
   writeCachedWeatherSnapshot,
 } from "../services/weatherSnapshotCache";
+import { claimForecastPreload } from "../api/forecastPreload.js";
 
 const DEFAULT_TRUST_META = {
   weatherFetchedAt: null,
@@ -28,6 +34,12 @@ const DEFAULT_TRUST_META = {
   cacheCapturedAt: null,
   cacheRestoredAt: null,
 };
+
+// When the network is down or the refresh failed, a snapshot older
+// than the default 12h freshness window is still better than the
+// global error screen — the trust pill labels exactly how old it is.
+// Two days is the ceiling: beyond that a forecast is misinformation.
+const DEGRADED_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
 // Forecast data is always fetched in Fahrenheit / inch units and converted
 // client-side. Switching units in the UI must not trigger a refetch.
@@ -71,6 +83,13 @@ function isBrowserOffline() {
 function getForecastFailureMessage(error) {
   if (isBrowserOffline()) {
     return "Browser is offline.";
+  }
+
+  // AbortSignal.timeout rejects with a TimeoutError (not AbortError),
+  // so a slow network gets an actionable message instead of the
+  // generic "unavailable".
+  if (error?.name === "TimeoutError") {
+    return "Open-Meteo forecast timed out. Check your connection and retry.";
   }
 
   const status = toFiniteNumber(error?.status);
@@ -119,7 +138,11 @@ function buildCachedTrustMeta(snapshot, restoredAt = Date.now()) {
 }
 
 export function useWeatherData(location, options = {}) {
-  const { climateEnabled = true, enabled = true } = options;
+  const {
+    climateEnabled = true,
+    enabled = true,
+    backgroundRefreshEnabled = true,
+  } = options;
   const locationLat = location?.lat;
   const locationLon = location?.lon;
   const weatherDataUnit = WEATHER_SOURCE_UNIT;
@@ -172,6 +195,7 @@ export function useWeatherData(location, options = {}) {
     requestId,
     controller,
     coordinates,
+    baseWeather,
     weatherFetchedAt,
   }) => {
     const supplementalTasks = [
@@ -229,34 +253,31 @@ export function useWeatherData(location, options = {}) {
             : ALERTS_STATUS.unavailable,
       };
 
-      setWeather((currentWeather) => {
-        if (!currentWeather) {
-          return currentWeather;
-        }
+      // The requestId guard above proves the weather state still holds
+      // this request's base snapshot (every other writer bumps the id
+      // first), so the merge is computed as a plain value. The cache
+      // write must stay outside the setState updater: updaters have to
+      // be pure — StrictMode invokes them twice — and a persistence
+      // side effect inside one runs twice with them.
+      const nextWeather = { ...baseWeather, aqi: nextAqi };
 
-        const nextWeather = { ...currentWeather };
-        nextWeather.aqi = nextAqi;
+      if (alertsPayload) {
+        nextWeather.alerts = Array.isArray(alertsPayload?.alerts)
+          ? alertsPayload.alerts
+          : [];
+        nextWeather.alertsStatus =
+          typeof alertsPayload?.status === "string"
+            ? alertsPayload.status
+            : ALERTS_STATUS.unavailable;
+      }
 
-        if (alertsPayload) {
-          nextWeather.alerts = Array.isArray(alertsPayload?.alerts)
-            ? alertsPayload.alerts
-            : [];
-          nextWeather.alertsStatus =
-            typeof alertsPayload?.status === "string"
-              ? alertsPayload.status
-              : ALERTS_STATUS.unavailable;
-        }
-
-        writeCachedWeatherSnapshot({
-          coordinates,
-          weather: nextWeather,
-          trustMeta: nextTrustMeta,
-        });
-
-        return nextWeather;
-      });
-
+      setWeather(nextWeather);
       setTrustMeta(nextTrustMeta);
+      writeCachedWeatherSnapshot({
+        coordinates,
+        weather: nextWeather,
+        trustMeta: nextTrustMeta,
+      });
     } finally {
       if (inFlightRequestRef.current === controller) {
         inFlightRequestRef.current = null;
@@ -266,6 +287,11 @@ export function useWeatherData(location, options = {}) {
 
   const requestWeatherData = useCallback(async () => {
     if (!enabled) {
+      // Invalidate any queued continuation from a prior request so a
+      // late supplemental merge cannot resurrect state after this
+      // reset clears it. This was previously guarded only by a null
+      // check inside the setWeather updater.
+      requestIdRef.current += 1;
       abortInFlightRequest();
       resetClimateComparison();
       lastFetchedCoordsRef.current = null;
@@ -291,24 +317,35 @@ export function useWeatherData(location, options = {}) {
 
     const requestWindSpeedUnit = getApiWindSpeedUnit();
     const cachedSnapshot = readCachedWeatherSnapshot(coordinates);
+    // Degraded paths (offline start, failed refresh) accept an older
+    // snapshot than the happy path would ever render. Resolved lazily
+    // so the wider read only happens when the fresh one came up empty.
+    const readDegradedSnapshot = () =>
+      cachedSnapshot ??
+      readCachedWeatherSnapshot(coordinates, {
+        maxAgeMs: DEGRADED_SNAPSHOT_MAX_AGE_MS,
+      });
 
     abortInFlightRequest();
     resetClimateComparison();
 
-    if (isBrowserOffline() && cachedSnapshot) {
-      setWeather(cachedSnapshot.weather);
-      setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
-      lastFetchedCoordsRef.current = {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-      };
-      setError(getForecastFailureMessage());
-      setLoading(false);
-      void requestClimateComparison({
-        coordinates,
-        weatherData: cachedSnapshot.weather,
-      });
-      return;
+    if (isBrowserOffline()) {
+      const offlineSnapshot = readDegradedSnapshot();
+      if (offlineSnapshot) {
+        setWeather(offlineSnapshot.weather);
+        setTrustMeta(buildCachedTrustMeta(offlineSnapshot));
+        lastFetchedCoordsRef.current = {
+          latitude: coordinates.latitude,
+          longitude: coordinates.longitude,
+        };
+        setError(getForecastFailureMessage());
+        setLoading(false);
+        void requestClimateComparison({
+          coordinates,
+          weatherData: offlineSnapshot.weather,
+        });
+        return;
+      }
     }
 
     const controller = new AbortController();
@@ -335,16 +372,20 @@ export function useWeatherData(location, options = {}) {
     let shouldKeepController = false;
 
     try {
-      const weatherData = await fetchWeather(
-        coordinates.latitude,
-        coordinates.longitude,
-        {
+      // Adopt the boot-time preload when its coordinates match this
+      // request (the cold-load path): the request was fired before React
+      // mounted, so its round-trip overlapped app hydration. On a miss
+      // this is null and we fetch as usual. The preloaded request carries
+      // no abort signal, but the requestId guard below still discards its
+      // result if a newer request has since superseded it.
+      const preloadedForecast = claimForecastPreload(coordinates);
+      const weatherData = await (preloadedForecast ??
+        fetchWeather(coordinates.latitude, coordinates.longitude, {
           signal: controller.signal,
           temperatureUnit: API_TEMPERATURE_UNIT,
           windSpeedUnit: requestWindSpeedUnit,
           precipitationUnit: WEATHER_PRECIPITATION_UNIT,
-        }
-      );
+        }));
 
       if (requestId !== requestIdRef.current || !isMountedRef.current) {
         return;
@@ -373,6 +414,7 @@ export function useWeatherData(location, options = {}) {
         requestId,
         controller,
         coordinates,
+        baseWeather,
         weatherFetchedAt: fetchedAt,
       });
       void requestClimateComparison({
@@ -385,9 +427,10 @@ export function useWeatherData(location, options = {}) {
         !isAbortError(requestError) &&
         isMountedRef.current
       ) {
-        if (cachedSnapshot) {
-          setWeather(cachedSnapshot.weather);
-          setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
+        const fallbackSnapshot = readDegradedSnapshot();
+        if (fallbackSnapshot) {
+          setWeather(fallbackSnapshot.weather);
+          setTrustMeta(buildCachedTrustMeta(fallbackSnapshot));
           lastFetchedCoordsRef.current = {
             latitude: coordinates.latitude,
             longitude: coordinates.longitude,
@@ -395,7 +438,7 @@ export function useWeatherData(location, options = {}) {
           setError(getForecastFailureMessage(requestError));
           void requestClimateComparison({
             coordinates,
-            weatherData: cachedSnapshot.weather,
+            weatherData: fallbackSnapshot.weather,
           });
         } else {
           setError(getForecastFailureMessage(requestError));
@@ -474,6 +517,85 @@ export function useWeatherData(location, options = {}) {
 
     void requestWeatherData();
   }, [requestWeatherData]);
+
+  // ---- Automatic refresh on natural opportunities -------------------
+  // The dashboard previously never refetched on its own: a tab left
+  // open overnight kept showing yesterday's forecast, and a connection
+  // drop left the error banner up even after connectivity returned.
+  // Two listeners plus a minute-level visible-tab check close that
+  // gap; the decision logic itself lives in weatherRefreshPolicy.js.
+  // Same-coordinate refreshes keep the current data visible behind the
+  // existing "Refreshing" pill, so this never blanks the screen.
+  const refreshSnapshotRef = useRef({ weatherFetchedAt: null, forecastStatus: "idle", hasError: false });
+  useEffect(() => {
+    refreshSnapshotRef.current = {
+      weatherFetchedAt: trustMeta.weatherFetchedAt,
+      forecastStatus: trustMeta.forecastStatus,
+      hasError: Boolean(error),
+    };
+  }, [trustMeta.weatherFetchedAt, trustMeta.forecastStatus, error]);
+  const lastAutoRefreshAttemptRef = useRef(null);
+
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const attemptAutoRefresh = ({ minAttemptIntervalMs } = {}) => {
+      const snapshot = refreshSnapshotRef.current;
+      const isVisible =
+        typeof document === "undefined" ||
+        document.visibilityState !== "hidden";
+      const decision = shouldAutoRefreshWeather({
+        nowMs: Date.now(),
+        weatherFetchedAt: snapshot.weatherFetchedAt,
+        forecastStatus: snapshot.forecastStatus,
+        hasError: snapshot.hasError,
+        isOffline: isBrowserOffline(),
+        isVisible,
+        lastAttemptAt: lastAutoRefreshAttemptRef.current,
+        ...(minAttemptIntervalMs !== undefined ? { minAttemptIntervalMs } : {}),
+      });
+
+      if (!decision) {
+        return;
+      }
+
+      lastAutoRefreshAttemptRef.current = Date.now();
+      void requestWeatherData();
+    };
+
+    const handleOnline = () => attemptAutoRefresh();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        attemptAutoRefresh();
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    // Visible-tab cadence: a dashboard that never loses focus (second
+    // monitor, kiosk, installed PWA left open) fires neither listener
+    // above, so a minute check runs the same policy with a calmer
+    // retry floor. Suppressed for prefers-reduced-data users — they
+    // keep the event-driven correctness without background spend.
+    const pollTimerId = backgroundRefreshEnabled
+      ? setInterval(
+          () =>
+            attemptAutoRefresh({
+              minAttemptIntervalMs: AUTO_REFRESH_POLL_MIN_INTERVAL_MS,
+            }),
+          AUTO_REFRESH_POLL_INTERVAL_MS
+        )
+      : null;
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (pollTimerId !== null) {
+        clearInterval(pollTimerId);
+      }
+    };
+  }, [backgroundRefreshEnabled, enabled, requestWeatherData]);
 
   // Project climate state back into trustMeta so existing consumers keep
   // working without prop-shape churn.

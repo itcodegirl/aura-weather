@@ -12,6 +12,7 @@ import {
   Sun,
 } from "lucide-react";
 import { isMissingPlaceholder } from "../utils/numbers";
+import { formatDisplayCountry } from "../utils/locationDisplay";
 import { useTimeNow } from "../hooks/useTimeNow";
 import WeatherIcon from "./WeatherIcon";
 import { Stat } from "./ui";
@@ -78,7 +79,7 @@ function HeroCard({
         : "";
     const fallbackLocationCountry =
       typeof location?.country === "string" && location.country.trim()
-        ? location.country.trim()
+        ? formatDisplayCountry(location.country)
         : "";
     const hasResolvedLocation = Boolean(fallbackLocationName);
     const locationLabel = hasResolvedLocation
@@ -321,26 +322,49 @@ function HeroCard({
             </ul>
           )}
 
-          <p
-            className="hero-sunlight-line"
+          <div
+            className="hero-daylight-strip"
             role="group"
             aria-label={`Sunrise ${sunriseLabel}, sunset ${sunsetLabel}, ${daylightLabel} of daylight`}
           >
-            <span className="hero-sunlight-segment">
-              <Sunrise size={13} aria-hidden="true" />
-              <time dateTime={sunriseValue || undefined}>{sunriseLabel}</time>
+            <span className="hero-daylight-item">
+              <span className="hero-daylight-icon" aria-hidden="true">
+                <Sunrise size={14} />
+              </span>
+              <span className="hero-daylight-copy">
+                <span className="hero-daylight-label">Sunrise</span>
+                <time
+                  className="hero-daylight-value"
+                  dateTime={sunriseValue || undefined}
+                >
+                  {sunriseLabel}
+                </time>
+              </span>
             </span>
-            <span className="hero-sunlight-separator" aria-hidden="true">·</span>
-            <span className="hero-sunlight-segment">
-              <Sunset size={13} aria-hidden="true" />
-              <time dateTime={sunsetValue || undefined}>{sunsetLabel}</time>
+            <span className="hero-daylight-item">
+              <span className="hero-daylight-icon" aria-hidden="true">
+                <Sunset size={14} />
+              </span>
+              <span className="hero-daylight-copy">
+                <span className="hero-daylight-label">Sunset</span>
+                <time
+                  className="hero-daylight-value"
+                  dateTime={sunsetValue || undefined}
+                >
+                  {sunsetLabel}
+                </time>
+              </span>
             </span>
-            <span className="hero-sunlight-separator" aria-hidden="true">·</span>
-            <span className="hero-sunlight-segment">
-              <Sun size={13} aria-hidden="true" />
-              <span>{daylightLabel}</span>
+            <span className="hero-daylight-item hero-daylight-item--duration">
+              <span className="hero-daylight-icon" aria-hidden="true">
+                <Sun size={14} />
+              </span>
+              <span className="hero-daylight-copy">
+                <span className="hero-daylight-label">Daylight</span>
+                <span className="hero-daylight-value">{daylightLabel}</span>
+              </span>
             </span>
-          </p>
+          </div>
         </div>
 
         <div className="hero-stats" role="group" aria-label="Current readings">

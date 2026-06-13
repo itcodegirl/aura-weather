@@ -40,7 +40,10 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  border-radius: var(--radius-pill);
+  /* Match the header unit/time toggles (14px shell / 11px buttons) so a
+     single-character label like "%" reads as a segmented control rather
+     than a stark circle. The 44x44 hit target below is unchanged. */
+  border-radius: 14px;
   background: var(--surface-3);
   border: var(--border-soft);
   transition:
@@ -63,7 +66,7 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 11px;
   border: 1px solid transparent;
   color: var(--text-muted);
   font-size: 12px;
@@ -492,6 +495,26 @@
   .rain-touch-sample:focus-visible {
     outline: 2px solid rgba(110, 231, 255, 0.72);
     outline-offset: 2px;
+  }
+}
+
+/*
+ * 10px legibility floor on touch (mirrors the severity-badge floor):
+ * the 640px tier drops the stat/history captions to 9px and the 420px
+ * tier drops the risk badge to 9px — below comfortable phone reading
+ * size. Pointer-scoped and tied to the same width tiers so desktop
+ * density and the visual baselines are unaffected.
+ */
+@media (pointer: coarse) and (max-width: 640px) {
+  .rain-stat-label,
+  .rain-history-pill-label {
+    font-size: 10px;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 420px) {
+  .rain-risk-badge {
+    font-size: 10px;
   }
 }
 

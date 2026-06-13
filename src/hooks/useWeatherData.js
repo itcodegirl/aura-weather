@@ -21,6 +21,7 @@ import {
   readCachedWeatherSnapshot,
   writeCachedWeatherSnapshot,
 } from "../services/weatherSnapshotCache";
+import { claimForecastPreload } from "../api/forecastPreload.js";
 
 const DEFAULT_TRUST_META = {
   weatherFetchedAt: null,
@@ -371,16 +372,20 @@ export function useWeatherData(location, options = {}) {
     let shouldKeepController = false;
 
     try {
-      const weatherData = await fetchWeather(
-        coordinates.latitude,
-        coordinates.longitude,
-        {
+      // Adopt the boot-time preload when its coordinates match this
+      // request (the cold-load path): the request was fired before React
+      // mounted, so its round-trip overlapped app hydration. On a miss
+      // this is null and we fetch as usual. The preloaded request carries
+      // no abort signal, but the requestId guard below still discards its
+      // result if a newer request has since superseded it.
+      const preloadedForecast = claimForecastPreload(coordinates);
+      const weatherData = await (preloadedForecast ??
+        fetchWeather(coordinates.latitude, coordinates.longitude, {
           signal: controller.signal,
           temperatureUnit: API_TEMPERATURE_UNIT,
           windSpeedUnit: requestWindSpeedUnit,
           precipitationUnit: WEATHER_PRECIPITATION_UNIT,
-        }
-      );
+        }));
 
       if (requestId !== requestIdRef.current || !isMountedRef.current) {
         return;

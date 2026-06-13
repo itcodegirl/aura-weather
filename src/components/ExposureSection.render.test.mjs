@@ -59,6 +59,41 @@ describe("ExposureSection section header status", () => {
   });
 });
 
+describe("ExposureSection severe alert summary", () => {
+  test("surfaces the highest-priority weather alert below the exposure gauges", () => {
+    render(
+      React.createElement(ExposureSection, {
+        aqi: 42,
+        uvIndex: 7.6,
+        aqiStatus: "ready",
+        alert: {
+          event: "Flood Watch",
+          headline: "Flood Watch issued for Cook County by NWS Chicago IL",
+          priority: "moderate",
+          endsAt: "2026-06-11T23:00:00-05:00",
+        },
+      })
+    );
+
+    assert.ok(screen.getByText("Active alert"));
+    assert.ok(screen.getByText("Flood Watch"));
+    assert.ok(screen.getByText(/Flood Watch issued for Cook County/));
+    assert.ok(screen.getByText("Details below"));
+  });
+
+  test("does not reserve alert space when there are no active alerts", () => {
+    const { container } = render(
+      React.createElement(ExposureSection, {
+        aqi: 42,
+        uvIndex: 7.6,
+        aqiStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".exposure-alert"), null);
+  });
+});
+
 describe("ExposureSection AQI scale (real EPA 0–500 range)", () => {
   test("supportText denominator is 500, not 300", () => {
     render(

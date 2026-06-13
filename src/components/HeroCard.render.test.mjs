@@ -183,6 +183,25 @@ describe("HeroCard with missing readings", () => {
       "no missing-data labels when every reading is present"
     );
   });
+
+  test("labels sunrise, sunset, and daylight values instead of showing unlabeled numbers", () => {
+    render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    assert.ok(screen.getByText("Sunrise"));
+    assert.ok(screen.getByText("Sunset"));
+    assert.ok(screen.getByText("Daylight"));
+    assert.ok(
+      screen.getByRole("group", {
+        name: /Sunrise .* sunset .* daylight/i,
+      })
+    );
+  });
 });
 
 describe("HeroCard accessibility scaffolding", () => {

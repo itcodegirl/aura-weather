@@ -67,7 +67,9 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   const alerts = Array.isArray(weather.alerts) ? weather.alerts : [];
   const seriousAlert = alerts.find(
     (alert) =>
-      alert?.priority === "high" || alert?.priority === "extreme"
+      alert?.priority === "critical" ||
+      alert?.priority === "high" ||
+      alert?.priority === "extreme"
   );
   if (seriousAlert) {
     const event =

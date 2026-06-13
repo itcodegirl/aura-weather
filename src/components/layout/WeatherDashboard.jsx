@@ -6,6 +6,7 @@ import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
 import { PRELOAD_HEAVY_PANELS, RainPanel } from "../lazyPanels";
+import { formatDisplayCountry } from "../../utils/locationDisplay";
 import "./WeatherDashboard.css";
 const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
 // Data-status is a diagnostic surface most users never open. Defer
@@ -86,7 +87,9 @@ function WeatherDashboard({
   const dashboardLocationName =
     typeof location?.name === "string" ? location.name.trim() : "";
   const dashboardLocationCountry =
-    typeof location?.country === "string" ? location.country.trim() : "";
+    typeof location?.country === "string"
+      ? formatDisplayCountry(location.country)
+      : "";
   const accessibleLocationSuffix = dashboardLocationName
     ? ` in ${dashboardLocationName}${
         dashboardLocationCountry ? `, ${dashboardLocationCountry}` : ""
@@ -135,6 +138,7 @@ function WeatherDashboard({
           aqi={weather?.aqi}
           aqiStatus={aqiStatus}
           uvIndex={weather?.daily?.uvIndexMax?.[0]}
+          alert={weather?.alerts?.[0]}
           style={CARD_STYLE_VARIABLES[1]}
           isRefreshing={isBackgroundLoading}
         />

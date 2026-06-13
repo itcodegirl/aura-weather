@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { formatDisplayCountry } from "../utils/locationDisplay";
 
 /*
  * Mirror the active forecast location into <title> so users with
@@ -19,7 +20,7 @@ function trimString(value) {
 
 export function useDocumentTitle(location) {
   const name = trimString(location?.name);
-  const country = trimString(location?.country);
+  const country = formatDisplayCountry(location?.country);
 
   useEffect(() => {
     if (typeof document === "undefined") {

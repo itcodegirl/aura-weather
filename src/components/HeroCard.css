@@ -252,32 +252,62 @@
   border-color: rgba(148, 163, 184, 0.24);
 }
 
-/*
- * Inline sunrise · sunset · daylight summary. Each segment aligns its
- * icon with its value and stays on one line, so the daylight duration
- * reads as "15 hr 09 min" instead of breaking after "15 hr". The line
- * wraps between segments when space is tight, never mid-value.
- */
-.hero-sunlight-line {
-  display: flex;
-  flex-wrap: wrap;
+.hero-daylight-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(198, 215, 242, 0.16);
+  background:
+    linear-gradient(135deg, rgba(139, 211, 255, 0.08), rgba(246, 196, 83, 0.08)),
+    rgba(8, 17, 36, 0.42);
+}
+
+.hero-daylight-item {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 6px 10px;
-  color: var(--text-dim);
+  gap: 8px;
+  padding: 8px 9px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: rgba(11, 20, 38, 0.58);
+  border: 1px solid rgba(198, 215, 242, 0.12);
+  box-shadow: var(--subcard-shadow);
+}
+
+.hero-daylight-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  color: #fde68a;
+  background: rgba(246, 196, 83, 0.12);
+}
+
+.hero-daylight-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.hero-daylight-label {
+  color: rgba(211, 223, 248, 0.78);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: var(--track-default);
+  text-transform: uppercase;
+}
+
+.hero-daylight-value {
+  color: #f8fbff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 760;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-}
-
-.hero-sunlight-segment {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
   white-space: nowrap;
-}
-
-.hero-sunlight-separator {
-  color: rgba(196, 213, 241, 0.5);
 }
 
 .hero-stats {

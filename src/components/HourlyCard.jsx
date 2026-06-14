@@ -4,10 +4,12 @@ import { memo, useId, useMemo, useState } from "react";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
+import { formatWindSpeed } from "../domain/wind";
 import { getZonedNow } from "../utils/dates";
 import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber } from "../utils/numbers";
 import { CardHeader } from "./ui";
+import WeatherIcon from "./WeatherIcon";
 import "./HourlyCard.css";
 
 function toDisplayTemperature(value, unit) {
@@ -31,8 +33,6 @@ function buildHourlyData(hourly, unit, timeZone) {
     // window + Now marker stay aligned when viewing another time zone.
     now: getZonedNow(timeZone).getTime(),
     windowSize: 24,
-    // Snap "Now" to the current hour band rather than the next future
-    // entry, so the Now indicator aligns with the active hour.
     currentSlotToleranceMs: 60 * 60 * 1000,
   });
   if (idx < 0) {
@@ -46,8 +46,8 @@ function buildHourlyData(hourly, unit, timeZone) {
       if (!Number.isFinite(timestamp.getTime())) return null;
 
       // toFiniteNumber rejects nullish/empty values, so a missing
-      // hourly sample renders as a gap in the chart instead of a fake
-      // 0°F point.
+      // hourly sample renders as a gap in the curve instead of a fake
+      // 0 reading.
       const baseTemp = toFiniteNumber(hourly.temperature[idx + i]);
       const convertedTemp =
         baseTemp === null ? Number.NaN : toDisplayTemperature(baseTemp, unit);
@@ -59,187 +59,165 @@ function buildHourlyData(hourly, unit, timeZone) {
           hour12: true,
         }),
         temp: Number.isFinite(convertedTemp) ? convertedTemp : null,
+        rainChance: toFiniteNumber(hourly.rainChance?.[idx + i]),
+        windGust: toFiniteNumber(hourly.windGust?.[idx + i]),
         code: hourly.conditionCode?.[idx + i] ?? 0,
       };
     })
     .filter(Boolean);
 }
 
-function buildChartGeometry(data, minTemp, maxTemp) {
-  if (!Array.isArray(data) || data.length === 0) {
-    return null;
-  }
+// Thin the 24h window to ~12 evenly-spaced points (every ~2 hours) so
+// the curve can weave through readable, un-cramped icons. The current
+// hour (index 0) is always kept so the strip still starts at "Now".
+function thinHourly(data) {
+  if (data.length <= 12) return data;
+  const step = Math.ceil(data.length / 12);
+  return data.filter((_, index) => index % step === 0);
+}
 
-  const svgWidth = 720;
-  const svgHeight = 240;
-  const margins = {
-    top: 18,
-    right: 14,
-    bottom: 32,
-    left: 34,
-  };
-  const plotWidth = Math.max(1, svgWidth - margins.left - margins.right);
-  const plotHeight = Math.max(1, svgHeight - margins.top - margins.bottom);
-  const range = maxTemp - minTemp || 1;
+// Each metric reads its own value off a point, paints the curve in its
+// own colour, formats its own units, and names itself for the
+// screen-reader summary. Temperature is the default landing view.
+const METRICS = {
+  temp: {
+    key: "temp",
+    label: "Temperature",
+    color: "#f3b765",
+    get: (point) => point.temp,
+    format: (value) => `${Math.round(value)}°`,
+    aria: "degrees",
+  },
+  precip: {
+    key: "precip",
+    label: "Precipitation",
+    color: "#6fb7f2",
+    get: (point) => point.rainChance,
+    format: (value) => `${Math.round(value)}%`,
+    aria: "percent chance",
+  },
+  wind: {
+    key: "wind",
+    label: "Wind",
+    color: "#7fd0c4",
+    get: (point) => point.windGust,
+    format: (value, unit) => formatWindSpeed(value, unit),
+    aria: "gusts",
+  },
+};
+const METRIC_ORDER = ["temp", "precip", "wind"];
 
-  const toX = (index) => {
-    if (data.length <= 1) {
-      return margins.left + plotWidth / 2;
-    }
-    return margins.left + (index / (data.length - 1)) * plotWidth;
-  };
+const FLOW_SVG_HEIGHT = 96;
+const FLOW_TOP_PAD = 8;
+const FLOW_SPAN = 46;
+const FLOW_ICON_HALF = 11;
 
-  const toY = (temp) =>
-    margins.top + ((maxTemp - temp) / range) * plotHeight;
+function buildFlowGeometry(points, metric) {
+  const count = points.length;
+  if (!count) return null;
 
-  const points = data
-    .map((entry, index) => {
-      if (!Number.isFinite(entry?.temp)) {
-        return null;
-      }
+  const rawValues = points.map((point) => toFiniteNumber(metric.get(point)));
+  const finite = rawValues.filter((value) => value !== null);
+  if (finite.length === 0) return null;
 
-      return {
-        ...entry,
-        x: toX(index),
-        y: toY(entry.temp),
-      };
-    })
-    .filter(Boolean);
+  const min = Math.min(...finite);
+  const max = Math.max(...finite);
+  const range = max - min || 1;
 
-  if (points.length === 0) {
-    return null;
-  }
-
-  const linePath = points
-    .map((point, index) =>
-      `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`
-    )
-    .join(" ");
-
-  const areaPath = [
-    linePath,
-    `L ${points[points.length - 1].x.toFixed(2)} ${(margins.top + plotHeight).toFixed(2)}`,
-    `L ${points[0].x.toFixed(2)} ${(margins.top + plotHeight).toFixed(2)}`,
-    "Z",
-  ].join(" ");
-
-  const yTickCount = 5;
-  const yTicks = Array.from({ length: yTickCount }, (_, index) => {
-    const t = index / (yTickCount - 1);
-    const value = Math.round(maxTemp - t * range);
-    const y = margins.top + t * plotHeight;
-    return { value, y };
+  const columns = points.map((point, index) => {
+    const value = rawValues[index];
+    const norm = value === null ? null : (value - min) / range;
+    // Missing samples sit at mid-height so the gap reads as "unknown"
+    // rather than a fake low/high point.
+    const offset =
+      norm === null
+        ? FLOW_TOP_PAD + FLOW_SPAN * 0.5
+        : FLOW_TOP_PAD + (1 - norm) * FLOW_SPAN;
+    return {
+      ...point,
+      value,
+      offset,
+      cx: ((index + 0.5) / count) * 1000,
+      cy: offset + FLOW_ICON_HALF,
+    };
   });
 
-  const xTicks = data
-    .map((entry, index) => ({ entry, index }))
-    .filter(({ index }) => index % 3 === 0 || index === data.length - 1)
-    .map(({ entry, index }) => ({
-      x: toX(index),
-      label: entry.label,
-    }));
+  const drawn = columns.filter((column) => column.value !== null);
+  let line = `M ${drawn[0].cx.toFixed(1)} ${drawn[0].cy.toFixed(1)}`;
+  for (let i = 1; i < drawn.length - 1; i += 1) {
+    const midX = ((drawn[i].cx + drawn[i + 1].cx) / 2).toFixed(1);
+    const midY = ((drawn[i].cy + drawn[i + 1].cy) / 2).toFixed(1);
+    line += ` Q ${drawn[i].cx.toFixed(1)} ${drawn[i].cy.toFixed(1)} ${midX} ${midY}`;
+  }
+  if (drawn.length > 1) {
+    const last = drawn[drawn.length - 1];
+    line += ` Q ${last.cx.toFixed(1)} ${last.cy.toFixed(1)} ${last.cx.toFixed(1)} ${last.cy.toFixed(1)}`;
+  }
+  const band =
+    drawn.length > 1
+      ? `${line} L ${drawn[drawn.length - 1].cx.toFixed(1)} ${FLOW_SVG_HEIGHT} L ${drawn[0].cx.toFixed(1)} ${FLOW_SVG_HEIGHT} Z`
+      : "";
 
-  return {
-    svgWidth,
-    svgHeight,
-    margins,
-    plotWidth,
-    plotHeight,
-    points,
-    linePath,
-    areaPath,
-    yTicks,
-    xTicks,
-  };
+  return { columns, line, band, min, max };
 }
 
 const HOURLY_EMPTY_MESSAGE =
-  "Hourly temperatures aren't available right now. Current conditions are still live above.";
+  "Hourly readings aren't available right now. Current conditions are still live above.";
 
-function getHourlySummary(data, unit) {
-  if (!Array.isArray(data) || data.length === 0) {
-    return HOURLY_EMPTY_MESSAGE;
-  }
-
-  // Strict coercion: a null entry.temp would silently land as 0 and
-  // crash the min/max into a fake "0 degrees" reading in the summary.
-  const validTemps = data
-    .map((entry) => toFiniteNumber(entry?.temp))
+function buildSummary(points, metric, unit) {
+  const drawn = points
+    .map((point) => toFiniteNumber(metric.get(point)))
     .filter((value) => value !== null);
-  if (validTemps.length === 0) {
-    return HOURLY_EMPTY_MESSAGE;
+  if (drawn.length === 0) {
+    return `${metric.label} is unavailable for the next several hours.`;
   }
-
-  const firstLabel = data[0]?.label || "now";
-  const lastLabel = data[data.length - 1]?.label || "later";
-  const current = validTemps[0];
-  const minimum = Math.min(...validTemps);
-  const maximum = Math.max(...validTemps);
-
-  return `From ${firstLabel} to ${lastLabel}, temperatures range from ${minimum} to ${maximum} degrees ${unit}. Current reading is ${current} degrees ${unit}.`;
+  const firstLabel = points[0]?.label || "now";
+  const lastLabel = points[points.length - 1]?.label || "later";
+  const min = Math.min(...drawn);
+  const max = Math.max(...drawn);
+  const current = toFiniteNumber(metric.get(points[0]));
+  const currentText =
+    current === null ? "unavailable" : metric.format(current, unit);
+  return `${metric.label} from ${firstLabel} to ${lastLabel}: ranges ${metric.format(
+    min,
+    unit
+  )} to ${metric.format(max, unit)} ${metric.aria}. Now ${currentText}.`;
 }
 
-function HourlyCard({
-  weather,
-  unit,
-  chartTopColor,
-  chartBottomColor,
-  style,
-  isRefreshing = false,
-}) {
-  const currentWeatherCode = weather?.current?.conditionCode;
-  const currentTemperature = weather?.current?.temperature;
+function HourlyCard({ weather, unit, style, isRefreshing = false }) {
   const chartId = useId();
   const chartTitleId = `${chartId}-title`;
   const chartSummaryId = `${chartId}-summary`;
-  const chartGradientId = `${chartId}-temp-gradient`.replace(/:/g, "");
-  const [selectedSampleKey, setSelectedSampleKey] = useState(null);
+  const [metricKey, setMetricKey] = useState("temp");
+  const metric = METRICS[metricKey] ?? METRICS.temp;
+
   const data = useMemo(
-    () => buildHourlyData(weather?.hourly, unit, weather?.meta?.timezone),
+    () => thinHourly(buildHourlyData(weather?.hourly, unit, weather?.meta?.timezone)),
     [weather?.hourly, unit, weather?.meta?.timezone]
   );
-  const palette = useMemo(() => {
-    const hourlyCodes = data
-      .map((entry) => entry.code)
-      .filter((value) => Number.isFinite(value));
-    const primaryCode = currentWeatherCode ?? hourlyCodes[0] ?? 0;
-    return getWeather(primaryCode).gradient || getWeather(0).gradient;
-  }, [data, currentWeatherCode]);
 
-  const topColor = chartTopColor || palette[0];
-  const bottomColor = chartBottomColor || palette[2] || palette[1];
-  const chartSummary = useMemo(() => getHourlySummary(data, unit), [data, unit]);
   const hasUsableTemperatureSamples = data.some((entry) =>
     Number.isFinite(entry?.temp)
   );
-
-  const chartMetrics = useMemo(() => {
-    const temps = data.map((d) => d.temp).filter((value) => Number.isFinite(value));
-    const baseCurrentTemp = toFiniteNumber(currentTemperature);
-    const currentTemp =
-      baseCurrentTemp === null
-        ? Number.NaN
-        : toDisplayTemperature(baseCurrentTemp, unit);
-
-    const safeMinTemp = temps.length
-      ? Math.min(...temps)
-      : Number.isFinite(currentTemp)
-        ? currentTemp
-        : 0;
-    const safeMaxTemp = temps.length
-      ? Math.max(...temps)
-      : Number.isFinite(currentTemp)
-        ? currentTemp
-        : 0;
-
-    return { currentTemp, safeMinTemp, safeMaxTemp };
-  }, [data, unit, currentTemperature]);
-
-  const chartLede = useMemo(() => {
-    return Number.isFinite(chartMetrics.currentTemp)
-      ? `Now ${chartMetrics.currentTemp}\u00B0${unit} \u00B7 Low ${Math.round(chartMetrics.safeMinTemp)}\u00B0 \u00B7 High ${Math.round(chartMetrics.safeMaxTemp)}\u00B0`
-      : `Range ${Math.round(chartMetrics.safeMinTemp)}\u00B0 to ${Math.round(chartMetrics.safeMaxTemp)}\u00B0`;
-  }, [chartMetrics, unit]);
+  const geometry = useMemo(
+    () => buildFlowGeometry(data, metric),
+    [data, metric]
+  );
+  const summary = useMemo(
+    () => buildSummary(data, metric, unit),
+    [data, metric, unit]
+  );
+  const lede = useMemo(() => {
+    if (!geometry) return null;
+    const current = toFiniteNumber(metric.get(data[0]));
+    const now =
+      current === null ? null : `Now ${metric.format(current, unit)}`;
+    const range = `${metric.format(geometry.min, unit)}–${metric.format(
+      geometry.max,
+      unit
+    )}`;
+    return now ? `${now} · ${range}` : `Range ${range}`;
+  }, [geometry, data, metric, unit]);
 
   if (!data.length || !hasUsableTemperatureSamples) {
     return (
@@ -252,7 +230,7 @@ function HourlyCard({
       >
         <CardHeader
           headerClassName="chart-header"
-          title="Hourly Temperature"
+          title="Hourly forecast"
           titleId={chartTitleId}
           titleTag="h3"
           titleClassName="chart-title"
@@ -260,7 +238,6 @@ function HourlyCard({
           subtitle="Next 24h"
           subtitleClassName="chart-subtitle eyebrow-pill"
         />
-
         <div className="card-empty" role="status">
           <div className="card-empty__icon">
             <LineIcon size={36} aria-hidden="true" />
@@ -274,61 +251,7 @@ function HourlyCard({
     );
   }
 
-  const minTemp = Math.floor(chartMetrics.safeMinTemp - 2);
-  const maxTemp = Math.ceil(chartMetrics.safeMaxTemp + 2);
-  const geometry = buildChartGeometry(data, minTemp, maxTemp);
-  const nowPoint = geometry?.points?.[0] ?? null;
-  const hourlySamples = geometry?.points ?? [];
-  const selectedSample =
-    hourlySamples.find((point) => String(point.time.getTime()) === selectedSampleKey) ||
-    hourlySamples[0] ||
-    null;
-  const selectedSampleWeather = selectedSample
-    ? getWeather(selectedSample.code)
-    : null;
-  // Roving tabindex: the strip exposes one tab stop (the displayed
-  // sample) and arrow keys move both focus and selection, so keyboard
-  // users are not forced through up to 24 individual tab stops.
-  const tabStopSampleKey = selectedSample
-    ? String(selectedSample.time.getTime())
-    : null;
-
-  const handleStripKeyDown = (event) => {
-    if (!hourlySamples.length) {
-      return;
-    }
-
-    const sampleKeys = hourlySamples.map((point) =>
-      String(point.time.getTime())
-    );
-    const activeKey =
-      event.target instanceof HTMLElement
-        ? event.target.dataset.sampleKey
-        : null;
-    const activeIndex = Math.max(0, sampleKeys.indexOf(activeKey));
-
-    let nextIndex = null;
-    if (event.key === "ArrowRight") {
-      nextIndex = Math.min(sampleKeys.length - 1, activeIndex + 1);
-    } else if (event.key === "ArrowLeft") {
-      nextIndex = Math.max(0, activeIndex - 1);
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = sampleKeys.length - 1;
-    }
-
-    if (nextIndex === null) {
-      return;
-    }
-
-    event.preventDefault();
-    const nextKey = sampleKeys[nextIndex];
-    setSelectedSampleKey(nextKey);
-    event.currentTarget
-      .querySelector(`[data-sample-key="${nextKey}"]`)
-      ?.focus();
-  };
+  const count = data.length;
 
   return (
     <section
@@ -339,219 +262,121 @@ function HourlyCard({
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
-      <CardHeader
-        headerClassName="chart-header"
-        title="Hourly Temperature"
-        titleId={chartTitleId}
-        titleTag="h3"
-        titleClassName="chart-title"
-        icon={<LineIcon size={16} />}
-        subtitle={
-          // An API window shorter than a full day must not be
-          // labelled as 24 hours of coverage.
-          data.length === 24 ? "Next 24h" : `Next ${data.length}h`
-        }
-        subtitleClassName="chart-subtitle eyebrow-pill"
-      />
-      <p className="chart-lede">{chartLede}</p>
-
-      <div className="chart-body">
-        <p id={chartSummaryId} className="sr-only">
-          {chartSummary}
-        </p>
-        {geometry ? (
-          <svg
-            className="hourly-svg"
-            viewBox={`0 0 ${geometry.svgWidth} ${geometry.svgHeight}`}
-            role="img"
-            aria-label="Hourly temperature chart"
-          >
-            <defs>
-              <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={topColor} stopOpacity={0.8} />
-                <stop
-                  offset="100%"
-                  stopColor={bottomColor}
-                  stopOpacity={0}
-                />
-              </linearGradient>
-            </defs>
-
-            {geometry.yTicks.map((tick) => (
-              <g key={`y-${tick.value}-${tick.y}`}>
-                <line
-                  className="hourly-grid-line"
-                  x1={geometry.margins.left}
-                  y1={tick.y}
-                  x2={geometry.margins.left + geometry.plotWidth}
-                  y2={tick.y}
-                />
-                <text
-                  className="hourly-y-label"
-                  x={geometry.margins.left - 6}
-                  y={tick.y + 3}
-                >
-                  {`${tick.value}\u00B0`}
-                </text>
-              </g>
-            ))}
-
-            {geometry.xTicks.map((tick) => (
-              <text
-                key={`x-${tick.x}-${tick.label}`}
-                className="hourly-x-label"
-                x={tick.x}
-                y={geometry.svgHeight - 8}
-                textAnchor="middle"
-              >
-                {tick.label}
-              </text>
-            ))}
-
-            {nowPoint ? (
-              <g>
-                <line
-                  className="hourly-now-line"
-                  x1={nowPoint.x}
-                  y1={geometry.margins.top}
-                  x2={nowPoint.x}
-                  y2={geometry.margins.top + geometry.plotHeight}
-                />
-                <text
-                  className="hourly-now-label"
-                  x={nowPoint.x}
-                  y={geometry.margins.top - 4}
-                  textAnchor="middle"
-                >
-                  Now
-                </text>
-              </g>
-            ) : null}
-
-            <path
-              className="hourly-area"
-              d={geometry.areaPath}
-              fill={`url(#${chartGradientId})`}
-            />
-
-            <path
-              className="hourly-line"
-              d={geometry.linePath}
-              stroke={topColor}
-            />
-
-            {geometry.points.map((point) => {
-              const info = getWeather(point.code);
-              // Separator is a middle dot rather than an ASCII hyphen so
-              // screen-reader engines do not pronounce it as "minus" /
-              // "dash". Matches the separator the rest of the app uses
-              // for inline metadata (see HeroCard sunlight line).
-              const tooltip = `${point.label} \u00B7 ${point.temp}\u00B0${unit} \u00B7 ${info.label}`;
-              const pointKey = String(point.time.getTime());
-              const isUserSelectedPoint = selectedSampleKey === pointKey;
-              return (
-                <g
-                  key={`point-${pointKey}`}
-                  className="hourly-point-group"
-                >
-                  {/* Visible point \u2014 kept small for chart density.
-                      Grows when the matching explorer sample is
-                      selected so keyboard/touch selection is mirrored
-                      on the chart itself (radius, not transform, so the
-                      cue survives prefers-reduced-motion). */}
-                  <circle
-                    className="hourly-point"
-                    cx={point.x}
-                    cy={point.y}
-                    r={isUserSelectedPoint ? 4.8 : 3.2}
-                    fill={topColor}
-                  />
-                  {/* Larger transparent hit area so hover and touch are
-                      easy to land on. The native <title> drives the OS
-                      tooltip; assistive tech gets the same values
-                      through the chart summary and the sample explorer
-                      (descendants of role="img" are presentational, so
-                      a per-circle aria-label would never be announced). */}
-                  <circle
-                    className="hourly-point-hit"
-                    cx={point.x}
-                    cy={point.y}
-                    r="14"
-                    fill="transparent"
-                  >
-                    <title>{tooltip}</title>
-                  </circle>
-                </g>
-              );
-            })}
-          </svg>
-        ) : null}
-      </div>
-
-      {hourlySamples.length ? (
-        /*
-         * The explorer is the keyboard-accessible counterpart to the
-         * hover-only SVG points. On small screens it is always visible
-         * (touch has no hover); on larger screens it stays visually
-         * collapsed until a sample button receives focus, so keyboard
-         * users can read individual hours without changing the desktop
-         * composition. role="group" (not role="list") because the
-         * children are interactive buttons, not list items.
-         */
+      <header className="chart-header">
+        <h3 id={chartTitleId} className="chart-title">
+          <LineIcon size={16} aria-hidden="true" />
+          Hourly forecast
+        </h3>
         <div
-          className="hourly-touch-explorer"
+          className="hourly-metric-seg"
           role="group"
-          aria-label="Hourly samples"
+          aria-label="Choose the hourly metric"
         >
-          {/*
-           * The selected-sample card displays the currently-shown
-           * sample. Previously this paragraph had aria-live=polite
-           * AND each sample button had aria-pressed + a verbose
-           * aria-label — so a screen-reader user tapping a sample
-           * heard the same info twice (button pressed state change
-           * + live region update). Live region removed; the button
-           * own state change carries the announcement.
-           */}
-          {selectedSample ? (
-            <p className="hourly-selected-sample">
-              <span>{selectedSample.label}</span>
-              <strong>{selectedSample.temp}&deg;{unit}</strong>
-              <span>{selectedSampleWeather?.label || "Weather sample"}</span>
-            </p>
-          ) : null}
-          <div className="hourly-touch-strip" onKeyDown={handleStripKeyDown}>
-            {hourlySamples.map((point) => {
-              const key = String(point.time.getTime());
-              const info = getWeather(point.code);
-              const isSelected = selectedSample
-                ? key === String(selectedSample.time.getTime())
-                : false;
-              // aria-current rather than aria-pressed: the highlighted
-              // sample is "the one being displayed right now", not "a
-              // toggle the user has switched on". aria-pressed=true
-              // before the user has tapped anything announced as if a
-              // selection had been made. aria-current=true only fires
-              // once the user has actually selected a sample.
-              const isUserSelection = selectedSampleKey === key;
-              return (
-                <button
-                  key={`sample-${key}`}
-                  type="button"
-                  className={`hourly-touch-sample ${isSelected ? "is-selected" : ""}`.trim()}
-                  aria-current={isUserSelection ? "true" : undefined}
-                  aria-label={`Show ${point.label}, ${point.temp} degrees ${unit}, ${info.label}`}
-                  data-sample-key={key}
-                  tabIndex={key === tabStopSampleKey ? 0 : -1}
-                  onClick={() => setSelectedSampleKey(key)}
-                >
-                  <span>{point.label}</span>
-                  <strong>{point.temp}&deg;</strong>
-                </button>
-              );
-            })}
+          {METRIC_ORDER.map((key) => {
+            const option = METRICS[key];
+            const isActive = key === metricKey;
+            return (
+              <button
+                key={key}
+                type="button"
+                className={`hourly-metric-option${isActive ? " is-active" : ""}`}
+                aria-pressed={isActive}
+                onClick={() => setMetricKey(key)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
+      <p className="chart-lede">{lede}</p>
+      <p id={chartSummaryId} className="sr-only">
+        {summary}
+      </p>
+
+      {geometry ? (
+        <div className="hourly-flow">
+          <div className="hourly-flow-times" aria-hidden="true">
+            {geometry.columns.map((column, index) => (
+              <span
+                key={`t-${column.time.getTime()}`}
+                className={`hourly-flow-time${index === 0 ? " is-now" : ""}`}
+              >
+                {index === 0 ? "Now" : column.label}
+              </span>
+            ))}
+          </div>
+          <div className="hourly-flow-track">
+            <svg
+              className="hourly-flow-svg"
+              viewBox={`0 0 1000 ${FLOW_SVG_HEIGHT}`}
+              preserveAspectRatio="none"
+              role="img"
+              aria-label={`${metric.label} curve over the next ${count * 2} hours`}
+            >
+              {geometry.band ? (
+                <path
+                  className="hourly-flow-band"
+                  d={geometry.band}
+                  fill={metric.color}
+                  fillOpacity="0.14"
+                />
+              ) : null}
+              <path
+                className="hourly-flow-line"
+                d={geometry.line}
+                fill="none"
+                stroke={metric.color}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <div className="hourly-flow-cols">
+              {geometry.columns.map((column) => {
+                const info = getWeather(column.code);
+                const valueText =
+                  column.value === null
+                    ? "—"
+                    : metric.format(column.value, unit);
+                return (
+                  <div
+                    key={`c-${column.time.getTime()}`}
+                    className="hourly-flow-col"
+                    style={{ marginTop: `${Math.round(column.offset)}px` }}
+                  >
+                    <span
+                      className="hourly-flow-icon"
+                      role="img"
+                      aria-label={info.label}
+                    >
+                      <WeatherIcon code={column.code} size={22} />
+                    </span>
+                    <span
+                      className={`hourly-flow-val${
+                        column.value === null ? " is-missing" : ""
+                      }`}
+                      style={
+                        column.value === null
+                          ? undefined
+                          : { color: metric.color }
+                      }
+                    >
+                      {valueText}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <p className="hourly-flow-empty" role="status">
+          {metric.label} isn’t available for the next several hours. Try
+          another metric above.
+        </p>
+      )}
     </section>
   );
 }

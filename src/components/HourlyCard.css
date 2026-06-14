@@ -43,6 +43,141 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Metric selector — the chip/data-point picker. Temperature / Precip /
+   Wind, each re-plots the curve in its own colour. */
+.hourly-metric-seg {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 11px;
+  border: var(--subcard-border);
+  background: var(--surface-1);
+}
+
+.hourly-metric-option {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(224, 236, 255, 0.72);
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+
+.hourly-metric-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hourly-metric-option.is-active {
+  background: rgba(231, 240, 255, 0.92);
+  color: #0b223c;
+}
+
+.hourly-metric-option:focus-visible {
+  outline: 2px solid rgba(110, 231, 255, 0.72);
+  outline-offset: 2px;
+}
+
+/* Flowing curve that weaves through the per-hour weather icons. The SVG
+   sits behind; the icon+value columns ride on top, each offset down to
+   the curve height (computed in JS, so the icon literally sits on the
+   line). */
+.hourly-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  padding: 12px 6px 4px;
+  border-radius: calc(var(--radius-sm) + 2px);
+  border: var(--border-default);
+  background:
+    linear-gradient(180deg, rgba(12, 24, 48, 0.34), rgba(8, 17, 35, 0.28)),
+    var(--surface-1);
+}
+
+.hourly-flow-times {
+  display: flex;
+  align-items: center;
+}
+
+.hourly-flow-time {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(224, 236, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-flow-time.is-now {
+  color: #cfe6fb;
+}
+
+.hourly-flow-track {
+  position: relative;
+  min-height: 104px;
+}
+
+.hourly-flow-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 96px;
+  display: block;
+}
+
+.hourly-flow-cols {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.hourly-flow-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.hourly-flow-icon {
+  line-height: 0;
+  color: rgba(231, 243, 255, 0.92);
+}
+
+.hourly-flow-val {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-flow-val.is-missing {
+  color: var(--text-dim);
+}
+
+.hourly-flow-empty {
+  margin: 0;
+  padding: 18px 12px;
+  text-align: center;
+  color: rgba(214, 230, 250, 0.7);
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .hourly-flow-time {
+    font-size: 11px;
+  }
+  .hourly-flow-val {
+    font-size: 12px;
+  }
+}
+
 .chart-body {
   position: relative;
   flex: 1;

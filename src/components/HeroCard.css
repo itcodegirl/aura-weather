@@ -101,6 +101,38 @@
   animation-delay: -26s;
 }
 
+/* Earned golden-hour warm wash. getSunlightPhase() only returns
+   "sunrise"/"sunset" within ±30 min of those events, so this warmth
+   surfaces during the actual golden hours and stays quiet the rest of
+   the day. Deepens the dusk wash, the ambient glow, and the sun itself. */
+.hero-card--phase-sunrise .hero-sky,
+.hero-card--phase-sunset .hero-sky {
+  background: linear-gradient(
+    158deg,
+    rgba(60, 50, 92, 0) 20%,
+    rgba(126, 74, 66, 0.36) 100%
+  );
+}
+
+.hero-card--phase-sunrise .hero-sky-glow,
+.hero-card--phase-sunset .hero-sky-glow {
+  background: radial-gradient(
+    120% 120% at 82% 42%,
+    rgba(247, 166, 94, 0.46),
+    transparent 60%
+  );
+}
+
+.hero-card--phase-sunrise .hero-sky-sun,
+.hero-card--phase-sunset .hero-sky-sun {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 210, 150, 0.95),
+    rgba(240, 150, 88, 0.5) 46%,
+    transparent 72%
+  );
+}
+
 @keyframes heroDrift {
   from {
     transform: translateX(-200px);

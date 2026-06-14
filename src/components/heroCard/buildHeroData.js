@@ -295,6 +295,60 @@ function buildDailyGuidance(weather, unit) {
   ].filter((item) => item.tone !== "calm");
 }
 
+/*
+ * Short "what it feels like right now" descriptor chips for the hero
+ * (Muggy / Light breeze / UV low ...). Each is derived from a real
+ * reading and omitted entirely when that reading is missing — the
+ * trust contract applies here too: an absent value yields no chip
+ * rather than a fabricated "Comfortable". Dew point and wind speed are
+ * read from the model in its source units (°F / mph) regardless of the
+ * F/C display toggle, so the thresholds stay stable.
+ */
+function buildCharacteristics(weather) {
+  const chips = [];
+
+  const dewPoint = toFiniteNumber(weather?.current?.dewPoint);
+  if (dewPoint !== null) {
+    const label =
+      dewPoint >= 65
+        ? "Muggy"
+        : dewPoint >= 60
+          ? "Humid"
+          : dewPoint >= 54
+            ? "Comfortable"
+            : "Dry air";
+    chips.push({ key: "comfort", label });
+  }
+
+  const windSpeed = toFiniteNumber(weather?.current?.windSpeed);
+  if (windSpeed !== null) {
+    const label =
+      windSpeed < 4
+        ? "Calm"
+        : windSpeed < 12
+          ? "Light breeze"
+          : windSpeed < 25
+            ? "Breezy"
+            : "Windy";
+    chips.push({ key: "wind", label });
+  }
+
+  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[0]);
+  if (uvIndex !== null) {
+    const label =
+      uvIndex < 3
+        ? "UV low"
+        : uvIndex < 6
+          ? "UV moderate"
+          : uvIndex < 8
+            ? "UV high"
+            : "UV very high";
+    chips.push({ key: "uv", label });
+  }
+
+  return chips;
+}
+
 /**
  * Pure data shaping for HeroCard. Returns the full set of display
  * strings the component needs, or null when the inputs cannot
@@ -401,6 +455,7 @@ export function buildHeroData({
     hasClimateComparison,
     climateMessage,
     dailyGuidance,
+    characteristics: buildCharacteristics(weather),
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
   };
 }

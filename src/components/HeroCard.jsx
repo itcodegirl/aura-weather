@@ -30,6 +30,12 @@ const GUIDANCE_ICONS = {
   wind: Wind,
 };
 
+const CHARACTERISTIC_ICONS = {
+  comfort: Droplets,
+  wind: Wind,
+  uv: Sun,
+};
+
 function HeroCard({
   weather,
   location,
@@ -152,6 +158,7 @@ function HeroCard({
     hasClimateComparison,
     climateMessage,
     dailyGuidance,
+    characteristics,
     today,
     tempUnit,
   } = heroData;
@@ -180,6 +187,17 @@ function HeroCard({
       aria-busy={isRefreshing || undefined}
       aria-labelledby={headingId}
     >
+      {/* Animated, weather-reactive sky scene behind the content: a slow
+          breathing glow, a softly pulsing sun, and clouds drifting at two
+          depths. Decorative only (aria-hidden); all motion is disabled
+          under prefers-reduced-motion via CSS. */}
+      <div className="hero-sky" aria-hidden="true">
+        <span className="hero-sky-glow" />
+        <span className="hero-sky-sun" />
+        <span className="hero-sky-cloud hero-sky-cloud--a" />
+        <span className="hero-sky-cloud hero-sky-cloud--b" />
+        <span className="hero-sky-cloud hero-sky-cloud--c" />
+      </div>
       {/* Hidden heading so screen-reader users land on the hero card
           when navigating by heading. The h2 group label above ("Current
           Conditions") covers the section, and the visible hero presents
@@ -275,6 +293,22 @@ function HeroCard({
             <span className="hero-condition-separator" aria-hidden="true">·</span>
             <span className="hero-feels">Feels like {feelsLikeDisplay}</span>
           </p>
+          {Array.isArray(characteristics) && characteristics.length > 0 && (
+            <ul
+              className="hero-characteristics"
+              aria-label="Current conditions at a glance"
+            >
+              {characteristics.map((chip) => {
+                const Icon = CHARACTERISTIC_ICONS[chip.key] ?? Sun;
+                return (
+                  <li key={chip.key} className="hero-char-chip">
+                    <Icon size={13} aria-hidden="true" />
+                    <span>{chip.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {/*
            * Editorial atmosphere reading sits below the temperature
            * block instead of above it. The user lands on the gestalt

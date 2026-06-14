@@ -3,6 +3,168 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Animated weather-reactive sky scene. Sits behind all hero content
+   (which is lifted to z-index 1 below) and is clipped by the card's
+   overflow:hidden + border-radius. */
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  /* A soft dusk wash so the panel reads as sky, warming toward the
+     horizon at the bottom-right where the sun sits. */
+  background: linear-gradient(
+    158deg,
+    rgba(40, 58, 92, 0) 28%,
+    rgba(78, 58, 86, 0.26) 100%
+  );
+}
+
+.hero-card > *:not(.hero-sky) {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-sky-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 120% at 82% 38%,
+    rgba(243, 183, 101, 0.28),
+    transparent 58%
+  );
+  animation: heroBreathe 13s ease-in-out infinite;
+}
+
+/* Soft sun glow positioned to halo the weather icon (sun behind the
+   clouds) rather than a hard disc competing beside it. */
+.hero-sky-sun {
+  position: absolute;
+  top: 92px;
+  right: 8%;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  transform-origin: center;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 222, 165, 0.92),
+    rgba(243, 177, 95, 0.4) 48%,
+    transparent 72%
+  );
+  animation: heroSunPulse 6.5s ease-in-out infinite;
+}
+
+.hero-sky-cloud {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0) 70%
+  );
+  filter: blur(9px);
+  will-change: transform;
+}
+
+.hero-sky-cloud--a {
+  top: 10%;
+  width: 184px;
+  height: 54px;
+  opacity: 0.3;
+  animation: heroDrift 60s linear infinite;
+  animation-delay: -12s;
+}
+
+.hero-sky-cloud--b {
+  top: 30%;
+  width: 132px;
+  height: 40px;
+  opacity: 0.2;
+  animation: heroDrift 86s linear infinite;
+  animation-delay: -44s;
+}
+
+.hero-sky-cloud--c {
+  top: 52%;
+  width: 210px;
+  height: 60px;
+  opacity: 0.26;
+  animation: heroDrift 48s linear infinite;
+  animation-delay: -26s;
+}
+
+@keyframes heroDrift {
+  from {
+    transform: translateX(-200px);
+  }
+  to {
+    transform: translateX(720px);
+  }
+}
+
+@keyframes heroSunPulse {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes heroBreathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sky-glow,
+  .hero-sky-sun,
+  .hero-sky-cloud {
+    animation: none;
+  }
+}
+
+/* "What it feels like right now" descriptor chips under the condition. */
+.hero-characteristics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  list-style: none;
+}
+
+.hero-char-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(198, 215, 242, 0.24);
+  background: rgba(13, 24, 46, 0.55);
+  color: rgba(233, 242, 255, 0.92);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.hero-char-chip svg {
+  color: #9cc9f2;
+  flex-shrink: 0;
 }
 
 .hero-meta {
@@ -56,9 +218,11 @@
   gap: 14px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(198, 215, 242, 0.2);
-  background: rgba(11, 20, 38, 0.64);
-  box-shadow: inset 0 1px 0 rgba(233, 242, 255, 0.06);
+  border: 1px solid rgba(198, 215, 242, 0.26);
+  background:
+    linear-gradient(150deg, rgba(139, 211, 255, 0.12), rgba(246, 196, 83, 0.08)),
+    rgba(140, 178, 230, 0.12);
+  box-shadow: inset 0 1px 0 rgba(233, 242, 255, 0.1);
 }
 
 .hero-high-low-item {
@@ -188,8 +352,8 @@
   padding: 11px 12px;
   min-height: 96px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(198, 215, 242, 0.14);
-  background: rgba(11, 20, 38, 0.58);
+  border: 1px solid rgba(198, 215, 242, 0.2);
+  background: rgba(142, 180, 232, 0.12);
   box-shadow: var(--subcard-shadow);
 }
 
@@ -272,8 +436,8 @@
   gap: 8px;
   padding: 8px 9px;
   border-radius: calc(var(--radius-sm) - 2px);
-  background: rgba(11, 20, 38, 0.58);
-  border: 1px solid rgba(198, 215, 242, 0.12);
+  background: rgba(142, 180, 232, 0.12);
+  border: 1px solid rgba(198, 215, 242, 0.2);
   box-shadow: var(--subcard-shadow);
 }
 

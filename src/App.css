@@ -46,9 +46,9 @@
   --bg-card-hover: rgba(16, 29, 55, 0.76);
   --panel: rgba(9, 17, 34, 0.78);
   --panel-soft: rgba(12, 22, 42, 0.66);
-  --subcard-bg: rgba(11, 20, 38, 0.62);
-  --subcard-border: 1px solid rgba(196, 213, 241, 0.15);
-  --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
+  --subcard-bg: rgba(142, 180, 232, 0.13);
+  --subcard-border: 1px solid rgba(192, 214, 246, 0.26);
+  --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.1);
 
   --accent: #8bd3ff;
   --accent-strong: #57c7e6;
@@ -117,8 +117,8 @@
   --hover-border-color: rgba(174, 227, 255, 0.44);
 
   /* Surface layers — used by component CSS for layered depth */
-  --surface-1: rgba(10, 18, 36, 0.52);
-  --surface-2: rgba(11, 20, 38, 0.62);
+  --surface-1: rgba(138, 176, 228, 0.1);
+  --surface-2: rgba(142, 180, 232, 0.13);
   --surface-3: rgba(8, 17, 36, 0.74);
   --surface-strong: rgba(6, 13, 28, 0.88);
 

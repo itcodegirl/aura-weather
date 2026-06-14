@@ -352,10 +352,13 @@ function DayRow({
         </div>
 
         <span
-          className={`forecast-row-chevron${isExpanded ? " is-expanded" : ""}`}
+          className={`forecast-row-details${isExpanded ? " is-expanded" : ""}`}
           aria-hidden="true"
         >
-          <ChevronDown size={16} />
+          <span className="forecast-row-details-text">
+            {isExpanded ? "Hide" : "Details"}
+          </span>
+          <ChevronDown size={14} className="forecast-row-details-chevron" />
         </span>
       </button>
 

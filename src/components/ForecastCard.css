@@ -82,7 +82,7 @@
   grid-template-columns: minmax(88px, 116px) 38px minmax(164px, 186px) minmax(0, 1fr) minmax(72px, 86px);
   align-items: center;
   gap: 12px;
-  padding-inline-end: 32px;
+  padding-inline-end: 92px;
   color: inherit;
   text-align: left;
 }
@@ -289,20 +289,45 @@
   font-weight: 700;
 }
 
-.forecast-row-chevron {
+/* Obvious expand affordance: a labelled "Details / Hide" pill, not a
+   lone chevron. The whole row is still the button; this pill is the
+   visible signal that a row opens. Accent-tinted so it reads as the
+   interactive element. On small screens the text is hidden (below) and
+   only the chevron remains, preserving the mobile row grid. */
+.forecast-row-details {
   position: absolute;
   top: 50%;
-  right: 4px;
+  right: 10px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: rgba(210, 227, 252, 0.86);
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(139, 211, 255, 0.42);
+  background: rgba(28, 78, 120, 0.34);
+  color: #cfeaff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--track-tight);
   transform: translateY(-50%);
+  transition:
+    transform var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+
+.forecast-row:hover .forecast-row-details,
+.forecast-row:focus-within .forecast-row-details {
+  background: rgba(38, 96, 142, 0.46);
+  border-color: rgba(160, 224, 255, 0.6);
+}
+
+.forecast-row-details-chevron {
   transition: transform var(--motion-fast) var(--ease-standard);
 }
 
-.forecast-row-chevron.is-expanded {
-  transform: translateY(-50%) rotate(180deg);
+.forecast-row-details.is-expanded .forecast-row-details-chevron {
+  transform: rotate(180deg);
 }
 
 .forecast-range {
@@ -417,7 +442,17 @@
       "day icon temps precip"
       "range range range range";
     gap: 10px;
-    padding-inline-end: 28px;
+    padding-inline-end: 40px;
+  }
+
+  /* Chevron-only affordance on small screens to keep the row grid tight. */
+  .forecast-row-details-text {
+    display: none;
+  }
+
+  .forecast-row-details {
+    right: 6px;
+    padding: 5px 7px;
   }
 
   .forecast-day-wrap {
@@ -446,9 +481,6 @@
     padding: 7px 9px;
   }
 
-  .forecast-row-chevron {
-    right: 0;
-  }
 }
 
 @media (max-width: 760px) {
@@ -491,7 +523,7 @@
   .forecast-row-trigger {
     grid-template-columns: minmax(70px, 1fr) 32px 1fr auto;
     gap: 8px;
-    padding-inline-end: 26px;
+    padding-inline-end: 40px;
   }
 
   .forecast-row:first-child::before {
@@ -554,7 +586,7 @@
       "temps temps temps"
       "range range range";
     gap: 7px;
-    padding-inline-end: 24px;
+    padding-inline-end: 38px;
   }
 
   .forecast-row:first-child::before {

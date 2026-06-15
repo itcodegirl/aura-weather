@@ -1,0 +1,95 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura · Glacier redesign — locked mockups</title><style>
+  :root{--font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--glacier:#6fb7f2;--amber:#f3b765;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);color:#eef1f8;
+    background:radial-gradient(120% 80% at 80% -10%,#20324a 0%,transparent 55%),linear-gradient(180deg,#101f31,#0a1424 60%,#070d18);}
+  header.page{padding:40px 28px 8px;max-width:1320px;margin:0 auto;}
+  header.page h1{font-weight:300;font-size:30px;letter-spacing:.01em;margin:0 0 6px;}
+  header.page h1 b{font-weight:600;color:var(--glacier);}
+  header.page p{color:rgba(238,241,248,.7);max-width:780px;line-height:1.55;font-weight:300;}
+  .legend{font-size:12.5px;color:rgba(238,241,248,.6);margin-top:10px;} .legend b{color:var(--glacier);}
+  h2.sec{max-width:1320px;margin:34px auto 0;padding:0 28px;font-size:12px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--glacier);border-left:3px solid var(--glacier);}
+  h2.sec.ref{color:rgba(238,241,248,.55);border-left-color:rgba(238,241,248,.3);}
+  .grid{max-width:1320px;margin:0 auto;padding:18px 28px 60px;display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:26px;align-items:start;}
+  .item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;}
+  .head{padding:16px 18px 12px;} .head h3{margin:8px 0 4px;font-size:15.5px;font-weight:500;}
+  .head p{margin:0;font-size:12.5px;line-height:1.5;color:rgba(238,241,248,.62);font-weight:300;}
+  .note{margin-top:8px;font-size:11.5px;line-height:1.45;color:var(--amber);
+    background:rgba(243,183,101,.1);border:1px solid rgba(243,183,101,.28);border-radius:8px;padding:7px 9px;}
+  .note.upd{color:var(--glacier);background:rgba(111,183,242,.1);border-color:rgba(111,183,242,.32);}
+  .tag{font-size:9.5px;letter-spacing:.13em;font-weight:600;padding:3px 7px;border-radius:5px;}
+  .tag-canon{background:rgba(111,183,242,.16);color:var(--glacier);border:1px solid rgba(111,183,242,.4);}
+  .tag-ref{background:rgba(255,255,255,.06);color:rgba(238,241,248,.6);border:1px solid rgba(255,255,255,.16);}
+  .open{display:inline-block;margin-top:10px;font-size:12px;color:var(--glacier);text-decoration:none;font-weight:500;}
+  iframe{width:100%;height:600px;border:0;border-top:1px solid rgba(255,255,255,.08);background:#0a1424;display:block;}
+</style></head><body>
+  <header class="page"><h1>Aura · <b>Glacier</b> redesign — locked mockups</h1>
+  <p>The approved design, frozen as files in the repo. Source of truth for the build; a component is done only when it matches its tile <i>and</i> Jenna signs off on the live preview.</p>
+  <div class="legend"><b>CANONICAL</b> = build to these. <b>REFERENCE</b> = study/history. Blue notes = updated since the build session. Keep this folder intact — the tiles load the sibling files.</div></header>
+  <h2 class="sec">Canonical — build to these</h2>
+  <div class="grid">
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_full_dashboard_glacier_assembled</h3><p>MASTER — full dashboard, full stacking order</p><a class="open" href="./aura_full_dashboard_glacier_assembled.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_full_dashboard_glacier_assembled.html" title="aura_full_dashboard_glacier_assembled" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_animated_reactive_hero</h3><p>Hero — animated reactive sky + characteristic chips</p><a class="open" href="./aura_animated_reactive_hero.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_animated_reactive_hero.html" title="aura_animated_reactive_hero" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_flowing_hourly_metric_selector</h3><p>Hourly — flowing curve + metric selector</p><div class="note upd">UPDATED v2 · inline-SVG day/night icons · value chips so the line never crosses a number · gradient fill · AA type</div><a class="open" href="./aura_flowing_hourly_metric_selector.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_flowing_hourly_metric_selector.html" title="aura_flowing_hourly_metric_selector" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_near_term_outlook_glacier</h3><p>Near-term outlook — Rain outlook + Nowcast</p><div class="note upd">UPDATED · balanced 1fr 1fr columns · AA labels (Nowcast detail → next tile)</div><a class="open" href="./aura_near_term_outlook_glacier.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_near_term_outlook_glacier.html" title="aura_near_term_outlook_glacier" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_nowcast_card</h3><p>Nowcast — fills its height</p><div class="note upd">NEW v2 · stranded sparkline replaced by a 15-min rain-guidance chart that grows to fill the row · AA type</div><a class="open" href="./aura_nowcast_card.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_nowcast_card.html" title="aura_nowcast_card" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_storm_watch</h3><p>Storm watch — legibility-tuned</p><div class="note upd">NEW · toggle Current vs AA-tuned type · quiet labels lifted to ≥11px / ≥66% white, values stay white</div><a class="open" href="./aura_storm_watch.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_storm_watch.html" title="aura_storm_watch" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_7day_with_mini_hourly_drawer</h3><p>7-day — Details pill + drawer + mini hourly</p><a class="open" href="./aura_7day_with_mini_hourly_drawer.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_7day_with_mini_hourly_drawer.html" title="aura_7day_with_mini_hourly_drawer" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-canon">CANONICAL</span><h3>aura_bento_metric_grid_glacier</h3><p>Atmosphere bento — DECISION PENDING</p><div class="note">DECIDED: build. In scope — build to this mockup; don't duplicate a metric's primary home.</div><a class="open" href="./aura_bento_metric_grid_glacier.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_bento_metric_grid_glacier.html" title="aura_bento_metric_grid_glacier" loading="lazy"></iframe>
+    </section>
+  </div>
+  <h2 class="sec ref">Reference &amp; history — do not build from</h2>
+  <div class="grid">
+    <section class="item">
+      <div class="head"><span class="tag tag-ref">REFERENCE</span><h3>aura_premium_dashboard_concept_v1</h3><p>Original full concept (superseded by MASTER)</p><a class="open" href="./aura_premium_dashboard_concept_v1.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_premium_dashboard_concept_v1.html" title="aura_premium_dashboard_concept_v1" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-ref">REFERENCE</span><h3>aura_glacier_reactive_hero_alerts_storm</h3><p>Hero + alert banner + storm-watch composition study</p><a class="open" href="./aura_glacier_reactive_hero_alerts_storm.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_glacier_reactive_hero_alerts_storm.html" title="aura_glacier_reactive_hero_alerts_storm" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-ref">REFERENCE</span><h3>aura_hero_plus_hourly_curve</h3><p>Earlier hero + hourly placement study</p><a class="open" href="./aura_hero_plus_hourly_curve.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_hero_plus_hourly_curve.html" title="aura_hero_plus_hourly_curve" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-ref">REFERENCE</span><h3>aura_7day_forecast_glacier_expandable</h3><p>Earlier 7-day study (before the mini-hourly drawer)</p><a class="open" href="./aura_7day_forecast_glacier_expandable.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_7day_forecast_glacier_expandable.html" title="aura_7day_forecast_glacier_expandable" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-ref">REFERENCE</span><h3>aura_glacier_lighter_grey_cards</h3><p>Card-surface study — the 'C lightest' opacity decision</p><a class="open" href="./aura_glacier_lighter_grey_cards.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_glacier_lighter_grey_cards.html" title="aura_glacier_lighter_grey_cards" loading="lazy"></iframe>
+    </section>
+    <section class="item">
+      <div class="head"><span class="tag tag-ref">REFERENCE</span><h3>aura_accent_mood_directions</h3><p>The 4 accent moods explored — why Glacier blue won</p><a class="open" href="./aura_accent_mood_directions.html" target="_blank" rel="noopener">Open full ↗</a></div>
+      <iframe src="./aura_accent_mood_directions.html" title="aura_accent_mood_directions" loading="lazy"></iframe>
+    </section>
+  </div>
+</body></html>

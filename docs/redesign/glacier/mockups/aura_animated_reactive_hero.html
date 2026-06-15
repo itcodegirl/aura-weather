@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura Glacier mockup — aura_animated_reactive_hero</title>
+<style>
+  :root { --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(120% 90% at 80% -10%, #20324a 0%, transparent 55%),
+      linear-gradient(180deg, #122236 0%, #0b1626 60%, #070e1a 100%);
+    min-height: 100vh; color: #eef1f8;
+  }
+  .mock-wrap { max-width: 460px; margin: 0 auto; }
+  .mock-label {
+    font: 500 11px/1.4 var(--font-sans); letter-spacing:.14em; text-transform:uppercase;
+    color:#6fb7f2; margin:0 auto 14px; max-width:460px;
+    border-left:3px solid #6fb7f2; padding-left:8px;
+  }
+</style>
+</head>
+<body>
+  <div class="mock-label">Aura · Glacier · aura_animated_reactive_hero</div>
+  <div class="mock-wrap">
+<h2 class="sr-only">An animated weather-reactive hero for Aura: a dusk sky with two layers of slowly drifting clouds, a gently pulsing sun, and a breathing light gradient, with the temperature, condition, and characteristic chips on top. Motion is disabled for reduced-motion users.</h2>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap');
+.ahero{font-family:'Inter',var(--font-sans);position:relative;overflow:hidden;border-radius:20px;border:1px solid rgba(255,255,255,.18);color:#eef1f8;background:linear-gradient(135deg,#1d3e63 0%,#243453 40%,#3a3559 72%,#4d3a50 100%);min-height:236px}
+.breathe{position:absolute;inset:0;background:radial-gradient(120% 120% at 75% 10%,rgba(243,183,101,.22),transparent 55%);animation:breathe 13s ease-in-out infinite}
+.sun{position:absolute;top:34px;right:54px;width:46px;height:46px;border-radius:50%;background:#f4bd6f}
+.sunglow{position:absolute;top:6px;right:14px;width:124px;height:124px;border-radius:50%;background:radial-gradient(circle,rgba(244,189,111,.55),transparent 65%);animation:pulse 6.5s ease-in-out infinite}
+.cloud{position:absolute;filter:blur(3px);will-change:transform}
+.cloud span{position:absolute;background:#fff;border-radius:50%}
+.c1{top:30px;opacity:.16;transform:scale(1.15);animation:drift 58s linear infinite;animation-delay:-12s}
+.c2{top:96px;opacity:.12;transform:scale(.8);animation:drift 82s linear infinite;animation-delay:-40s}
+.c3{top:62px;opacity:.2;transform:scale(1);animation:drift 44s linear infinite;animation-delay:-26s}
+.content{position:relative;padding:20px}
+.sub{color:rgba(238,241,248,.82);font-weight:300}
+.row{display:flex;align-items:center}
+.lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:rgba(238,241,248,.78);font-weight:500}
+.chipc{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#eef1f8}
+@keyframes drift{from{transform:translateX(-160px) scale(var(--s,1))}to{transform:translateX(720px) scale(var(--s,1))}}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.9;transform:scale(1.18)}}
+@keyframes breathe{0%,100%{opacity:.6}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.c1,.c2,.c3,.sunglow,.breathe{animation:none}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="ahero">
+  <div class="breathe"></div>
+  <div class="sunglow"></div>
+  <div class="sun"></div>
+
+  <div class="cloud c1" style="--s:1.15"><span style="left:0;top:16px;width:130px;height:30px"></span><span style="left:26px;top:0;width:52px;height:52px"></span><span style="left:64px;top:8px;width:42px;height:42px"></span></div>
+  <div class="cloud c2" style="--s:.8"><span style="left:0;top:14px;width:120px;height:28px"></span><span style="left:22px;top:0;width:46px;height:46px"></span><span style="left:56px;top:6px;width:38px;height:38px"></span></div>
+  <div class="cloud c3" style="--s:1"><span style="left:0;top:13px;width:96px;height:24px"></span><span style="left:18px;top:0;width:40px;height:40px"></span><span style="left:46px;top:5px;width:32px;height:32px"></span></div>
+
+  <div class="content">
+    <div class="lbl" style="margin-bottom:8px">Oak Lawn, Illinois · 4:58 PM</div>
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <div style="font-weight:200;font-size:84px;line-height:.8;letter-spacing:-.03em">84°</div>
+      <div style="padding-top:8px"><div style="font-size:18px">Partly cloudy</div><div class="sub" style="font-size:13px;margin-top:3px">Feels like 83° · H 85° L 63°</div></div>
+    </div>
+    <div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap">
+      <span class="chipc"><i class="ti ti-droplet" style="font-size:13px;color:#bcdcfa" aria-hidden="true"></i>Muggy</span>
+      <span class="chipc"><i class="ti ti-wind" style="font-size:13px;color:#bcdcfa" aria-hidden="true"></i>Light breeze</span>
+      <span class="chipc"><i class="ti ti-lungs" style="font-size:13px;color:#a9e2bd" aria-hidden="true"></i>Air good</span>
+      <span class="chipc"><i class="ti ti-sun" style="font-size:13px;color:#a9e2bd" aria-hidden="true"></i>UV low</span>
+    </div>
+    <div class="row" style="gap:7px;margin-top:14px">
+      <span class="row" style="gap:6px;font-size:11.5px;padding:5px 11px;border-radius:999px;background:rgba(111,183,242,.22);border:1px solid rgba(111,183,242,.45);color:#cfe6fb"><span style="width:6px;height:6px;border-radius:50%;background:#6fb7f2;display:inline-block"></span>High confidence · 2 min ago</span>
+    </div>
+  </div>
+</div>
+  </div>
+</body>
+</html>

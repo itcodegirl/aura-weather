@@ -58,8 +58,9 @@
   animation: card-slide-up var(--card-enter-duration) var(--ease-emphasis) forwards;
   animation-delay: calc(var(--i, 0) * var(--card-enter-stagger));
   background:
-    linear-gradient(168deg, rgba(13, 23, 43, 0.82), rgba(8, 15, 30, 0.72)),
-    linear-gradient(132deg, rgba(139, 211, 255, 0.045), rgba(246, 196, 83, 0.035) 62%, transparent 84%);
+    linear-gradient(168deg, rgba(226, 237, 255, 0.13), rgba(198, 218, 248, 0.055) 72%),
+    linear-gradient(132deg, rgba(139, 211, 255, 0.07), rgba(246, 196, 83, 0.04) 60%, transparent 84%),
+    rgba(120, 152, 208, 0.05);
   box-shadow: var(--card-shadow);
   transition:
     transform var(--motion-medium) var(--ease-emphasis),
@@ -132,8 +133,9 @@
     transform: translateY(-2px);
     border-color: rgba(198, 218, 243, 0.34);
     background:
-      linear-gradient(165deg, rgba(17, 29, 52, 0.86), rgba(8, 16, 32, 0.74)),
-      linear-gradient(130deg, rgba(139, 211, 255, 0.055), rgba(246, 196, 83, 0.04) 60%, transparent 86%);
+      linear-gradient(165deg, rgba(232, 242, 255, 0.17), rgba(205, 224, 250, 0.07) 72%),
+      linear-gradient(130deg, rgba(139, 211, 255, 0.08), rgba(246, 196, 83, 0.045) 60%, transparent 86%),
+      rgba(130, 162, 216, 0.06);
     box-shadow: var(--card-shadow-hover);
   }
 

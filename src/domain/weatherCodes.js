@@ -4,41 +4,44 @@ import { toFiniteNumber } from "../utils/numbers.js";
  * WMO weather interpretation codes from Open-Meteo.
  */
 /*
- * Each descriptor's gradient is a 3-stop sky palette (horizon-warm top
- * → mid → cooler base) painted full-bleed behind the frosted-glass UI,
- * matching the bright daylight-weather aesthetic. Storms still darken
- * the scene for mood, but stop short of true black so the white UI
- * stays legible.
+ * Each descriptor's gradient is a 3-stop "Glacier" sky palette
+ * (atmospheric top → mid → deep base) painted full-bleed behind the
+ * frosted-glass UI. The palette is deliberately deep and premium: a
+ * dark navy/indigo dusk so the light-on-dark glass cards read as
+ * elevated rather than muddy. Each condition keeps its hue character
+ * (clear = blue, fog = slate, snow = cool steel, storm = indigo) but
+ * lands dark. The decorative accent glows in App.css (.app::after) and
+ * the AtmosphereParticles layer add the "alive" highlights on top.
  */
 export const weatherCodes = {
-  0: { label: "Clear", icon: "clear", gradient: ["#5398d7", "#82b785", "#4d92d3"] },
-  1: { label: "Mostly Clear", icon: "mostly_clear", gradient: ["#5b9ed6", "#88b98a", "#5295cf"] },
-  2: { label: "Partly Cloudy", icon: "partly_cloudy", gradient: ["#7aaace", "#a4bcc2", "#6f9ec6"] },
-  3: { label: "Overcast", icon: "overcast", gradient: ["#9aaeba", "#8a9ba7", "#76858f"] },
-  45: { label: "Foggy", icon: "fog", gradient: ["#bdc7cc", "#aab4ba", "#929da4"] },
-  48: { label: "Rime Fog", icon: "fog", gradient: ["#c2cbd0", "#aeb8bd", "#96a0a7"] },
-  51: { label: "Light Drizzle", icon: "drizzle", gradient: ["#7d9fb6", "#67889c", "#52707f"] },
-  53: { label: "Drizzle", icon: "drizzle", gradient: ["#6f93ac", "#5b7d92", "#496776"] },
-  55: { label: "Heavy Drizzle", icon: "drizzle", gradient: ["#647f93", "#516b7d", "#3f5663"] },
-  56: { label: "Freezing Drizzle", icon: "drizzle", gradient: ["#8fb6c6", "#6f9aac", "#5a8496"] },
-  57: { label: "Heavy Freezing Drizzle", icon: "drizzle", gradient: ["#7da6b6", "#62909e", "#4d7886"] },
-  61: { label: "Light Rain", icon: "rain", gradient: ["#6a8499", "#54697c", "#3f5161"] },
-  63: { label: "Rain", icon: "rain", gradient: ["#5a7388", "#46596b", "#33424f"] },
-  65: { label: "Heavy Rain", icon: "rain", gradient: ["#4f6577", "#3c4d5c", "#2b3743"] },
-  66: { label: "Freezing Rain", icon: "rain", gradient: ["#7aa3b3", "#5d8494", "#48677a"] },
-  67: { label: "Heavy Freezing Rain", icon: "rain", gradient: ["#6b95a4", "#527684", "#3f5d6b"] },
-  71: { label: "Light Snow", icon: "snow", gradient: ["#d6e7f1", "#c2d6e6", "#aec8dc"] },
-  73: { label: "Snow", icon: "snow", gradient: ["#cbe1ee", "#b4cfe2", "#9fc2da"] },
-  75: { label: "Heavy Snow", icon: "snow", gradient: ["#bfd9e9", "#a6c6da", "#8eb5cf"] },
-  77: { label: "Snow Grains", icon: "snow", gradient: ["#d2e3ef", "#bdd3e4", "#a8c5db"] },
-  80: { label: "Rain Showers", icon: "showers", gradient: ["#6f8ea6", "#58748a", "#445e6e"] },
-  81: { label: "Showers", icon: "showers", gradient: ["#647f97", "#506a7e", "#3d5362"] },
-  82: { label: "Heavy Showers", icon: "showers", gradient: ["#566c7e", "#42535f", "#313e48"] },
-  85: { label: "Light Snow Showers", icon: "showers", gradient: ["#c9def0", "#b1cce2", "#9bc0d9"] },
-  86: { label: "Heavy Snow Showers", icon: "showers", gradient: ["#bcd6ea", "#a3c4da", "#8bb3cf"] },
-  95: { label: "Thunderstorm", icon: "thunderstorm", gradient: ["#4d5867", "#3a4452", "#2b333d"] },
-  96: { label: "Storm with Hail", icon: "severe", gradient: ["#454f5d", "#333c47", "#262d36"] },
-  99: { label: "Severe Storm", icon: "severe", gradient: ["#3b4350", "#2c333d", "#20262e"] },
+  0: { label: "Clear", icon: "clear", gradient: ["#1c3a5c", "#102338", "#070f1d"] },
+  1: { label: "Mostly Clear", icon: "mostly_clear", gradient: ["#1b3656", "#0f2134", "#070e1c"] },
+  2: { label: "Partly Cloudy", icon: "partly_cloudy", gradient: ["#1d3851", "#102031", "#080f1c"] },
+  3: { label: "Overcast", icon: "overcast", gradient: ["#283039", "#181f28", "#0c1117"] },
+  45: { label: "Foggy", icon: "fog", gradient: ["#2c333d", "#1c222b", "#10151c"] },
+  48: { label: "Rime Fog", icon: "fog", gradient: ["#2e353f", "#1e242d", "#11161d"] },
+  51: { label: "Light Drizzle", icon: "drizzle", gradient: ["#1e3445", "#13212e", "#0a131c"] },
+  53: { label: "Drizzle", icon: "drizzle", gradient: ["#1b3040", "#111d29", "#091018"] },
+  55: { label: "Heavy Drizzle", icon: "drizzle", gradient: ["#182a38", "#0f1924", "#080e15"] },
+  56: { label: "Freezing Drizzle", icon: "drizzle", gradient: ["#21384a", "#142430", "#0a141c"] },
+  57: { label: "Heavy Freezing Drizzle", icon: "drizzle", gradient: ["#1d3344", "#12202c", "#091018"] },
+  61: { label: "Light Rain", icon: "rain", gradient: ["#1a2e3d", "#101c27", "#080f17"] },
+  63: { label: "Rain", icon: "rain", gradient: ["#172836", "#0e1923", "#070d14"] },
+  65: { label: "Heavy Rain", icon: "rain", gradient: ["#142330", "#0c151f", "#060b12"] },
+  66: { label: "Freezing Rain", icon: "rain", gradient: ["#1e3849", "#13222f", "#0a141d"] },
+  67: { label: "Heavy Freezing Rain", icon: "rain", gradient: ["#1a3140", "#101e2a", "#091017"] },
+  71: { label: "Light Snow", icon: "snow", gradient: ["#2a3f52", "#1b2c3b", "#0f1c28"] },
+  73: { label: "Snow", icon: "snow", gradient: ["#283d50", "#192a39", "#0e1a26"] },
+  75: { label: "Heavy Snow", icon: "snow", gradient: ["#26384a", "#172634", "#0d1823"] },
+  77: { label: "Snow Grains", icon: "snow", gradient: ["#2b4053", "#1c2d3c", "#101d29"] },
+  80: { label: "Rain Showers", icon: "showers", gradient: ["#1c3243", "#11202d", "#09111a"] },
+  81: { label: "Showers", icon: "showers", gradient: ["#192d3d", "#0f1c28", "#080f17"] },
+  82: { label: "Heavy Showers", icon: "showers", gradient: ["#152433", "#0d1620", "#060c13"] },
+  85: { label: "Light Snow Showers", icon: "showers", gradient: ["#293e51", "#1a2b3a", "#0e1b27"] },
+  86: { label: "Heavy Snow Showers", icon: "showers", gradient: ["#26384b", "#172635", "#0d1824"] },
+  95: { label: "Thunderstorm", icon: "thunderstorm", gradient: ["#1a1f2e", "#12151f", "#080a11"] },
+  96: { label: "Storm with Hail", icon: "severe", gradient: ["#181c29", "#0f121b", "#070910"] },
+  99: { label: "Severe Storm", icon: "severe", gradient: ["#161a26", "#0e111a", "#06080e"] },
 };
 
 export function getWeather(code) {
@@ -53,7 +56,7 @@ export function getWeather(code) {
 
 export function gradientCss(gradient) {
   if (!Array.isArray(gradient) || gradient.length < 3) {
-    return "linear-gradient(180deg, #5398d7 0%, #82b785 50%, #4d92d3 100%)";
+    return "linear-gradient(180deg, #1c3a5c 0%, #102338 50%, #070f1d 100%)";
   }
 
   return `linear-gradient(180deg, ${gradient[0]} 0%, ${gradient[1]} 50%, ${gradient[2]} 100%)`;

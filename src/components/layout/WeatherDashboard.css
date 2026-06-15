@@ -30,12 +30,12 @@
   position: absolute;
   left: 0;
   top: 50%;
-  width: 4px;
-  height: 16px;
+  width: 3px;
+  height: 14px;
   border-radius: var(--radius-pill);
   transform: translateY(-50%);
-  background: linear-gradient(180deg, rgba(139, 211, 255, 0.95), rgba(246, 196, 83, 0.72));
-  box-shadow: 0 0 0 2px rgba(139, 211, 255, 0.1);
+  background: #6fb7f2;
+  box-shadow: 0 0 8px rgba(111, 183, 242, 0.45);
 }
 
 .bento-group-label::after {

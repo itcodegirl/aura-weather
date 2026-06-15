@@ -180,8 +180,9 @@
     grid-column: span 3;
   }
 
-  .bento-rain {
-    grid-column: span 2;
+  .bento-rain,
+  .bento-nowcast {
+    grid-column: span 3;
   }
 
   .bento-chart,
@@ -191,10 +192,6 @@
 
   .bento-forecast {
     grid-column: span 3;
-  }
-
-  .bento-nowcast {
-    grid-column: span 1;
   }
 }
 

@@ -5,12 +5,39 @@ import { analyzeNowcast } from "./nowcast/analyzeNowcast.js";
 import { InfoDrawer } from "./ui";
 import "./NowcastCard.css";
 
+const NC_SVG_W = 1000;
+const NC_SVG_H = 150;
+const NC_TOP_PAD = 20;
+const NC_BOT_PAD = 24;
+const NC_DOMAIN = 50;
+
+function buildNowcastChartGeometry(points) {
+  const n = points.length;
+  if (n < 2) return null;
+  const span = NC_SVG_H - NC_TOP_PAD - NC_BOT_PAD;
+  const xs = points.map((_, i) => (i / (n - 1)) * NC_SVG_W);
+  const ys = points.map(v => NC_TOP_PAD + (1 - Math.min(v, NC_DOMAIN) / NC_DOMAIN) * span);
+  let core = "";
+  for (let i = 0; i < n - 1; i++) {
+    const xc = (xs[i] + xs[i + 1]) / 2;
+    const yc = (ys[i] + ys[i + 1]) / 2;
+    core += ` Q${xs[i].toFixed(1)},${ys[i].toFixed(1)} ${xc.toFixed(1)},${yc.toFixed(1)}`;
+  }
+  core += ` L${xs[n - 1].toFixed(1)},${ys[n - 1].toFixed(1)}`;
+  const strokeD = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}${core}`;
+  const fillD = `${strokeD} L${NC_SVG_W},${NC_SVG_H} L0,${NC_SVG_H} Z`;
+  const thresholdY = NC_TOP_PAD + (1 - 40 / NC_DOMAIN) * span;
+  const peakIdx = points.indexOf(Math.max(...points));
+  return { strokeD, fillD, thresholdY, xs, ys, peakIdx };
+}
+
 function NowcastCard({
   weather,
   style,
   isRefreshing = false,
 }) {
   const titleId = useId();
+  const chartGradientId = `${titleId}-ncg`;
   const nowcast = useMemo(
     () => analyzeNowcast(weather?.nowcast, { timeZone: weather?.meta?.timezone }),
     [weather?.nowcast, weather?.meta?.timezone]
@@ -77,6 +104,18 @@ function NowcastCard({
     };
   }, [nowcast]);
 
+  const chartPoints = useMemo(() => {
+    if (!nowcast.hasData || !Array.isArray(weather?.nowcast?.rainChance)) return [];
+    const vals = weather.nowcast.rainChance.slice(0, 9);
+    if (!vals.some(v => toStrictFiniteNumber(v) !== null)) return [];
+    return vals.map(v => {
+      const p = toStrictFiniteNumber(v);
+      return p === null ? 0 : Math.max(0, Math.min(100, p));
+    });
+  }, [nowcast.hasData, weather?.nowcast?.rainChance]);
+
+  const chartGeo = useMemo(() => buildNowcastChartGeometry(chartPoints), [chartPoints]);
+
   return (
     <section
       className="bento-nowcast nowcast-card glass"
@@ -112,6 +151,85 @@ function NowcastCard({
         <p className="nowcast-summary">{nowcast.summary}</p>
         <p className="nowcast-details">{nowcast.details}</p>
       </div>
+
+      {chartGeo !== null && (
+        <div className="nowcast-chart">
+          <div className="nowcast-chart-head">
+            <span className="nowcast-chart-label">Rain chance · next 2h</span>
+            {peakValue !== "—" && (
+              <span className="nowcast-chart-peak">peak {peakValue}</span>
+            )}
+          </div>
+          <div className="nowcast-chart-box">
+            <svg
+              viewBox={`0 0 ${NC_SVG_W} ${NC_SVG_H}`}
+              preserveAspectRatio="none"
+              className="nowcast-svg"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#7fd99a" stopOpacity="0.34" />
+                  <stop offset="55%" stopColor="#7fd99a" stopOpacity="0.12" />
+                  <stop offset="100%" stopColor="#7fd99a" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <line
+                x1="0" y1={chartGeo.thresholdY.toFixed(1)}
+                x2={NC_SVG_W} y2={chartGeo.thresholdY.toFixed(1)}
+                stroke="rgba(238,241,248,.22)"
+                strokeWidth="1"
+                strokeDasharray="5 6"
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1="0" y1={NC_SVG_H - 1}
+                x2={NC_SVG_W} y2={NC_SVG_H - 1}
+                stroke="rgba(255,255,255,.08)"
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+              <path d={chartGeo.fillD} fill={`url(#${chartGradientId})`} />
+              <path
+                d={chartGeo.strokeD}
+                fill="none"
+                stroke="#7fd99a"
+                strokeOpacity="0.22"
+                strokeWidth="6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                d={chartGeo.strokeD}
+                fill="none"
+                stroke="#7fd99a"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+              <circle
+                cx={chartGeo.xs[chartGeo.peakIdx].toFixed(1)}
+                cy={chartGeo.ys[chartGeo.peakIdx].toFixed(1)}
+                r="3.2"
+                fill="#0b1626"
+                stroke="#7fd99a"
+                strokeWidth="2"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+            <span className="nowcast-chart-thresh-label" aria-hidden="true">Rain likely</span>
+          </div>
+          <div className="nowcast-chart-ticks" aria-hidden="true">
+            <span>Now</span>
+            <span>30m</span>
+            <span>1h</span>
+            <span>90m</span>
+            <span>2h</span>
+          </div>
+        </div>
+      )}
 
       <ul className="nowcast-chips" aria-label="Immediate precipitation details">
         <li className="nowcast-chip">

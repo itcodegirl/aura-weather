@@ -1,7 +1,7 @@
 ﻿.bento-nowcast {
   display: flex;
   flex-direction: column;
-  grid-column: span 3;
+  grid-column: span 6;
   min-height: 272px;
   gap: 12px;
 }
@@ -239,6 +239,75 @@
   .nowcast-risk-badge {
     font-size: 10px;
   }
+}
+
+/* ── Area chart (fills leftover card height) ─────────────────────────────── */
+
+.nowcast-chart {
+  flex: 1;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  margin: 4px 0;
+}
+
+.nowcast-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.nowcast-chart-label {
+  font-size: 11px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.66);
+  font-weight: 500;
+}
+
+.nowcast-chart-peak {
+  font-size: 11.5px;
+  color: #a9e2bd;
+  font-weight: 500;
+}
+
+.nowcast-chart-box {
+  position: relative;
+  flex: 1;
+  min-height: 96px;
+}
+
+.nowcast-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.nowcast-chart-thresh-label {
+  position: absolute;
+  right: 0;
+  top: 5%;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.6);
+  pointer-events: none;
+}
+
+.nowcast-chart-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+}
+
+.nowcast-chart-ticks span {
+  font-size: 11px;
+  color: rgba(238, 241, 248, 0.62);
+  font-weight: 400;
 }
 
 

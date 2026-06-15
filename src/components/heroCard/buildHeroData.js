@@ -295,6 +295,82 @@ function buildDailyGuidance(weather, unit) {
   ].filter((item) => item.tone !== "calm");
 }
 
+const DEW_POINT_MUGGY_F = 65;
+const DEW_POINT_DRY_F = 45;
+const WIND_CALM_MPH = 5;
+const WIND_BREEZY_MPH = 12;
+const WIND_GUSTY_MPH = 25;
+const AQI_GOOD = 50;
+const AQI_MODERATE = 100;
+
+function buildCharacteristicChips(weather, unit, aqi) {
+  const chips = [];
+
+  const dewPoint = toFiniteNumber(weather?.current?.dewPoint);
+  if (dewPoint !== null) {
+    const dpF = unit === "C" ? dewPoint * 9 / 5 + 32 : dewPoint;
+    chips.push({
+      id: "comfort",
+      icon: "droplets",
+      label:
+        dpF >= DEW_POINT_MUGGY_F
+          ? "Muggy"
+          : dpF <= DEW_POINT_DRY_F
+          ? "Dry air"
+          : "Comfortable",
+    });
+  }
+
+  const windSpeed = toFiniteNumber(weather?.current?.windSpeed);
+  if (windSpeed !== null) {
+    const wMph = unit === "C" ? windSpeed * 0.621371 : windSpeed;
+    chips.push({
+      id: "wind",
+      icon: "wind",
+      label:
+        wMph >= WIND_GUSTY_MPH
+          ? "Gusty"
+          : wMph >= WIND_BREEZY_MPH
+          ? "Breezy"
+          : wMph <= WIND_CALM_MPH
+          ? "Calm air"
+          : "Light breeze",
+    });
+  }
+
+  const aqiValue = toFiniteNumber(aqi);
+  if (aqiValue !== null) {
+    chips.push({
+      id: "aqi",
+      icon: "leaf",
+      label:
+        aqiValue <= AQI_GOOD
+          ? "Air good"
+          : aqiValue <= AQI_MODERATE
+          ? "Air fair"
+          : "Air poor",
+    });
+  }
+
+  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[0]);
+  if (uvIndex !== null) {
+    chips.push({
+      id: "uv",
+      icon: "sun",
+      label:
+        uvIndex >= 8
+          ? "UV very high"
+          : uvIndex >= 6
+          ? "UV high"
+          : uvIndex >= 3
+          ? "UV moderate"
+          : "UV low",
+    });
+  }
+
+  return chips;
+}
+
 /**
  * Pure data shaping for HeroCard. Returns the full set of display
  * strings the component needs, or null when the inputs cannot
@@ -307,6 +383,7 @@ export function buildHeroData({
   unit,
   climateComparison,
   nowMs,
+  aqi = null,
 } = {}) {
   if (!weather?.current || !location) {
     return null;
@@ -375,6 +452,8 @@ export function buildHeroData({
     windDisplay,
   ].some((value) => isMissingPlaceholder(value));
 
+  const characteristicChips = buildCharacteristicChips(weather, unit, aqi);
+
   return {
     current,
     info,
@@ -401,6 +480,7 @@ export function buildHeroData({
     hasClimateComparison,
     climateMessage,
     dailyGuidance,
+    characteristicChips,
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
   };
 }

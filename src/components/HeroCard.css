@@ -1,9 +1,113 @@
 ﻿.hero-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 16px;
 }
+
+/* ─── Animated reactive sky ─────────────────────────────────────────────── */
+.hero-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-sky-breathe {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 75% 10%, rgba(243, 183, 101, 0.2), transparent 55%);
+  animation: hero-breathe 13s ease-in-out infinite;
+}
+
+.hero-sky-glow {
+  position: absolute;
+  top: 6px;
+  right: 14px;
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 189, 111, 0.52), transparent 65%);
+  animation: hero-glow-pulse 6.5s ease-in-out infinite;
+}
+
+.hero-sky-orb {
+  position: absolute;
+  top: 34px;
+  right: 54px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f4bd6f;
+  box-shadow: 0 0 18px rgba(244, 189, 111, 0.5);
+}
+
+.hero-sky-orb--moon {
+  background: radial-gradient(circle at 38% 38%, #d4dff0, #9aaecc);
+  box-shadow: 0 0 14px rgba(155, 185, 230, 0.3);
+}
+
+.hero-sky-cloud {
+  position: absolute;
+  filter: blur(3px);
+  will-change: transform;
+}
+
+.hero-sky-cloud span {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+}
+
+.hero-sky-cloud--1 {
+  top: 30px;
+  opacity: 0.15;
+  animation: hero-cloud-drift 58s linear infinite;
+  animation-delay: -12s;
+}
+
+.hero-sky-cloud--2 {
+  top: 90px;
+  opacity: 0.1;
+  animation: hero-cloud-drift 84s linear infinite;
+  animation-delay: -42s;
+}
+
+@keyframes hero-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.18); }
+}
+
+@keyframes hero-cloud-drift {
+  from { transform: translateX(-180px); }
+  to { transform: translateX(900px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sky-breathe,
+  .hero-sky-glow,
+  .hero-sky-cloud--1,
+  .hero-sky-cloud--2 {
+    animation: none;
+  }
+}
+
+/* All direct hero content sits above the sky layer */
+.hero-meta,
+.hero-main,
+.hero-bottom,
+.hero-stats-note {
+  position: relative;
+  z-index: 1;
+}
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 .hero-meta {
   display: flex;
@@ -56,9 +160,9 @@
   gap: 14px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(198, 215, 242, 0.2);
-  background: rgba(11, 20, 38, 0.64);
-  box-shadow: inset 0 1px 0 rgba(233, 242, 255, 0.06);
+  border: 1px solid rgba(111, 183, 242, 0.3);
+  background: rgba(111, 183, 242, 0.1);
+  box-shadow: inset 0 1px 0 rgba(111, 183, 242, 0.08);
 }
 
 .hero-high-low-item {
@@ -107,11 +211,11 @@
 }
 
 .hero-temp {
-  font-family: var(--font-display);
-  font-size: clamp(96px, 9vw, 124px);
-  font-weight: 700;
-  line-height: 0.9;
-  letter-spacing: 0;
+  font-family: var(--font-sans);
+  font-size: 84px;
+  font-weight: 200;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -140,7 +244,7 @@
   aspect-ratio: 1;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.28), rgba(139, 211, 255, 0.08) 62%, transparent 76%),
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.28), rgba(111, 183, 242, 0.1) 62%, transparent 76%),
     rgba(10, 18, 34, 0.5);
   box-shadow:
     inset 0 1px 0 rgba(240, 247, 255, 0.14),
@@ -173,6 +277,61 @@
   line-height: 1.5;
 }
 
+/* Characteristic chips — horizontal pill row derived from live data.
+   Each chip drops out individually when its reading is missing. */
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.13);
+  color: #eef1f8;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.hero-chip-icon {
+  color: var(--glacier-light);
+  flex-shrink: 0;
+}
+
+/* Trust pill — freshness + confidence indicator */
+.hero-trust-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(111, 183, 242, 0.45);
+  background: rgba(111, 183, 242, 0.18);
+  color: #cfe6fb;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.hero-trust-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--glacier);
+}
+
+/* Keep guidance items for the daily guidance that still shows on
+   notice/watch conditions (rain-gear alerts etc.) */
 .hero-guidance {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

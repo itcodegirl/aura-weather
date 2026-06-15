@@ -10,6 +10,7 @@ import {
   Sunrise,
   Sunset,
   Sun,
+  Leaf,
 } from "lucide-react";
 import { isMissingPlaceholder } from "../utils/numbers";
 import { formatDisplayCountry } from "../utils/locationDisplay";
@@ -30,6 +31,44 @@ const GUIDANCE_ICONS = {
   wind: Wind,
 };
 
+const CHIP_ICONS = {
+  droplets: Droplets,
+  wind: Wind,
+  leaf: Leaf,
+  sun: Sun,
+};
+
+function formatAge(fetchedAt, nowMs) {
+  if (!fetchedAt || !nowMs) return null;
+  const diffMs = nowMs - fetchedAt;
+  if (diffMs < 0) return null;
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 1) return "just now";
+  if (mins === 1) return "1 min ago";
+  return `${mins} min ago`;
+}
+
+function HeroSkyLayer({ sunlightPhase }) {
+  const isNight = sunlightPhase === "night" || sunlightPhase === "dusk";
+  return (
+    <div className="hero-sky" aria-hidden="true">
+      <div className="hero-sky-breathe" />
+      <div className="hero-sky-glow" />
+      <div className={`hero-sky-orb${isNight ? " hero-sky-orb--moon" : ""}`} />
+      <div className="hero-sky-cloud hero-sky-cloud--1">
+        <span style={{ left: 0, top: 16, width: 130, height: 30 }} />
+        <span style={{ left: 26, top: 0, width: 52, height: 52 }} />
+        <span style={{ left: 64, top: 8, width: 42, height: 42 }} />
+      </div>
+      <div className="hero-sky-cloud hero-sky-cloud--2">
+        <span style={{ left: 0, top: 14, width: 110, height: 26 }} />
+        <span style={{ left: 20, top: 0, width: 44, height: 44 }} />
+        <span style={{ left: 52, top: 6, width: 36, height: 36 }} />
+      </div>
+    </div>
+  );
+}
+
 function HeroCard({
   weather,
   location,
@@ -38,6 +77,8 @@ function HeroCard({
   climateStatus = "idle",
   style,
   isRefreshing = false,
+  aqi = null,
+  trustMeta = null,
 }) {
   // Subscribe directly at the 5-minute cadence so the dashboard does
   // not have to thread nowMs through every card. Sunlight phase, the
@@ -57,8 +98,9 @@ function HeroCard({
         unit,
         climateComparison,
         nowMs: nowBucket === null ? null : nowBucket * HERO_NOW_BUCKET_MS,
+        aqi,
       }),
-    [weather, location, unit, climateComparison, nowBucket]
+    [weather, location, unit, climateComparison, nowBucket, aqi]
   );
 
   if (!heroData) {
@@ -152,9 +194,12 @@ function HeroCard({
     hasClimateComparison,
     climateMessage,
     dailyGuidance,
+    characteristicChips,
     today,
     tempUnit,
   } = heroData;
+
+  const ageLabel = formatAge(trustMeta?.weatherFetchedAt, nowMs);
 
   // Climate-context loading and unavailable states used to render a
   // placeholder sentence between the temperature and the bottom block,
@@ -180,6 +225,7 @@ function HeroCard({
       aria-busy={isRefreshing || undefined}
       aria-labelledby={headingId}
     >
+      <HeroSkyLayer sunlightPhase={sunlightPhase} />
       {/* Hidden heading so screen-reader users land on the hero card
           when navigating by heading. The h2 group label above ("Current
           Conditions") covers the section, and the visible hero presents
@@ -299,27 +345,24 @@ function HeroCard({
 
       <div className="hero-bottom">
         <div className="hero-bottom-left">
-          {Array.isArray(dailyGuidance) && dailyGuidance.length > 0 && (
-            <ul className="hero-guidance" aria-label="Daily guidance">
-              {dailyGuidance.map((item) => {
-                const Icon = GUIDANCE_ICONS[item.kind] ?? Sun;
+          {Array.isArray(characteristicChips) && characteristicChips.length > 0 && (
+            <ul className="hero-chips" aria-label="Current conditions summary">
+              {characteristicChips.map((chip) => {
+                const Icon = CHIP_ICONS[chip.icon] ?? Sun;
                 return (
-                  <li
-                    key={item.kind}
-                    className={`hero-guidance-item hero-guidance-item--${item.tone}`}
-                  >
-                    <div className="hero-guidance-icon">
-                      <Icon size={15} aria-hidden="true" />
-                    </div>
-                    <div className="hero-guidance-copy">
-                      <span className="hero-guidance-label">{item.label}</span>
-                      <strong className="hero-guidance-value">{item.value}</strong>
-                      <span className="hero-guidance-detail">{item.detail}</span>
-                    </div>
+                  <li key={chip.id} className="hero-chip">
+                    <Icon size={13} aria-hidden="true" className="hero-chip-icon" />
+                    {chip.label}
                   </li>
                 );
               })}
             </ul>
+          )}
+          {ageLabel && (
+            <div className="hero-trust-pill" role="status" aria-live="polite">
+              <span className="hero-trust-dot" aria-hidden="true" />
+              High confidence · {ageLabel}
+            </div>
           )}
 
           <div

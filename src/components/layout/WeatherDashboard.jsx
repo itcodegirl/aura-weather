@@ -126,6 +126,8 @@ function WeatherDashboard({
           climateStatus={climateStatus}
           style={CARD_STYLE_VARIABLES[0]}
           isRefreshing={isBackgroundLoading}
+          aqi={weather?.aqi}
+          trustMeta={trustMeta}
         />
       </PanelErrorBoundary>
 

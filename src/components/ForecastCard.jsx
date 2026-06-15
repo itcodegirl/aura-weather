@@ -189,6 +189,60 @@ function buildDayWhy(daySignal, day) {
   }
 }
 
+function buildMiniSvgPath(temps) {
+  const n = temps.length;
+  const W = 600, H = 70, padX = 8, topPad = 8, botPad = 22;
+  const min = Math.min(...temps);
+  const max = Math.max(...temps);
+  const rng = max - min || 1;
+  const pts = temps.map((t, i) => [
+    padX + (i * (W - 2 * padX)) / (n - 1),
+    topPad + (1 - (t - min) / rng) * (H - topPad - botPad),
+  ]);
+  let line = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < n - 1; i++) {
+    const xc = ((pts[i][0] + pts[i + 1][0]) / 2).toFixed(1);
+    const yc = ((pts[i][1] + pts[i + 1][1]) / 2).toFixed(1);
+    line += ` Q${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)} ${xc},${yc}`;
+  }
+  const last = pts[n - 1];
+  line += ` Q${last[0].toFixed(1)},${last[1].toFixed(1)} ${last[0].toFixed(1)},${last[1].toFixed(1)}`;
+  const baseY = H - botPad + 8;
+  const band = `${line} L${last[0].toFixed(1)},${baseY} L${pts[0][0].toFixed(1)},${baseY} Z`;
+  return { line, band, min, max };
+}
+
+function ForecastMiniCurve({ temps }) {
+  if (!temps || temps.length < 4) return null;
+  const { line, band, min, max } = buildMiniSvgPath(temps);
+  const hi = Math.round(max);
+  const lo = Math.round(min);
+  return (
+    <div className="forecast-mini-curve">
+      <div className="forecast-mini-curve-header">
+        <span className="forecast-mini-curve-label">Hourly temperature</span>
+        <span className="forecast-mini-curve-range">H {hi}° · L {lo}°</span>
+      </div>
+      <svg
+        viewBox="0 0 600 70"
+        preserveAspectRatio="none"
+        className="forecast-mini-curve-svg"
+        role="img"
+        aria-label={`Hourly temperature curve, high ${hi}°, low ${lo}°`}
+      >
+        <path d={band} fill="rgba(243,183,101,.16)" />
+        <path d={line} fill="none" stroke="#f3b765" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="forecast-mini-curve-axis" aria-hidden="true">
+        <span>6a</span>
+        <span>12p</span>
+        <span>6p</span>
+        <span>12a</span>
+      </div>
+    </div>
+  );
+}
+
 function formatWindSummary(day, unit) {
   const speed = toFiniteNumber(day.windSpeedMax);
   if (!Number.isFinite(speed)) {
@@ -233,6 +287,7 @@ function DayRow({
   rangeGradient,
   isExpanded,
   onToggle,
+  hourlyTemps,
 }) {
   const triggerRef = useRef(null);
   const info = getWeather(day.conditionCode);
@@ -386,6 +441,7 @@ function DayRow({
           aria-label={`${label} forecast details`}
         >
           <p className="forecast-detail-why">{buildDayWhy(daySignal, day)}</p>
+          <ForecastMiniCurve temps={hourlyTemps} />
           <dl className="forecast-detail-grid">
             <DetailMetric
               label="Rain chance"
@@ -512,6 +568,23 @@ function ForecastCard({
     () => getForecastRangeGradient(weekMin, weekMax),
     [weekMin, weekMax]
   );
+  const hourlyTempsByDate = useMemo(() => {
+    const hourlyTime = weather?.hourly?.time;
+    const hourlyTemp = weather?.hourly?.temperature;
+    if (!Array.isArray(hourlyTime) || !Array.isArray(hourlyTemp)) return {};
+    const map = {};
+    for (let i = 0; i < hourlyTime.length; i++) {
+      const t = hourlyTime[i];
+      if (typeof t !== "string") continue;
+      const dateStr = t.slice(0, 10);
+      const raw = hourlyTemp[i];
+      if (typeof raw === "number" && Number.isFinite(raw)) {
+        if (!map[dateStr]) map[dateStr] = [];
+        map[dateStr].push(convertTemp(raw, unit));
+      }
+    }
+    return map;
+  }, [weather?.hourly, unit]);
   const weekSummary = useMemo(
     () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso),
     [days, weekMin, weekMax, unit, timeZone, todayIso]
@@ -587,6 +660,7 @@ function ForecastCard({
             rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
+            hourlyTemps={hourlyTempsByDate[day.date] ?? null}
           />
         ))}
       </ul>
@@ -615,13 +689,15 @@ const MemoizedDayRow = memo(
     prevProps.day.uvIndexMax === nextProps.day.uvIndexMax &&
     prevProps.day.windSpeedMax === nextProps.day.windSpeedMax &&
     prevProps.day.windGustMax === nextProps.day.windGustMax &&
-    prevProps.day.windDirectionDominant === nextProps.day.windDirectionDominant
+    prevProps.day.windDirectionDominant === nextProps.day.windDirectionDominant &&
+    prevProps.hourlyTemps === nextProps.hourlyTemps
 );
 
 export default memo(
   ForecastCard,
   (prevProps, nextProps) =>
     prevProps.weather?.daily === nextProps.weather?.daily &&
+    prevProps.weather?.hourly === nextProps.weather?.hourly &&
     prevProps.weather?.meta?.timezone === nextProps.weather?.meta?.timezone &&
     prevProps.unit === nextProps.unit &&
     prevProps.style === nextProps.style &&

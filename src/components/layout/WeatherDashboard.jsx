@@ -7,6 +7,7 @@ import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
 import { PRELOAD_HEAVY_PANELS, RainPanel, HourlyPanel } from "../lazyPanels";
 import { formatDisplayCountry } from "../../utils/locationDisplay";
+import DataTrustFooter from "../DataTrustFooter";
 import "./WeatherDashboard.css";
 const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
 // Data-status is a diagnostic surface most users never open. Defer
@@ -283,6 +284,11 @@ function WeatherDashboard({
           </Suspense>
         ) : null}
       </details>
+      <DataTrustFooter
+        weather={weather}
+        location={location}
+        trustMeta={trustMeta}
+      />
     </main>
   );
 }

@@ -115,10 +115,22 @@
   border-color: rgba(153, 218, 255, 0.38);
 }
 
+.forecast-row.is-today {
+  border-color: rgba(111, 183, 242, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(111, 183, 242, 0.25);
+}
+
 .forecast-row.is-expanded {
   border-color: rgba(126, 221, 255, 0.42);
   box-shadow:
     inset 0 1px 0 rgba(236, 244, 255, 0.12),
+    0 14px 28px rgba(3, 8, 22, 0.26);
+}
+
+.forecast-row.is-today.is-expanded {
+  border-color: rgba(111, 183, 242, 0.65);
+  box-shadow:
+    inset 0 0 0 1px rgba(111, 183, 242, 0.3),
     0 14px 28px rgba(3, 8, 22, 0.26);
 }
 

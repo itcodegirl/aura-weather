@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronDown, Droplets } from "lucide-react";
-import { memo, useCallback, useId, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { formatWindSpeed, windDirectionName } from "../domain/wind";
 import { getWeather } from "../domain/weatherCodes";
 import {
@@ -288,6 +288,7 @@ function DayRow({
   isExpanded,
   onToggle,
   hourlyTemps,
+  isToday,
 }) {
   const triggerRef = useRef(null);
   const info = getWeather(day.conditionCode);
@@ -327,7 +328,7 @@ function DayRow({
 
   return (
     <li
-      className={`forecast-row${isExpanded ? " is-expanded" : ""}`}
+      className={`forecast-row${isExpanded ? " is-expanded" : ""}${isToday ? " is-today" : ""}`}
       role="listitem"
       onKeyDown={handleRowKeyDown}
     >
@@ -425,7 +426,7 @@ function DayRow({
         </div>
 
         <span className="forecast-details-btn" aria-hidden="true">
-          <span className="forecast-details-btn-text">Details</span>
+          <span className="forecast-details-btn-text">{isExpanded ? "Hide" : "Details"}</span>
           <ChevronDown
             size={13}
             className={`forecast-details-btn-chevron${isExpanded ? " is-expanded" : ""}`}
@@ -534,6 +535,7 @@ function ForecastCard({
 }) {
   const titleId = useId();
   const [expandedDate, setExpandedDate] = useState(null);
+  const hasAutoOpenedRef = useRef(false);
   const timeZone = weather?.meta?.timezone;
   // Minute tick -> day-granular todayIso. Rows therefore relabel at the
   // location's midnight (a tab left open overnight used to keep
@@ -589,6 +591,12 @@ function ForecastCard({
     () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso),
     [days, weekMin, weekMax, unit, timeZone, todayIso]
   );
+  useEffect(() => {
+    if (!hasAutoOpenedRef.current && days.length > 0) {
+      hasAutoOpenedRef.current = true;
+      setExpandedDate(days[0].date);
+    }
+  }, [days]);
   const handleToggleDay = useCallback((date) => {
     setExpandedDate((currentDate) => (currentDate === date ? null : date));
   }, []);
@@ -661,6 +669,7 @@ function ForecastCard({
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
             hourlyTemps={hourlyTempsByDate[day.date] ?? null}
+            isToday={day.date === todayIso}
           />
         ))}
       </ul>
@@ -690,7 +699,8 @@ const MemoizedDayRow = memo(
     prevProps.day.windSpeedMax === nextProps.day.windSpeedMax &&
     prevProps.day.windGustMax === nextProps.day.windGustMax &&
     prevProps.day.windDirectionDominant === nextProps.day.windDirectionDominant &&
-    prevProps.hourlyTemps === nextProps.hourlyTemps
+    prevProps.hourlyTemps === nextProps.hourlyTemps &&
+    prevProps.isToday === nextProps.isToday
 );
 
 export default memo(

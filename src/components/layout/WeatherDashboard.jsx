@@ -39,6 +39,7 @@ const GROUP_LABEL_IDS = {
   nearTermOutlook: "group-near-term-outlook",
   riskSignals: "group-risk-signals",
   weekAhead: "group-week-ahead",
+  atmosphere: "group-atmosphere",
 };
 
 function WeatherDashboard({

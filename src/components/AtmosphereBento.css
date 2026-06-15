@@ -1,0 +1,321 @@
+/* src/components/AtmosphereBento.css */
+
+.bento-atm {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.atm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.atm-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: var(--section-title-lg-size);
+  font-weight: 650;
+  margin: 0;
+  letter-spacing: 0;
+}
+
+/* 9-tile grid: 4 cols */
+.atm-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Base tile */
+.atm-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 13px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Missing data variant */
+.atm-tile--missing {
+  background: rgba(255, 255, 255, 0.06);
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Wide tiles span 2 columns */
+.atm-tile--wide {
+  grid-column: span 2;
+}
+
+/* Center content for stub tiles */
+.atm-tile--center {
+  align-items: center;
+  text-align: center;
+}
+
+/* Label row (icon + text) */
+.atm-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+.atm-label--dim {
+  opacity: 0.55;
+}
+
+/* Arc gauge SVG */
+.atm-arc-svg {
+  width: 100%;
+  max-width: 96px;
+  align-self: center;
+  overflow: visible;
+}
+
+.atm-arc-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+/* Main numeric value */
+.atm-val {
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #eef1f8;
+  line-height: 1;
+}
+
+.atm-val--dim {
+  color: rgba(238, 241, 248, 0.45);
+}
+
+.atm-val--pressure {
+  font-size: 15px;
+}
+
+.atm-val--dew {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.atm-val--vis {
+  font-size: 14px;
+}
+
+/* Secondary / label text */
+.atm-sub {
+  font-size: 12.5px;
+  color: rgba(238, 241, 248, 0.68);
+  font-weight: 400;
+}
+
+.atm-sub--sm {
+  font-size: 11px;
+}
+
+.atm-sub--moon {
+  font-size: 11.5px;
+  color: rgba(238, 241, 248, 0.55);
+  text-align: center;
+}
+
+/* Missing note */
+.atm-missing-note {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(238, 241, 248, 0.45);
+}
+
+/* Horizontal label / value row */
+.atm-tile-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* ── Wind tile ─────────────────────────────────────────────────────────────── */
+
+.atm-wind-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.atm-compass {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+}
+
+.atm-wind-gust {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+/* ── Sun arc tile ──────────────────────────────────────────────────────────── */
+
+.atm-sun-arc {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.atm-sun-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(238, 241, 248, 0.75);
+}
+
+/* ── Dew point tile ────────────────────────────────────────────────────────── */
+
+.atm-dewpoint-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.atm-dewpoint-scale {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.atm-dewpoint-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #6fb7f2, #7fd99a, #f3d765, #e8745b);
+  overflow: visible;
+}
+
+.atm-dewpoint-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(7, 15, 29, 0.5);
+}
+
+.atm-dewpoint-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: rgba(238, 241, 248, 0.52);
+}
+
+/* ── Visibility bar chart ──────────────────────────────────────────────────── */
+
+.atm-vis-svg {
+  width: 100%;
+  max-width: 128px;
+  height: auto;
+  overflow: visible;
+}
+
+/* ── Moon tile ─────────────────────────────────────────────────────────────── */
+
+.atm-moon-svg {
+  width: 48px;
+  height: 48px;
+  overflow: visible;
+  align-self: center;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 980px) {
+  .atm-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Wide tiles already span 2, which fits in 3-col grid */
+}
+
+@media (max-width: 760px) {
+  .atm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .atm-tile--wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .atm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .atm-tile {
+    padding: 11px;
+  }
+
+  .atm-val--dew {
+    font-size: 18px;
+  }
+
+  .atm-compass {
+    width: 52px;
+    height: 52px;
+  }
+
+  .atm-dewpoint-body {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .atm-dewpoint-scale {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .atm-title {
+    font-size: 17px;
+  }
+
+  .atm-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .atm-tile--wide {
+    grid-column: auto;
+  }
+
+  .atm-wind-body {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atm-tile {
+    transition: none;
+  }
+}

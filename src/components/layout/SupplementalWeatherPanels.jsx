@@ -4,7 +4,7 @@ import AlertsCard from "../AlertsCard";
 import ForecastCard from "../ForecastCard";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
-import { StormWatchPanel } from "../lazyPanels";
+import { StormWatchPanel, AtmospherePanel } from "../lazyPanels";
 
 function SupplementalWeatherPanels({
   weather,
@@ -89,6 +89,37 @@ function SupplementalWeatherPanels({
             weather={weather}
             unit={unit}
             style={cardStyleVariables[6]}
+            isRefreshing={isBackgroundLoading}
+          />
+        </Suspense>
+      </PanelErrorBoundary>
+      <h2
+        id={groupLabelIds.atmosphere}
+        className="bento-group-label"
+        style={groupLabelStyleVariables[4]}
+      >
+        Atmosphere
+      </h2>
+      <PanelErrorBoundary
+        label="Atmosphere"
+        className="bento-atm"
+        style={cardStyleVariables[8]}
+      >
+        <Suspense
+          fallback={(
+            <CardFallback
+              className="bento-atm"
+              style={cardStyleVariables[8]}
+              title="Loading atmosphere..."
+              isRefreshing={isBackgroundLoading}
+            />
+          )}
+        >
+          <AtmospherePanel
+            weather={weather}
+            aqi={weather?.aqi}
+            unit={unit}
+            style={cardStyleVariables[8]}
             isRefreshing={isBackgroundLoading}
           />
         </Suspense>

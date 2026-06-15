@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura · Glacier — Nowcast (v2)</title>
+<style>
+  :root{ --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --glacier:#6fb7f2; --green:#7fd99a; --greenSoft:#a9e2bd; }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:30px 18px; font-family:var(--font); color:#eef1f8;
+    background:
+      radial-gradient(120% 90% at 80% -10%, #20324a 0%, transparent 55%),
+      linear-gradient(180deg,#122236 0%,#0b1626 60%,#070e1a 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start;
+  }
+  .stage{ width:100%; max-width:430px; }
+  .cap{ font:500 11px/1.4 var(--font); letter-spacing:.14em; text-transform:uppercase;
+        color:var(--glacier); border-left:3px solid var(--glacier); padding-left:8px; margin:0 0 6px; }
+  .capnote{ font:300 12px/1.5 var(--font); color:rgba(238,241,248,.55); margin:0 0 14px; padding-left:11px; }
+
+  /* fixed height ~ matches the Rain outlook card next to it, to prove the fill */
+  .demo-h{ height:556px; }
+
+  .nowcard{
+    height:100%;
+    display:flex; flex-direction:column;
+    background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+    border:1px solid rgba(255,255,255,.13); border-radius:18px; padding:18px 17px 16px;
+    box-shadow:0 1px 0 rgba(255,255,255,.05) inset, 0 18px 40px -24px rgba(0,0,0,.6);
+  }
+  .ntop{ display:flex; align-items:center; gap:8px; }
+  .ntop h3{ margin:0; font-size:17px; font-weight:500; }
+  .ntop .info{ font-size:11px; color:rgba(238,241,248,.4); border:1px solid rgba(238,241,248,.3);
+               width:15px; height:15px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; }
+  .nsub{ font-size:12.5px; line-height:1.5; color:rgba(238,241,248,.66); font-weight:300; margin:8px 0 13px; }
+
+  .npill{ align-self:flex-start; font-size:10.5px; letter-spacing:.12em; font-weight:600; text-transform:uppercase;
+          color:var(--greenSoft); background:rgba(127,217,154,.13); border:1px solid rgba(127,217,154,.4);
+          padding:5px 11px; border-radius:999px; }
+  .nhead{ font-size:27px; line-height:1.12; font-weight:400; letter-spacing:-.01em; margin:13px 0 0; }
+  .nsupport{ font-size:13px; line-height:1.5; color:rgba(238,241,248,.62); font-weight:300; margin:11px 0 0; }
+
+  /* chart grows to fill leftover vertical space — kills the void */
+  .nchart{ flex:1; min-height:128px; display:flex; flex-direction:column; justify-content:flex-end; margin:16px 0 4px; }
+  .nchead{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .nclabel{ font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:rgba(238,241,248,.66); font-weight:500; }
+  .ncpeak{ font-size:11.5px; color:var(--greenSoft); font-weight:500; }
+  .ncbox{ position:relative; flex:1; min-height:96px; }
+  .ncbox svg{ position:absolute; inset:0; width:100%; height:100%; display:block; overflow:visible; }
+  .ncthresh-lbl{ position:absolute; right:0; top:5%; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+                 color:rgba(238,241,248,.6); }
+  .ncticks{ display:flex; justify-content:space-between; margin-top:7px; }
+  .ncticks span{ font-size:11px; color:rgba(238,241,248,.62); font-weight:400; }
+
+  .nstats{ display:flex; gap:8px; margin-top:6px; }
+  .nstat{ flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:11px;
+          padding:9px 10px; }
+  .nstat .k{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:rgba(238,241,248,.66); font-weight:500; }
+  .nstat .v{ font-size:16px; font-weight:500; margin-top:3px; }
+  .nstat .v.dim{ color:rgba(238,241,248,.66); font-weight:300; }
+  .nstat .v.good{ color:var(--greenSoft); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="cap">Aura · Glacier · nowcast — v2</div>
+  <div class="capnote">Shown at a fixed height to prove it fills the row; in production it's <code>height:100%</code> of the equal-height Near-term outlook row.</div>
+
+  <div class="demo-h">
+  <!--WIDGET-START-->
+  <div class="nowcard">
+    <div class="ntop"><h3>Nowcast</h3><span class="info">i</span></div>
+    <p class="nsub">15-minute rain guidance over the next 2 hours.</p>
+    <span class="npill">Dry window</span>
+    <h2 class="nhead">Dry for the next 2 hours.</h2>
+    <p class="nsupport">Peak rain chance stays below 16% in the near term — no rain expected.</p>
+
+    <div class="nchart">
+      <div class="nchead">
+        <span class="nclabel">Rain chance · next 2h</span>
+        <span class="ncpeak">peak 16%</span>
+      </div>
+      <div class="ncbox">
+        <svg id="ncsvg" viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <span class="ncthresh-lbl">Rain likely</span>
+      </div>
+      <div class="ncticks"><span>Now</span><span>30m</span><span>1h</span><span>90m</span><span>2h</span></div>
+    </div>
+
+    <div class="nstats">
+      <div class="nstat"><div class="k">Start</div><div class="v dim">—</div></div>
+      <div class="nstat"><div class="k">Duration</div><div class="v good">Dry 2h</div></div>
+      <div class="nstat"><div class="k">Peak</div><div class="v good">16%</div></div>
+    </div>
+  </div>
+  <!--WIDGET-END-->
+  </div>
+</div>
+
+<script>
+(function(){
+  var svg=document.getElementById("ncsvg");
+  var vals=[9,11,13,15,16,14,12,10,8];        // 15-min rain-chance %, dry window
+  var n=vals.length, DOMAIN=50;                // 0–50% scale so the dry curve hugs the floor
+  var H=150, topPad=20, botPad=24, span=H-topPad-botPad;
+  var ys=vals.map(function(v){ return topPad+(1-Math.min(v,DOMAIN)/DOMAIN)*span; });
+  var xs=vals.map(function(_,i){ return i/(n-1)*1000; });
+
+  // smooth curve (quadratic midpoint)
+  var core="";
+  for(var i=0;i<n-1;i++){
+    var xc=(xs[i]+xs[i+1])/2, yc=(ys[i]+ys[i+1])/2;
+    core+=" Q"+xs[i].toFixed(1)+","+ys[i].toFixed(1)+" "+xc.toFixed(1)+","+yc.toFixed(1);
+  }
+  core+=" L"+xs[n-1].toFixed(1)+","+ys[n-1].toFixed(1);
+  var strokeD="M"+xs[0].toFixed(1)+","+ys[0].toFixed(1)+core;
+  var fillD=strokeD+" L1000,"+H+" L0,"+H+" Z";
+
+  var thresholdY=topPad+(1-40/DOMAIN)*span;     // dashed "rain likely" line at 40%
+  var peakIdx=4, px=xs[peakIdx], py=ys[peakIdx];
+
+  svg.innerHTML=
+    '<defs><linearGradient id="ncg" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0%" stop-color="#7fd99a" stop-opacity="0.34"/>'+
+      '<stop offset="55%" stop-color="#7fd99a" stop-opacity="0.12"/>'+
+      '<stop offset="100%" stop-color="#7fd99a" stop-opacity="0"/>'+
+    '</linearGradient></defs>'+
+    // threshold reference line
+    '<line x1="0" y1="'+thresholdY.toFixed(1)+'" x2="1000" y2="'+thresholdY.toFixed(1)+'" '+
+      'stroke="rgba(238,241,248,.22)" stroke-width="1" stroke-dasharray="5 6" vector-effect="non-scaling-stroke"/>'+
+    // baseline
+    '<line x1="0" y1="'+(H-1)+'" x2="1000" y2="'+(H-1)+'" stroke="rgba(255,255,255,.08)" stroke-width="1" vector-effect="non-scaling-stroke"/>'+
+    // area + glow + line
+    '<path d="'+fillD+'" fill="url(#ncg)"/>'+
+    '<path d="'+strokeD+'" fill="none" stroke="#7fd99a" stroke-opacity="0.22" stroke-width="6" '+
+      'stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+    '<path d="'+strokeD+'" fill="none" stroke="#7fd99a" stroke-width="2.6" '+
+      'stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+    // peak marker dot (drawn as tiny rect so it stays round-ish under non-uniform scale)
+    '<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="3.2" fill="#0b1626" stroke="#7fd99a" stroke-width="2" vector-effect="non-scaling-stroke"/>';
+})();
+</script>
+</body>
+</html>

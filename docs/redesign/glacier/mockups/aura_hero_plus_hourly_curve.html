@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura Glacier mockup — aura_hero_plus_hourly_curve</title>
+<style>
+  :root { --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(120% 90% at 80% -10%, #20324a 0%, transparent 55%),
+      linear-gradient(180deg, #122236 0%, #0b1626 60%, #070e1a 100%);
+    min-height: 100vh; color: #eef1f8;
+  }
+  .mock-wrap { max-width: 460px; margin: 0 auto; }
+  .mock-label {
+    font: 500 11px/1.4 var(--font-sans); letter-spacing:.14em; text-transform:uppercase;
+    color:#6fb7f2; margin:0 auto 14px; max-width:460px;
+    border-left:3px solid #6fb7f2; padding-left:8px;
+  }
+</style>
+</head>
+<body>
+  <div class="mock-label">Aura · Glacier · aura_hero_plus_hourly_curve</div>
+  <div class="mock-wrap">
+<h2 class="sr-only">Aura Glacier dashboard: a weather-reactive hero with a dusk sky scene and characteristic chips, with an hourly precipitation forecast card directly below showing a flowing probability curve weaving through hourly icons and a metric selector.</h2>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap');
+.aura{font-family:'Inter',var(--font-sans);background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);border-radius:22px;padding:18px;color:#eef1f8;overflow:hidden;position:relative;--ac:#6fb7f2;--bd:rgba(255,255,255,.22)}
+.sub{color:rgba(238,241,248,.65);font-weight:300}
+.row{display:flex;align-items:center}
+.lbl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:rgba(238,241,248,.6);font-weight:500}
+.chipc{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);color:rgba(238,241,248,.88)}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.hr{display:flex;align-items:flex-start;flex:1;min-width:0;flex-direction:column;text-align:center}
+.tcell{flex:1;text-align:center;font-size:12px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="aura">
+
+  <div style="border-radius:18px;overflow:hidden;margin-bottom:12px;border:1px solid var(--bd);background:linear-gradient(135deg,#1d3e63 0%,#243453 42%,#3a3559 74%,#4d3a50 100%);position:relative">
+    <svg viewBox="0 0 260 150" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;opacity:.9" aria-hidden="true">
+      <circle cx="208" cy="56" r="22" fill="#f3b765"/>
+      <circle cx="208" cy="56" r="34" fill="none" stroke="rgba(243,183,101,.3)" stroke-width="2"/>
+      <g fill="#ffffff" opacity=".2"><ellipse cx="70" cy="46" rx="42" ry="16"/><ellipse cx="105" cy="38" rx="30" ry="13"/><ellipse cx="155" cy="92" rx="50" ry="18"/><ellipse cx="122" cy="98" rx="34" ry="14"/></g>
+    </svg>
+    <div style="position:relative;padding:20px">
+      <div class="lbl" style="margin-bottom:8px;color:rgba(238,241,248,.78)">Oak Lawn, Illinois · 4:58 PM</div>
+      <div class="row" style="gap:14px;align-items:flex-start">
+        <div style="font-weight:200;font-size:78px;line-height:.8;letter-spacing:-.03em">84°</div>
+        <div style="padding-top:6px"><div style="font-size:17px">Partly cloudy</div><div class="sub" style="font-size:13px;margin-top:2px;color:rgba(238,241,248,.82)">Feels like 83° · H 85° L 63°</div></div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px;flex-wrap:wrap">
+        <span class="chipc"><i class="ti ti-droplet" style="font-size:13px;color:#9cc9f2" aria-hidden="true"></i>Muggy</span>
+        <span class="chipc"><i class="ti ti-wind" style="font-size:13px;color:#9cc9f2" aria-hidden="true"></i>Light breeze</span>
+        <span class="chipc"><i class="ti ti-lungs" style="font-size:13px;color:#9bdcb0" aria-hidden="true"></i>Air good</span>
+        <span class="chipc"><i class="ti ti-sun" style="font-size:13px;color:#9bdcb0" aria-hidden="true"></i>UV low</span>
+      </div>
+      <div class="row" style="gap:7px;margin-top:13px">
+        <span class="row" style="gap:6px;font-size:11.5px;padding:5px 11px;border-radius:999px;background:rgba(111,183,242,.2);border:1px solid rgba(111,183,242,.4);color:#c2def8"><span class="dot" style="background:var(--ac)"></span>High confidence · 2 min ago</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-radius:18px;border:1px solid var(--bd);background:rgba(255,255,255,.15);padding:16px 14px">
+    <div class="row" style="justify-content:space-between;margin-bottom:14px">
+      <div class="row" style="gap:8px"><i class="ti ti-chart-line" style="font-size:17px;color:var(--ac)" aria-hidden="true"></i><span style="font-size:16px;font-weight:500">Hourly forecast</span><i class="ti ti-info-circle" style="font-size:14px;color:rgba(238,241,248,.45)" aria-hidden="true"></i></div>
+      <div class="row" style="gap:6px;padding:6px 11px;border-radius:10px;background:rgba(255,255,255,.12);border:1px solid var(--bd);font-size:12.5px">Precipitation <i class="ti ti-chevron-down" style="font-size:14px;color:rgba(238,241,248,.6)" aria-hidden="true"></i></div>
+    </div>
+
+    <div class="row" style="margin-bottom:4px">
+      <span class="tcell" style="font-weight:500">Now</span><span class="tcell sub">7 PM</span><span class="tcell sub">8 PM</span><span class="tcell sub">9 PM</span><span class="tcell sub">10 PM</span><span class="tcell sub">11 PM</span><span class="tcell sub">12 AM</span><span class="tcell sub">1 AM</span><span class="tcell sub">2 AM</span><span class="tcell sub">3 AM</span>
+    </div>
+
+    <div style="position:relative;min-height:96px">
+      <svg viewBox="0 0 1000 75" preserveAspectRatio="none" style="position:absolute;top:0;left:0;width:100%;height:75px" aria-hidden="true">
+        <defs><linearGradient id="bandg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fb7f2" stop-opacity=".28"/><stop offset="1" stop-color="#6fb7f2" stop-opacity="0"/></linearGradient></defs>
+        <path d="M50,33 Q150,38 200,37.5 Q250,37 300,35.5 Q350,34 400,27 Q450,20 500,16.5 Q550,13 600,12 Q650,11 700,17 Q750,23 800,27 Q850,31 900,30 L950,29 L950,75 L50,75 Z" fill="url(#bandg)"/>
+        <path d="M50,33 Q150,38 200,37.5 Q250,37 300,35.5 Q350,34 400,27 Q450,20 500,16.5 Q550,13 600,12 Q650,11 700,17 Q750,23 800,27 Q850,31 900,30 L950,29" fill="none" stroke="#6fb7f2" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <div class="row" style="align-items:flex-start;position:relative">
+        <div class="hr" style="margin-top:22px"><i class="ti ti-cloud" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">24%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:27px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">18%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:26px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">19%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:23px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">23%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:9px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">42%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:2px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">52%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:0"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">54%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:12px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">38%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:20px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">27%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+        <div class="hr" style="margin-top:18px"><i class="ti ti-cloud-rain" style="font-size:22px" aria-hidden="true"></i><span style="font-size:14px;font-weight:500;color:#6fb7f2;margin-top:4px">30%</span><span class="sub" style="font-size:10.5px">&lt;.01"</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+  </div>
+</body>
+</html>

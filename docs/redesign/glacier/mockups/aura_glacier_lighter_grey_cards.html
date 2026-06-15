@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura Glacier mockup — aura_glacier_lighter_grey_cards</title>
+<style>
+  :root { --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(120% 90% at 80% -10%, #20324a 0%, transparent 55%),
+      linear-gradient(180deg, #122236 0%, #0b1626 60%, #070e1a 100%);
+    min-height: 100vh; color: #eef1f8;
+  }
+  .mock-wrap { max-width: 460px; margin: 0 auto; }
+  .mock-label {
+    font: 500 11px/1.4 var(--font-sans); letter-spacing:.14em; text-transform:uppercase;
+    color:#6fb7f2; margin:0 auto 14px; max-width:460px;
+    border-left:3px solid #6fb7f2; padding-left:8px;
+  }
+</style>
+</head>
+<body>
+  <div class="mock-label">Aura · Glacier · aura_glacier_lighter_grey_cards</div>
+  <div class="mock-wrap">
+<h2 class="sr-only">The Aura dashboard in the Glacier blue theme with lighter grey card surfaces: header, hero current conditions, chip selector, hourly strip, a bento grid of metric gauges, a 7-day forecast, and a comparison of three card-surface grey levels.</h2>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap');
+.aura{font-family:'Inter',var(--font-sans);background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);border-radius:22px;padding:20px;color:#eef1f8;overflow:hidden;position:relative;--ac:#6fb7f2;--card:rgba(255,255,255,.10);--bd:rgba(255,255,255,.17)}
+.aura:before{content:"";position:absolute;right:-8%;top:-12%;width:60%;height:55%;background:radial-gradient(circle,rgba(111,183,242,.18),transparent 70%);pointer-events:none}
+.glass{background:var(--card);border:1px solid var(--bd);border-radius:18px;position:relative}
+.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(238,241,248,.55);font-weight:500}
+.sub{color:rgba(238,241,248,.62);font-weight:300}
+.row{display:flex;align-items:center}
+.chip{font-size:12.5px;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.16);color:rgba(238,241,248,.72);white-space:nowrap}
+.chip.on{background:var(--ac);color:#08233f;border-color:transparent;font-weight:500}
+.bento{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mcard{padding:14px;display:flex;flex-direction:column;gap:6px;min-height:116px}
+.val{font-weight:300;font-size:26px;line-height:1}
+.hrcol{display:flex;flex-direction:column;align-items:center;gap:7px;flex:1;min-width:0}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="aura">
+
+  <div class="row" style="justify-content:space-between;margin-bottom:18px">
+    <div class="row" style="gap:9px"><span style="font-size:19px;font-weight:500;letter-spacing:.02em">Aura</span><span class="dot" style="background:var(--ac);box-shadow:0 0 10px var(--ac)"></span></div>
+    <div class="row" style="gap:8px">
+      <div class="glass row" style="gap:7px;padding:7px 12px;border-radius:999px;font-size:13px"><i class="ti ti-map-pin" style="font-size:15px;color:var(--ac)" aria-hidden="true"></i>Oak Lawn, IL<i class="ti ti-search" style="font-size:14px;color:rgba(238,241,248,.45)" aria-hidden="true"></i></div>
+      <div class="glass row" style="border-radius:999px;font-size:12.5px;overflow:hidden"><span style="padding:7px 11px;background:var(--ac);color:#08233f;font-weight:500">°F</span><span style="padding:7px 11px;color:rgba(238,241,248,.6)">°C</span></div>
+      <div class="glass row" style="padding:8px;border-radius:50%"><i class="ti ti-settings" style="font-size:16px;color:rgba(238,241,248,.65)" aria-hidden="true"></i></div>
+    </div>
+  </div>
+
+  <div class="glass" style="padding:22px;margin-bottom:14px;overflow:hidden">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="lbl" style="margin-bottom:10px">Oak Lawn, Illinois</div>
+        <div class="row" style="gap:14px;align-items:flex-start">
+          <div style="font-weight:200;font-size:84px;line-height:.82;letter-spacing:-.03em">84°</div>
+          <div style="padding-top:6px">
+            <div style="font-size:16px;font-weight:400">Partly cloudy</div>
+            <div class="sub" style="font-size:13px;margin-top:3px">Feels like 83°</div>
+            <div class="row sub" style="gap:10px;font-size:13px;margin-top:8px"><span>H 85°</span><span style="opacity:.4">·</span><span>L 63°</span></div>
+          </div>
+        </div>
+      </div>
+      <i class="ti ti-cloud" style="font-size:62px;color:rgba(238,241,248,.88)" aria-hidden="true"></i>
+    </div>
+    <div class="sub" style="font-size:14px;line-height:1.6;margin-top:16px;max-width:430px;font-weight:300">Partly cloudy through the evening. Rain holds off until after 10 PM, then light showers overnight.</div>
+    <div class="row" style="gap:10px;margin-top:16px;flex-wrap:wrap">
+      <div class="row" style="gap:7px;font-size:12px;padding:6px 12px;border-radius:999px;background:rgba(111,183,242,.16);border:1px solid rgba(111,183,242,.3);color:#aed4f7"><span class="dot" style="background:var(--ac)"></span>High confidence</div>
+      <div class="row sub" style="gap:6px;font-size:12px;padding:6px 12px"><i class="ti ti-refresh" style="font-size:13px" aria-hidden="true"></i>Updated 2 min ago</div>
+      <div class="row sub" style="gap:6px;font-size:12px;padding:6px 12px"><i class="ti ti-arrow-up-right" style="font-size:13px;color:#efb05a" aria-hidden="true"></i>3° warmer than this morning</div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:8px;margin-bottom:16px;overflow:hidden">
+    <span class="chip on">Temperature</span><span class="chip">Precipitation</span><span class="chip">Wind</span><span class="chip">Air quality</span><span class="chip">UV</span><span class="chip">Sun &amp; moon</span>
+  </div>
+
+  <div class="glass" style="padding:16px 6px;margin-bottom:14px">
+    <div class="row" style="justify-content:space-around;align-items:flex-end">
+      <div class="hrcol"><span style="font-size:12px;color:var(--ac)">Now</span><i class="ti ti-cloud" style="font-size:20px" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">84°</span></div>
+      <div class="hrcol"><span class="sub" style="font-size:12px">5 PM</span><i class="ti ti-cloud" style="font-size:20px" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">83°</span></div>
+      <div class="hrcol"><span class="sub" style="font-size:12px">6 PM</span><i class="ti ti-cloud" style="font-size:20px" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">82°</span></div>
+      <div class="hrcol"><span class="sub" style="font-size:12px">7 PM</span><i class="ti ti-cloud" style="font-size:20px" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">80°</span></div>
+      <div class="hrcol"><span style="font-size:12px;color:#efb05a">8:26</span><i class="ti ti-sunset" style="font-size:20px;color:#efb05a" aria-hidden="true"></i><span class="sub" style="font-size:11px">Sunset</span></div>
+      <div class="hrcol"><span class="sub" style="font-size:12px">9 PM</span><i class="ti ti-moon" style="font-size:19px" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">75°</span></div>
+      <div class="hrcol"><span class="sub" style="font-size:12px">10 PM</span><i class="ti ti-cloud-rain" style="font-size:20px;color:#7fb2e8" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">73°</span><span style="font-size:11px;color:#7fb2e8">51%</span></div>
+      <div class="hrcol"><span class="sub" style="font-size:12px">11 PM</span><i class="ti ti-cloud-rain" style="font-size:20px;color:#7fb2e8" aria-hidden="true"></i><span style="font-size:15px;font-weight:300">71°</span><span style="font-size:11px;color:#7fb2e8">44%</span></div>
+    </div>
+  </div>
+
+  <div class="bento" style="margin-bottom:14px">
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-droplet" style="font-size:14px" aria-hidden="true"></i>Humidity</div><svg viewBox="0 0 100 58" style="width:100%;max-width:130px;margin:0 auto" role="img" aria-label="Humidity 69 percent high"><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7" stroke-linecap="round"/><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="#7fb2e8" stroke-width="7" stroke-linecap="round" stroke-dasharray="95 200"/></svg><div style="text-align:center;margin-top:-6px"><span class="val">69%</span> <span class="sub" style="font-size:12px">High</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-sun" style="font-size:14px" aria-hidden="true"></i>UV index</div><svg viewBox="0 0 100 58" style="width:100%;max-width:130px;margin:0 auto" role="img" aria-label="UV index 1 low"><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7" stroke-linecap="round"/><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="#7fd99a" stroke-width="7" stroke-linecap="round" stroke-dasharray="14 200"/></svg><div style="text-align:center;margin-top:-6px"><span class="val">1</span> <span class="sub" style="font-size:12px">Low</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-lungs" style="font-size:14px" aria-hidden="true"></i>Air quality</div><svg viewBox="0 0 100 58" style="width:100%;max-width:130px;margin:0 auto" role="img" aria-label="Air quality 43 good"><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7" stroke-linecap="round"/><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="#7fd99a" stroke-width="7" stroke-linecap="round" stroke-dasharray="40 200"/></svg><div style="text-align:center;margin-top:-6px"><span class="val">43</span> <span class="sub" style="font-size:12px">Good</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-wind" style="font-size:14px" aria-hidden="true"></i>Wind</div><svg viewBox="0 0 80 80" style="width:74px;margin:2px auto" role="img" aria-label="Wind 11 mph southwest"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.5"/><text x="40" y="14" fill="rgba(238,241,248,.5)" font-size="9" text-anchor="middle" font-family="Inter">N</text><g transform="rotate(45 40 40)"><line x1="40" y1="22" x2="40" y2="58" stroke="var(--ac)" stroke-width="2.5" stroke-linecap="round"/><path d="M40 20 l-5 9 l10 0 z" fill="#6fb7f2"/></g></svg><div style="text-align:center;margin-top:-2px"><span class="val" style="font-size:20px">11</span> <span class="sub" style="font-size:12px">mph SW</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-gauge" style="font-size:14px" aria-hidden="true"></i>Pressure</div><svg viewBox="0 0 100 58" style="width:100%;max-width:130px;margin:0 auto" role="img" aria-label="Pressure 29.79 inches falling"><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="7" stroke-linecap="round"/><path d="M8 52 A44 44 0 0 1 92 52" fill="none" stroke="#a88cf5" stroke-width="7" stroke-linecap="round" stroke-dasharray="71 200"/></svg><div style="text-align:center;margin-top:-6px"><i class="ti ti-arrow-down" style="font-size:13px;color:#efb05a" aria-hidden="true"></i> <span class="val" style="font-size:21px">29.79</span> <span class="sub" style="font-size:11px">in</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-temperature" style="font-size:14px" aria-hidden="true"></i>Dew point</div><div class="val" style="margin-top:4px">68°</div><div style="height:8px;border-radius:999px;background:rgba(255,255,255,.14);margin-top:8px;position:relative"><div style="position:absolute;left:0;top:0;height:100%;width:76%;border-radius:999px;background:linear-gradient(90deg,#7fb2e8,#efb05a)"></div></div><div class="row sub" style="justify-content:space-between;font-size:11px;margin-top:5px"><span>Dry</span><span>Muggy</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-eye" style="font-size:14px" aria-hidden="true"></i>Visibility</div><svg viewBox="0 0 120 40" style="width:100%;margin-top:6px" role="img" aria-label="Visibility 10 miles clear"><g fill="#6fb7f2"><rect x="2" y="28" width="8" height="10" rx="2"/><rect x="16" y="24" width="8" height="14" rx="2"/><rect x="30" y="20" width="8" height="18" rx="2"/><rect x="44" y="16" width="8" height="22" rx="2"/><rect x="58" y="12" width="8" height="26" rx="2"/><rect x="72" y="9" width="8" height="29" rx="2"/><rect x="86" y="6" width="8" height="32" rx="2"/><rect x="100" y="3" width="8" height="35" rx="2"/></g></svg><div style="margin-top:2px"><span class="val" style="font-size:22px">10</span> <span class="sub" style="font-size:12px">mi · clear</span></div></div>
+    <div class="glass mcard"><div class="row lbl" style="gap:6px"><i class="ti ti-sunrise" style="font-size:14px" aria-hidden="true"></i>Sun</div><svg viewBox="0 0 160 60" style="width:100%;margin-top:4px" role="img" aria-label="Sunrise 5:14am sunset 8:26pm"><line x1="6" y1="50" x2="154" y2="50" stroke="rgba(255,255,255,.16)" stroke-width="1" stroke-dasharray="3 3"/><path d="M10 50 Q80 -6 150 50" fill="none" stroke="rgba(239,176,90,.5)" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="130" cy="27" r="7" fill="#efb05a"/></svg><div class="row sub" style="justify-content:space-between;font-size:12px;margin-top:2px"><span>5:14<span style="font-size:10px"> am</span></span><span>8:26<span style="font-size:10px"> pm</span></span></div></div>
+    <div class="glass mcard" style="align-items:center;justify-content:center;text-align:center"><div class="row lbl" style="gap:6px;align-self:flex-start"><i class="ti ti-moon" style="font-size:14px" aria-hidden="true"></i>Moon</div><svg viewBox="0 0 60 60" style="width:48px;margin:2px auto" role="img" aria-label="Waning crescent moon"><circle cx="30" cy="30" r="20" fill="#465674"/><circle cx="22" cy="30" r="20" fill="#0a1626"/></svg><div class="sub" style="font-size:12px">Waning crescent</div></div>
+  </div>
+
+  <div class="glass" style="padding:18px;margin-bottom:14px">
+    <div class="lbl" style="margin-bottom:14px">Next 7 days</div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <div class="row" style="gap:12px"><span style="width:40px;font-size:13px">Today</span><i class="ti ti-cloud" style="font-size:18px;width:22px;text-align:center" aria-hidden="true"></i><span style="width:36px;font-size:12px;color:#7fb2e8">28%</span><span class="sub" style="font-size:13px;width:26px;text-align:right">63°</span><div style="flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.14);position:relative"><div style="position:absolute;left:30%;width:55%;height:100%;border-radius:999px;background:linear-gradient(90deg,#7fb2e8,#efb05a)"></div></div><span style="font-size:13px;width:26px">85°</span></div>
+      <div class="row" style="gap:12px"><span style="width:40px;font-size:13px" class="sub">Sun</span><i class="ti ti-sun" style="font-size:18px;width:22px;text-align:center;color:#efb05a" aria-hidden="true"></i><span style="width:36px;font-size:12px;color:rgba(238,241,248,.35)">—</span><span class="sub" style="font-size:13px;width:26px;text-align:right">54°</span><div style="flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.14);position:relative"><div style="position:absolute;left:18%;width:50%;height:100%;border-radius:999px;background:linear-gradient(90deg,#7fb2e8,#efb05a)"></div></div><span style="font-size:13px;width:26px">80°</span></div>
+      <div class="row" style="gap:12px"><span style="width:40px;font-size:13px" class="sub">Mon</span><i class="ti ti-sun" style="font-size:18px;width:22px;text-align:center;color:#efb05a" aria-hidden="true"></i><span style="width:36px;font-size:12px;color:rgba(238,241,248,.35)">—</span><span class="sub" style="font-size:13px;width:26px;text-align:right">54°</span><div style="flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.14);position:relative"><div style="position:absolute;left:16%;width:46%;height:100%;border-radius:999px;background:linear-gradient(90deg,#7fb2e8,#efb05a)"></div></div><span style="font-size:13px;width:26px">77°</span></div>
+      <div class="row" style="gap:12px"><span style="width:40px;font-size:13px" class="sub">Tue</span><i class="ti ti-cloud-rain" style="font-size:18px;width:22px;text-align:center;color:#7fb2e8" aria-hidden="true"></i><span style="width:36px;font-size:12px;color:#7fb2e8">64%</span><span class="sub" style="font-size:13px;width:26px;text-align:right">58°</span><div style="flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.14);position:relative"><div style="position:absolute;left:22%;width:38%;height:100%;border-radius:999px;background:linear-gradient(90deg,#7fb2e8,#efb05a)"></div></div><span style="font-size:13px;width:26px">73°</span></div>
+    </div>
+  </div>
+
+  <div class="lbl" style="margin:4px 0 10px">Card surface — pick the grey</div>
+  <div class="row" style="gap:12px">
+    <div style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:14px;text-align:center"><div style="font-weight:300;font-size:22px">A</div><div class="sub" style="font-size:11px;margin-top:4px">Subtle · 6%</div></div>
+    <div style="flex:1;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.17);border-radius:14px;padding:14px;text-align:center"><div style="font-weight:300;font-size:22px">B</div><div class="sub" style="font-size:11px;margin-top:4px">Lighter · 10% (shown)</div></div>
+    <div style="flex:1;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:14px;text-align:center"><div style="font-weight:300;font-size:22px">C</div><div class="sub" style="font-size:11px;margin-top:4px">Lightest · 15%</div></div>
+  </div>
+
+</div>
+  </div>
+</body>
+</html>

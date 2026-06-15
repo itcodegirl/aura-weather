@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura Glacier mockup — aura_7day_forecast_glacier_expandable</title>
+<style>
+  :root { --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(120% 90% at 80% -10%, #20324a 0%, transparent 55%),
+      linear-gradient(180deg, #122236 0%, #0b1626 60%, #070e1a 100%);
+    min-height: 100vh; color: #eef1f8;
+  }
+  .mock-wrap { max-width: 460px; margin: 0 auto; }
+  .mock-label {
+    font: 500 11px/1.4 var(--font-sans); letter-spacing:.14em; text-transform:uppercase;
+    color:#6fb7f2; margin:0 auto 14px; max-width:460px;
+    border-left:3px solid #6fb7f2; padding-left:8px;
+  }
+</style>
+</head>
+<body>
+  <div class="mock-label">Aura · Glacier · aura_7day_forecast_glacier_expandable</div>
+  <div class="mock-wrap">
+<h2 class="sr-only">Aura 7-day forecast section in the Glacier theme: each day row shows condition, a signal badge, high and low with a temperature range bar across the week's range, a rain-chance pill, and an obvious Details button that expands a drawer of extra stats. Today's drawer is open.</h2>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
+.aura7{font-family:'Inter',var(--font-sans);background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);border-radius:22px;padding:18px;color:#eef1f8;position:relative;--ac:#6fb7f2}
+.sub{color:rgba(238,241,248,.62);font-weight:300}
+.row{display:flex;align-items:center}
+.lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(238,241,248,.55);font-weight:500}
+.day{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:11px 13px;margin-bottom:9px;transition:background .2s}
+.day.open{background:rgba(255,255,255,.13)}
+.day.today{border-color:rgba(111,183,242,.55);box-shadow:inset 0 0 0 1px rgba(111,183,242,.25)}
+.badge{font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:6px;font-weight:500;display:inline-block;margin-top:5px}
+.bar{flex:1;min-width:70px;height:6px;border-radius:999px;background:rgba(255,255,255,.14);position:relative}
+.fill{position:absolute;top:0;height:100%;border-radius:999px;background:linear-gradient(90deg,#6fb7f2,#f3b765)}
+.rain{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);min-width:46px;justify-content:center}
+.exp{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:6px 11px;border-radius:999px;background:rgba(111,183,242,.16);border:1px solid rgba(111,183,242,.4);color:#bcdcfa;cursor:pointer;font-family:inherit}
+.exp:hover{background:rgba(111,183,242,.26)}
+.exp i{transition:transform .2s}
+.detail{max-height:0;overflow:hidden;transition:max-height .28s ease}
+.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.12)}
+.dstat{background:rgba(255,255,255,.07);border-radius:10px;padding:8px 9px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="aura7">
+
+  <div class="row" style="justify-content:space-between;margin-bottom:4px">
+    <div class="row" style="gap:9px"><i class="ti ti-calendar" style="font-size:18px;color:var(--ac)" aria-hidden="true"></i><span style="font-size:16px;font-weight:500">7-day forecast</span></div>
+    <span class="lbl" style="padding:4px 9px;border-radius:7px;background:rgba(255,255,255,.1)">Upcoming week</span>
+  </div>
+  <div class="sub" style="font-size:12.5px;margin-bottom:14px">Cooling trend · 54° to 84° · Wed peaks at 82% rain chance</div>
+
+  <div class="day today">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Today</div><div class="lbl" style="margin-top:2px">Light drizzle</div><span class="badge" style="background:rgba(243,183,101,.2);color:#f3b765">Warm peak</span></div>
+      <i class="ti ti-cloud-rain" style="font-size:21px;flex-shrink:0;color:#9cc9f2" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">84°</span> <span class="sub" style="font-size:12px">63°</span></div>
+      <div class="bar"><div class="fill" style="left:30%;width:70%"></div></div>
+      <span class="rain"><i class="ti ti-droplet" style="font-size:12px;color:var(--ac)" aria-hidden="true"></i>28%</span>
+      <button class="exp" aria-label="Toggle details for Today"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail">
+      <div class="sub" style="font-size:12.5px;margin-top:11px;font-style:normal;color:rgba(238,241,248,.75)">Warmest day of the week — light layers, an umbrella only for the evening drizzle.</div>
+      <div class="dgrid">
+        <div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">83°</div></div>
+        <div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">8 <span class="sub" style="font-size:11px">mph SSW</span></div></div>
+        <div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">69%</div></div>
+        <div class="dstat"><div class="lbl">UV index</div><div style="font-size:15px;margin-top:3px">1 <span class="sub" style="font-size:11px">Low</span></div></div>
+        <div class="dstat"><div class="lbl">Dew point</div><div style="font-size:15px;margin-top:3px">67°</div></div>
+        <div class="dstat"><div class="lbl">Precip</div><div style="font-size:15px;margin-top:3px">0.06"</div></div>
+        <div class="dstat"><div class="lbl">Sunrise</div><div style="font-size:15px;margin-top:3px">5:14</div></div>
+        <div class="dstat"><div class="lbl">Sunset</div><div style="font-size:15px;margin-top:3px">8:26</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="day">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Tomorrow</div><div class="lbl" style="margin-top:2px">Drizzle</div><span class="badge" style="background:rgba(255,255,255,.1);color:rgba(238,241,248,.7)">Steady</span></div>
+      <i class="ti ti-cloud-rain" style="font-size:21px;flex-shrink:0;color:#9cc9f2" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">71°</span> <span class="sub" style="font-size:12px">60°</span></div>
+      <div class="bar"><div class="fill" style="left:20%;width:37%"></div></div>
+      <span class="rain"><i class="ti ti-droplet" style="font-size:12px;color:var(--ac)" aria-hidden="true"></i>48%</span>
+      <button class="exp" aria-label="Toggle details for Tomorrow"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail"><div class="sub" style="font-size:12.5px;margin-top:11px;color:rgba(238,241,248,.75)">A steady, mild day — on-and-off drizzle, nothing heavy.</div><div class="dgrid"><div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">70°</div></div><div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">10 <span class="sub" style="font-size:11px">mph S</span></div></div><div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">74%</div></div><div class="dstat"><div class="lbl">UV index</div><div style="font-size:15px;margin-top:3px">2 <span class="sub" style="font-size:11px">Low</span></div></div></div></div>
+  </div>
+
+  <div class="day">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Mon</div><div class="lbl" style="margin-top:2px">Overcast</div><span class="badge" style="background:rgba(111,183,242,.18);color:#9cc9f2">Cool dip</span></div>
+      <i class="ti ti-cloud" style="font-size:21px;flex-shrink:0;color:rgba(238,241,248,.8)" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">74°</span> <span class="sub" style="font-size:12px">54°</span></div>
+      <div class="bar"><div class="fill" style="left:0%;width:67%"></div></div>
+      <span class="rain sub" style="font-size:11px">Low</span>
+      <button class="exp" aria-label="Toggle details for Monday"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail"><div class="sub" style="font-size:12.5px;margin-top:11px;color:rgba(238,241,248,.75)">Grey but dry — the coolest start of the week.</div><div class="dgrid"><div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">73°</div></div><div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">7 <span class="sub" style="font-size:11px">mph NE</span></div></div><div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">61%</div></div><div class="dstat"><div class="lbl">UV index</div><div style="font-size:15px;margin-top:3px">3 <span class="sub" style="font-size:11px">Mod</span></div></div></div></div>
+  </div>
+
+  <div class="day">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Tue</div><div class="lbl" style="margin-top:2px">Rain showers</div><span class="badge" style="background:rgba(123,178,232,.2);color:#aecdf2">Rain watch</span></div>
+      <i class="ti ti-cloud-rain" style="font-size:21px;flex-shrink:0;color:#9cc9f2" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">73°</span> <span class="sub" style="font-size:12px">56°</span></div>
+      <div class="bar"><div class="fill" style="left:7%;width:57%"></div></div>
+      <span class="rain"><i class="ti ti-droplet" style="font-size:12px;color:var(--ac)" aria-hidden="true"></i>78%</span>
+      <button class="exp" aria-label="Toggle details for Tuesday"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail"><div class="sub" style="font-size:12.5px;margin-top:11px;color:rgba(238,241,248,.75)">Showers likely through the afternoon — keep the umbrella handy.</div><div class="dgrid"><div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">72°</div></div><div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">12 <span class="sub" style="font-size:11px">mph SE</span></div></div><div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">81%</div></div><div class="dstat"><div class="lbl">Precip</div><div style="font-size:15px;margin-top:3px">0.34"</div></div></div></div>
+  </div>
+
+  <div class="day">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Wed</div><div class="lbl" style="margin-top:2px">Showers</div><span class="badge" style="background:rgba(123,178,232,.2);color:#aecdf2">Rain watch</span></div>
+      <i class="ti ti-cloud-rain" style="font-size:21px;flex-shrink:0;color:#9cc9f2" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">66°</span> <span class="sub" style="font-size:12px">56°</span></div>
+      <div class="bar"><div class="fill" style="left:7%;width:33%"></div></div>
+      <span class="rain"><i class="ti ti-droplet" style="font-size:12px;color:var(--ac)" aria-hidden="true"></i>82%</span>
+      <button class="exp" aria-label="Toggle details for Wednesday"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail"><div class="sub" style="font-size:12.5px;margin-top:11px;color:rgba(238,241,248,.75)">Wettest day of the week — peak rain chance at 82%.</div><div class="dgrid"><div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">65°</div></div><div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">14 <span class="sub" style="font-size:11px">mph E</span></div></div><div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">86%</div></div><div class="dstat"><div class="lbl">Precip</div><div style="font-size:15px;margin-top:3px">0.52"</div></div></div></div>
+  </div>
+
+  <div class="day">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Thu</div><div class="lbl" style="margin-top:2px">Heavy drizzle</div><span class="badge" style="background:rgba(123,178,232,.2);color:#aecdf2">Rain watch</span></div>
+      <i class="ti ti-cloud-rain" style="font-size:21px;flex-shrink:0;color:#9cc9f2" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">77°</span> <span class="sub" style="font-size:12px">58°</span></div>
+      <div class="bar"><div class="fill" style="left:13%;width:63%"></div></div>
+      <span class="rain"><i class="ti ti-droplet" style="font-size:12px;color:var(--ac)" aria-hidden="true"></i>82%</span>
+      <button class="exp" aria-label="Toggle details for Thursday"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail"><div class="sub" style="font-size:12.5px;margin-top:11px;color:rgba(238,241,248,.75)">Warmer again, but persistent drizzle all day.</div><div class="dgrid"><div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">78°</div></div><div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">9 <span class="sub" style="font-size:11px">mph S</span></div></div><div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">83%</div></div><div class="dstat"><div class="lbl">Precip</div><div style="font-size:15px;margin-top:3px">0.21"</div></div></div></div>
+  </div>
+
+  <div class="day" style="margin-bottom:0">
+    <div class="row" style="gap:12px">
+      <div style="width:118px;flex-shrink:0"><div style="font-size:14px;font-weight:500">Fri</div><div class="lbl" style="margin-top:2px">Partly cloudy</div><span class="badge" style="background:rgba(111,183,242,.18);color:#9cc9f2">Cool dip</span></div>
+      <i class="ti ti-cloud" style="font-size:21px;flex-shrink:0;color:rgba(238,241,248,.8)" aria-hidden="true"></i>
+      <div style="width:74px;flex-shrink:0;font-size:13px"><span style="font-weight:500">75°</span> <span class="sub" style="font-size:12px">54°</span></div>
+      <div class="bar"><div class="fill" style="left:0%;width:70%"></div></div>
+      <span class="rain sub" style="font-size:11px">Low</span>
+      <button class="exp" aria-label="Toggle details for Friday"><span class="etxt">Details</span><i class="ti ti-chevron-down" style="font-size:14px" aria-hidden="true"></i></button>
+    </div>
+    <div class="detail"><div class="sub" style="font-size:12.5px;margin-top:11px;color:rgba(238,241,248,.75)">Drier and brighter to close the week — a good outdoor day.</div><div class="dgrid"><div class="dstat"><div class="lbl">Feels like</div><div style="font-size:15px;margin-top:3px">76°</div></div><div class="dstat"><div class="lbl">Wind</div><div style="font-size:15px;margin-top:3px">8 <span class="sub" style="font-size:11px">mph NW</span></div></div><div class="dstat"><div class="lbl">Humidity</div><div style="font-size:15px;margin-top:3px">58%</div></div><div class="dstat"><div class="lbl">UV index</div><div style="font-size:15px;margin-top:3px">5 <span class="sub" style="font-size:11px">Mod</span></div></div></div></div>
+  </div>
+
+</div>
+<script>
+(function(){
+  var days=Array.prototype.slice.call(document.querySelectorAll('.aura7 .day'));
+  days.forEach(function(d,i){
+    var det=d.querySelector('.detail');var btn=d.querySelector('.exp');
+    function set(open){
+      d.classList.toggle('open',open);
+      det.style.maxHeight=open?det.scrollHeight+'px':'0px';
+      btn.querySelector('.etxt').textContent=open?'Hide':'Details';
+      btn.querySelector('i').style.transform=open?'rotate(180deg)':'';
+    }
+    set(i===0);
+    btn.addEventListener('click',function(){set(!d.classList.contains('open'));});
+  });
+})();
+</script>
+  </div>
+</body>
+</html>

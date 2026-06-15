@@ -4,7 +4,7 @@ import AlertsCard from "../AlertsCard";
 import ForecastCard from "../ForecastCard";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
-import { HourlyPanel, StormWatchPanel } from "../lazyPanels";
+import { StormWatchPanel } from "../lazyPanels";
 
 function SupplementalWeatherPanels({
   weather,
@@ -31,32 +31,6 @@ function SupplementalWeatherPanels({
           isRefreshing={isBackgroundLoading}
         />
       </PanelErrorBoundary>
-      <PanelErrorBoundary
-        label="Hourly outlook"
-        className="bento-chart"
-        style={cardStyleVariables[4]}
-      >
-        <Suspense
-          fallback={(
-            <CardFallback
-              className="bento-chart"
-              style={cardStyleVariables[4]}
-              title="Loading hourly outlook..."
-              isRefreshing={isBackgroundLoading}
-            />
-          )}
-        >
-          <HourlyPanel
-            weather={weather}
-            unit={unit}
-            chartTopColor={weatherInfo?.gradient?.[0]}
-            chartBottomColor={weatherInfo?.gradient?.[2] ?? weatherInfo?.gradient?.[1]}
-            style={cardStyleVariables[4]}
-            isRefreshing={isBackgroundLoading}
-          />
-        </Suspense>
-      </PanelErrorBoundary>
-
       <h2
         id={groupLabelIds.weekAhead}
         className="bento-group-label"

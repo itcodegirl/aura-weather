@@ -171,6 +171,24 @@ function formatUvIndex(value) {
   return value >= 10 ? String(Math.round(value)) : value.toFixed(1);
 }
 
+function buildDayWhy(daySignal, day) {
+  const pct = day.rainChanceMax;
+  switch (daySignal.tone) {
+    case "warm":
+      return "Warmest day of the stretch — light layers and sunscreen.";
+    case "cool":
+      return "Coolest day this week — bring a jacket for the morning.";
+    case "wet":
+      return pct !== null && pct >= 80
+        ? `High rain chance at ${pct}% — an umbrella is a must.`
+        : `Showers expected at ${pct}% — keep an umbrella handy.`;
+    case "steady":
+      return "Calm and consistent — the forecast looks predictable for the day.";
+    default:
+      return "Some readings are missing; forecast may be incomplete for this day.";
+  }
+}
+
 function formatWindSummary(day, unit) {
   const speed = toFiniteNumber(day.windSpeedMax);
   if (!Number.isFinite(speed)) {
@@ -351,11 +369,12 @@ function DayRow({
           )}
         </div>
 
-        <span
-          className={`forecast-row-chevron${isExpanded ? " is-expanded" : ""}`}
-          aria-hidden="true"
-        >
-          <ChevronDown size={16} />
+        <span className="forecast-details-btn" aria-hidden="true">
+          <span className="forecast-details-btn-text">Details</span>
+          <ChevronDown
+            size={13}
+            className={`forecast-details-btn-chevron${isExpanded ? " is-expanded" : ""}`}
+          />
         </span>
       </button>
 
@@ -366,6 +385,7 @@ function DayRow({
           role="region"
           aria-label={`${label} forecast details`}
         >
+          <p className="forecast-detail-why">{buildDayWhy(daySignal, day)}</p>
           <dl className="forecast-detail-grid">
             <DetailMetric
               label="Rain chance"

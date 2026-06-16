@@ -1,0 +1,31 @@
+.data-trust-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 4px 2px;
+  color: rgba(238, 241, 248, 0.63);
+  font-size: 11px;
+  font-weight: 300;
+}
+
+.data-trust-footer-location,
+.data-trust-footer-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.data-trust-footer-icon {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.data-trust-footer-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #7fd99a;
+}

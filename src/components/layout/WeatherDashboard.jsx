@@ -5,8 +5,9 @@ import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
-import { PRELOAD_HEAVY_PANELS, RainPanel } from "../lazyPanels";
+import { PRELOAD_HEAVY_PANELS, RainPanel, HourlyPanel } from "../lazyPanels";
 import { formatDisplayCountry } from "../../utils/locationDisplay";
+import DataTrustFooter from "../DataTrustFooter";
 import "./WeatherDashboard.css";
 const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
 // Data-status is a diagnostic surface most users never open. Defer
@@ -39,6 +40,7 @@ const GROUP_LABEL_IDS = {
   nearTermOutlook: "group-near-term-outlook",
   riskSignals: "group-risk-signals",
   weekAhead: "group-week-ahead",
+  atmosphere: "group-atmosphere",
 };
 
 function WeatherDashboard({
@@ -52,6 +54,10 @@ function WeatherDashboard({
   trustMeta,
   prefersReducedData = false,
 }) {
+  const showHourlyPanel = useDeferredMount(Boolean(weather), {
+    idleTimeout: 1800,
+    fallbackDelay: 900,
+  });
   const showRainPanel = useDeferredMount(Boolean(weather), {
     idleTimeout: 1800,
     fallbackDelay: 900,
@@ -126,6 +132,8 @@ function WeatherDashboard({
           climateStatus={climateStatus}
           style={CARD_STYLE_VARIABLES[0]}
           isRefreshing={isBackgroundLoading}
+          aqi={weather?.aqi}
+          trustMeta={trustMeta}
         />
       </PanelErrorBoundary>
 
@@ -142,6 +150,39 @@ function WeatherDashboard({
           style={CARD_STYLE_VARIABLES[1]}
           isRefreshing={isBackgroundLoading}
         />
+      </PanelErrorBoundary>
+
+      <PanelErrorBoundary
+        label="Hourly forecast"
+        className="bento-chart hourly-chart"
+        style={CARD_STYLE_VARIABLES[1]}
+      >
+        {showHourlyPanel ? (
+          <Suspense
+            fallback={(
+              <CardFallback
+                className="bento-chart hourly-chart"
+                style={CARD_STYLE_VARIABLES[1]}
+                title="Loading hourly forecast..."
+                isRefreshing={isBackgroundLoading}
+              />
+            )}
+          >
+            <HourlyPanel
+              weather={weather}
+              unit={unit}
+              style={CARD_STYLE_VARIABLES[1]}
+              isRefreshing={isBackgroundLoading}
+            />
+          </Suspense>
+        ) : (
+          <CardFallback
+            className="bento-chart hourly-chart"
+            style={CARD_STYLE_VARIABLES[1]}
+            title="Loading hourly forecast..."
+            isRefreshing={isBackgroundLoading}
+          />
+        )}
       </PanelErrorBoundary>
 
       <h2
@@ -243,6 +284,11 @@ function WeatherDashboard({
           </Suspense>
         ) : null}
       </details>
+      <DataTrustFooter
+        weather={weather}
+        location={location}
+        trustMeta={trustMeta}
+      />
     </main>
   );
 }

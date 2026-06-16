@@ -90,9 +90,9 @@
   border-radius: var(--radius-pill);
   border: var(--border-soft);
   background: var(--surface-1);
-  color: var(--text-dim);
-  font-size: 10px;
-  font-weight: 700;
+  color: rgba(238, 241, 248, 0.66);
+  font-size: 11px;
+  font-weight: 500;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -116,10 +116,10 @@
 
 .storm-module-summary {
   margin: -2px 0 0;
-  color: var(--text-muted);
+  color: rgba(238, 241, 248, 0.68);
   font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .storm-term-hint {
@@ -139,15 +139,17 @@
 }
 
 .storm-detail-label {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
+  color: rgba(238, 241, 248, 0.66);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 .storm-detail-value {
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
+  color: #eef1f8;
 }
 
 .storm-detail-value[data-state="missing"],
@@ -376,8 +378,7 @@
 }
 
 @media (pointer: coarse) and (max-width: 420px) {
-  .storm-subtitle,
-  .storm-module-kicker {
+  .storm-subtitle {
     font-size: 10px;
   }
 }

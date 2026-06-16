@@ -76,13 +76,11 @@
 }
 
 .forecast-row-trigger {
-  position: relative;
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(88px, 116px) 38px minmax(164px, 186px) minmax(0, 1fr) minmax(72px, 86px);
+  grid-template-columns: minmax(88px, 116px) 38px minmax(164px, 186px) minmax(0, 1fr) minmax(72px, 86px) auto;
   align-items: center;
   gap: 12px;
-  padding-inline-end: 32px;
   color: inherit;
   text-align: left;
 }
@@ -117,10 +115,22 @@
   border-color: rgba(153, 218, 255, 0.38);
 }
 
+.forecast-row.is-today {
+  border-color: rgba(111, 183, 242, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(111, 183, 242, 0.25);
+}
+
 .forecast-row.is-expanded {
   border-color: rgba(126, 221, 255, 0.42);
   box-shadow:
     inset 0 1px 0 rgba(236, 244, 255, 0.12),
+    0 14px 28px rgba(3, 8, 22, 0.26);
+}
+
+.forecast-row.is-today.is-expanded {
+  border-color: rgba(111, 183, 242, 0.65);
+  box-shadow:
+    inset 0 0 0 1px rgba(111, 183, 242, 0.3),
     0 14px 28px rgba(3, 8, 22, 0.26);
 }
 
@@ -289,20 +299,33 @@
   font-weight: 700;
 }
 
-.forecast-row-chevron {
-  position: absolute;
-  top: 50%;
-  right: 4px;
+/* Details accent pill — last column of each day row */
+.forecast-details-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: rgba(210, 227, 252, 0.86);
-  transform: translateY(-50%);
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: var(--radius-pill);
+  background: rgba(111, 183, 242, 0.14);
+  border: 1px solid rgba(111, 183, 242, 0.38);
+  color: #bcdcfa;
+  font-size: 11.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+
+.forecast-row-trigger:hover .forecast-details-btn,
+.forecast-row-trigger:focus-visible .forecast-details-btn {
+  background: rgba(111, 183, 242, 0.24);
+}
+
+.forecast-details-btn-chevron {
   transition: transform var(--motion-fast) var(--ease-standard);
 }
 
-.forecast-row-chevron.is-expanded {
-  transform: translateY(-50%) rotate(180deg);
+.forecast-details-btn-chevron.is-expanded {
+  transform: rotate(180deg);
 }
 
 .forecast-range {
@@ -340,9 +363,17 @@
   border-top: 1px solid rgba(184, 208, 245, 0.14);
 }
 
+.forecast-detail-why {
+  margin: 0 0 10px;
+  color: rgba(238, 241, 248, 0.75);
+  font-size: 12.5px;
+  font-weight: 300;
+  line-height: 1.45;
+}
+
 .forecast-detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
 }
@@ -388,7 +419,7 @@
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
 @media (max-width: 980px) {
   .forecast-row-trigger {
-    grid-template-columns: minmax(82px, 1fr) 36px minmax(152px, 178px) minmax(0, 1fr) minmax(66px, 82px);
+    grid-template-columns: minmax(82px, 1fr) 36px minmax(152px, 178px) minmax(0, 1fr) minmax(66px, 82px) auto;
     gap: 10px;
   }
 
@@ -397,7 +428,7 @@
   }
 
   .forecast-detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -415,9 +446,8 @@
     grid-template-columns: minmax(76px, 1fr) 34px 1fr auto;
     grid-template-areas:
       "day icon temps precip"
-      "range range range range";
+      "range range details details";
     gap: 10px;
-    padding-inline-end: 28px;
   }
 
   .forecast-day-wrap {
@@ -437,7 +467,7 @@
 
   .forecast-range {
     grid-area: range;
-    margin-top: 2px;
+    align-self: center;
   }
 
   .forecast-precip {
@@ -446,8 +476,14 @@
     padding: 7px 9px;
   }
 
-  .forecast-row-chevron {
-    right: 0;
+  .forecast-details-btn {
+    grid-area: details;
+    justify-self: end;
+    align-self: center;
+  }
+
+  .forecast-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -466,6 +502,11 @@
 
   .forecast-detail-grid {
     gap: 8px;
+  }
+
+  .forecast-details-btn {
+    font-size: 11px;
+    padding: 5px 9px;
   }
 }
 
@@ -491,7 +532,6 @@
   .forecast-row-trigger {
     grid-template-columns: minmax(70px, 1fr) 32px 1fr auto;
     gap: 8px;
-    padding-inline-end: 26px;
   }
 
   .forecast-row:first-child::before {
@@ -552,9 +592,16 @@
     grid-template-areas:
       "day icon precip"
       "temps temps temps"
-      "range range range";
+      "range range range"
+      "details details details";
     gap: 7px;
-    padding-inline-end: 24px;
+  }
+
+  .forecast-details-btn {
+    grid-area: details;
+    justify-self: center;
+    font-size: 11px;
+    padding: 5px 10px;
   }
 
   .forecast-row:first-child::before {
@@ -621,6 +668,51 @@
   .bento-forecast .forecast-subtitle {
     font-size: 10px;
   }
+}
+
+/* Mini hourly temperature curve in the expanded day drawer */
+.forecast-mini-curve {
+  margin: 10px 0 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.forecast-mini-curve-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.forecast-mini-curve-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.55);
+}
+
+.forecast-mini-curve-range {
+  font-size: 11px;
+  color: rgba(238, 241, 248, 0.62);
+  font-weight: 300;
+}
+
+.forecast-mini-curve-svg {
+  display: block;
+  width: 100%;
+  height: 60px;
+}
+
+.forecast-mini-curve-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1px;
+  font-size: 10px;
+  color: rgba(238, 241, 248, 0.5);
+  font-weight: 300;
 }
 
 

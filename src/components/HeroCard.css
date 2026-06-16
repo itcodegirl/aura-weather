@@ -592,7 +592,7 @@
   gap: 12px;
   padding: 12px;
   border-radius: var(--radius-sm);
-  background: var(--subcard-bg);
+  background: var(--bg-well);
   border: var(--subcard-border);
   box-shadow: var(--subcard-shadow);
 }

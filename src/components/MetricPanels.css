@@ -212,7 +212,7 @@
   padding: var(--subcard-padding);
   border-radius: calc(var(--radius-sm) + 2px);
   border: var(--subcard-border);
-  background: var(--subcard-bg);
+  background: var(--bg-well);
   box-shadow: var(--subcard-shadow);
 }
 

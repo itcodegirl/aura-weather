@@ -42,11 +42,10 @@
   --shadow-raise: 0 10px 22px rgba(3, 9, 24, 0.26);
   --shadow-raise-lg: 0 18px 44px rgba(3, 9, 24, 0.32);
 
-  --bg-card: rgba(11, 19, 37, 0.68);
-  --bg-card-hover: rgba(16, 29, 55, 0.76);
-  --panel: rgba(9, 17, 34, 0.78);
-  --panel-soft: rgba(12, 22, 42, 0.66);
-  --subcard-bg: rgba(11, 20, 38, 0.62);
+  /* Glacier glass pass: removed the dark-navy surface tokens --bg-card,
+     --bg-card-hover, --panel, --panel-soft, and --subcard-bg. They have
+     zero consumers — cards use --bg-large-card, hover/tiles --bg-tile,
+     and wells now reference --bg-well directly. */
   --subcard-border: 1px solid rgba(196, 213, 241, 0.15);
   --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
 

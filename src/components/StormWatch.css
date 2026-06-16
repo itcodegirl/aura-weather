@@ -60,7 +60,7 @@
   border: var(--subcard-border);
   background:
     linear-gradient(165deg, rgba(12, 24, 48, 0.56), rgba(7, 15, 32, 0.48)),
-    var(--subcard-bg);
+    var(--bg-well);
   box-shadow: var(--subcard-shadow);
 }
 

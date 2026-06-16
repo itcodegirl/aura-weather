@@ -1,6 +1,6 @@
 ﻿:root {
   --font-sans: "Inter", "Manrope", "Segoe UI", sans-serif;
-  --font-display: "Space Grotesk", "Manrope", sans-serif;
+  --font-display: "Inter", "Manrope", sans-serif;
 
   --text: #eef1f8;
   --text-muted: rgba(238, 241, 248, 0.7);

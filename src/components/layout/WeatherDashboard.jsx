@@ -5,7 +5,7 @@ import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
-import { PRELOAD_HEAVY_PANELS, RainPanel, HourlyPanel } from "../lazyPanels";
+import { PRELOAD_HEAVY_PANELS, RainPanel, HourlyPanel, RadarPanel } from "../lazyPanels";
 import { formatDisplayCountry } from "../../utils/locationDisplay";
 import DataTrustFooter from "../DataTrustFooter";
 import "./WeatherDashboard.css";
@@ -61,6 +61,12 @@ function WeatherDashboard({
   const showRainPanel = useDeferredMount(Boolean(weather), {
     idleTimeout: 1800,
     fallbackDelay: 900,
+  });
+  // Radar pulls in Leaflet, so defer it further than the other panels —
+  // it gates on a resolved location (its only input) rather than weather.
+  const showRadarPanel = useDeferredMount(Boolean(location), {
+    idleTimeout: 3200,
+    fallbackDelay: 2000,
   });
   const showSupplementalPanels = useDeferredMount(Boolean(weather), {
     idleTimeout: 2800,
@@ -221,6 +227,38 @@ function WeatherDashboard({
             className="bento-rain"
             style={CARD_STYLE_VARIABLES[2]}
             title="Loading rain outlook..."
+            isRefreshing={isBackgroundLoading}
+          />
+        )}
+      </PanelErrorBoundary>
+
+      <PanelErrorBoundary
+        label="Precipitation radar"
+        className="bento-radar"
+        style={CARD_STYLE_VARIABLES[4]}
+      >
+        {showRadarPanel ? (
+          <Suspense
+            fallback={(
+              <CardFallback
+                className="bento-radar"
+                style={CARD_STYLE_VARIABLES[4]}
+                title="Loading precipitation radar..."
+                isRefreshing={isBackgroundLoading}
+              />
+            )}
+          >
+            <RadarPanel
+              location={location}
+              style={CARD_STYLE_VARIABLES[4]}
+              isRefreshing={isBackgroundLoading}
+            />
+          </Suspense>
+        ) : (
+          <CardFallback
+            className="bento-radar"
+            style={CARD_STYLE_VARIABLES[4]}
+            title="Loading precipitation radar..."
             isRefreshing={isBackgroundLoading}
           />
         )}

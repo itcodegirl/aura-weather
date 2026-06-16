@@ -69,12 +69,15 @@
   --green-good-light: #a9e2bd;
 
   /* Card surface tiers — Glacier glass system.
-     Tile (.16) → large card (.11) → inset well (.055) → outer panel (.04).
-     Nesting rule: outer is always darker so inner tiles read as elevated. */
+     Tile (+.16) and large card (+.11) are ADDITIVE white over the dusk
+     gradient. The inset WELL is SUBTRACTIVE (a dark overlay), so nested
+     stats read recessed AND keep muted/dim text above AA 4.5:1 even on
+     the brightest dusk — a .055 white well composited brighter than its
+     card (raised, backwards from §1) and failed AA on bright conditions. */
   --bg-tile: rgba(255, 255, 255, 0.16);
   --bg-tile-border: rgba(255, 255, 255, 0.22);
   --bg-large-card: rgba(255, 255, 255, 0.11);
-  --bg-well: rgba(255, 255, 255, 0.055);
+  --bg-well: rgba(0, 0, 0, 0.3);
   --bg-panel-outer: rgba(255, 255, 255, 0.04);
 
   --hero-unit-size: 28px;

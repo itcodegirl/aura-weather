@@ -515,7 +515,7 @@
 }
 
 .hero-guidance-item--notice {
-  border-color: rgba(246, 196, 83, 0.32);
+  border-color: rgba(243, 183, 101, 0.32);
   background: linear-gradient(160deg, rgba(60, 48, 22, 0.32), rgba(11, 20, 38, 0.48));
 }
 
@@ -536,7 +536,7 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(198, 215, 242, 0.16);
   background:
-    linear-gradient(135deg, rgba(139, 211, 255, 0.08), rgba(246, 196, 83, 0.08)),
+    linear-gradient(135deg, rgba(111, 183, 242, 0.08), rgba(243, 183, 101, 0.08)),
     rgba(8, 17, 36, 0.42);
 }
 
@@ -560,7 +560,7 @@
   height: 28px;
   border-radius: 9px;
   color: #fde68a;
-  background: rgba(246, 196, 83, 0.12);
+  background: rgba(243, 183, 101, 0.12);
 }
 
 .hero-daylight-copy {
@@ -605,7 +605,7 @@
   place-items: center;
   border-radius: 10px;
   color: #dcf7ff;
-  background: linear-gradient(160deg, rgba(139, 211, 255, 0.18), rgba(246, 196, 83, 0.09));
+  background: linear-gradient(160deg, rgba(111, 183, 242, 0.18), rgba(243, 183, 101, 0.09));
 }
 
 .stat-label {

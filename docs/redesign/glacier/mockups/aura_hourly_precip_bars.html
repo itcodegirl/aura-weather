@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura · Glacier — Hourly (Precipitation) as bars</title>
+<style>
+  :root{ --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --glacier:#6fb7f2; --amber:#f3b765; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:28px 18px; font-family:var(--font); color:#eef1f8;
+    background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start; }
+  .stage{ width:100%; max-width:600px; }
+  .cap-eyebrow{ font:500 11px/1.4 var(--font); letter-spacing:.14em; text-transform:uppercase;
+        color:var(--glacier); border-left:3px solid var(--glacier); padding-left:8px; margin:0 0 14px; }
+
+  .card{ background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+         border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:18px; }
+  .chead{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+  .chead .ttl{ display:flex; align-items:center; gap:9px; font-size:18px; font-weight:600; }
+  .chead .ttl svg{ color:var(--glacier); }
+  .seg{ display:inline-flex; gap:3px; padding:4px; border-radius:11px; background:rgba(8,17,36,.45); border:1px solid rgba(255,255,255,.1); }
+  .seg button{ font-family:inherit; font-size:12.5px; padding:7px 13px; border-radius:8px; border:none; background:transparent; color:rgba(238,241,248,.66); cursor:pointer; }
+  .seg button.on{ background:var(--glacier); color:#06223c; font-weight:600; }
+
+  /* ===== plot (bars + threshold) — fixed 140px = 0–100% ===== */
+  .plot{ position:relative; height:140px; display:flex; align-items:flex-end; margin:0 2px; }
+  .col{ flex:1; min-width:0; position:relative; height:100%; }
+  .bar{ position:absolute; bottom:0; left:17%; right:17%; border-radius:5px 5px 0 0;
+        background:linear-gradient(180deg,#9fd0ff,#5aa0e4); box-shadow:0 0 0 1px rgba(255,255,255,.05) inset; }
+  .col.lo .bar{ background:linear-gradient(180deg,rgba(159,208,255,.6),rgba(90,160,228,.55)); }
+  .col.sel .bar{ background:linear-gradient(180deg,#bfe2ff,#6fb7f2); box-shadow:0 0 14px rgba(111,183,242,.55), 0 0 0 1px rgba(191,226,255,.6) inset; }
+  .vlabel{ position:absolute; left:0; right:0; text-align:center; font-size:11.5px; font-weight:600; color:#eef1f8; }
+  .col.lo .vlabel{ color:rgba(238,241,248,.72); font-weight:500; }
+  .col.sel .vlabel{ color:#bfe2ff; }
+  .threshold{ position:absolute; left:0; right:0; bottom:70px; border-top:1px dashed rgba(111,183,242,.45); }
+  .threshold span{ position:absolute; right:0; top:-15px; font-size:10px; color:rgba(159,208,255,.8); letter-spacing:.03em; }
+
+  .axis{ display:flex; margin:7px 2px 0; }
+  .ax{ flex:1; text-align:center; font-size:10.5px; color:rgba(238,241,248,.6); }
+  .ax.sel{ color:#eef1f8; font-weight:500; }
+  .baseline{ height:1px; background:rgba(255,255,255,.12); margin:0 2px; }
+
+  .legend{ display:flex; align-items:center; gap:16px; margin-top:13px; font-size:11.5px; color:rgba(238,241,248,.6); }
+  .legend i{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:11px; height:11px; border-radius:3px; background:linear-gradient(180deg,#9fd0ff,#5aa0e4); }
+  .dash{ width:16px; border-top:1px dashed rgba(111,183,242,.7); }
+
+  .summary{ font-size:13px; color:rgba(238,241,248,.7); font-weight:300; margin:15px 2px 0; }
+  .summary b{ color:#eef1f8; font-weight:500; }
+
+  .detail{ display:flex; align-items:baseline; gap:10px; margin-top:13px; padding:13px 15px; border-radius:12px;
+           background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); }
+  .detail .t{ font-size:13px; color:rgba(238,241,248,.66); }
+  .detail .v{ font-size:23px; font-weight:300; }
+  .detail .meta{ font-size:12.5px; color:rgba(238,241,248,.68); }
+
+  .scroll{ display:flex; gap:9px; margin-top:13px; overflow-x:auto; padding-bottom:4px; }
+  .pill{ flex:0 0 auto; width:74px; text-align:center; padding:11px 0; border-radius:13px;
+         background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); }
+  .pill.sel{ background:rgba(111,183,242,.16); border-color:rgba(111,183,242,.45); }
+  .pill .h{ font-size:12px; color:rgba(238,241,248,.7); }
+  .pill .s{ font-size:15px; font-weight:600; margin-top:3px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="cap-eyebrow">Aura · Glacier · hourly — Precipitation as bars (matches the Wind treatment)</div>
+
+  <!--WIDGET-START-->
+  <div class="card">
+    <div class="chead">
+      <div class="ttl"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a5 5 0 0 1-.5-9.97A6 6 0 0 1 18 7a4 4 0 0 1 0 9"/><path d="M8 19v2M12 20v2M16 19v2"/></svg>Hourly forecast</div>
+      <div class="seg"><button class="on">Precipitation</button><button>Temperature</button><button>Wind</button></div>
+    </div>
+
+    <!-- bars = chance of rain, scale 0–100% (140px) · dashed line = 50% likely -->
+    <div class="plot">
+      <div class="threshold"><span>50% · likely</span></div>
+      <div class="col lo sel"><span class="vlabel" style="bottom:38px">24%</span><span class="bar" style="height:34px"></span></div>
+      <div class="col lo"><span class="vlabel" style="bottom:29px">18%</span><span class="bar" style="height:25px"></span></div>
+      <div class="col lo"><span class="vlabel" style="bottom:31px">19%</span><span class="bar" style="height:27px"></span></div>
+      <div class="col lo"><span class="vlabel" style="bottom:36px">23%</span><span class="bar" style="height:32px"></span></div>
+      <div class="col"><span class="vlabel" style="bottom:63px">42%</span><span class="bar" style="height:59px"></span></div>
+      <div class="col"><span class="vlabel" style="bottom:77px">52%</span><span class="bar" style="height:73px"></span></div>
+      <div class="col"><span class="vlabel" style="bottom:80px">54%</span><span class="bar" style="height:76px"></span></div>
+      <div class="col"><span class="vlabel" style="bottom:57px">38%</span><span class="bar" style="height:53px"></span></div>
+      <div class="col lo"><span class="vlabel" style="bottom:42px">27%</span><span class="bar" style="height:38px"></span></div>
+      <div class="col"><span class="vlabel" style="bottom:46px">30%</span><span class="bar" style="height:42px"></span></div>
+      <div class="col lo"><span class="vlabel" style="bottom:35px">22%</span><span class="bar" style="height:31px"></span></div>
+      <div class="col lo"><span class="vlabel" style="bottom:26px">16%</span><span class="bar" style="height:22px"></span></div>
+    </div>
+    <div class="baseline"></div>
+    <div class="axis">
+      <div class="ax sel">7P</div><div class="ax">8P</div><div class="ax">9P</div><div class="ax">10P</div><div class="ax">11P</div><div class="ax">12A</div><div class="ax">1A</div><div class="ax">2A</div><div class="ax">3A</div><div class="ax">4A</div><div class="ax">5A</div><div class="ax">6A</div>
+    </div>
+
+    <div class="legend">
+      <i><span class="sw"></span>Chance of rain</i>
+      <i><span class="dash"></span>50% = rain likely</i>
+    </div>
+
+    <p class="summary"><b>Driest now, wettest at midnight.</b> Rain chance climbs from ~20% this evening to a 54% peak around 1 AM, then tapers off before dawn — the window to watch is roughly 11 PM–2 AM.</p>
+
+    <div class="detail"><span class="t">7 PM</span><span class="v">24<small style="font-size:12px;color:rgba(238,241,248,.6)">%</small></span><span class="meta">· 0.00 in so far · mostly clear for now</span></div>
+
+    <div class="scroll">
+      <div class="pill sel"><div class="h">7 PM</div><div class="s">24%</div></div>
+      <div class="pill"><div class="h">8 PM</div><div class="s">18%</div></div>
+      <div class="pill"><div class="h">9 PM</div><div class="s">19%</div></div>
+      <div class="pill"><div class="h">10 PM</div><div class="s">23%</div></div>
+      <div class="pill"><div class="h">11 PM</div><div class="s">42%</div></div>
+      <div class="pill"><div class="h">12 AM</div><div class="s">52%</div></div>
+    </div>
+  </div>
+  <!--WIDGET-END-->
+</div>
+</body>
+</html>

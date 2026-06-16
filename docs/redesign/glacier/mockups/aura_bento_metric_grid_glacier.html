@@ -3,109 +3,158 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aura Glacier mockup — aura_bento_metric_grid_glacier</title>
+<title>Aura · Glacier — Atmosphere bento (v3)</title>
 <style>
-  :root { --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 28px;
-    font-family: var(--font-sans);
-    background:
-      radial-gradient(120% 90% at 80% -10%, #20324a 0%, transparent 55%),
-      linear-gradient(180deg, #122236 0%, #0b1626 60%, #070e1a 100%);
-    min-height: 100vh; color: #eef1f8;
-  }
-  .mock-wrap { max-width: 460px; margin: 0 auto; }
-  .mock-label {
-    font: 500 11px/1.4 var(--font-sans); letter-spacing:.14em; text-transform:uppercase;
-    color:#6fb7f2; margin:0 auto 14px; max-width:460px;
-    border-left:3px solid #6fb7f2; padding-left:8px;
-  }
+  :root{ --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --glacier:#6fb7f2; --amber:#f3b765; --green:#7fd99a; --uv:#ef8f6a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:28px 18px; font-family:var(--font); color:#eef1f8;
+    background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start; }
+  .stage{ width:100%; max-width:560px; }
+  .cap-eyebrow{ font:500 11px/1.4 var(--font); letter-spacing:.14em; text-transform:uppercase;
+        color:var(--glacier); border-left:3px solid var(--glacier); padding-left:8px; margin:0 0 14px; }
+
+  .panel{ background:radial-gradient(120% 90% at 80% 0%,rgba(111,183,242,.06),transparent 55%),
+          linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+          border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:18px; }
+  .phead{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .phead .ic{ color:var(--glacier); display:flex; }
+  .phead h3{ margin:0; font-size:16px; font-weight:500; }
+
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .full{ grid-column:1 / -1; }
+  .tile{ background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:15px;
+         padding:14px; display:flex; flex-direction:column; gap:9px; }
+
+  .tlabel{ display:flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.11em;
+           text-transform:uppercase; color:rgba(238,241,248,.66); font-weight:500; }
+  .tlabel .qual{ margin-left:auto; font-size:11px; letter-spacing:.02em; text-transform:none; font-weight:500; padding:2px 8px; border-radius:999px; }
+  .q-good{ color:var(--green); background:rgba(127,217,154,.13); border:1px solid rgba(127,217,154,.36); }
+  .q-warn{ color:var(--amber); background:rgba(243,183,101,.12); border:1px solid rgba(243,183,101,.34); }
+  .q-high{ color:#f4a07f; background:rgba(239,143,106,.13); border:1px solid rgba(239,143,106,.38); }
+  .q-cool{ color:#9cc9f2; background:rgba(111,183,242,.12); border:1px solid rgba(111,183,242,.34); }
+
+  .gaugewrap{ text-align:center; }
+  .gaugewrap svg{ width:100%; max-width:118px; }
+  .reading{ text-align:center; margin-top:-8px; }
+  .val{ font-weight:300; font-size:25px; line-height:1; }
+  .val.sm{ font-size:20px; }
+  .unit{ font-size:12px; color:rgba(238,241,248,.66); }
+
+  .scale{ margin-top:2px; }
+  .track{ position:relative; height:5px; border-radius:999px; background:rgba(255,255,255,.12); }
+  .track .mk{ position:absolute; top:50%; transform:translate(-50%,-50%); width:4px; height:12px; border-radius:2px; background:#fff; box-shadow:0 0 5px rgba(0,0,0,.5); }
+  .track.grad{ background:linear-gradient(90deg,#6fb7f2,#7fd99a,#f3d765,#e8745b); }
+  .track.uvgrad{ background:linear-gradient(90deg,#7fd99a,#f3d765 45%,#ef8f6a 72%,#d65a8f); }
+  .ends{ display:flex; justify-content:space-between; font-size:11px; color:rgba(238,241,248,.6); margin-top:5px; }
+
+  .cap{ font-size:12.5px; line-height:1.45; color:rgba(238,241,248,.68); font-weight:300; margin:0; }
+  .cap b{ color:#eef1f8; font-weight:500; }
+
+  .row{ display:flex; align-items:center; }
+  .wide-sun{ display:grid; grid-template-columns:1fr; gap:8px; }
 </style>
 </head>
 <body>
-  <div class="mock-label">Aura · Glacier · aura_bento_metric_grid_glacier</div>
-  <div class="mock-wrap">
-<h2 class="sr-only">Aura atmosphere bento grid in the Glacier theme: humidity, UV index, air quality (shown unavailable), and pressure gauges; a wide wind compass and a wide sun arc; a wide dew-point comfort bar, visibility, and moon phase. Tiles use a shared instrument style and semantic color, and the air-quality tile shows an honest missing-data state.</h2>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
-.aurab{font-family:'Inter',var(--font-sans);background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);border-radius:22px;padding:18px;color:#eef1f8;--ac:#6fb7f2}
-.sub{color:rgba(238,241,248,.62);font-weight:300}
-.row{display:flex;align-items:center}
-.lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(238,241,248,.6);font-weight:500}
-.bento{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.tile{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);border-radius:15px;padding:13px;display:flex;flex-direction:column;gap:7px}
-.s2{grid-column:span 2}
-.val{font-weight:300;font-size:25px;line-height:1}
-.miss{background:rgba(255,255,255,.06);border-style:dashed;border-color:rgba(255,255,255,.2)}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-</style>
+<div class="stage">
+  <div class="cap-eyebrow">Aura · Glacier · atmosphere — v3 (one home: UV + AQI in, Env-Exposure section retired)</div>
 
-<div class="aurab">
-  <div class="row" style="gap:9px;margin-bottom:14px"><i class="ti ti-windsock" style="font-size:18px;color:var(--ac)" aria-hidden="true"></i><span style="font-size:16px;font-weight:500">Atmosphere</span></div>
-
-  <div class="bento">
-
-    <div class="tile">
-      <div class="row lbl" style="gap:6px"><i class="ti ti-droplet" style="font-size:14px" aria-hidden="true"></i>Humidity</div>
-      <svg viewBox="0 0 100 56" style="width:100%;max-width:120px;margin:0 auto" role="img" aria-label="Humidity 69 percent high"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#7fb2e8" stroke-width="7" stroke-linecap="round" stroke-dasharray="95 200"/></svg>
-      <div style="text-align:center;margin-top:-6px"><span class="val">69%</span> <span class="sub" style="font-size:12px">High</span></div>
+  <!--WIDGET-START-->
+  <div class="panel">
+    <div class="phead">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9h13a3 3 0 1 0-3-3"/><path d="M3 14h16a3 3 0 1 1-3 3"/></svg></span>
+      <h3>Atmosphere</h3>
     </div>
 
-    <div class="tile">
-      <div class="row lbl" style="gap:6px"><i class="ti ti-sun" style="font-size:14px" aria-hidden="true"></i>UV index</div>
-      <svg viewBox="0 0 100 56" style="width:100%;max-width:120px;margin:0 auto" role="img" aria-label="UV index 1 low"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#7fd99a" stroke-width="7" stroke-linecap="round" stroke-dasharray="13 200"/></svg>
-      <div style="text-align:center;margin-top:-6px"><span class="val">1</span> <span class="sub" style="font-size:12px">Low</span></div>
-    </div>
+    <div class="grid">
 
-    <div class="tile miss">
-      <div class="row lbl" style="gap:6px;color:rgba(238,241,248,.5)"><i class="ti ti-lungs" style="font-size:14px" aria-hidden="true"></i>Air quality</div>
-      <svg viewBox="0 0 100 56" style="width:100%;max-width:120px;margin:0 auto" role="img" aria-label="Air quality unavailable"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 9"/></svg>
-      <div style="text-align:center;margin-top:-6px"><span class="val" style="color:rgba(238,241,248,.45)">—</span> <span class="sub" style="font-size:12px">Unavailable</span></div>
-      <div class="row" style="gap:5px;justify-content:center;font-size:10px;color:rgba(238,241,248,.45)"><i class="ti ti-info-circle" style="font-size:12px" aria-hidden="true"></i>Not reported here</div>
-    </div>
-
-    <div class="tile">
-      <div class="row lbl" style="gap:6px"><i class="ti ti-gauge" style="font-size:14px" aria-hidden="true"></i>Pressure</div>
-      <svg viewBox="0 0 100 56" style="width:100%;max-width:120px;margin:0 auto" role="img" aria-label="Pressure 29.79 inches falling"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#a88cf5" stroke-width="7" stroke-linecap="round" stroke-dasharray="71 200"/></svg>
-      <div style="text-align:center;margin-top:-6px"><i class="ti ti-arrow-down" style="font-size:12px;color:#f3b765" aria-hidden="true"></i> <span class="val" style="font-size:20px">29.79</span> <span class="sub" style="font-size:11px">in</span></div>
-    </div>
-
-    <div class="tile s2">
-      <div class="row" style="justify-content:space-between"><div class="row lbl" style="gap:6px"><i class="ti ti-wind" style="font-size:14px" aria-hidden="true"></i>Wind</div><span class="sub" style="font-size:11px">Light breeze</span></div>
-      <div class="row" style="gap:14px;margin-top:2px">
-        <svg viewBox="0 0 80 80" style="width:64px;flex-shrink:0" role="img" aria-label="Wind from south-southwest"><circle cx="40" cy="40" r="31" fill="rgba(111,183,242,.08)" stroke="rgba(255,255,255,.2)" stroke-width="1.4"/><text x="40" y="14" fill="rgba(238,241,248,.5)" font-size="9" text-anchor="middle" font-family="Inter">N</text><g transform="rotate(25 40 40)"><line x1="40" y1="23" x2="40" y2="57" stroke="var(--ac)" stroke-width="2.6" stroke-linecap="round"/><path d="M40 21 l-5 9 l10 0 z" fill="#6fb7f2"/></g></svg>
-        <div><div><span class="val">8</span> <span class="sub" style="font-size:13px">mph SSW</span></div><div class="sub" style="font-size:12.5px;margin-top:6px">Gusts to <span style="color:#eef1f8">17 mph</span></div></div>
+      <!-- AIR QUALITY -->
+      <div class="tile">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7fd99a" stroke-width="1.7" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h9"/></svg>Air quality<span class="qual q-good">Good</span></div>
+        <div class="gaugewrap"><svg viewBox="0 0 100 56" role="img" aria-label="Air quality 41, good"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#7fd99a" stroke-width="7" stroke-linecap="round" stroke-dasharray="11 200"/></svg></div>
+        <div class="reading"><span class="val">41</span> <span class="unit">AQI</span></div>
+        <div class="scale"><div class="track"><span class="mk" style="left:8%"></span></div><div class="ends"><span>0</span><span>500</span></div></div>
+        <p class="cap"><b>Clean air</b> — AQI 41 on a 0–500 scale. Safe for everyone, no precautions needed.</p>
       </div>
-    </div>
 
-    <div class="tile s2">
-      <div class="row" style="justify-content:space-between"><div class="row lbl" style="gap:6px"><i class="ti ti-sunrise" style="font-size:14px" aria-hidden="true"></i>Sun</div><span class="sub" style="font-size:11px">15h 12m daylight</span></div>
-      <svg viewBox="0 0 280 70" style="width:100%;margin-top:2px" role="img" aria-label="Sunrise 5:14am, sunset 8:26pm, sun low in the evening"><line x1="8" y1="58" x2="272" y2="58" stroke="rgba(255,255,255,.16)" stroke-width="1" stroke-dasharray="3 3"/><path d="M14 58 Q140 -8 266 58" fill="none" stroke="rgba(243,183,101,.5)" stroke-width="1.6" stroke-dasharray="3 3"/><circle cx="230" cy="30" r="8" fill="#f3b765"/><circle cx="230" cy="30" r="13" fill="none" stroke="rgba(243,183,101,.35)" stroke-width="1.6"/></svg>
-      <div class="row" style="justify-content:space-between;font-size:12.5px;margin-top:-2px"><span>5:14<span class="sub" style="font-size:10px"> am</span></span><span>8:26<span class="sub" style="font-size:10px"> pm</span></span></div>
-    </div>
-
-    <div class="tile s2">
-      <div class="row" style="justify-content:space-between"><div class="row lbl" style="gap:6px"><i class="ti ti-temperature" style="font-size:14px" aria-hidden="true"></i>Dew point · comfort</div><span class="sub" style="font-size:11px">Humid</span></div>
-      <div class="row" style="gap:12px;margin-top:6px"><span class="val">67°</span>
-        <div style="flex:1"><div style="height:8px;border-radius:999px;position:relative;background:linear-gradient(90deg,#6fb7f2,#7fd99a,#f3d765,#e8745b)"><span style="position:absolute;right:18%;top:50%;transform:translateY(-50%);width:4px;height:14px;border-radius:2px;background:#fff"></span></div><div class="row" style="justify-content:space-between;font-size:10px;margin-top:5px"><span class="sub">Dry</span><span class="sub">Comfortable</span><span class="sub">Muggy</span></div></div>
+      <!-- UV INDEX -->
+      <div class="tile">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef8f6a" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>UV index<span class="qual q-high">Very high</span></div>
+        <div class="gaugewrap"><svg viewBox="0 0 100 56" role="img" aria-label="UV index 7.5, very high"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#ef8f6a" stroke-width="7" stroke-linecap="round" stroke-dasharray="94 200"/></svg></div>
+        <div class="reading"><span class="val">7.5</span></div>
+        <div class="scale"><div class="track uvgrad"><span class="mk" style="left:68%"></span></div><div class="ends"><span>0</span><span>11+</span></div></div>
+        <p class="cap"><b>Burn risk in ~15 min</b> — peak UV 7.5. Hat, shade, and SPF if you're out midday.</p>
       </div>
-    </div>
 
-    <div class="tile">
-      <div class="row lbl" style="gap:6px"><i class="ti ti-eye" style="font-size:14px" aria-hidden="true"></i>Visibility</div>
-      <svg viewBox="0 0 120 38" style="width:100%;margin-top:4px" role="img" aria-label="Visibility 10 miles clear"><g fill="#6fb7f2"><rect x="2" y="27" width="8" height="9" rx="2"/><rect x="16" y="23" width="8" height="13" rx="2"/><rect x="30" y="19" width="8" height="17" rx="2"/><rect x="44" y="15" width="8" height="21" rx="2"/><rect x="58" y="11" width="8" height="25" rx="2"/><rect x="72" y="8" width="8" height="28" rx="2"/><rect x="86" y="5" width="8" height="31" rx="2"/><rect x="100" y="2" width="8" height="34" rx="2"/></g></svg>
-      <div><span class="val" style="font-size:22px">10</span> <span class="sub" style="font-size:12px">mi · clear</span></div>
-    </div>
+      <!-- HUMIDITY -->
+      <div class="tile">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="#7fb2e8"><path d="M12 2.5S5 10 5 15a7 7 0 0 0 14 0c0-5-7-12.5-7-12.5z"/></svg>Humidity<span class="qual q-cool">High</span></div>
+        <div class="gaugewrap"><svg viewBox="0 0 100 56" role="img" aria-label="Humidity 69 percent, high"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#7fb2e8" stroke-width="7" stroke-linecap="round" stroke-dasharray="95 200"/></svg></div>
+        <div class="reading"><span class="val">69<span class="unit">%</span></span></div>
+        <div class="scale"><div class="track"><span class="mk" style="left:69%"></span></div><div class="ends"><span>0</span><span>100%</span></div></div>
+        <p class="cap"><b>Muggy and sticky</b> — relative humidity at 69%, near the high end.</p>
+      </div>
 
-    <div class="tile" style="align-items:center;text-align:center">
-      <div class="row lbl" style="gap:6px;align-self:flex-start"><i class="ti ti-moon" style="font-size:14px" aria-hidden="true"></i>Moon</div>
-      <svg viewBox="0 0 60 60" style="width:46px;margin:2px auto" role="img" aria-label="Waning crescent moon"><circle cx="30" cy="30" r="20" fill="#c9d2e2"/><circle cx="22" cy="30" r="20" fill="#0a1626"/></svg>
-      <div class="sub" style="font-size:11.5px">Waning crescent</div>
-    </div>
+      <!-- PRESSURE -->
+      <div class="tile">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a88cf5" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M12 4V2"/></svg>Pressure<span class="qual q-warn">Falling</span></div>
+        <div class="gaugewrap"><svg viewBox="0 0 100 56" role="img" aria-label="Pressure 29.79 inches, falling"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#a88cf5" stroke-width="7" stroke-linecap="round" stroke-dasharray="46 200"/></svg></div>
+        <div class="reading"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f3b765" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M12 5v14M6 13l6 6 6-6"/></svg> <span class="val sm">29.79</span> <span class="unit">in</span></div>
+        <div class="scale"><div class="track"><span class="mk" style="left:32%"></span></div><div class="ends"><span>28.5</span><span>31.0</span></div></div>
+        <p class="cap"><b>Dropping over 6h</b> — falling pressure often means unsettled weather moving in.</p>
+      </div>
 
+      <!-- VISIBILITY -->
+      <div class="tile">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fb7f2" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Visibility<span class="qual q-good">Clear</span></div>
+        <div class="gaugewrap"><svg viewBox="0 0 100 56" role="img" aria-label="Visibility 10 miles, clear"><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="7" stroke-linecap="round"/><path d="M8 50 A44 44 0 0 1 92 50" fill="none" stroke="#6fb7f2" stroke-width="7" stroke-linecap="round" stroke-dasharray="120 200"/></svg></div>
+        <div class="reading"><span class="val sm">10</span> <span class="unit">mi</span></div>
+        <div class="scale"><div class="track"><span class="mk" style="left:96%"></span></div><div class="ends"><span>0</span><span>10+ mi</span></div></div>
+        <p class="cap"><b>Crystal clear</b> — full 10-mile visibility, no haze or fog.</p>
+      </div>
+
+      <!-- WIND -->
+      <div class="tile">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6fb7f2" stroke-width="1.8" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 14h15a3 3 0 1 1-3 3"/></svg>Wind<span class="qual q-cool">Light breeze</span></div>
+        <div class="row" style="gap:14px;margin-top:2px">
+          <svg viewBox="0 0 80 80" style="width:58px;flex-shrink:0" role="img" aria-label="Wind from south-southwest"><circle cx="40" cy="40" r="31" fill="rgba(111,183,242,.08)" stroke="rgba(255,255,255,.2)" stroke-width="1.4"/><text x="40" y="14" fill="rgba(238,241,248,.6)" font-size="9" text-anchor="middle" font-family="Inter">N</text><g transform="rotate(25 40 40)"><line x1="40" y1="23" x2="40" y2="57" stroke="var(--glacier)" stroke-width="2.6" stroke-linecap="round"/><path d="M40 21 l-5 9 l10 0 z" fill="#6fb7f2"/></g></svg>
+          <div><span class="val sm">8</span> <span class="unit">mph SSW</span></div>
+        </div>
+        <p class="cap"><b>8 mph from the SSW</b>, gusting to <b>17 mph</b> — barely a breeze.</p>
+      </div>
+
+      <!-- DEW POINT · COMFORT (full) -->
+      <div class="tile full">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f3b765" stroke-width="1.8" stroke-linecap="round"><path d="M10 13V5a2 2 0 1 1 4 0v8a4 4 0 1 1-4 0z"/></svg>Dew point · comfort<span class="qual q-warn">Humid</span></div>
+        <div class="row" style="gap:14px;margin-top:2px"><span class="val">67°</span>
+          <div style="flex:1">
+            <div class="track grad" style="height:8px"><span class="mk" style="left:82%"></span></div>
+            <div class="ends"><span>Dry</span><span>Comfortable</span><span>Muggy</span></div>
+          </div>
+        </div>
+        <p class="cap"><b>Noticeably sticky</b> — a 67° dew point puts the air in the muggy range; it'll feel heavier than the temperature suggests.</p>
+      </div>
+
+      <!-- SUN (full, long) -->
+      <div class="tile full">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f3b765" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v2M5 12H3M21 12h-2M6 6l1.5 1.5M18 6l-1.5 1.5M4 18h16M9 18a3 3 0 0 1 6 0"/></svg>Sun<span class="qual" style="color:rgba(238,241,248,.7)">15h 12m daylight</span></div>
+        <svg viewBox="0 0 520 78" style="width:100%;margin-top:2px" preserveAspectRatio="none" role="img" aria-label="Sunrise 5:14am, sunset 8:26pm, sun low in the western sky"><line x1="10" y1="64" x2="510" y2="64" stroke="rgba(255,255,255,.16)" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><path d="M16 64 Q260 -10 504 64" fill="none" stroke="rgba(243,183,101,.5)" stroke-width="1.6" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><circle cx="430" cy="32" r="7" fill="#f3b765"/><circle cx="430" cy="32" r="12" fill="none" stroke="rgba(243,183,101,.35)" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>
+        <div class="row" style="justify-content:space-between;font-size:12.5px;margin-top:-2px"><span>↑ 5:14<span class="unit"> am</span></span><span>↓ 8:26<span class="unit"> pm</span></span></div>
+        <p class="cap"><b>15h 12m of daylight</b> — sun sets at 8:26 PM and sits low in the western sky right now.</p>
+      </div>
+
+      <!-- MOON (full, bottom) -->
+      <div class="tile full">
+        <div class="tlabel"><svg width="14" height="14" viewBox="0 0 24 24" fill="#c9d2e2"><path d="M20 13.5A8 8 0 1 1 10.5 4a6.3 6.3 0 0 0 9.5 9.5z"/></svg>Moon<span class="qual" style="color:rgba(238,241,248,.7)">Waning crescent</span></div>
+        <div class="row" style="gap:16px;margin-top:2px">
+          <svg viewBox="0 0 60 60" style="width:46px;flex-shrink:0" role="img" aria-label="Waning crescent moon, 32 percent illuminated"><circle cx="30" cy="30" r="20" fill="#c9d2e2"/><circle cx="22" cy="30" r="20" fill="#0a1626"/></svg>
+          <p class="cap" style="flex:1"><b>32% illuminated</b> and shrinking toward new moon. Rises 2:48 AM, sets 4:12 PM — mostly a daytime moon right now.</p>
+        </div>
+      </div>
+
+    </div>
   </div>
+  <!--WIDGET-END-->
 </div>
-  </div>
 </body>
 </html>

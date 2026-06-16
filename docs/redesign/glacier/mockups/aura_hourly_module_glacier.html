@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aura · Glacier — Hourly module (Temp &amp; Rain · Precipitation · Wind)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --glacier:#6fb7f2; --amber:#f3b765; --green:#7fd99a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:28px 18px; font-family:var(--font); color:#eef1f8;
+    background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start;
+    -webkit-tap-highlight-color:transparent; }
+  .stage{ width:100%; max-width:600px; }
+  .cap-eyebrow{ font:500 11px/1.4 var(--font); letter-spacing:.14em; text-transform:uppercase;
+        color:var(--glacier); border-left:3px solid var(--glacier); padding-left:8px; margin:0 0 14px; }
+
+  .card{ background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+         border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:18px; }
+  .chead{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .chead .ttl{ display:flex; align-items:center; gap:9px; font-size:18px; font-weight:600; }
+  .chead .ttl svg{ color:var(--glacier); }
+
+  /* ===== tabs ===== */
+  .tabs{ display:flex; gap:6px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1);
+         border-radius:12px; padding:4px; margin:0 0 12px; }
+  .tab{ flex:1; appearance:none; border:0; background:transparent; color:rgba(238,241,248,.62);
+        font:600 12.5px/1 var(--font); padding:11px 6px; border-radius:9px; cursor:pointer;
+        touch-action:manipulation; transition:background .15s,color .15s,box-shadow .15s; }
+  .tab.on{ background:rgba(111,183,242,.16); color:#eef1f8; box-shadow:inset 0 0 0 1px rgba(111,183,242,.42); }
+  .tab:active{ transform:translateY(.5px); }
+
+  .legend{ display:flex; align-items:center; gap:14px; font-size:11.5px; color:rgba(238,241,248,.66); flex-wrap:wrap; min-height:16px; }
+  .legend i{ display:inline-flex; align-items:center; gap:6px; }
+  .lg-line{ width:16px; height:0; border-top:2.5px solid var(--amber); position:relative; }
+  .lg-line:after{ content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:6px; height:6px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 1.5px #0d1b2e; }
+  .lg-bar{ width:11px; height:11px; border-radius:3px; }
+  .lg-dash{ width:16px; height:0; border-top:1.5px dashed rgba(255,255,255,.5); }
+  .lg-arrow{ font-size:13px; color:#9cc9f2; line-height:1; }
+
+  /* ===== plot (horizontally scrollable day) ===== */
+  .chartscroll{ overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;
+                scroll-snap-type:x proximity; margin:12px -4px 2px; padding:10px 4px 0;
+                scrollbar-width:none; }
+  .chartscroll::-webkit-scrollbar{ height:0; }
+  .track{ /* pixel width set by JS = hours * per-hour column */ }
+  .plot{ position:relative; height:182px; width:100%; }
+  .bars{ position:absolute; inset:0; display:flex; align-items:flex-end; }
+  .col{ flex:1; min-width:0; height:100%; position:relative; display:flex; align-items:flex-end;
+        justify-content:center; cursor:pointer; touch-action:manipulation; scroll-snap-align:center; }
+  .bar{ width:96%; border-radius:2px 2px 0 0; transition:filter .12s; }
+  .b-lo{ background:linear-gradient(180deg, rgba(176,193,214,.32), rgba(176,193,214,.16)); }
+  .b-mid{ background:linear-gradient(180deg,#7fb6ef,#5391d8); }
+  .b-hi{ background:linear-gradient(180deg,#9be7b4,#5fc88c); box-shadow:0 0 12px rgba(127,217,154,.35); }
+  .col.sel .bar{ outline:1px solid rgba(255,255,255,.5); box-shadow:0 0 16px rgba(255,255,255,.25); }
+
+  /* wind bars */
+  .wbar{ width:64%; position:relative; border-radius:3px 3px 0 0; background:rgba(127,182,239,.26); }
+  .wspd{ position:absolute; left:0; right:0; bottom:0; border-radius:3px 3px 0 0; background:linear-gradient(180deg,#7fb6ef,#5391d8); }
+  .wcap{ position:absolute; left:-1px; right:-1px; top:0; height:2px; border-radius:2px; background:#bfe0ff; box-shadow:0 0 6px rgba(150,200,255,.55); }
+  .wval{ position:absolute; left:0; right:0; text-align:center; font-size:10.5px; font-weight:600;
+         color:#cfe3fb; pointer-events:none; text-shadow:0 1px 3px rgba(6,13,28,.7); }
+  .col.sel .wval{ color:#fff; }
+  .col.sel .wbar{ outline:1px solid rgba(255,255,255,.5); box-shadow:0 0 16px rgba(255,255,255,.22); }
+
+  svg.line{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  #dots,#thresh,#arrows{ position:absolute; inset:0; pointer-events:none; }
+  .dot{ position:absolute; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%;
+        background:var(--amber); box-shadow:0 0 0 2px #0d1b2e, 0 0 8px rgba(243,183,101,.5); }
+  .dot.sel{ width:12px; height:12px; background:#ffd591; box-shadow:0 0 0 2px #0d1b2e, 0 0 14px rgba(243,183,101,.8); }
+  .tchip{ position:absolute; transform:translate(-50%,-50%); font-size:10.5px; font-weight:600; color:#eef1f8;
+          background:rgba(9,18,33,.78); border:1px solid rgba(255,255,255,.14); border-radius:6px; padding:1px 6px; white-space:nowrap; }
+  .threshline{ position:absolute; left:0; right:0; border-top:1.5px dashed rgba(255,255,255,.36); }
+  .threshline span{ position:absolute; right:0; top:-8px; font-size:9.5px; color:rgba(238,241,248,.62); background:rgba(9,18,33,.6); padding:0 4px; border-radius:4px; }
+  .warrow{ position:absolute; top:-1px; transform:translateX(-50%); color:rgba(159,201,242,.9); }
+  .warrow.sel{ color:#ffd591; }
+
+  .baseline{ height:1px; background:rgba(255,255,255,.12); margin:0 2px; }
+  .axis{ display:flex; margin:7px 2px 0; }
+  .ax{ flex:1; text-align:center; font-size:10.5px; color:rgba(238,241,248,.6); }
+  .ax.sel{ color:#eef1f8; font-weight:500; }
+
+  .summary{ font-size:13px; color:rgba(238,241,248,.7); font-weight:300; margin:15px 2px 0; line-height:1.5; }
+  .summary b{ color:#eef1f8; font-weight:500; }
+
+  .detail{ display:flex; align-items:baseline; gap:10px; margin-top:13px; padding:13px 15px; border-radius:12px;
+           background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); }
+  .detail .t{ font-size:13px; color:rgba(238,241,248,.66); }
+  .detail .v{ font-size:23px; font-weight:300; }
+  .detail .v small{ font-size:13px; color:rgba(238,241,248,.6); font-weight:400; }
+  .detail .meta{ font-size:12.5px; color:rgba(238,241,248,.68); }
+
+  .scroll{ display:flex; gap:9px; margin-top:13px; overflow-x:auto; padding-bottom:4px;
+           -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity; }
+  .pill{ flex:0 0 auto; width:80px; text-align:center; padding:10px 0; border-radius:13px; cursor:pointer;
+         background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+         touch-action:manipulation; scroll-snap-align:center; transition:background .12s,border-color .12s; }
+  .pill.sel{ background:rgba(243,183,101,.14); border-color:rgba(243,183,101,.42); }
+  .pill .h{ font-size:12px; color:rgba(238,241,248,.7); }
+  .pill .s{ font-size:14px; font-weight:600; margin-top:3px; }
+  .pill .s .r{ font-size:11px; font-weight:500; color:#9cc9f2; display:block; margin-top:1px; }
+
+  .hint{ font-size:11px; color:rgba(238,241,248,.45); text-align:center; margin:10px 2px 0; }
+
+  @media (max-width:430px){
+    body{ padding:18px 12px; }
+    .card{ padding:14px; border-radius:16px; }
+    .chead .ttl{ font-size:16px; }
+    .tab{ font-size:11.5px; padding:10px 4px; }
+    .pill{ width:68px; }
+    .summary{ font-size:12.5px; }
+    .legend{ font-size:11px; gap:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="cap-eyebrow">Aura · Glacier · hourly module — 3 views · scrollable 24-hour day · tap any hour</div>
+
+  <!--WIDGET-START-->
+  <div class="card">
+    <div class="chead">
+      <div class="ttl"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 16l5-6 4 4 5-7 4 4"/><circle cx="8" cy="10" r="1.4" fill="currentColor"/><circle cx="12" cy="14" r="1.4" fill="currentColor"/><circle cx="17" cy="7" r="1.4" fill="currentColor"/></svg>Hourly forecast</div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab" data-t="tr" type="button">Temp &amp; Rain</button>
+      <button class="tab" data-t="precip" type="button">Precipitation</button>
+      <button class="tab" data-t="wind" type="button">Wind</button>
+    </div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="chartscroll" id="chartscroll">
+      <div class="track" id="track">
+        <div class="plot">
+          <div class="bars" id="bars"></div>
+          <svg class="line" id="line" viewBox="0 0 1000 182" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <div id="dots"></div>
+          <div id="thresh"></div>
+          <div id="arrows"></div>
+        </div>
+        <div class="baseline"></div>
+        <div class="axis" id="axis"></div>
+      </div>
+    </div>
+
+    <p class="summary" id="summary"></p>
+
+    <div class="detail" id="detail"></div>
+
+    <div class="scroll" id="scroll"></div>
+    <div class="hint">Tap any hour to inspect · swipe to scroll through the full day</div>
+  </div>
+  <!--WIDGET-END-->
+</div>
+
+<script>
+(function(){
+  var labels=['7P','8P','9P','10P','11P','12A','1A','2A','3A','4A','5A','6A','7A','8A','9A','10A','11A','12P','1P','2P','3P','4P','5P','6P'];
+  var temps =[78,76,74,72,70,68,67,65,64,62,61,62,65,69,73,77,80,83,85,86,86,84,82,79];
+  var rainPct=[22,18,20,28,42,52,58,55,47,33,24,16,10,7,6,8,12,18,26,31,28,19,12,9];
+  var windSpd=[5,6,7,9,12,14,16,15,13,11,9,8,8,9,10,11,12,13,14,15,15,13,11,9];
+  var windGust=[9,10,12,15,19,22,24,22,20,17,14,12,12,13,15,16,18,20,22,24,24,21,18,15];
+  var windDir =[170,180,190,200,210,220,230,240,250,255,260,265,270,275,280,285,290,300,305,310,315,320,320,315];
+
+  var n=labels.length, sel=6, tab='tr';
+  var W=1000, BARMAX=120, lineTop=16, lineSpan=64;
+  var tmin=Math.min.apply(null,temps), tmax=Math.max.apply(null,temps), trng=(tmax-tmin)||1;
+  var maxW=Math.max.apply(null,windGust);
+  var alignPills=function(){};   /* reassigned once the scroll-sync is wired */
+
+  function el(id){ return document.getElementById(id); }
+  function cx(i){ return (i+0.5)/n; }
+  function ty(i){ return lineTop + (tmax-temps[i])/trng*lineSpan; }
+  function rainClass(p){ return p>=50?'b-hi':(p>=30?'b-mid':'b-lo'); }
+  function rainWord(p){ return p>=50?'showers likely':p>=30?'scattered chance':p>=15?'slight chance':'mostly dry'; }
+  function compass(d){ var dirs=['N','NE','E','SE','S','SW','W','NW']; return dirs[Math.round((d%360)/45)%8]; }
+  function hr(i){ return labels[i].replace('P',' PM').replace('A',' AM'); }
+
+  var LEG={
+    tr:'<i><span class="lg-line"></span>Temperature</i>'
+      +'<i><span class="lg-bar" style="background:linear-gradient(180deg,#7fb6ef,#5391d8)"></span>Rain chance</i>'
+      +'<i><span class="lg-bar" style="background:linear-gradient(180deg,#9be7b4,#5fc88c)"></span>Likely &gt;50%</i>',
+    precip:'<i><span class="lg-bar" style="background:linear-gradient(180deg,#7fb6ef,#5391d8)"></span>Chance of rain</i>'
+      +'<i><span class="lg-bar" style="background:linear-gradient(180deg,#9be7b4,#5fc88c)"></span>Likely &gt;50%</i>'
+      +'<i><span class="lg-dash"></span>50% line</i>',
+    wind:'<i><span class="lg-bar" style="background:linear-gradient(180deg,#7fb6ef,#5391d8)"></span>Wind speed</i>'
+      +'<i><span class="lg-bar" style="background:rgba(127,182,239,.3)"></span>Gusts</i>'
+      +'<i><span class="lg-arrow">&uarr;</span>Direction</i>'
+  };
+  var SUM={
+    tr:'<b>Rain moves through overnight, then a bright next day.</b> Temperature slides from 78&deg; into the low 60s before dawn while rain chance climbs past 50% from midnight to 2 AM &mdash; the green bars flag the hours most likely to actually see rain. It clears by mid-morning and warms into the mid-80s by afternoon.',
+    precip:'<b>Best chance of rain is overnight.</b> 50%+ from midnight to 2 AM, then tapering to a dry, mostly clear day. Roughly 0.2 in expected &mdash; nearly all of it before dawn.',
+    wind:'<b>Breezy overnight, easy by day.</b> Light and out of the south this evening, picking up near 16 mph with gusts to 24 as the rain moves through, then settling to a gentle afternoon breeze from the west.'
+  };
+
+  function renderBars(){
+    var h='', i;
+    if(tab==='wind'){
+      for(i=0;i<n;i++){
+        var g=Math.round(windGust[i]/maxW*BARMAX), s=Math.round(windSpd[i]/maxW*BARMAX);
+        h+='<div class="col'+(i===sel?' sel':'')+'" data-i="'+i+'">'
+          +'<div class="wval" style="bottom:'+(g+5)+'px">'+windSpd[i]+'</div>'
+          +'<div class="wbar" style="height:'+g+'px"><div class="wspd" style="height:'+s+'px"></div><div class="wcap"></div></div></div>';
+      }
+    } else {
+      for(i=0;i<n;i++){
+        var hh=Math.round(rainPct[i]/100*BARMAX);
+        h+='<div class="col'+(i===sel?' sel':'')+'" data-i="'+i+'"><div class="bar '+rainClass(rainPct[i])+'" style="height:'+hh+'px"></div></div>';
+      }
+    }
+    el('bars').innerHTML=h;
+  }
+
+  function renderLine(){
+    var line=el('line'), dots=el('dots');
+    if(tab!=='tr'){ line.innerHTML=''; dots.innerHTML=''; return; }
+    var pts=temps.map(function(_,i){ return [cx(i)*W, ty(i)]; });
+    var d='M'+pts[0][0].toFixed(1)+','+pts[0][1].toFixed(1), i;
+    for(i=1;i<n-1;i++){ var xc=(pts[i][0]+pts[i+1][0])/2, yc=(pts[i][1]+pts[i+1][1])/2; d+=' Q'+pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1)+' '+xc.toFixed(1)+','+yc.toFixed(1); }
+    var last=pts[n-1]; d+=' Q'+last[0].toFixed(1)+','+last[1].toFixed(1)+' '+last[0].toFixed(1)+','+last[1].toFixed(1);
+    var area=d+' L'+last[0].toFixed(1)+',182 L'+pts[0][0].toFixed(1)+',182 Z';
+    line.innerHTML='<defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3b765" stop-opacity=".18"/><stop offset="1" stop-color="#f3b765" stop-opacity="0"/></linearGradient></defs>'
+      +'<path d="'+area+'" fill="url(#tg)"/>'
+      +'<path d="'+d+'" fill="none" stroke="#f3b765" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+    var dh='';
+    for(i=0;i<n;i++){ dh+='<div class="dot'+(i===sel?' sel':'')+'" style="left:'+(cx(i)*100)+'%;top:'+ty(i)+'px"></div>'; }
+    dh+='<div class="tchip" style="left:'+(cx(sel)*100)+'%;top:'+(ty(sel)-16)+'px">'+temps[sel]+'&deg;</div>';
+    dots.innerHTML=dh;
+  }
+
+  function renderThresh(){
+    el('thresh').innerHTML = (tab==='precip')
+      ? '<div class="threshline" style="bottom:'+(50/100*BARMAX)+'px"><span>50% &middot; likely</span></div>' : '';
+  }
+
+  function renderArrows(){
+    if(tab!=='wind'){ el('arrows').innerHTML=''; return; }
+    var h='', i;
+    for(i=0;i<n;i++){
+      /* arrow on every hour — the scrollable track has room */
+      var rot=(windDir[i]+180)%360;
+      h+='<div class="warrow'+(i===sel?' sel':'')+'" style="left:'+(cx(i)*100)+'%">'
+        +'<svg width="13" height="13" viewBox="0 0 24 24" style="transform:rotate('+rot+'deg)"><path d="M12 3 L12 21 M12 3 L7 9 M12 3 L17 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+    }
+    el('arrows').innerHTML=h;
+  }
+
+  function renderAxis(){
+    el('axis').innerHTML=labels.map(function(l,i){ return '<div class="ax'+(i===sel?' sel':'')+'">'+l+'</div>'; }).join('');
+  }
+
+  function renderDetail(){
+    var l=hr(sel), html;
+    if(tab==='tr'){
+      html='<span class="t">'+l+'</span><span class="v">'+temps[sel]+'<small>&deg;</small></span><span class="meta">&middot; '+rainPct[sel]+'% rain &middot; '+rainWord(rainPct[sel])+'</span>';
+    } else if(tab==='precip'){
+      html='<span class="t">'+l+'</span><span class="v">'+rainPct[sel]+'<small>%</small></span><span class="meta">&middot; chance of rain &middot; '+rainWord(rainPct[sel])+'</span>';
+    } else {
+      html='<span class="t">'+l+'</span><span class="v">'+windSpd[sel]+'<small> mph</small></span><span class="meta">&middot; gusts '+windGust[sel]+' &middot; from '+compass(windDir[sel])+'</span>';
+    }
+    el('detail').innerHTML=html;
+  }
+
+  function renderPills(){
+    var h='', i;
+    for(i=0;i<n;i++){
+      var main, sub;
+      if(tab==='tr'){ main=temps[i]+'&deg;'; sub=rainPct[i]+'%'; }
+      else if(tab==='precip'){ main=rainPct[i]+'%'; sub=(rainPct[i]>=50?'likely':rainPct[i]>=30?'maybe':'dry'); }
+      else { main=windSpd[i]+'<span style="font-size:10px;font-weight:500"> mph</span>'; sub='g'+windGust[i]+' '+compass(windDir[i]); }
+      h+='<div class="pill'+(i===sel?' sel':'')+'" data-i="'+i+'"><div class="h">'+hr(i)+'</div><div class="s">'+main+'<span class="r">'+sub+'</span></div></div>';
+    }
+    el('scroll').innerHTML=h;
+  }
+
+  function paintTabs(){
+    var b=document.querySelectorAll('.tab'), i;
+    for(i=0;i<b.length;i++){ b[i].classList.toggle('on', b[i].getAttribute('data-t')===tab); }
+  }
+
+  function render(){
+    el('legend').innerHTML=LEG[tab];
+    el('summary').innerHTML=SUM[tab];
+    paintTabs();
+    renderBars(); renderLine(); renderThresh(); renderArrows();
+    renderAxis(); renderDetail(); renderPills();
+    alignPills();
+  }
+
+  function setSel(i){ if(i<0||i>=n||i===sel)return; sel=i; render(); }
+  function setTab(t){ if(t===tab)return; tab=t; render(); }
+
+  el('bars').addEventListener('click',function(e){ var c=e.target.closest('.col'); if(c) setSel(+c.getAttribute('data-i')); });
+  el('scroll').addEventListener('click',function(e){ var p=e.target.closest('.pill'); if(p) setSel(+p.getAttribute('data-i')); });
+  el('tabs').addEventListener('click',function(e){ var b=e.target.closest('.tab'); if(b) setTab(b.getAttribute('data-t')); });
+
+  /* width of the scrollable day = hours * per-hour column */
+  var COL=44;
+  el('track').style.width=(n*COL)+'px';
+
+  /* keep the chart strip and the pill strip scrolled in step (proportionally) */
+  var cs=el('chartscroll'), ps=el('scroll'), syncing=false;
+  function frac(node){ var m=node.scrollWidth-node.clientWidth; return m>0?node.scrollLeft/m:0; }
+  function applyFrac(node,f){ var m=node.scrollWidth-node.clientWidth; node.scrollLeft=(m>0?f*m:0); }
+  function link(from,to){ if(syncing)return; syncing=true; applyFrac(to,frac(from)); requestAnimationFrame(function(){ syncing=false; }); }
+  cs.addEventListener('scroll',function(){ link(cs,ps); });
+  ps.addEventListener('scroll',function(){ link(ps,cs); });
+  alignPills=function(){ syncing=true; applyFrac(ps,frac(cs)); requestAnimationFrame(function(){ syncing=false; }); };
+
+  render();
+})();
+</script>
+</body>
+</html>

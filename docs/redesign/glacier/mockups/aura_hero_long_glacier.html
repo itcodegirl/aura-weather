@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura · Glacier — hero (long)</title>
+<style>
+  :root{ --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --glacier:#6fb7f2; --amber:#f3b765; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:28px 18px; font-family:var(--font); color:#eef1f8;
+    background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start; }
+  .stage{ width:100%; max-width:600px; }
+  .cap-eyebrow{ font:500 11px/1.4 var(--font); letter-spacing:.14em; text-transform:uppercase;
+        color:var(--glacier); border-left:3px solid var(--glacier); padding-left:8px; margin:0 0 14px; }
+
+  .hero{ position:relative; border-radius:22px; overflow:hidden; min-height:600px;
+         border:1px solid rgba(255,255,255,.14); isolation:isolate; }
+  .sky{ position:absolute; inset:0; z-index:-4;
+        background:radial-gradient(130% 60% at 80% 10%, rgba(255,212,140,.42), transparent 50%),
+        linear-gradient(168deg,#15375c 0%,#224d74 36%,#3a6588 62%,#456680 100%); }
+  .coral{ position:absolute; inset:0; z-index:-4; background:linear-gradient(0deg, rgba(243,140,107,.16) 0%, rgba(243,140,107,.04) 12%, transparent 26%); }
+  .breathe{ position:absolute; inset:0; z-index:-3; background:radial-gradient(120% 60% at 76% 12%, rgba(255,196,110,.5), transparent 50%); animation:breathe 8s ease-in-out infinite; }
+  /* lower scrim keeps the detail panels legible over the sky */
+  .scrim{ position:absolute; inset:0; z-index:-2; background:linear-gradient(180deg, transparent 36%, rgba(6,14,28,.5) 78%, rgba(6,14,28,.62) 100%); }
+
+  .cloud{ position:absolute; z-index:-2; height:40px; border-radius:50%; filter:blur(11px);
+          background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); }
+  .c1{ width:210px; top:30%; left:-40%; opacity:.16; animation:drift 46s linear infinite; }
+  .c2{ width:150px; top:46%; left:-40%; opacity:.11; animation:drift 64s linear infinite; }
+  .c3{ width:120px; top:22%; left:-40%; opacity:.09; animation:drift 54s linear infinite; }
+
+  .mote{ position:absolute; z-index:-1; border-radius:50%; filter:blur(1px); }
+  .m1{ width:7px; height:7px; background:rgba(255,222,160,.85); top:34%; left:26%; animation:float1 13s ease-in-out infinite; }
+  .m2{ width:5px; height:5px; background:rgba(159,208,255,.85); top:44%; left:48%; animation:float2 16s ease-in-out infinite; }
+  .m3{ width:9px; height:9px; background:rgba(255,196,150,.75); top:26%; left:58%; animation:float3 19s ease-in-out infinite; }
+
+  .sun{ position:absolute; top:22px; right:34px; width:118px; height:118px; z-index:-1; }
+  .sun .rays{ transform-origin:59px 59px; animation:spin 55s linear infinite; }
+  .sun .halo{ transform-origin:59px 59px; animation:halo 5s ease-in-out infinite; }
+
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  @keyframes halo{ 0%,100%{ opacity:.4; transform:scale(1);} 50%{ opacity:.9; transform:scale(1.16);} }
+  @keyframes breathe{ 0%,100%{ opacity:.4;} 50%{ opacity:1;} }
+  @keyframes drift{ from{ transform:translateX(0);} to{ transform:translateX(1020px);} }
+  @keyframes float1{ 0%,100%{ transform:translate(0,0); opacity:.3;} 50%{ transform:translate(16px,-22px); opacity:.8;} }
+  @keyframes float2{ 0%,100%{ transform:translate(0,0); opacity:.25;} 50%{ transform:translate(-18px,-28px); opacity:.7;} }
+  @keyframes float3{ 0%,100%{ transform:translate(0,0); opacity:.25;} 50%{ transform:translate(12px,20px); opacity:.65;} }
+
+  .content{ position:relative; padding:20px 22px 22px; display:flex; flex-direction:column; min-height:600px; }
+  .loc{ display:flex; align-items:center; gap:8px; font-size:19px; font-weight:600; text-shadow:0 1px 12px rgba(0,0,0,.35); }
+  .loc svg{ color:var(--glacier); flex-shrink:0; }
+  .date{ font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:rgba(238,241,248,.82); font-weight:500; margin:6px 0 0 1px; }
+  .spacer{ height:44px; }
+  .temprow{ display:flex; align-items:flex-end; gap:18px; }
+  .big{ font-weight:200; font-size:88px; line-height:.82; letter-spacing:-.03em; text-shadow:0 2px 24px rgba(0,0,0,.3); }
+  .big .deg{ font-size:28px; font-weight:300; vertical-align:top; color:rgba(238,241,248,.82); }
+  .meta{ padding-bottom:10px; }
+  .cond{ font-size:17px; font-weight:500; display:flex; align-items:center; gap:9px; }
+  .cond .sep{ width:4px; height:4px; border-radius:50%; background:rgba(238,241,248,.5); }
+  .cond .feels{ font-weight:300; color:rgba(238,241,248,.82); }
+  .hl{ display:inline-flex; align-items:center; gap:11px; margin-top:9px; padding:6px 13px; border-radius:999px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18); font-size:13.5px; backdrop-filter:blur(4px); }
+  .hl b{ font-weight:600;} .hl .lo{ color:rgba(238,241,248,.78);} .hl .div{ width:1px; height:13px; background:rgba(255,255,255,.22);}
+  .up-ic{ color:var(--amber); display:flex;} .lo-ic{ color:#9cc9f2; display:flex;}
+  .uvline{ font-size:14px; line-height:1.5; color:rgba(238,241,248,.92); font-weight:300; margin-top:15px; max-width:430px; }
+
+  .gap{ flex:1; min-height:14px; }
+
+  /* ===== UV index panel ===== */
+  .uvpanel{ padding:15px 16px; border-radius:16px; background:rgba(8,18,33,.46);
+            border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(6px); }
+  .uvtop{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
+  .uvlabel{ display:flex; align-items:center; gap:6px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:rgba(238,241,248,.66); font-weight:500; }
+  .uvhead{ font-size:17px; font-weight:600; margin:5px 0 2px; }
+  .uvsub{ font-size:12.5px; color:rgba(238,241,248,.78); font-weight:300; }
+  .uvnum{ text-align:right; flex-shrink:0; }
+  .uvnum .n{ font-size:32px; font-weight:200; line-height:1; }
+  .uvnum .of{ font-size:11px; color:rgba(238,241,248,.6); margin-top:3px; }
+  .uvscale{ margin-top:14px; }
+  .uvbar{ position:relative; height:7px; border-radius:999px;
+          background:linear-gradient(90deg,#7fd99a,#f3d765 42%,#ef8f6a 66%,#e8745b 84%,#d65a8f); }
+  .uvbar .mk{ position:absolute; left:68%; top:50%; transform:translate(-50%,-50%); width:4px; height:14px; border-radius:2px; background:#fff; box-shadow:0 0 6px rgba(0,0,0,.6); }
+  .uvticks{ display:flex; justify-content:space-between; font-size:10.5px; color:rgba(238,241,248,.64); margin-top:7px; }
+
+  /* ===== Sunrise / Sunset ===== */
+  .sunrow{ display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-top:11px; }
+  .sun-tile{ padding:13px 14px; border-radius:14px; background:rgba(8,18,33,.46); border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(6px); display:flex; align-items:center; gap:11px; }
+  .sun-ic{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; background:rgba(243,183,101,.14); border:1px solid rgba(243,183,101,.3); flex-shrink:0; }
+  .sun-tx .l{ font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:rgba(238,241,248,.64); font-weight:500; }
+  .sun-tx .v{ font-size:17px; font-weight:600; margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="cap-eyebrow">Aura · Glacier · hero — long (UV + sunrise/sunset built in)</div>
+
+  <!--WIDGET-START-->
+  <div class="hero">
+    <div class="sky"></div><div class="coral"></div><div class="breathe"></div><div class="scrim"></div>
+    <span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span>
+    <span class="mote m1"></span><span class="mote m2"></span><span class="mote m3"></span>
+    <svg class="sun" viewBox="0 0 118 118" aria-hidden="true">
+      <defs>
+        <radialGradient id="core" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#fffdf5"/><stop offset="42%" stop-color="#ffe2a0"/><stop offset="100%" stop-color="#f4a93f"/></radialGradient>
+        <radialGradient id="haloG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="rgba(255,206,120,.6)"/><stop offset="70%" stop-color="rgba(255,196,110,.12)"/><stop offset="100%" stop-color="rgba(255,196,110,0)"/></radialGradient>
+      </defs>
+      <circle class="halo" cx="59" cy="59" r="57" fill="url(#haloG)"/>
+      <g class="rays" stroke="#ffd27f" stroke-width="3.2" stroke-linecap="round">
+        <line x1="59" y1="12" x2="59" y2="25"/><line x1="59" y1="93" x2="59" y2="106"/>
+        <line x1="12" y1="59" x2="25" y2="59"/><line x1="93" y1="59" x2="106" y2="59"/>
+        <line x1="26" y1="26" x2="35" y2="35"/><line x1="83" y1="83" x2="92" y2="92"/>
+        <line x1="92" y1="26" x2="83" y2="35"/><line x1="35" y1="83" x2="26" y2="92"/>
+      </g>
+      <circle cx="59" cy="59" r="22" fill="url(#core)"/>
+      <circle cx="59" cy="59" r="22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
+    </svg>
+
+    <div class="content">
+      <div class="loc"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>Township of Palos, United States</div>
+      <div class="date">Monday, June 15</div>
+
+      <div class="spacer"></div>
+
+      <div class="temprow">
+        <div class="big">69<span class="deg">°F</span></div>
+        <div class="meta">
+          <div class="cond">Clear <span class="sep"></span> <span class="feels">Feels like 66°</span></div>
+          <div class="hl"><span class="up-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l7 8h-4v8h-6v-8H5z"/></svg></span><b>76°</b><span class="div"></span><span class="lo-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-7-8h4V4h6v8h4z"/></svg></span><span class="lo">52°</span></div>
+        </div>
+      </div>
+
+      <div class="uvline">Moderate UV today — easy on the sun exposure.</div>
+
+      <div class="gap"></div>
+
+      <div class="uvpanel">
+        <div class="uvtop">
+          <div>
+            <div class="uvlabel"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f3b765" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></svg>UV index</div>
+            <div class="uvhead">Use sun protection</div>
+            <div class="uvsub">Peak UV 7.5 — hat &amp; SPF if you're out midday.</div>
+          </div>
+          <div class="uvnum"><span class="n">7.5</span><div class="of">of 11+</div></div>
+        </div>
+        <div class="uvscale">
+          <div class="uvbar"><span class="mk"></span></div>
+          <div class="uvticks"><span>Low</span><span>Moderate</span><span>High</span><span>Very high</span><span>Extreme</span></div>
+        </div>
+      </div>
+
+      <div class="sunrow">
+        <div class="sun-tile">
+          <div class="sun-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f3b765" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18"/><path d="M7 18a5 5 0 0 1 10 0"/><path d="M12 3v3.5M9.4 6l2.6-2.6L14.6 6"/></svg></div>
+          <div class="sun-tx"><div class="l">Sunrise</div><div class="v">5:16 AM</div></div>
+        </div>
+        <div class="sun-tile">
+          <div class="sun-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f0a07a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18"/><path d="M7 18a5 5 0 0 1 10 0"/><path d="M12 7V3.5M9.4 5l2.6 2.6L14.6 5"/></svg></div>
+          <div class="sun-tx"><div class="l">Sunset</div><div class="v">8:27 PM</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!--WIDGET-END-->
+</div>
+</body>
+</html>

@@ -474,8 +474,9 @@ test("expands a forecast day for richer detail", async ({ page }) => {
 
 test("renders the missing-data placeholder when the forecast reports null fields", async ({ page }) => {
   // Override the standard forecast mock with one that returns null for
-  // humidity and pressure. The trust contract requires the hero card
-  // to render "—" instead of fake "0%" / "0 hPa" readings.
+  // humidity and pressure. The trust contract requires the Atmosphere
+  // bento (the new home for these readings since the hero stat grid was
+  // removed) to render "—" instead of fake "0%" / "0 hPa" values.
   await page.route("https://api.open-meteo.com/v1/forecast**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -516,21 +517,24 @@ test("renders the missing-data placeholder when the forecast reports null fields
 
   await openDashboard(page);
 
-  const humidityStat = page
-    .locator(".hero-stats .stat", { hasText: "Humidity" })
-    .first();
-  await expect(humidityStat).toBeVisible();
-  await expect(humidityStat).toContainText("—");
-  await expect(humidityStat).not.toContainText("0%");
-  await expect(humidityStat.locator(".stat-value")).toHaveClass(
-    /is-missing/
-  );
+  // Humidity + pressure now live in the Atmosphere bento; the missing-
+  // data contract (— not fake 0) is enforced on its tiles. Wait for the
+  // lazy bento to mount, then assert each tile dashes out honestly.
+  await expect(page.locator(".atm-bento")).toBeVisible({ timeout: 20_000 });
 
-  const pressureStat = page
-    .locator(".hero-stats .stat", { hasText: "Pressure" })
+  const humidityTile = page
+    .locator(".atm-tile", { hasText: "Humidity" })
     .first();
-  await expect(pressureStat).toContainText("—");
-  await expect(pressureStat).not.toContainText("0 hPa");
+  await expect(humidityTile).toBeVisible();
+  await expect(humidityTile).toContainText("—");
+  await expect(humidityTile).not.toContainText("0%");
+  await expect(humidityTile).toHaveClass(/atm-tile--missing/);
+
+  const pressureTile = page
+    .locator(".atm-tile", { hasText: "Pressure" })
+    .first();
+  await expect(pressureTile).toContainText("—");
+  await expect(pressureTile).not.toContainText("0 hPa");
 });
 
 test("does not query live providers in the missing-data portfolio demo", async ({ page }) => {

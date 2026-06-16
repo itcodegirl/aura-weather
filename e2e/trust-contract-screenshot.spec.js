@@ -17,8 +17,12 @@ test.describe("trust contract screenshots", () => {
     await expect(
       page.getByRole("heading", { name: "Current Conditions" })
     ).toBeVisible();
+    // The hero no longer carries a "some readings unavailable" note (those
+    // readings moved to the Atmosphere bento). Anchor the capture on the
+    // hero's high/low missing-data indicator instead — still a non-lazy,
+    // hero-level proof that the missing-data state has rendered.
     await expect(
-      page.getByText("Some readings are unavailable from the provider")
+      page.getByRole("img", { name: "No data available" }).first()
     ).toBeVisible();
     await forceLazyPanelsToPaint(page);
 

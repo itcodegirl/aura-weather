@@ -5,8 +5,6 @@ import {
   MapPin,
   Wind,
   Droplets,
-  Gauge,
-  Thermometer,
   Sunrise,
   Sunset,
   Sun,
@@ -16,7 +14,6 @@ import { isMissingPlaceholder } from "../utils/numbers";
 import { formatDisplayCountry } from "../utils/locationDisplay";
 import { useTimeNow } from "../hooks/useTimeNow";
 import WeatherIcon from "./WeatherIcon";
-import { Stat } from "./ui";
 import { buildHeroData } from "./heroCard/buildHeroData";
 import "./HeroCard.css";
 
@@ -177,13 +174,8 @@ function HeroCard({
     currentTempDisplay,
     isCurrentTempMissing,
     feelsLikeDisplay,
-    dewPointDisplay,
     todayHighDisplay,
     todayLowDisplay,
-    windDisplay,
-    humidityDisplay,
-    pressureDisplay,
-    heroStatsHaveAnyMissing,
     sunriseValue,
     sunsetValue,
     sunriseLabel,
@@ -193,7 +185,7 @@ function HeroCard({
     atmosphereReading,
     hasClimateComparison,
     climateMessage,
-    dailyGuidance,
+    uvPanel,
     characteristicChips,
     today,
     tempUnit,
@@ -337,6 +329,7 @@ function HeroCard({
               {atmosphereReading.text}
             </p>
           )}
+          {uvPanel && <p className="hero-uv-line">{uvPanel.line}</p>}
           {hasClimateComparison && (
             <p className="hero-insight">{climateMessage}</p>
           )}
@@ -362,6 +355,44 @@ function HeroCard({
             <div className="hero-trust-pill" role="status" aria-live="polite">
               <span className="hero-trust-dot" aria-hidden="true" />
               High confidence · {ageLabel}
+            </div>
+          )}
+
+          {uvPanel && (
+            <div
+              className="hero-uv-panel"
+              role="group"
+              aria-label={`UV index ${uvPanel.peak.toFixed(1)} of 11, ${uvPanel.level}. ${uvPanel.head}.`}
+            >
+              <div className="hero-uv-top">
+                <div className="hero-uv-head-block">
+                  <span className="hero-uv-label">
+                    <Sun size={13} aria-hidden="true" />
+                    UV index
+                  </span>
+                  <p className="hero-uv-head">{uvPanel.head}</p>
+                  <p className="hero-uv-sub">{uvPanel.sub}</p>
+                </div>
+                <div className="hero-uv-num" aria-hidden="true">
+                  <span className="hero-uv-peak">{uvPanel.peak.toFixed(1)}</span>
+                  <span className="hero-uv-of">of 11+</span>
+                </div>
+              </div>
+              <div className="hero-uv-scale" aria-hidden="true">
+                <div className="hero-uv-bar">
+                  <span
+                    className="hero-uv-marker"
+                    style={{ left: `${uvPanel.markerPct}%` }}
+                  />
+                </div>
+                <div className="hero-uv-ticks">
+                  <span>Low</span>
+                  <span>Moderate</span>
+                  <span>High</span>
+                  <span>Very high</span>
+                  <span>Extreme</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -409,38 +440,7 @@ function HeroCard({
             </span>
           </div>
         </div>
-
-        <div className="hero-stats" role="group" aria-label="Current readings">
-          <Stat
-            icon={<Wind size={18} />}
-            label="Wind"
-            value={windDisplay}
-          />
-          <Stat
-            icon={<Droplets size={18} />}
-            label="Humidity"
-            value={humidityDisplay}
-          />
-          <Stat
-            icon={<Gauge size={18} />}
-            label="Pressure"
-            value={pressureDisplay}
-          />
-          <Stat
-            icon={<Thermometer size={18} />}
-            label="Dew Point"
-            value={dewPointDisplay}
-          />
-        </div>
       </div>
-
-      {heroStatsHaveAnyMissing && (
-        <p className="hero-stats-note" role="status">
-          Some readings are unavailable from the provider. Aura shows
-          “—” instead of a fallback value to keep the rest of the
-          forecast trustworthy.
-        </p>
-      )}
     </section>
   );
 }

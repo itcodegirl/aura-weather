@@ -50,140 +50,7 @@ function buildWeather(overrides = {}) {
   };
 }
 
-function getStatValue(label) {
-  // The Stat layout renders the label and value as siblings under a
-  // shared parent. Find the label element, then walk up to the .stat
-  // and return the .stat-value text.
-  const labelEl = screen.getByText(label);
-  const statEl = labelEl.closest(".stat");
-  return statEl?.querySelector(".stat-value");
-}
-
-describe("HeroCard with missing readings", () => {
-  test("renders 0%/0 hPa nowhere when humidity and pressure are null", () => {
-    const weather = buildWeather({
-      current: { humidity: null, pressure: null, dewPoint: null },
-    });
-
-    const { container } = render(
-      React.createElement(HeroCard, {
-        weather,
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    const visibleText = container.textContent || "";
-    assert.equal(
-      visibleText.includes("0%"),
-      false,
-      "rendered text must not contain '0%'"
-    );
-    assert.equal(
-      visibleText.includes("0 hPa"),
-      false,
-      "rendered text must not contain '0 hPa'"
-    );
-    assert.equal(
-      visibleText.includes("—°F"),
-      false,
-      "rendered text must not contain the malformed '—°F' string"
-    );
-  });
-
-  test("marks missing humidity, pressure, and dew point with the .is-missing visual modifier", () => {
-    const weather = buildWeather({
-      current: { humidity: null, pressure: null, dewPoint: null },
-    });
-
-    render(
-      React.createElement(HeroCard, {
-        weather,
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    for (const label of ["Humidity", "Pressure", "Dew Point"]) {
-      const valueEl = getStatValue(label);
-      assert.ok(valueEl, `${label} value renders`);
-      assert.equal(valueEl.textContent.trim(), "—", `${label} renders dash`);
-      assert.ok(
-        valueEl.classList.contains("is-missing"),
-        `${label} carries .is-missing modifier`
-      );
-    }
-  });
-
-  test("announces missing values to assistive tech as 'No data available'", () => {
-    const weather = buildWeather({
-      current: { humidity: null, pressure: null },
-    });
-
-    render(
-      React.createElement(HeroCard, {
-        weather,
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    // Three places carry the "No data available" label: the two
-    // missing stats here, plus the absence of any readings means
-    // there should be exactly two announcements (humidity + pressure).
-    const announcements = screen.getAllByLabelText("No data available");
-    assert.equal(announcements.length, 2);
-  });
-
-  test("shows the helper note when any hero stat is missing", () => {
-    const weather = buildWeather({
-      current: { humidity: null },
-    });
-
-    render(
-      React.createElement(HeroCard, {
-        weather,
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    const note = screen.getByText(/Some readings are unavailable from the provider/i);
-    assert.ok(note);
-    assert.equal(note.getAttribute("role"), "status");
-  });
-
-  test("does not show the helper note when every hero stat is present", () => {
-    const { container } = render(
-      React.createElement(HeroCard, {
-        weather: buildWeather(),
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    assert.equal(container.querySelector(".hero-stats-note"), null);
-  });
-
-  test("renders real readings normally when nothing is missing", () => {
-    render(
-      React.createElement(HeroCard, {
-        weather: buildWeather(),
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    assert.equal(getStatValue("Humidity").textContent.trim(), "58%");
-    assert.equal(getStatValue("Pressure").textContent.trim(), "1014 hPa");
-    assert.equal(getStatValue("Dew Point").textContent.trim(), "52°F");
-    assert.equal(
-      screen.queryByLabelText("No data available"),
-      null,
-      "no missing-data labels when every reading is present"
-    );
-  });
-
+describe("HeroCard content", () => {
   test("labels sunrise, sunset, and daylight values instead of showing unlabeled numbers", () => {
     render(
       React.createElement(HeroCard, {
@@ -200,6 +67,72 @@ describe("HeroCard with missing readings", () => {
       screen.getByRole("group", {
         name: /Sunrise .* sunset .* daylight/i,
       })
+    );
+  });
+
+  test("renders the UV index panel (head, peak, scale) when UV data is present", () => {
+    // baseWeather daily.uvIndexMax = [7] → High band → "Use sun protection".
+    render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    assert.ok(screen.getByText("UV index"), "UV panel label renders");
+    assert.ok(screen.getByText("Use sun protection"), "guidance head renders");
+    assert.ok(screen.getByText("7.0"), "peak numeric renders to one decimal");
+    assert.ok(
+      screen.getByText(/High UV today/),
+      "the guaranteed UV one-liner renders whenever UV data exists"
+    );
+  });
+
+  test("drops the UV panel and one-liner entirely when UV data is missing", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ daily: { uvIndexMax: [null] } }),
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    assert.equal(
+      container.querySelector(".hero-uv-panel"),
+      null,
+      "no UV panel element when the reading is missing (trust contract)"
+    );
+    assert.equal(
+      container.querySelector(".hero-uv-line"),
+      null,
+      "no UV one-liner when the reading is missing"
+    );
+    assert.equal(
+      screen.queryByText("UV index"),
+      null,
+      "no fabricated UV panel label"
+    );
+  });
+
+  test("no longer renders the retired wind/humidity/pressure/dew-point stat grid", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    assert.equal(
+      container.querySelector(".hero-stats"),
+      null,
+      "the 4-stat grid is gone — those readings live in the Atmosphere bento"
+    );
+    assert.equal(
+      container.querySelector(".hero-stats-note"),
+      null,
+      "the stat-grid missing-data note is gone with the grid"
     );
   });
 });

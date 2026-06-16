@@ -102,8 +102,7 @@
 /* All direct hero content sits above the sky layer */
 .hero-meta,
 .hero-main,
-.hero-bottom,
-.hero-stats-note {
+.hero-bottom {
   position: relative;
   z-index: 1;
 }
@@ -330,6 +329,124 @@
   background: var(--glacier);
 }
 
+/* UV one-liner — guaranteed whenever UV data is present (not gated on
+   the priority-ranked atmosphere reading). */
+.hero-uv-line {
+  margin-top: 12px;
+  max-width: 460px;
+  color: rgba(238, 241, 248, 0.92);
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+/* UV index panel — frosted dark-glass over the reactive sky. Mockup
+   .uvpanel, with the ticks/qualifier raised to the §1 legibility floor
+   (>=11px, >=66% white) since the mockup's 10.5px/.64 values fail AA. */
+.hero-uv-panel {
+  padding: 15px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(8, 18, 33, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.hero-uv-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hero-uv-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.7);
+}
+
+.hero-uv-label svg {
+  color: var(--amber, #f3b765);
+  flex-shrink: 0;
+}
+
+.hero-uv-head {
+  margin: 6px 0 2px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hero-uv-sub {
+  margin: 0;
+  color: rgba(238, 241, 248, 0.8);
+  font-size: 12.5px;
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+.hero-uv-num {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.hero-uv-peak {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 200;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-uv-of {
+  display: block;
+  margin-top: 3px;
+  color: rgba(238, 241, 248, 0.66);
+  font-size: 11px;
+}
+
+.hero-uv-scale {
+  margin-top: 14px;
+}
+
+.hero-uv-bar {
+  position: relative;
+  height: 7px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    #7fd99a,
+    #f3d765 42%,
+    #ef8f6a 66%,
+    #e8745b 84%,
+    #d65a8f
+  );
+}
+
+.hero-uv-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.hero-uv-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+  color: rgba(238, 241, 248, 0.66);
+  font-size: 11px;
+}
+
 /* Keep guidance items for the daily guidance that still shows on
    notice/watch conditions (rain-gear alerts etc.) */
 .hero-guidance {
@@ -469,14 +586,6 @@
   white-space: nowrap;
 }
 
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(178, 202, 244, 0.2);
-}
-
 .stat {
   display: flex;
   align-items: flex-start;
@@ -515,13 +624,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Keep a value and its unit on one line ("10 mph", not "10" / "mph") so
-   the metric grid reads evenly. Scoped to the hero grid; values here are
-   short enough that nowrap never overflows the cell. */
-.hero-stats .stat-value {
-  white-space: nowrap;
-}
-
 .stat-value.is-missing {
   /* Visual cue that distinguishes "no data" from a real reading.
      The em-dash already carries the meaning; the muted color and
@@ -530,25 +632,7 @@
   font-weight: 600;
 }
 
-.hero-stats-note {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px dashed rgba(186, 212, 252, 0.34);
-  background: rgba(8, 17, 36, 0.4);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
-@media (max-width: 1200px) {
-  .hero-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 980px) {
   .hero-card {
     gap: 16px;
@@ -644,11 +728,6 @@
   .hero-icon {
     width: 102px;
   }
-
-  /* 2×2 stat grid halves vertical height vs 4×1 stack */
-  .hero-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 420px) {
@@ -692,12 +771,6 @@
   .stat {
     gap: 10px;
     padding: 10px;
-  }
-
-  /* Tighten the stats section separator on very small phones */
-  .hero-stats {
-    gap: 8px;
-    padding-top: 14px;
   }
 }
 

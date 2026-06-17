@@ -5,8 +5,6 @@ import {
   MapPin,
   Wind,
   Droplets,
-  Gauge,
-  Thermometer,
   Sunrise,
   Sunset,
   Sun,
@@ -16,7 +14,6 @@ import { isMissingPlaceholder } from "../utils/numbers";
 import { formatDisplayCountry } from "../utils/locationDisplay";
 import { useTimeNow } from "../hooks/useTimeNow";
 import WeatherIcon from "./WeatherIcon";
-import { Stat } from "./ui";
 import { buildHeroData } from "./heroCard/buildHeroData";
 import "./HeroCard.css";
 
@@ -177,13 +174,8 @@ function HeroCard({
     currentTempDisplay,
     isCurrentTempMissing,
     feelsLikeDisplay,
-    dewPointDisplay,
     todayHighDisplay,
     todayLowDisplay,
-    windDisplay,
-    humidityDisplay,
-    pressureDisplay,
-    heroStatsHaveAnyMissing,
     sunriseValue,
     sunsetValue,
     sunriseLabel,
@@ -193,7 +185,6 @@ function HeroCard({
     atmosphereReading,
     hasClimateComparison,
     climateMessage,
-    dailyGuidance,
     characteristicChips,
     today,
     tempUnit,
@@ -410,37 +401,8 @@ function HeroCard({
           </div>
         </div>
 
-        <div className="hero-stats" role="group" aria-label="Current readings">
-          <Stat
-            icon={<Wind size={18} />}
-            label="Wind"
-            value={windDisplay}
-          />
-          <Stat
-            icon={<Droplets size={18} />}
-            label="Humidity"
-            value={humidityDisplay}
-          />
-          <Stat
-            icon={<Gauge size={18} />}
-            label="Pressure"
-            value={pressureDisplay}
-          />
-          <Stat
-            icon={<Thermometer size={18} />}
-            label="Dew Point"
-            value={dewPointDisplay}
-          />
-        </div>
       </div>
 
-      {heroStatsHaveAnyMissing && (
-        <p className="hero-stats-note" role="status">
-          Some readings are unavailable from the provider. Aura shows
-          “—” instead of a fallback value to keep the rest of the
-          forecast trustworthy.
-        </p>
-      )}
     </section>
   );
 }

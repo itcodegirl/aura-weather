@@ -701,4 +701,213 @@
   }
 }
 
+/* ── Calm / warm hero treatment (brand pass) ─────────────────────────────────
+ * Lets the sun's warmth carry from the reactive sky into the content layer:
+ * warm frosted glass, softened (not hard) borders, lighter sentence-feel
+ * labels, and a warm off-white ink kept above the AA legibility floor. The
+ * blue/green stays only where it carries meaning (Low temp, confidence dot).
+ * ------------------------------------------------------------------------- */
+.hero-card.glass {
+  color: #f4f1ea;
+  border-radius: 20px;
+}
 
+.hero-location {
+  color: rgba(244, 241, 234, 0.9);
+}
+
+.hero-date {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: rgba(244, 241, 234, 0.62);
+}
+
+.hero-high-low {
+  border: 1px solid rgba(255, 243, 225, 0.1);
+  background: rgba(255, 243, 225, 0.06);
+  box-shadow: none;
+}
+
+.hero-high-low-label {
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(244, 241, 234, 0.68);
+}
+
+.hero-high-low-value {
+  color: #f6f2ea;
+  font-weight: 400;
+}
+
+.hero-high-low-item:first-child .hero-high-low-value {
+  color: #f5d9a8;
+}
+
+.hero-high-low-item:last-child .hero-high-low-value {
+  color: #bcd2f0;
+}
+
+.hero-temp-unit {
+  color: rgba(244, 241, 234, 0.72);
+  font-weight: 400;
+}
+
+.hero-icon {
+  background:
+    radial-gradient(circle at 34% 30%, rgba(255, 235, 200, 0.24), rgba(244, 189, 111, 0.08) 60%, transparent 76%),
+    rgba(14, 18, 30, 0.42);
+}
+
+.hero-condition {
+  font-weight: 500;
+}
+
+.hero-feels {
+  color: rgba(244, 241, 234, 0.68);
+  font-weight: 400;
+}
+
+.hero-insight {
+  background: rgba(255, 243, 225, 0.05);
+  border: 1px solid rgba(255, 238, 214, 0.1);
+  color: rgba(245, 242, 235, 0.9);
+}
+
+.hero-chip {
+  border: 1px solid rgba(255, 243, 225, 0.12);
+  background: rgba(255, 243, 225, 0.07);
+  color: rgba(245, 242, 235, 0.92);
+}
+
+.hero-chip-icon {
+  color: #f3c98a;
+}
+
+.hero-trust-pill {
+  border: 1px solid rgba(255, 243, 225, 0.12);
+  background: rgba(255, 243, 225, 0.06);
+  color: rgba(245, 242, 235, 0.82);
+}
+
+.hero-trust-dot {
+  background: #7fd99a;
+}
+
+.hero-daylight-strip {
+  border: 1px solid rgba(255, 238, 214, 0.1);
+  background: rgba(255, 243, 225, 0.045);
+}
+
+.hero-daylight-item {
+  border: 1px solid rgba(255, 238, 214, 0.08);
+  background: rgba(255, 243, 225, 0.05);
+  box-shadow: none;
+}
+
+.hero-daylight-label {
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(244, 241, 234, 0.68);
+}
+
+.hero-daylight-value {
+  color: #f6f2ea;
+  font-weight: 500;
+}
+
+.hero-stats {
+  border-top: 1px solid rgba(255, 238, 214, 0.12);
+}
+
+.hero-stats .stat {
+  border: 1px solid rgba(255, 238, 214, 0.09);
+  background: rgba(255, 243, 225, 0.05);
+  box-shadow: none;
+}
+
+.hero-stats .stat-icon {
+  color: #f3c98a;
+  background: rgba(244, 189, 111, 0.12);
+}
+
+.hero-stats .stat-label {
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(244, 241, 234, 0.68);
+}
+
+.hero-stats .stat-value {
+  color: #f6f2ea;
+  font-weight: 500;
+}
+
+/* ── Hero refinements: sun placement, daylight strip, feels-like ─────────────
+ * The decorative sky-orb sat directly under the High/Low pill ("covering the
+ * sun"). The big condition icon is the real sun, so drop the redundant orb and
+ * let the soft glow halo that icon (lower-right, clear of the High/Low).
+ * ------------------------------------------------------------------------- */
+.hero-sky-glow {
+  top: 96px;
+  right: 14px;
+  width: 152px;
+  height: 152px;
+}
+
+.hero-sky-orb {
+  display: none;
+}
+
+/* Daylight strip — one cohesive warm panel with hairline dividers instead of
+   three separate bordered boxes. */
+.hero-daylight-strip {
+  gap: 0;
+  padding: 2px;
+  border: 1px solid rgba(255, 238, 214, 0.1);
+  background: rgba(255, 243, 225, 0.05);
+}
+
+.hero-daylight-item {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 11px 13px;
+}
+
+.hero-daylight-item + .hero-daylight-item {
+  border-left: 1px solid rgba(255, 238, 214, 0.09);
+}
+
+.hero-daylight-icon {
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  color: #f3c98a;
+}
+
+.hero-daylight-label {
+  color: rgba(244, 241, 234, 0.62);
+}
+
+.hero-daylight-value {
+  font-size: 14px;
+  color: #f8f4ec;
+}
+
+/* Feels-like: give the condition line room so "Feels like ___" sits clearly
+   beside the condition rather than crowding it. */
+.hero-condition-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.hero-condition-separator {
+  color: rgba(244, 241, 234, 0.4);
+}
+
+.hero-feels {
+  margin-top: 0;
+}

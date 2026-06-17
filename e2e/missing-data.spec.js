@@ -27,23 +27,21 @@ test("?mock=missing renders 'Data unavailable' instead of synthetic zeros", asyn
   expect(heroText).not.toMatch(/—°F/);
   expect(heroText).not.toMatch(/—°C/);
 
-  // The hero card renders "—" for each unavailable stat and surfaces a
-  // note when at least one stat is missing — verify it is present.
-  await expect(hero.locator(".hero-stats-note")).toBeVisible();
+  // The 4-stat grid and its "some readings unavailable" note moved out
+  // of the hero (those readings live in the Atmosphere bento now). The
+  // hero still honours the contract for its own readings — verify it
+  // surfaces a missing-data indicator (the high/low "No data available"
+  // span) rather than a fabricated value.
+  await expect(
+    hero.locator("span[aria-label='No data available']").first()
+  ).toBeVisible();
 });
 
 test("?mock=missing surfaces the missing-data trust contract via assistive-tech cues", async ({ page }) => {
   await page.goto("/?mock=missing");
   await expect(page.getByRole("main")).toBeVisible();
 
-  // The helper note is the user-facing explanation for why values are
-  // dashed out. It must be a polite live region (role="status") so a
-  // screen-reader user hears the explanation when it appears.
-  const helperNote = page.locator(".hero-stats-note");
-  await expect(helperNote).toBeVisible();
-  await expect(helperNote).toHaveAttribute("role", "status");
-
-  // Each missing stat replaces its glyph with a labelled span so AT
+  // Each missing reading replaces its glyph with a labelled span so AT
   // announces "no data available" instead of speaking the em-dash
   // character literally. At least one of these must be present in the
   // rendered hero card while ?mock=missing is in effect.
@@ -55,7 +53,10 @@ test("?mock=missing surfaces the missing-data trust contract via assistive-tech 
 test("?mock=missing passes baseline axe-core accessibility checks", async ({ page }) => {
   await page.goto("/?mock=missing");
   await expect(page.getByRole("main")).toBeVisible();
-  await expect(page.locator(".hero-stats-note")).toBeVisible();
+  // Gate the axe analysis on the missing-data state having rendered.
+  await expect(
+    page.locator("span[aria-label='No data available']").first()
+  ).toBeVisible();
 
   const report = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa"])

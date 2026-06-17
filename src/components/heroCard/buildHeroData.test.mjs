@@ -386,4 +386,65 @@ describe("buildHeroData", () => {
     assert.equal(data.heroStatsHaveAnyMissing, true);
     assert.equal(data.dewPointDisplay, "—");
   });
+
+  test("builds a UV panel from the daily peak with level, copy, and marker", () => {
+    // baseWeather daily.uvIndexMax = [7.2] → High band (6–7.99).
+    const data = buildHeroData({
+      weather: baseWeather,
+      location: baseLocation,
+      unit: "F",
+    });
+
+    assert.ok(data.uvPanel, "uvPanel present when uvIndexMax exists");
+    assert.equal(data.uvPanel.peak, 7.2);
+    assert.equal(data.uvPanel.peakLabel, "Peak UV 7.2");
+    assert.equal(data.uvPanel.level, "High");
+    assert.equal(data.uvPanel.head, "Use sun protection");
+    assert.ok(data.uvPanel.sub.startsWith("Peak UV 7.2 —"));
+    assert.ok(Math.abs(data.uvPanel.markerPct - (7.2 / 11) * 100) < 1e-9);
+  });
+
+  test("drops the UV panel entirely when the daily peak is missing", () => {
+    const data = buildHeroData({
+      weather: {
+        ...baseWeather,
+        daily: { ...baseWeather.daily, uvIndexMax: [null] },
+      },
+      location: baseLocation,
+      unit: "F",
+    });
+
+    assert.equal(data.uvPanel, null);
+  });
+
+  test("labels UV bands across the 0–11+ scale", () => {
+    const level = (uv) =>
+      buildHeroData({
+        weather: {
+          ...baseWeather,
+          daily: { ...baseWeather.daily, uvIndexMax: [uv] },
+        },
+        location: baseLocation,
+        unit: "F",
+      }).uvPanel.level;
+
+    assert.equal(level(1), "Low");
+    assert.equal(level(4), "Moderate");
+    assert.equal(level(7), "High");
+    assert.equal(level(9), "Very high");
+    assert.equal(level(11.5), "Extreme");
+  });
+
+  test("clamps the UV marker to 100% past the top of the scale", () => {
+    const data = buildHeroData({
+      weather: {
+        ...baseWeather,
+        daily: { ...baseWeather.daily, uvIndexMax: [13] },
+      },
+      location: baseLocation,
+      unit: "F",
+    });
+
+    assert.equal(data.uvPanel.markerPct, 100);
+  });
 });

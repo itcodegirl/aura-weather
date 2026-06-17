@@ -88,9 +88,13 @@ async function bootstrapMissingMockState(page, context, viewport) {
   await expect(
     page.getByRole("heading", { name: "Current Conditions" })
   ).toBeVisible();
-  // Wait for the helper note — its presence proves the missing-data trust
-  // contract is fully rendered and not still in a transient state.
-  await expect(page.locator(".hero-stats-note")).toBeVisible();
+  // Wait for a missing-data indicator — its presence proves the trust
+  // contract is fully rendered and not still in a transient state. (The
+  // hero's "some readings unavailable" note retired with the 4-stat grid;
+  // the high/low "No data available" span is the surviving cue.)
+  await expect(
+    page.locator("span[aria-label='No data available']").first()
+  ).toBeVisible();
   // The dashboard mounts its supplemental panels via Suspense + idle
   // callback. Wait for those headers so the screenshot captures a
   // fully-laid-out page rather than a transient mid-mount state where

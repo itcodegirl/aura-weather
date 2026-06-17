@@ -233,6 +233,80 @@ function buildUvGuidance(weather) {
   };
 }
 
+// UV severity bands (peak index), matching the spec's 0–11+ scale:
+// Low 0–2 · Moderate 3–5 · High 6–7 · Very high 8–10 · Extreme 11+.
+// Shared by the hero UV panel so the level word, marker, and ticks
+// agree with the characteristic-chip and guidance thresholds above.
+const UV_MODERATE_MIN = 3;
+const UV_HIGH_MIN = 6;
+const UV_VERY_HIGH_MIN = 8;
+const UV_EXTREME_MIN = 11;
+const UV_SCALE_MAX = 11;
+
+/*
+ * Hero UV index panel data. Reads the raw daily peak directly (NOT the
+ * filtered dailyGuidance, which drops "calm"/low-UV days) so the panel
+ * renders for EVERY UV level. Returns null when the reading is missing
+ * — the trust contract says drop the whole panel rather than paint an
+ * empty graded bar. Level word + guidance copy are derived from the
+ * same severity bands as buildUvGuidance/the UV chip, so the panel,
+ * the chip, and the one-liner never disagree (the mockup itself ships
+ * a "Moderate" label over a 7.5 reading — data-driven copy fixes that).
+ */
+function buildHeroUvPanel(weather) {
+  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[0]);
+  if (uvIndex === null) {
+    return null;
+  }
+
+  const peak = Math.max(0, uvIndex);
+  const peakLabel = `Peak UV ${peak.toFixed(1)}`;
+  // Linear placement on the 0–11+ bar — matches the mockup marker
+  // (7.5 → ~68%). Clamp so 11+ pins to the Extreme end.
+  const markerPct = Math.max(0, Math.min(100, (peak / UV_SCALE_MAX) * 100));
+
+  let level;
+  let head;
+  let advice;
+  let line;
+  if (peak >= UV_EXTREME_MIN) {
+    level = "Extreme";
+    head = "Avoid the midday sun";
+    advice = "shade, hat & SPF are essential";
+    line = "Extreme UV today — cover up and limit midday exposure.";
+  } else if (peak >= UV_VERY_HIGH_MIN) {
+    level = "Very high";
+    head = "Cover up outdoors";
+    advice = "hat, shade & SPF around midday";
+    line = "Very high UV today — protect your skin midday.";
+  } else if (peak >= UV_HIGH_MIN) {
+    level = "High";
+    head = "Use sun protection";
+    advice = "hat & SPF if you're out midday";
+    line = "High UV today — sun protection is worth it midday.";
+  } else if (peak >= UV_MODERATE_MIN) {
+    level = "Moderate";
+    head = "Some protection helps";
+    advice = "seek shade through midday";
+    line = "Moderate UV today — easy on the sun exposure.";
+  } else {
+    level = "Low";
+    head = "Minimal protection needed";
+    advice = "no special protection required";
+    line = "Low UV today — comfortable to be outside.";
+  }
+
+  return {
+    peak,
+    peakLabel,
+    head,
+    sub: `${peakLabel} — ${advice}.`,
+    line,
+    level,
+    markerPct,
+  };
+}
+
 function buildWindGuidance(weather, unit) {
   const windSpeed = toFiniteNumber(weather?.current?.windSpeed);
   const windGust = toFiniteNumber(weather?.current?.windGust);
@@ -481,6 +555,7 @@ export function buildHeroData({
     climateMessage,
     dailyGuidance,
     characteristicChips,
+    uvPanel: buildHeroUvPanel(weather),
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
   };
 }

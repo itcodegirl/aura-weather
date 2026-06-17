@@ -220,7 +220,7 @@ function CitySearch({ onSelect, savedCities, recentCities }, ref) {
           onFocus={handleInputFocus}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          placeholder="Search city or region..."
+          placeholder="Search a city"
           className="city-search-input"
           aria-label="Search for a city"
           aria-expanded={showDropdown}

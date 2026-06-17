@@ -50,72 +50,39 @@ function buildWeather(overrides = {}) {
   };
 }
 
-describe("HeroCard content", () => {
-  test("labels sunrise, sunset, and daylight values instead of showing unlabeled numbers", () => {
-    render(
-      React.createElement(HeroCard, {
-        weather: buildWeather(),
-        location: baseLocation,
-        unit: "F",
-      })
-    );
+describe("HeroCard with missing readings", () => {
+  test("renders 0%/0 hPa nowhere when humidity and pressure are null", () => {
+    const weather = buildWeather({
+      current: { humidity: null, pressure: null, dewPoint: null },
+    });
 
-    assert.ok(screen.getByText("Sunrise"));
-    assert.ok(screen.getByText("Sunset"));
-    assert.ok(screen.getByText("Daylight"));
-    assert.ok(
-      screen.getByRole("group", {
-        name: /Sunrise .* sunset .* daylight/i,
-      })
-    );
-  });
-
-  test("renders the UV index panel (head, peak, scale) when UV data is present", () => {
-    // baseWeather daily.uvIndexMax = [7] → High band → "Use sun protection".
-    render(
-      React.createElement(HeroCard, {
-        weather: buildWeather(),
-        location: baseLocation,
-        unit: "F",
-      })
-    );
-
-    assert.ok(screen.getByText("UV index"), "UV panel label renders");
-    assert.ok(screen.getByText("Use sun protection"), "guidance head renders");
-    assert.ok(screen.getByText("7.0"), "peak numeric renders to one decimal");
-    assert.ok(
-      screen.getByText(/High UV today/),
-      "the guaranteed UV one-liner renders whenever UV data exists"
-    );
-  });
-
-  test("drops the UV panel and one-liner entirely when UV data is missing", () => {
     const { container } = render(
       React.createElement(HeroCard, {
-        weather: buildWeather({ daily: { uvIndexMax: [null] } }),
+        weather,
         location: baseLocation,
         unit: "F",
       })
     );
 
+    const visibleText = container.textContent || "";
     assert.equal(
-      container.querySelector(".hero-uv-panel"),
-      null,
-      "no UV panel element when the reading is missing (trust contract)"
+      visibleText.includes("0%"),
+      false,
+      "rendered text must not contain '0%'"
     );
     assert.equal(
-      container.querySelector(".hero-uv-line"),
-      null,
-      "no UV one-liner when the reading is missing"
+      visibleText.includes("0 hPa"),
+      false,
+      "rendered text must not contain '0 hPa'"
     );
     assert.equal(
-      screen.queryByText("UV index"),
-      null,
-      "no fabricated UV panel label"
+      visibleText.includes("—°F"),
+      false,
+      "rendered text must not contain the malformed '—°F' string"
     );
   });
 
-  test("no longer renders the retired wind/humidity/pressure/dew-point stat grid", () => {
+  test("does not show the helper note when every hero stat is present", () => {
     const { container } = render(
       React.createElement(HeroCard, {
         weather: buildWeather(),
@@ -124,17 +91,9 @@ describe("HeroCard content", () => {
       })
     );
 
-    assert.equal(
-      container.querySelector(".hero-stats"),
-      null,
-      "the 4-stat grid is gone — those readings live in the Atmosphere bento"
-    );
-    assert.equal(
-      container.querySelector(".hero-stats-note"),
-      null,
-      "the stat-grid missing-data note is gone with the grid"
-    );
+    assert.equal(container.querySelector(".hero-stats-note"), null);
   });
+
 });
 
 describe("HeroCard accessibility scaffolding", () => {

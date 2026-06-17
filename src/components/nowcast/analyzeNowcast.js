@@ -122,6 +122,13 @@ export function analyzeNowcast(nowcast, options = {}) {
     };
   }
 
+  // The chart and the readouts must share one now-anchored window so the
+  // curve matches the headline (previously the chart sliced the raw array
+  // from index 0, which is in the past, and rendered a flat line).
+  const probabilitySeries = rows.map((row) =>
+    row.probability === null ? 0 : row.probability
+  );
+
   const firstWetIndex = rows.findIndex((row) => row.isWet);
   if (firstWetIndex === -1) {
     const probabilityRows = rows.filter((row) => row.probability !== null);
@@ -134,6 +141,7 @@ export function analyzeNowcast(nowcast, options = {}) {
       startInMinutes: 0,
       durationMinutes: 0,
       peakProbability,
+      series: probabilitySeries,
       summary: "Dry for the next 2 hours.",
       details:
         peakProbability === null
@@ -186,6 +194,7 @@ export function analyzeNowcast(nowcast, options = {}) {
     durationMinutes,
     peakProbability,
     averageProbability,
+    series: probabilitySeries,
     summary,
     details:
       peakProbability === null

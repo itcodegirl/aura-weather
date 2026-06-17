@@ -1,11 +1,11 @@
 import { lazy, memo, Suspense, useCallback, useState } from "react";
 import HeroCard from "../HeroCard";
-import ExposureSection from "../ExposureSection";
+import AlertsCard from "../AlertsCard";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
-import { PRELOAD_HEAVY_PANELS, RainPanel, HourlyPanel } from "../lazyPanels";
+import { PRELOAD_HEAVY_PANELS, HourlyPanel, RadarPanel } from "../lazyPanels";
 import { formatDisplayCountry } from "../../utils/locationDisplay";
 import DataTrustFooter from "../DataTrustFooter";
 import "./WeatherDashboard.css";
@@ -33,15 +33,10 @@ const GROUP_LABEL_STYLE_VARIABLES = [
   { "--group-i": 2 },
   { "--group-i": 3 },
   { "--group-i": 4 },
+  { "--group-i": 5 },
+  { "--group-i": 6 },
+  { "--group-i": 7 },
 ];
-
-const GROUP_LABEL_IDS = {
-  currentConditions: "group-current-conditions",
-  nearTermOutlook: "group-near-term-outlook",
-  riskSignals: "group-risk-signals",
-  weekAhead: "group-week-ahead",
-  atmosphere: "group-atmosphere",
-};
 
 function WeatherDashboard({
   weather,
@@ -50,7 +45,6 @@ function WeatherDashboard({
   weatherDataUnit,
   climateComparison,
   isBackgroundLoading,
-  weatherInfo,
   trustMeta,
   prefersReducedData = false,
 }) {
@@ -58,17 +52,16 @@ function WeatherDashboard({
     idleTimeout: 1800,
     fallbackDelay: 900,
   });
-  const showRainPanel = useDeferredMount(Boolean(weather), {
-    idleTimeout: 1800,
-    fallbackDelay: 900,
+  // Radar pulls in Leaflet, so defer it further than the other panels —
+  // it gates on a resolved location (its only input) rather than weather.
+  const showRadarPanel = useDeferredMount(Boolean(location), {
+    idleTimeout: 3200,
+    fallbackDelay: 2000,
   });
   const showSupplementalPanels = useDeferredMount(Boolean(weather), {
     idleTimeout: 2800,
     fallbackDelay: 1800,
   });
-  // Once a user opens data-status we keep the panel mounted so the
-  // toggle no longer pays for a network round-trip; the chunk is
-  // cached after first reveal.
   const [hasOpenedSourceHealth, setHasOpenedSourceHealth] = useState(false);
   const handleSourceHealthToggle = useCallback((event) => {
     if (event.currentTarget?.open) {
@@ -82,14 +75,14 @@ function WeatherDashboard({
     fallbackDelay: 4200,
   });
 
-  const aqiStatus = trustMeta?.aqiStatus ?? "idle";
   const climateStatus = trustMeta?.climateStatus ?? "idle";
+  const alertsStatus = trustMeta?.alertsStatus ?? weather?.alertsStatus ?? "idle";
+  // Severe-alert banner only renders when there are active alerts for this
+  // area, or when coverage/feed status itself is informative.
+  const hasAlerts = Array.isArray(weather?.alerts) && weather.alerts.length > 0;
+  const showAlertsPanel =
+    hasAlerts || alertsStatus === "unsupported" || alertsStatus === "unavailable";
 
-  // Append the active location to the first heading for assistive
-  // tech only. Sighted users read "Current Conditions" as a visual
-  // eyebrow; screen-reader users hear "Current Conditions in Tokyo,
-  // Japan" so the heading list actually tells them where the weather
-  // is for instead of four generic group labels in a row.
   const dashboardLocationName =
     typeof location?.name === "string" ? location.name.trim() : "";
   const dashboardLocationCountry =
@@ -109,8 +102,24 @@ function WeatherDashboard({
       aria-busy={isBackgroundLoading}
       tabIndex={-1}
     >
+      {/* Severe-alert banner — top of the page, only when alerts are active */}
+      {showAlertsPanel && (
+        <PanelErrorBoundary
+          label="Severe alerts"
+          className="bento-alerts"
+          style={CARD_STYLE_VARIABLES[5]}
+        >
+          <AlertsCard
+            alerts={weather.alerts}
+            alertsStatus={alertsStatus}
+            style={CARD_STYLE_VARIABLES[5]}
+            isRefreshing={isBackgroundLoading}
+          />
+        </PanelErrorBoundary>
+      )}
+
       <h2
-        id={GROUP_LABEL_IDS.currentConditions}
+        id="group-current-conditions"
         className="bento-group-label"
         style={GROUP_LABEL_STYLE_VARIABLES[0]}
       >
@@ -137,21 +146,13 @@ function WeatherDashboard({
         />
       </PanelErrorBoundary>
 
-      <PanelErrorBoundary
-        label="Environmental exposure"
-        className="bento-exposure"
-        style={CARD_STYLE_VARIABLES[1]}
+      <h2
+        id="group-hourly"
+        className="bento-group-label"
+        style={GROUP_LABEL_STYLE_VARIABLES[1]}
       >
-        <ExposureSection
-          aqi={weather?.aqi}
-          aqiStatus={aqiStatus}
-          uvIndex={weather?.daily?.uvIndexMax?.[0]}
-          alert={weather?.alerts?.[0]}
-          style={CARD_STYLE_VARIABLES[1]}
-          isRefreshing={isBackgroundLoading}
-        />
-      </PanelErrorBoundary>
-
+        Near-Term Outlook
+      </h2>
       <PanelErrorBoundary
         label="Hourly forecast"
         className="bento-chart hourly-chart"
@@ -186,45 +187,44 @@ function WeatherDashboard({
       </PanelErrorBoundary>
 
       <h2
-        id={GROUP_LABEL_IDS.nearTermOutlook}
+        id="group-radar"
         className="bento-group-label"
-        style={GROUP_LABEL_STYLE_VARIABLES[1]}
+        style={GROUP_LABEL_STYLE_VARIABLES[2]}
       >
-        Near-Term Outlook
+        Precipitation Radar
       </h2>
       <PanelErrorBoundary
-        label="Rain outlook"
-        className="bento-rain"
-        style={CARD_STYLE_VARIABLES[2]}
+        label="Precipitation radar"
+        className="bento-radar"
+        style={CARD_STYLE_VARIABLES[4]}
       >
-        {showRainPanel ? (
+        {showRadarPanel ? (
           <Suspense
             fallback={(
               <CardFallback
-                className="bento-rain"
-                style={CARD_STYLE_VARIABLES[2]}
-                title="Loading rain outlook..."
+                className="bento-radar"
+                style={CARD_STYLE_VARIABLES[4]}
+                title="Loading precipitation radar..."
                 isRefreshing={isBackgroundLoading}
               />
             )}
           >
-            <RainPanel
-              weather={weather}
-              unit={unit}
-              dataUnit={weatherDataUnit}
-              style={CARD_STYLE_VARIABLES[2]}
+            <RadarPanel
+              location={location}
+              style={CARD_STYLE_VARIABLES[4]}
               isRefreshing={isBackgroundLoading}
             />
           </Suspense>
         ) : (
           <CardFallback
-            className="bento-rain"
-            style={CARD_STYLE_VARIABLES[2]}
-            title="Loading rain outlook..."
+            className="bento-radar"
+            style={CARD_STYLE_VARIABLES[4]}
+            title="Loading precipitation radar..."
             isRefreshing={isBackgroundLoading}
           />
         )}
       </PanelErrorBoundary>
+
       {showSupplementalPanels ? (
         <Suspense
           fallback={(
@@ -239,11 +239,10 @@ function WeatherDashboard({
           <SupplementalWeatherPanels
             weather={weather}
             unit={unit}
-            weatherInfo={weatherInfo}
+            weatherDataUnit={weatherDataUnit}
             trustMeta={trustMeta}
             cardStyleVariables={CARD_STYLE_VARIABLES}
             groupLabelStyleVariables={GROUP_LABEL_STYLE_VARIABLES}
-            groupLabelIds={GROUP_LABEL_IDS}
             isBackgroundLoading={isBackgroundLoading}
           />
         </Suspense>
@@ -301,7 +300,6 @@ function areWeatherDashboardPropsEqual(prevProps, nextProps) {
     prevProps.weatherDataUnit === nextProps.weatherDataUnit &&
     prevProps.climateComparison === nextProps.climateComparison &&
     prevProps.isBackgroundLoading === nextProps.isBackgroundLoading &&
-    prevProps.weatherInfo === nextProps.weatherInfo &&
     prevProps.trustMeta === nextProps.trustMeta &&
     prevProps.prefersReducedData === nextProps.prefersReducedData
   );

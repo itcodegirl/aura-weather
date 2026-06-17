@@ -72,7 +72,6 @@ async function bootstrapDashboard(page, context, viewport) {
 
   await page.goto("/");
   await expect(page.getByRole("main")).toBeVisible();
-  await expect(page.locator(".loading-card")).toHaveCount(0, { timeout: 20_000 });
   await expect(page.locator(".bento-chart .chart-title")).toBeVisible();
   await expect(page.locator(".bento-storm .storm-title")).toBeVisible();
   await disableMotionAndPinFont(page);
@@ -142,7 +141,6 @@ test.describe("README dashboard screenshots", () => {
     await freezeTime(page);
     await page.goto("/");
     await expect(page.getByRole("main")).toBeVisible();
-    await expect(page.locator(".loading-card")).toHaveCount(0, { timeout: 20_000 });
     await expect(page.locator(".bento-alerts")).toBeVisible();
     await disableMotionAndPinFont(page);
 

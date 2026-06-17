@@ -1,25 +1,30 @@
 import { memo, Suspense } from "react";
 import NowcastCard from "../NowcastCard";
-import AlertsCard from "../AlertsCard";
 import ForecastCard from "../ForecastCard";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
-import { StormWatchPanel, AtmospherePanel } from "../lazyPanels";
+import { StormWatchPanel, AtmospherePanel, RainPanel } from "../lazyPanels";
 
 function SupplementalWeatherPanels({
   weather,
   unit,
-  weatherInfo,
+  weatherDataUnit,
   trustMeta,
   isBackgroundLoading,
   cardStyleVariables,
   groupLabelStyleVariables,
-  groupLabelIds,
 }) {
-  const alertsStatus = trustMeta?.alertsStatus ?? weather?.alertsStatus ?? "idle";
+  void trustMeta; // retained for API parity; not read in this section
 
   return (
     <>
+      <h2
+        id="group-nowcast"
+        className="bento-group-label"
+        style={groupLabelStyleVariables[3]}
+      >
+        Nowcast
+      </h2>
       <PanelErrorBoundary
         label="Nowcast"
         className="bento-nowcast"
@@ -33,54 +38,11 @@ function SupplementalWeatherPanels({
       </PanelErrorBoundary>
 
       <h2
-        id={groupLabelIds.riskSignals}
+        id="group-atmosphere"
         className="bento-group-label"
-        style={groupLabelStyleVariables[2]}
+        style={groupLabelStyleVariables[4]}
       >
         Risk Signals
-      </h2>
-      <PanelErrorBoundary
-        label="Severe alerts"
-        className="bento-alerts"
-        style={cardStyleVariables[5]}
-      >
-        <AlertsCard
-          alerts={weather?.alerts}
-          alertsStatus={alertsStatus}
-          style={cardStyleVariables[5]}
-          isRefreshing={isBackgroundLoading}
-        />
-      </PanelErrorBoundary>
-      <PanelErrorBoundary
-        label="Storm watch"
-        className="bento-storm"
-        style={cardStyleVariables[6]}
-      >
-        <Suspense
-          fallback={(
-            <CardFallback
-              className="bento-storm"
-              style={cardStyleVariables[6]}
-              title="Loading risk signals..."
-              isRefreshing={isBackgroundLoading}
-            />
-          )}
-        >
-          <StormWatchPanel
-            weather={weather}
-            unit={unit}
-            style={cardStyleVariables[6]}
-            isRefreshing={isBackgroundLoading}
-          />
-        </Suspense>
-      </PanelErrorBoundary>
-
-      <h2
-        id={groupLabelIds.atmosphere}
-        className="bento-group-label"
-        style={groupLabelStyleVariables[3]}
-      >
-        Atmosphere
       </h2>
       <PanelErrorBoundary
         label="Atmosphere"
@@ -108,9 +70,72 @@ function SupplementalWeatherPanels({
       </PanelErrorBoundary>
 
       <h2
-        id={groupLabelIds.weekAhead}
+        id="group-rain-outlook"
         className="bento-group-label"
-        style={groupLabelStyleVariables[4]}
+        style={groupLabelStyleVariables[5]}
+      >
+        Precipitation Outlook
+      </h2>
+      <PanelErrorBoundary
+        label="Rain outlook"
+        className="bento-rain"
+        style={cardStyleVariables[2]}
+      >
+        <Suspense
+          fallback={(
+            <CardFallback
+              className="bento-rain"
+              style={cardStyleVariables[2]}
+              title="Loading rain outlook..."
+              isRefreshing={isBackgroundLoading}
+            />
+          )}
+        >
+          <RainPanel
+            weather={weather}
+            unit={unit}
+            dataUnit={weatherDataUnit}
+            style={cardStyleVariables[2]}
+            isRefreshing={isBackgroundLoading}
+          />
+        </Suspense>
+      </PanelErrorBoundary>
+
+      <h2
+        id="group-storm-watch"
+        className="bento-group-label"
+        style={groupLabelStyleVariables[6]}
+      >
+        Storm Watch
+      </h2>
+      <PanelErrorBoundary
+        label="Storm watch"
+        className="bento-storm"
+        style={cardStyleVariables[6]}
+      >
+        <Suspense
+          fallback={(
+            <CardFallback
+              className="bento-storm"
+              style={cardStyleVariables[6]}
+              title="Loading storm watch..."
+              isRefreshing={isBackgroundLoading}
+            />
+          )}
+        >
+          <StormWatchPanel
+            weather={weather}
+            unit={unit}
+            style={cardStyleVariables[6]}
+            isRefreshing={isBackgroundLoading}
+          />
+        </Suspense>
+      </PanelErrorBoundary>
+
+      <h2
+        id="group-week-ahead"
+        className="bento-group-label"
+        style={groupLabelStyleVariables[7]}
       >
         Week Ahead
       </h2>

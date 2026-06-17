@@ -9,7 +9,7 @@ const NC_SVG_W = 1000;
 const NC_SVG_H = 150;
 const NC_TOP_PAD = 20;
 const NC_BOT_PAD = 24;
-const NC_DOMAIN = 50;
+const NC_DOMAIN = 100; // full 0-100% range so high-rain windows slope instead of pegging flat at the cap
 
 function buildNowcastChartGeometry(points) {
   const n = points.length;
@@ -105,14 +105,12 @@ function NowcastCard({
   }, [nowcast]);
 
   const chartPoints = useMemo(() => {
-    if (!nowcast.hasData || !Array.isArray(weather?.nowcast?.rainChance)) return [];
-    const vals = weather.nowcast.rainChance.slice(0, 9);
-    if (!vals.some(v => toStrictFiniteNumber(v) !== null)) return [];
-    return vals.map(v => {
-      const p = toStrictFiniteNumber(v);
-      return p === null ? 0 : Math.max(0, Math.min(100, p));
-    });
-  }, [nowcast.hasData, weather?.nowcast?.rainChance]);
+    // Use the now-anchored probability window from analyzeNowcast so the
+    // curve matches the headline/peak (not the raw, past-shifted array).
+    const series = Array.isArray(nowcast.series) ? nowcast.series : [];
+    if (!nowcast.hasData || series.length < 2) return [];
+    return series.map((v) => Math.max(0, Math.min(100, v)));
+  }, [nowcast.hasData, nowcast.series]);
 
   const chartGeo = useMemo(() => buildNowcastChartGeometry(chartPoints), [chartPoints]);
 

@@ -130,10 +130,10 @@
 }
 
 .rain-primary-label {
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
+  color: rgba(238, 241, 248, 0.82);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .rain-stats {
@@ -154,9 +154,21 @@
 }
 
 .rain-stat-value {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.rain-stat-value--observed {
+  color: #f3b765;
+}
+
+.rain-stat-value--projected {
+  color: #f3b765;
+}
+
+.rain-stat-value--peak {
+  color: #f3b765;
 }
 
 .rain-stat-value.is-missing {
@@ -207,9 +219,9 @@
 }
 
 .rain-history-pill-value {
-  color: #eef5ff;
-  font-size: 13px;
-  font-weight: 700;
+  color: #f3b765;
+  font-size: 14px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -219,10 +231,11 @@
  */
 
 .rain-timeline {
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: 2px;
-  height: 50px;
+  height: 62px;
 }
 
 .rain-timeline-wrap {
@@ -364,38 +377,109 @@
 
 .rain-bar {
   flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.rain-bar:focus-visible {
+  outline: 2px solid rgba(111, 183, 242, 0.72);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.rain-bar-fill {
+  width: 100%;
   min-height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: linear-gradient(to top, #38bdf8, #67e8f9);
-  transform-origin: bottom center;
-  transition:
-    opacity var(--motion-subtle) var(--ease-standard),
-    background var(--motion-subtle) var(--ease-standard),
-    transform var(--motion-subtle) var(--ease-standard);
+  border-radius: 3px 3px 0 0;
+  transition: filter var(--motion-subtle) var(--ease-standard);
 }
 
-.rain-bar:hover {
-  opacity: 1 !important;
-  background: linear-gradient(to top, #0ea5e9, #38bdf8);
-  transform: scaleY(1.03);
+.rain-bar-fill.b-lo {
+  background: linear-gradient(180deg, rgba(176, 193, 214, 0.34), rgba(176, 193, 214, 0.16));
 }
 
-.rain-bar--missing {
-  background:
-    repeating-linear-gradient(
-      to top,
-      rgba(191, 219, 254, 0.34) 0 4px,
-      rgba(191, 219, 254, 0.08) 4px 7px
-    );
+.rain-bar-fill.b-mid {
+  background: linear-gradient(180deg, #7fb6ef, #5391d8);
 }
 
-.rain-bar--missing:hover {
-  background:
-    repeating-linear-gradient(
-      to top,
-      rgba(219, 234, 254, 0.46) 0 4px,
-      rgba(219, 234, 254, 0.14) 4px 7px
-    );
+.rain-bar-fill.b-hi {
+  background: linear-gradient(180deg, #9be7b4, #5fc88c);
+  box-shadow: 0 0 10px rgba(127, 217, 154, 0.3);
+}
+
+.rain-bar-fill.is-peak {
+  filter: brightness(1.18);
+}
+
+.rain-bar.is-sel .rain-bar-fill {
+  outline: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
+}
+
+.rain-bar-fill.rain-bar--missing {
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    to top,
+    rgba(191, 219, 254, 0.34) 0 4px,
+    rgba(191, 219, 254, 0.08) 4px 7px
+  );
+}
+
+.rain-thresh {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 50%;
+  border-top: 1.5px dashed rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+.rain-thresh span {
+  position: absolute;
+  right: 0;
+  top: -8px;
+  font-size: 9px;
+  color: rgba(238, 241, 248, 0.62);
+  background: rgba(9, 18, 33, 0.6);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.rain-detail {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rain-detail-time {
+  font-size: 12.5px;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+.rain-detail-value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: #f7fbff;
+  font-variant-numeric: tabular-nums;
+}
+
+.rain-detail-meta {
+  font-size: 12px;
+  color: rgba(238, 241, 248, 0.7);
 }
 
 .rain-timeline-labels {
@@ -414,8 +498,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rain-mode-btn:hover,
-  .rain-mode-btn:active,
-  .rain-bar:hover {
+  .rain-mode-btn:active {
     transform: none;
   }
 }
@@ -518,7 +601,8 @@
   }
 }
 
-
-
-
-
+@media (max-width: 640px) {
+  .rain-detail {
+    display: none;
+  }
+}

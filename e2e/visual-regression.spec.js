@@ -69,7 +69,6 @@ async function bootstrapVisualState(page, context, viewport) {
 
   await page.goto("/");
   await expect(page.getByRole("main")).toBeVisible();
-  await expect(page.locator(".loading-card")).toHaveCount(0, { timeout: 20_000 });
   await expect(page.locator(".bento-chart .chart-title")).toBeVisible();
   await expect(page.locator(".bento-storm .storm-title")).toBeVisible();
 
@@ -106,7 +105,6 @@ async function bootstrapMissingMockState(page, context, viewport) {
   await expect(
     page.getByRole("heading", { name: "Week Ahead" })
   ).toBeVisible();
-  await expect(page.locator(".loading-card")).toHaveCount(0, { timeout: 20_000 });
 
   await applyVisualOverrides(page);
 }

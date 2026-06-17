@@ -13,7 +13,8 @@
  *   pressure: number|null,
  *   dewPoint: number|null,
  *   cloudCover: number|null,
- *   visibility: number|null
+ *   visibility: number|null,
+ *   isDay: number|null
  * }} WeatherCurrent
  * @typedef {{
  *   time: string[],
@@ -23,7 +24,14 @@
  *   rainAmount: number[],
  *   pressure: number[],
  *   cape: number[],
- *   windGust: number[]
+ *   windSpeed: number[],
+ *   windGust: number[],
+ *   windDirection: number[],
+ *   humidity: number[],
+ *   dewPoint: number[],
+ *   feelsLike: number[],
+ *   uvIndex: number[],
+ *   visibility: number[]
  * }} WeatherHourly
  * @typedef {{
  *   time: string[],
@@ -79,6 +87,7 @@ export function createEmptyWeatherModel() {
       dewPoint: null,
       cloudCover: null,
       visibility: null,
+      isDay: null,
     },
     hourly: {
       time: [],
@@ -88,7 +97,14 @@ export function createEmptyWeatherModel() {
       rainAmount: [],
       pressure: [],
       cape: [],
+      windSpeed: [],
       windGust: [],
+      windDirection: [],
+      humidity: [],
+      dewPoint: [],
+      feelsLike: [],
+      uvIndex: [],
+      visibility: [],
     },
     daily: {
       time: [],

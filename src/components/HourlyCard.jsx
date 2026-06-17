@@ -1,6 +1,18 @@
 // src/components/HourlyCard.jsx
+//
+// Glacier hourly module — three views in one card:
+//   • Temp & Rain (combo): amber temperature line + node dots over
+//     intensity-coloured rain-chance bars (green when rain ≥ 50%).
+//   • Precipitation: rain-chance bars with a 50% "likely" threshold line.
+//   • Wind: sustained-speed bars with a translucent gust extension + cap,
+//     the mph value printed on every bar, and a direction arrow per hour.
+//
+// All 24 hours scroll horizontally (fixed column width), any hour is
+// tap-selectable (the whole column is the target), the selected hour
+// persists across tabs, and the pill strip scrolls in step with the chart.
+// Inline-SVG only; every reading drops to an honest "—" when missing.
 
-import { memo, useId, useMemo, useState } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
 import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
@@ -8,365 +20,289 @@ import { WIND_SPEED_CONVERSION } from "../domain/wind";
 import { getZonedNow } from "../utils/dates";
 import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber } from "../utils/numbers";
-import { CardHeader } from "./ui";
 import "./HourlyCard.css";
 
-// ── Condition icon colours (from the Glacier mockup palette) ─────────────────
-const IC = {
-  sun: "#f3b765",
-  cloud: "#c3d6f0",
-  cloudDk: "#a9c4e6",
-  rain: "#6fb7f2",
-  moon: "#d8e2f2",
-};
+// ── Layout geometry ────────────────────────────────────────────────────────
+const PLOT_H = 182; // px — plot height, matches the canonical mockup
+const BARMAX = 120; // px — tallest a value bar can grow
+const LINE_TOP = 16; // px — top of the temperature band
+const LINE_SPAN = 64; // px — vertical range the temperature line uses
+const SVG_W = 1000; // viewBox width for the temperature line
+const COL = 44; // px — per-hour column width (drives horizontal scroll)
+const LOOKBACK = 2; // hours of recent context shown (dimmed) before "now"
+const WINDOW = 24; // hours rendered
 
-// Reusable cloud blob shape (matches mockup cloud() helper geometry exactly).
-function CloudBlob({ fill, cx, cy, s = 1 }) {
-  return (
-    <g fill={fill}>
-      <ellipse cx={cx} cy={cy + 3 * s} rx={8 * s} ry={4.2 * s} />
-      <circle cx={cx - 3 * s} cy={cy} r={3.5 * s} />
-      <circle cx={cx + 2.5 * s} cy={cy - 0.5 * s} r={4.3 * s} />
-      <rect
-        x={cx - 8 * s}
-        y={cy + 1.2 * s}
-        width={16 * s}
-        height={4.4 * s}
-        rx={2.2 * s}
-      />
-    </g>
-  );
+const TABS = [
+  { key: "tr", label: "Temp & Rain" },
+  { key: "precip", label: "Precipitation" },
+  { key: "wind", label: "Wind" },
+];
+
+const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+// ── Pure helpers ───────────────────────────────────────────────────────────
+
+function compass(deg) {
+  if (deg === null || deg === undefined || !Number.isFinite(deg)) return null;
+  return COMPASS[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
 }
 
-// Inline-SVG condition icon variants — no font dependency.
-function SunInner() {
-  return (
-    <>
-      <circle cx="12" cy="12" r="4.3" fill={IC.sun} />
-      <g stroke={IC.sun} strokeWidth="1.7" strokeLinecap="round">
-        <line x1="12" y1="2.4" x2="12" y2="5" />
-        <line x1="12" y1="19" x2="12" y2="21.6" />
-        <line x1="2.4" y1="12" x2="5" y2="12" />
-        <line x1="19" y1="12" x2="21.6" y2="12" />
-        <line x1="5.2" y1="5.2" x2="7" y2="7" />
-        <line x1="17" y1="17" x2="18.8" y2="18.8" />
-        <line x1="5.2" y1="18.8" x2="7" y2="17" />
-        <line x1="17" y1="7" x2="18.8" y2="5.2" />
-      </g>
-    </>
-  );
+function rainTier(p) {
+  if (p === null) return "na";
+  if (p >= 50) return "hi"; // rain likely
+  if (p >= 30) return "mid";
+  return "lo";
 }
 
-function MoonInner() {
-  // crescent(13, 11, 7) from the mockup
-  const r = 7, x = 13, y = 11;
-  return (
-    <path
-      d={`M${x + r},${y} A${r} ${r} 0 1 1 ${(x - 0.2 * r).toFixed(2)},${(y - r * 0.95).toFixed(2)} A${(r * 0.78).toFixed(2)} ${(r * 0.78).toFixed(2)} 0 0 0 ${x + r},${y} Z`}
-      fill={IC.moon}
-    />
-  );
+function rainWord(p) {
+  if (p === null) return "no data";
+  if (p >= 50) return "showers likely";
+  if (p >= 30) return "scattered chance";
+  if (p >= 15) return "slight chance";
+  return "mostly dry";
 }
 
-function SunCloudInner() {
-  return (
-    <>
-      <circle cx="8" cy="8" r="3.1" fill={IC.sun} />
-      <g stroke={IC.sun} strokeWidth="1.45" strokeLinecap="round">
-        <line x1="8" y1="1.7" x2="8" y2="3.6" />
-        <line x1="1.7" y1="8" x2="3.6" y2="8" />
-        <line x1="3.5" y1="3.5" x2="4.9" y2="4.9" />
-        <line x1="12.5" y1="3.5" x2="11.1" y2="4.9" />
-      </g>
-      <CloudBlob fill={IC.cloud} cx={13} cy={13.6} s={0.92} />
-    </>
-  );
+function toDisplayTemp(value, unit) {
+  const c = convertTemp(value, unit);
+  return Number.isFinite(c) ? Math.round(c) : null;
 }
 
-function MoonCloudInner() {
-  // crescent(16.5, 8, 4.6) from the mockup
-  const r = 4.6, x = 16.5, y = 8;
-  return (
-    <>
-      <path
-        d={`M${x + r},${y} A${r} ${r} 0 1 1 ${(x - 0.2 * r).toFixed(2)},${(y - r * 0.95).toFixed(2)} A${(r * 0.78).toFixed(2)} ${(r * 0.78).toFixed(2)} 0 0 0 ${x + r},${y} Z`}
-        fill={IC.moon}
-      />
-      <CloudBlob fill={IC.cloud} cx={11.5} cy={14} s={0.9} />
-    </>
-  );
+// Wind is always fetched in mph (getApiWindSpeedUnit), so convert to km/h
+// client-side for Celsius users — same contract the rest of the app uses.
+function toDisplayWind(value, unit) {
+  if (value === null) return null;
+  return Math.round(unit === "C" ? value * WIND_SPEED_CONVERSION : value);
 }
 
-function CloudRainInner() {
-  return (
-    <>
-      <CloudBlob fill={IC.cloudDk} cx={12} cy={9.3} s={1} />
-      <g stroke={IC.rain} strokeWidth="1.9" strokeLinecap="round">
-        <line x1="8.8" y1="18" x2="7.8" y2="21" />
-        <line x1="12.4" y1="18" x2="11.4" y2="21.4" />
-        <line x1="16" y1="18" x2="15" y2="21" />
-      </g>
-    </>
-  );
-}
-
-const ICON_INNER = {
-  sun: SunInner,
-  moon: MoonInner,
-  suncloud: SunCloudInner,
-  mooncloud: MoonCloudInner,
-  cloud: () => <CloudBlob fill={IC.cloud} cx={12} cy={10.5} s={1} />,
-  cloudrain: CloudRainInner,
-};
-
-function getConditionKind(code, isDay) {
-  const c =
-    typeof code === "number" && Number.isFinite(code) ? Math.trunc(code) : 0;
-  if (c === 0 || c === 1) return isDay ? "sun" : "moon";
-  if (c === 2) return isDay ? "suncloud" : "mooncloud";
-  if (c === 3 || c === 45 || c === 48) return "cloud";
-  if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95) {
-    return "cloudrain";
-  }
-  return "cloud"; // snow, fog fallback
-}
-
-function isDayHour(timestamp, sunriseStr, sunsetStr) {
-  if (!timestamp || !sunriseStr || !sunsetStr) return true;
-  try {
-    const t = timestamp.getTime();
-    const rise = new Date(sunriseStr).getTime();
-    const set = new Date(sunsetStr).getTime();
-    return Number.isFinite(rise) && Number.isFinite(set)
-      ? t >= rise && t < set
-      : true;
-  } catch {
-    return true;
-  }
-}
-
-function ConditionIcon({ code, isDay }) {
-  const kind = getConditionKind(code, isDay);
-  const Inner = ICON_INNER[kind] ?? ICON_INNER.cloud;
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="hourly-cond-icon"
-      aria-hidden="true"
-    >
-      <Inner />
-    </svg>
-  );
-}
-
-// ── Metric config ─────────────────────────────────────────────────────────────
-
-const METRIC_CONFIGS = {
-  precip: { label: "Precipitation", color: "#6fb7f2", unitSuffix: "%" },
-  temperature: { label: "Temperature", color: "#f3b765", unitSuffix: "°" },
-  wind: { label: "Wind", color: "#79d8c9", unitSuffix: null },
-};
-const METRIC_KEYS = ["precip", "temperature", "wind"];
-
-// ── Data helpers ──────────────────────────────────────────────────────────────
-
-function toDisplayTemperature(value, unit) {
-  const converted = convertTemp(value, unit);
-  return Number.isFinite(converted) ? Math.round(converted) : Number.NaN;
-}
-
-function buildHourlyData(hourly, unit, timeZone) {
+// Build the rendered window: a little recent context (dimmed) + "now" + the
+// hours ahead, each row carrying every reading the three views need.
+function buildHours(hourly, unit, timeZone) {
   if (
     !Array.isArray(hourly?.time) ||
     !Array.isArray(hourly.temperature) ||
-    hourly.time.length === 0 ||
-    hourly.temperature.length === 0
+    hourly.time.length === 0
   ) {
-    return [];
+    return { hours: [], nowIndex: -1 };
   }
 
-  const idx = findWindowStartIndex(hourly.time, {
+  const nowIdx = findWindowStartIndex(hourly.time, {
     now: getZonedNow(timeZone).getTime(),
-    windowSize: 24,
+    windowSize: WINDOW,
     currentSlotToleranceMs: 60 * 60 * 1000,
   });
-  if (idx < 0) return [];
+  if (nowIdx < 0) return { hours: [], nowIndex: -1 };
 
-  return hourly.time
-    .slice(idx, idx + 24)
+  const start = Math.max(0, nowIdx - LOOKBACK);
+  const nowInWindow = nowIdx - start; // position of "now" within the window
+
+  const hours = hourly.time
+    .slice(start, start + WINDOW)
     .map((t, i) => {
-      const timestamp = new Date(t);
-      if (!Number.isFinite(timestamp.getTime())) return null;
+      const src = start + i;
+      const time = new Date(t);
+      if (!Number.isFinite(time.getTime())) return null;
 
-      const baseTemp = toFiniteNumber(hourly.temperature[idx + i]);
-      const convertedTemp =
-        baseTemp === null
-          ? Number.NaN
-          : toDisplayTemperature(baseTemp, unit);
-
-      const rainChance = toFiniteNumber(hourly.rainChance?.[idx + i]);
-
-      const rawGust = toFiniteNumber(hourly.windGust?.[idx + i]);
-      const windGust =
-        rawGust === null
-          ? null
-          : Math.round(unit === "C" ? rawGust * WIND_SPEED_CONVERSION : rawGust);
+      const h12 = time.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        hour12: true,
+      }); // "7 PM"
+      const ampm = h12.endsWith("AM") ? "A" : "P";
+      const shortLabel = `${h12.replace(/\s?[AP]M$/, "")}${ampm}`; // "7P"
 
       return {
-        time: timestamp,
-        label: timestamp.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          hour12: true,
-        }),
-        temp: Number.isFinite(convertedTemp) ? convertedTemp : null,
-        rainChance,
-        windGust,
-        code: hourly.conditionCode?.[idx + i] ?? 0,
+        key: String(time.getTime()),
+        time,
+        label: h12,
+        shortLabel,
+        isNow: i === nowInWindow,
+        isPast: i < nowInWindow,
+        temp: toDisplayTemp(toFiniteNumber(hourly.temperature[src]), unit),
+        rain: toFiniteNumber(hourly.rainChance?.[src]),
+        windSpeed: toDisplayWind(toFiniteNumber(hourly.windSpeed?.[src]), unit),
+        windGust: toDisplayWind(toFiniteNumber(hourly.windGust?.[src]), unit),
+        windDir: toFiniteNumber(hourly.windDirection?.[src]),
+        code: hourly.conditionCode?.[src] ?? 0,
       };
     })
     .filter(Boolean);
+
+  return { hours, nowIndex: hours.findIndex((h) => h.isNow) };
 }
 
-function getMetricValues(data, metric, unit) {
-  const windUnitLabel = unit === "C" ? " km/h" : " mph";
-  return data.map((entry) => {
-    switch (metric) {
-      case "precip": {
-        const v = entry.rainChance;
-        return {
-          ...entry,
-          value: v,
-          displayValue: v !== null ? `${Math.round(v)}%` : null,
-        };
-      }
-      case "wind": {
-        const v = entry.windGust;
-        return {
-          ...entry,
-          value: v,
-          displayValue: v !== null ? `${v}${windUnitLabel}` : null,
-        };
-      }
-      default: {
-        // temperature
-        const v = entry.temp;
-        return {
-          ...entry,
-          value: v,
-          displayValue: v !== null ? `${v}°` : null,
-        };
-      }
-    }
-  });
-}
-
-// ── SVG chart geometry ────────────────────────────────────────────────────────
-// Matches the mockup's quadratic-bezier-with-midpoint algorithm exactly.
-// The curve extends flat to x=0 and x=SVG_W so the fill goes full-bleed.
-
-const SVG_W = 1000;
-const SVG_H = 96;
-const TOP_PAD = 18;
-const Y_SPAN = 52;
-
-function buildChartGeometry(metricValues) {
-  const n = metricValues.length;
-  if (n === 0) return null;
-
-  const valid = metricValues.filter((e) => e.value !== null);
-  if (valid.length < 2) return null;
-
-  const allVals = valid.map((e) => e.value);
-  const min = Math.min(...allVals);
-  const max = Math.max(...allVals);
-  const rng = max - min || 1;
-
-  const xs = metricValues.map((_, i) => (i + 0.5) / n * SVG_W);
-  const ys = metricValues.map((e) =>
-    e.value !== null
-      ? TOP_PAD + (1 - (e.value - min) / rng) * Y_SPAN
-      : TOP_PAD + Y_SPAN / 2
-  );
-
-  // Quadratic bezier path through consecutive midpoints (same as mockup)
-  let core = "";
-  for (let i = 0; i < n - 1; i++) {
-    const xc = (xs[i] + xs[i + 1]) / 2;
-    const yc = (ys[i] + ys[i + 1]) / 2;
-    core += ` Q${xs[i].toFixed(1)},${ys[i].toFixed(1)} ${xc.toFixed(1)},${yc.toFixed(1)}`;
+// Per-tab projections so the chart, pills, detail and aria all agree.
+function metricFor(hour, tab, unit) {
+  const windUnit = unit === "C" ? "km/h" : "mph";
+  switch (tab) {
+    case "precip":
+      return {
+        value: hour.rain,
+        main: hour.rain === null ? "—" : `${Math.round(hour.rain)}%`,
+        sub:
+          hour.rain === null
+            ? "—"
+            : hour.rain >= 50
+              ? "likely"
+              : hour.rain >= 30
+                ? "maybe"
+                : "dry",
+        aria:
+          hour.rain === null
+            ? "no data"
+            : `${Math.round(hour.rain)}% chance of rain`,
+      };
+    case "wind":
+      return {
+        value: hour.windSpeed,
+        main: hour.windSpeed === null ? "—" : `${hour.windSpeed}`,
+        sub:
+          hour.windSpeed === null
+            ? "—"
+            : `g${hour.windGust ?? "–"} ${compass(hour.windDir) ?? ""}`.trim(),
+        aria:
+          hour.windSpeed === null
+            ? "no data"
+            : `${hour.windSpeed} ${windUnit}, gusts ${hour.windGust ?? "unknown"}, from ${compass(hour.windDir) ?? "variable"}`,
+      };
+    default:
+      return {
+        value: hour.temp,
+        main: hour.temp === null ? "—" : `${hour.temp}°`,
+        sub: hour.rain === null ? "" : `${Math.round(hour.rain)}%`,
+        aria:
+          hour.temp === null
+            ? "no data"
+            : `${hour.temp} degrees, ${hour.rain === null ? "no" : Math.round(hour.rain)}% rain`,
+      };
   }
-  core += ` L${xs[n - 1].toFixed(1)},${ys[n - 1].toFixed(1)}`;
-
-  // Extend flat to edges so the stroke and fill bleed to the card border
-  const linePath = `M0,${ys[0].toFixed(1)} L${xs[0].toFixed(1)},${ys[0].toFixed(1)}${core} L${SVG_W},${ys[n - 1].toFixed(1)}`;
-  const fillPath = `${linePath} L${SVG_W},${SVG_H} L0,${SVG_H} Z`;
-
-  return { linePath, fillPath, xs, ys };
 }
 
-function buildMetricLede(metricValues, metric) {
-  const valid = metricValues.filter((e) => e.value !== null);
-  if (!valid.length) return "";
-  const first = valid[0].value;
-  const allVals = valid.map((e) => e.value);
-  const lo = Math.min(...allVals);
-  const hi = Math.max(...allVals);
-  const cfg = METRIC_CONFIGS[metric];
-  const suffix = cfg.unitSuffix ?? "";
-  return `${cfg.label} · now ${Math.round(first)}${suffix} · range ${Math.round(lo)}–${Math.round(hi)}${suffix}`;
+function detailText(hour, tab, unit) {
+  const cond = getWeather(hour.code)?.label ?? "";
+  if (tab === "precip") {
+    return {
+      value: hour.rain === null ? "—" : `${Math.round(hour.rain)}`,
+      unit: hour.rain === null ? "" : "%",
+      meta: `chance of rain · ${rainWord(hour.rain)}`,
+    };
+  }
+  if (tab === "wind") {
+    const u = unit === "C" ? "km/h" : "mph";
+    return {
+      value: hour.windSpeed === null ? "—" : `${hour.windSpeed}`,
+      unit: hour.windSpeed === null ? "" : ` ${u}`,
+      meta:
+        hour.windSpeed === null
+          ? "not reported"
+          : `gusts ${hour.windGust ?? "—"} · from ${compass(hour.windDir) ?? "variable"}`,
+    };
+  }
+  return {
+    value: hour.temp === null ? "—" : `${hour.temp}`,
+    unit: hour.temp === null ? "" : "°",
+    meta:
+      hour.rain === null
+        ? cond
+        : `${Math.round(hour.rain)}% rain · ${rainWord(hour.rain)}`,
+  };
 }
 
-const HOURLY_EMPTY_MESSAGE =
-  "Hourly data isn't available right now. Current conditions are still live above.";
+const LEGENDS = {
+  tr: [
+    { type: "line", label: "Temperature" },
+    { type: "bar", cls: "b-mid", label: "Rain chance" },
+    { type: "bar", cls: "b-hi", label: "Likely >50%" },
+  ],
+  precip: [
+    { type: "bar", cls: "b-mid", label: "Chance of rain" },
+    { type: "bar", cls: "b-hi", label: "Likely >50%" },
+    { type: "dash", label: "50% line" },
+  ],
+  wind: [
+    { type: "bar", cls: "b-mid", label: "Wind speed" },
+    { type: "bar", cls: "b-gust", label: "Gusts" },
+    { type: "arrow", label: "Direction" },
+  ],
+};
 
-// ── HourlyCard ────────────────────────────────────────────────────────────────
+// Largest gust (or speed) in the window — the wind bars' shared scale.
+function maxGust(hours) {
+  const vals = hours
+    .flatMap((h) => [h.windGust, h.windSpeed])
+    .filter((v) => v !== null && Number.isFinite(v));
+  return vals.length ? Math.max(...vals, 1) : 1;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 function HourlyCard({ weather, unit, style, isRefreshing = false }) {
-  const [metric, setMetric] = useState("precip");
-  const [selectedSampleKey, setSelectedSampleKey] = useState(null);
+  const [tab, setTab] = useState("tr");
+  const [selectedKey, setSelectedKey] = useState(null); // null = follow "now"
 
-  const chartId = useId();
-  const chartTitleId = `${chartId}-title`;
-  const chartSummaryId = `${chartId}-summary`;
-  const gradientId = `${chartId}-grad`.replace(/:/g, "");
+  const chartRef = useRef(null);
+  const pillsRef = useRef(null);
+  const syncing = useRef(false);
 
-  const data = useMemo(
-    () =>
-      buildHourlyData(
-        weather?.hourly,
-        unit,
-        weather?.meta?.timezone
-      ),
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const summaryId = `${baseId}-summary`;
+  const gradId = `${baseId}-grad`.replace(/:/g, "");
+
+  const { hours, nowIndex } = useMemo(
+    () => buildHours(weather?.hourly, unit, weather?.meta?.timezone),
     [weather?.hourly, unit, weather?.meta?.timezone]
   );
 
-  const metricValues = useMemo(
-    () => getMetricValues(data, metric, unit),
-    [data, metric, unit]
+  const hasUsable = hours.some(
+    (h) => h.temp !== null || h.rain !== null || h.windSpeed !== null
   );
 
-  const hasUsableValues = metricValues.some((e) => e.value !== null);
+  // Keep the chart and pill strip scrolled in step (proportionally).
+  useEffect(() => {
+    const cs = chartRef.current;
+    const ps = pillsRef.current;
+    if (!cs || !ps) return undefined;
+    const frac = (n) => {
+      const m = n.scrollWidth - n.clientWidth;
+      return m > 0 ? n.scrollLeft / m : 0;
+    };
+    const apply = (n, f) => {
+      const m = n.scrollWidth - n.clientWidth;
+      n.scrollLeft = m > 0 ? f * m : 0;
+    };
+    const link = (from, to) => () => {
+      if (syncing.current) return;
+      syncing.current = true;
+      apply(to, frac(from));
+      requestAnimationFrame(() => {
+        syncing.current = false;
+      });
+    };
+    const onChart = link(cs, ps);
+    const onPills = link(ps, cs);
+    cs.addEventListener("scroll", onChart, { passive: true });
+    ps.addEventListener("scroll", onPills, { passive: true });
+    return () => {
+      cs.removeEventListener("scroll", onChart);
+      ps.removeEventListener("scroll", onPills);
+    };
+  }, [hasUsable, hours.length]);
 
-  // Empty / unavailable state
-  if (!data.length || !hasUsableValues) {
+  // ── Empty / unavailable state (trust contract) ──
+  if (!hours.length || !hasUsable) {
     return (
       <section
         className="bento-chart hourly-chart glass"
         style={style}
-        aria-labelledby={chartTitleId}
+        aria-labelledby={titleId}
         data-refreshing={isRefreshing ? "true" : undefined}
         aria-busy={isRefreshing || undefined}
       >
-        <CardHeader
-          headerClassName="chart-header"
-          title="Hourly forecast"
-          titleId={chartTitleId}
-          titleTag="h3"
-          titleClassName="chart-title"
-          icon={<LineIcon size={16} />}
-          subtitle="Next 24h"
-          subtitleClassName="chart-subtitle eyebrow-pill"
-        />
+        <div className="chart-header">
+          <h3 id={titleId} className="chart-title">
+            <LineIcon size={16} aria-hidden="true" />
+            <span>Hourly forecast</span>
+          </h3>
+        </div>
         <div className="card-empty" role="status">
           <div className="card-empty__icon">
             <LineIcon size={36} aria-hidden="true" />
@@ -380,259 +316,351 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
     );
   }
 
-  const geometry = buildChartGeometry(metricValues);
-  const cfg = METRIC_CONFIGS[metric];
-  const lede = buildMetricLede(metricValues, metric);
+  const n = hours.length;
+  const cx = (i) => ((i + 0.5) / n) * 100; // percent across the track
 
-  // Condition icon row: every 3rd hour (8 slots across 24h)
-  const sunrise = weather?.daily?.sunrise?.[0];
-  const sunset = weather?.daily?.sunset?.[0];
-  const iconSlots = data.filter((_, i) => i % 3 === 0);
+  // Selected hour resolves to the user pick, else "now", else first.
+  const selected =
+    hours.find((h) => h.key === selectedKey) || hours[nowIndex] || hours[0];
+  const tabStopKey = selected?.key ?? null;
+  const selectedIndex = hours.indexOf(selected);
 
-  // Touch explorer strip — all samples with valid values for current metric
-  const allSamples = metricValues.filter((e) => e.value !== null);
-  const selectedSample =
-    allSamples.find(
-      (e) => String(e.time.getTime()) === selectedSampleKey
-    ) ||
-    allSamples[0] ||
-    null;
-  const tabStopKey = selectedSample
-    ? String(selectedSample.time.getTime())
-    : null;
-  const selectedSampleWeather = selectedSample
-    ? getWeather(selectedSample.code)
-    : null;
+  // Active-tab projection for every hour.
+  const cells = hours.map((h) => ({ hour: h, m: metricFor(h, tab, unit) }));
+  const tabHasValues = cells.some((c) => c.m.value !== null);
+  const gMax = maxGust(hours);
 
-  const handleStripKeyDown = (event) => {
-    if (!allSamples.length) return;
-    const sampleKeys = allSamples.map((e) => String(e.time.getTime()));
+  // Temperature line geometry (Temp & Rain view only).
+  let tempPath = "";
+  const tempDots = [];
+  if (tab === "tr") {
+    const temps = hours.map((h) => h.temp).filter((v) => v !== null);
+    const tmin = temps.length ? Math.min(...temps) : 0;
+    const tmax = temps.length ? Math.max(...temps) : 1;
+    const trng = tmax - tmin || 1;
+    const ty = (t) => LINE_TOP + ((tmax - t) / trng) * LINE_SPAN;
+    const xv = (i) => ((i + 0.5) / n) * SVG_W;
+    let started = false;
+    hours.forEach((h, i) => {
+      if (h.temp === null) {
+        started = false;
+        return;
+      }
+      tempPath += `${started ? " L" : " M"}${xv(i).toFixed(1)},${ty(h.temp).toFixed(1)}`;
+      started = true;
+      tempDots.push({ key: h.key, leftPct: cx(i), topPx: ty(h.temp) });
+    });
+  }
+  const selDot = tempDots.find((d) => d.key === selected?.key);
+
+  const lede = (() => {
+    const vals = cells.map((c) => c.m.value).filter((v) => v !== null);
+    if (!vals.length) return "Hourly readings aren't available right now.";
+    const lo = Math.round(Math.min(...vals));
+    const hi = Math.round(Math.max(...vals));
+    if (tab === "tr") {
+      const peak = Math.round(Math.max(...cells.map((c) => c.hour.rain ?? 0)));
+      return `Temperature ${lo}°–${hi}° with rain chance peaking at ${peak}% — green bars flag the hours rain is likely.`;
+    }
+    if (tab === "precip")
+      return `Rain chance ranges ${lo}–${hi}%. Bars above the dashed 50% line mark when rain is likely.`;
+    const u = unit === "C" ? "km/h" : "mph";
+    return `Wind ${lo}–${hi} ${u} with the speed printed on every bar; arrows show the direction it blows toward.`;
+  })();
+
+  const det = detailText(selected, tab, unit);
+
+  const onStripKeyDown = (event) => {
+    const keys = cells.map((c) => c.hour.key);
     const activeKey =
       event.target instanceof HTMLElement
         ? event.target.dataset.sampleKey
         : null;
-    const activeIndex = Math.max(0, sampleKeys.indexOf(activeKey));
-
-    let nextIndex = null;
-    if (event.key === "ArrowRight") {
-      nextIndex = Math.min(sampleKeys.length - 1, activeIndex + 1);
-    } else if (event.key === "ArrowLeft") {
-      nextIndex = Math.max(0, activeIndex - 1);
-    } else if (event.key === "Home") {
-      nextIndex = 0;
-    } else if (event.key === "End") {
-      nextIndex = sampleKeys.length - 1;
-    }
-
-    if (nextIndex === null) return;
+    const active = Math.max(0, keys.indexOf(activeKey));
+    let next = null;
+    if (event.key === "ArrowRight") next = Math.min(keys.length - 1, active + 1);
+    else if (event.key === "ArrowLeft") next = Math.max(0, active - 1);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = keys.length - 1;
+    if (next === null) return;
     event.preventDefault();
-    const nextKey = sampleKeys[nextIndex];
-    setSelectedSampleKey(nextKey);
+    setSelectedKey(keys[next]);
     event.currentTarget
-      .querySelector(`[data-sample-key="${nextKey}"]`)
+      .querySelector(`[data-sample-key="${keys[next]}"]`)
       ?.focus();
   };
-
-  // Chips to overlay: every 3rd valid point for temperature/wind density,
-  // every 2nd for precipitation (fewer decimal swings to label).
-  const chipStep = metric === "temperature" ? 3 : 2;
 
   return (
     <section
       className="bento-chart hourly-chart glass"
       style={style}
-      aria-labelledby={chartTitleId}
-      aria-describedby={chartSummaryId}
+      aria-labelledby={titleId}
+      aria-describedby={summaryId}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
-      {/* ── Header row: title + metric selector ── */}
       <div className="chart-header">
-        <h3 id={chartTitleId} className="chart-title">
+        <h3 id={titleId} className="chart-title">
           <LineIcon size={16} aria-hidden="true" />
           <span>Hourly forecast</span>
         </h3>
-        <div
-          className="hourly-metric-selector"
-          role="group"
-          aria-label="Chart metric"
-        >
-          {METRIC_KEYS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={`hourly-metric-btn${metric === key ? " is-active" : ""}`}
-              aria-pressed={metric === key}
-              onClick={() => setMetric(key)}
-            >
-              {METRIC_CONFIGS[key].label}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* ── Time + condition icon row ── */}
-      <div className="hourly-time-icon-row" aria-hidden="true">
-        {iconSlots.map((entry) => {
-          const isDay = isDayHour(entry.time, sunrise, sunset);
-          return (
-            <div
-              key={String(entry.time.getTime())}
-              className="hourly-icon-slot"
-            >
-              <span className="hourly-icon-time">{entry.label}</span>
-              <ConditionIcon code={entry.code} isDay={isDay} />
-            </div>
-          );
-        })}
+      <div className="hourly-tabs" role="group" aria-label="Hourly view">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            className={`hourly-tab${tab === t.key ? " is-active" : ""}`}
+            aria-pressed={tab === t.key}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* ── SVG chart + HTML chip overlay ── */}
-      <div className="hourly-plot">
-        <p id={chartSummaryId} className="sr-only">
-          {lede || HOURLY_EMPTY_MESSAGE}
-        </p>
-        {geometry ? (
-          <>
-            <svg
-              className="hourly-svg"
-              viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor={cfg.color}
-                    stopOpacity="0.42"
-                  />
-                  <stop
-                    offset="48%"
-                    stopColor={cfg.color}
-                    stopOpacity="0.16"
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor={cfg.color}
-                    stopOpacity="0"
-                  />
-                </linearGradient>
-              </defs>
-              {/* Gradient fill */}
-              <path d={geometry.fillPath} fill={`url(#${gradientId})`} />
-              {/* Glow stroke (thick, low opacity — drawn first, behind main) */}
-              <path
-                d={geometry.linePath}
-                fill="none"
-                stroke={cfg.color}
-                strokeOpacity="0.22"
-                strokeWidth="6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-              {/* Main stroke */}
-              <path
-                d={geometry.linePath}
-                fill="none"
-                stroke={cfg.color}
-                strokeWidth="2.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
-            {/* Value chips: absolutely-positioned HTML elements over the SVG.
-                They naturally occlude the stroke behind them so no digit
-                is ever crossed by the line. */}
-            <div className="hourly-chips-overlay" aria-hidden="true">
-              {metricValues
-                .filter(
-                  (e, i) => e.value !== null && i % chipStep === 0
-                )
-                .map((entry, idx) => {
-                  const origIdx = metricValues.indexOf(entry);
-                  const xPct = (
-                    (origIdx + 0.5) /
-                    metricValues.length *
-                    100
-                  ).toFixed(2);
-                  const yPx = geometry.ys[origIdx].toFixed(1);
+      <div className="hourly-legend" aria-hidden="true">
+        {LEGENDS[tab].map((item, i) => (
+          <span className="hourly-legend-item" key={i}>
+            {item.type === "line" && <span className="lg-line" />}
+            {item.type === "bar" && <span className={`lg-bar ${item.cls}`} />}
+            {item.type === "dash" && <span className="lg-dash" />}
+            {item.type === "arrow" && <span className="lg-arrow">↑</span>}
+            {item.label}
+          </span>
+        ))}
+      </div>
+
+      <p id={summaryId} className="sr-only">
+        {lede}
+      </p>
+
+      <div className="hourly-scroll-wrap">
+        <div className="hourly-scroll" ref={chartRef}>
+          <div className="hourly-track" style={{ width: `${n * COL}px` }}>
+            <div className="hourly-plot">
+              <div className="hourly-bars">
+                {cells.map(({ hour }) => {
+                  const isSel = hour.key === selected?.key;
+                  const colCls = `hourly-col${isSel ? " is-sel" : ""}${hour.isPast ? " is-past" : ""}`;
+                  if (tab === "wind") {
+                    const gustH =
+                      hour.windGust !== null
+                        ? Math.round((hour.windGust / gMax) * BARMAX)
+                        : 0;
+                    const spdH =
+                      hour.windSpeed !== null
+                        ? Math.round((hour.windSpeed / gMax) * BARMAX)
+                        : 0;
+                    return (
+                      <button
+                        type="button"
+                        className={colCls}
+                        key={hour.key}
+                        aria-label={`Select ${hour.label}`}
+                        onClick={() => setSelectedKey(hour.key)}
+                      >
+                        {hour.windSpeed !== null && (
+                          <span
+                            className="hourly-wval"
+                            style={{ bottom: `${gustH + 5}px` }}
+                          >
+                            {hour.windSpeed}
+                          </span>
+                        )}
+                        {hour.windSpeed !== null && (
+                          <span
+                            className="hourly-wbar"
+                            style={{ height: `${gustH}px` }}
+                          >
+                            <span
+                              className="hourly-wspd"
+                              style={{ height: `${spdH}px` }}
+                            />
+                            <span className="hourly-wcap" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  }
+                  const h =
+                    hour.rain !== null
+                      ? Math.round((hour.rain / 100) * BARMAX)
+                      : 0;
                   return (
-                    <span
-                      key={String(entry.time.getTime())}
-                      className="hourly-chip"
-                      style={{
-                        left: `${xPct}%`,
-                        top: `${yPx}px`,
-                        color: cfg.color,
-                      }}
+                    <button
+                      type="button"
+                      className={colCls}
+                      key={hour.key}
+                      aria-label={`Select ${hour.label}`}
+                      onClick={() => setSelectedKey(hour.key)}
                     >
-                      {entry.displayValue}
-                    </span>
+                      {hour.rain !== null && (
+                        <span
+                          className={`hourly-bar b-${rainTier(hour.rain)}`}
+                          style={{ height: `${h}px` }}
+                        />
+                      )}
+                    </button>
                   );
                 })}
-            </div>
-          </>
-        ) : null}
-      </div>
+              </div>
 
-      {/* ── Lede ── */}
-      <p className="chart-lede">{lede}</p>
-
-      {/* ── Touch / keyboard sample explorer ──
-          All ARIA contracts from the original component are preserved:
-          - role="group" on the explorer wrapper (not role="list")
-          - aria-current on the selected sample only (never aria-pressed)
-          - aria-label starts with "Show " on each sample button
-          - aria-live is NOT on the selected-sample paragraph
-          - Roving tabindex: one tab stop, arrows move selection */}
-      {allSamples.length ? (
-        <div
-          className="hourly-touch-explorer"
-          role="group"
-          aria-label="Hourly samples"
-        >
-          {selectedSample ? (
-            <p className="hourly-selected-sample">
-              <span>{selectedSample.label}</span>
-              <strong>{selectedSample.displayValue}</strong>
-              <span>
-                {selectedSampleWeather?.label || "Weather sample"}
-              </span>
-            </p>
-          ) : null}
-          <div
-            className="hourly-touch-strip"
-            onKeyDown={handleStripKeyDown}
-          >
-            {allSamples.map((entry) => {
-              const key = String(entry.time.getTime());
-              const info = getWeather(entry.code);
-              const isSelected = selectedSample
-                ? key === String(selectedSample.time.getTime())
-                : false;
-              const isUserSelection = selectedSampleKey === key;
-              return (
-                <button
-                  key={`sample-${key}`}
-                  type="button"
-                  className={`hourly-touch-sample${isSelected ? " is-selected" : ""}`.trim()}
-                  aria-current={isUserSelection ? "true" : undefined}
-                  aria-label={`Show ${entry.label}, ${entry.displayValue ?? "no data"}, ${info.label}`}
-                  data-sample-key={key}
-                  tabIndex={key === tabStopKey ? 0 : -1}
-                  onClick={() => setSelectedSampleKey(key)}
+              {tab === "tr" && tempPath && (
+                <svg
+                  className="hourly-svg"
+                  viewBox={`0 0 ${SVG_W} ${PLOT_H}`}
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
                 >
-                  <span>{entry.label}</span>
-                  <strong>{entry.displayValue ?? "—"}</strong>
-                </button>
-              );
-            })}
+                  <defs>
+                    <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f3b765" stopOpacity="0.18" />
+                      <stop offset="100%" stopColor="#f3b765" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={tempPath}
+                    fill="none"
+                    stroke="#f3b765"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+              )}
+
+              <div className="hourly-overlay" aria-hidden="true">
+                {tab === "tr" &&
+                  tempDots.map((d) => (
+                    <span
+                      key={d.key}
+                      className={`hourly-dot${d.key === selected?.key ? " is-sel" : ""}`}
+                      style={{ left: `${d.leftPct}%`, top: `${d.topPx}px` }}
+                    />
+                  ))}
+                {tab === "tr" && selDot && selected?.temp !== null && (
+                  <span
+                    className="hourly-tchip"
+                    style={{ left: `${cx(selectedIndex)}%`, top: `${selDot.topPx - 16}px` }}
+                  >
+                    {selected.temp}°
+                  </span>
+                )}
+
+                {(tab === "precip" || tab === "tr") && (
+                  <div
+                    className="hourly-thresh"
+                    style={{ bottom: `${(50 / 100) * BARMAX}px` }}
+                  >
+                    <span>50% · likely</span>
+                  </div>
+                )}
+
+                {tab === "wind" &&
+                  hours.map((h, i) =>
+                    h.windDir === null ? null : (
+                      <span
+                        key={h.key}
+                        className={`hourly-arrow${h.key === selected?.key ? " is-sel" : ""}`}
+                        style={{ left: `${cx(i)}%` }}
+                      >
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          style={{ transform: `rotate(${(h.windDir + 180) % 360}deg)` }}
+                        >
+                          <path
+                            d="M12 3 L12 21 M12 3 L7 9 M12 3 L17 9"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    )
+                  )}
+
+                {nowIndex >= 0 && (
+                  <div className="hourly-now" style={{ left: `${cx(nowIndex)}%` }}>
+                    <span className="hourly-now-tick">Now</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="hourly-baseline" />
+            <div className="hourly-axis">
+              {hours.map((h) => (
+                <span
+                  className={`hourly-ax${h.key === selected?.key ? " is-sel" : ""}${h.isPast ? " is-past" : ""}${h.isNow ? " is-now" : ""}`}
+                  key={h.key}
+                >
+                  {h.shortLabel}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-      ) : null}
+        <div className="hourly-edge-fade" aria-hidden="true" />
+      </div>
+
+      {!tabHasValues && (
+        <p className="hourly-empty-note" role="status">
+          Not reported for this location.
+        </p>
+      )}
+
+      <p className="chart-lede">{lede}</p>
+
+      <div
+        className="hourly-touch-explorer"
+        role="group"
+        aria-label="Hourly samples"
+      >
+        {selected && (
+          <p className="hourly-selected-sample hourly-detail">
+            <span>{selected.label}</span>
+            <strong>
+              {det.value}
+              <small>{det.unit}</small>
+            </strong>
+            <span className="hourly-detail-meta">{det.meta}</span>
+          </p>
+        )}
+        <div
+          className="hourly-touch-strip"
+          ref={pillsRef}
+          onKeyDown={onStripKeyDown}
+        >
+          {cells.map(({ hour, m }) => {
+            const isSel = hour.key === selected?.key;
+            const isUserPick = selectedKey === hour.key;
+            const cond = getWeather(hour.code)?.label ?? "Weather sample";
+            return (
+              <button
+                key={`sample-${hour.key}`}
+                type="button"
+                className={`hourly-touch-sample${isSel ? " is-selected" : ""}${hour.isPast ? " is-past" : ""}${hour.isNow ? " is-now" : ""}`}
+                aria-current={isUserPick ? "true" : undefined}
+                aria-label={`Show ${hour.label}, ${m.aria}, ${cond}`}
+                data-sample-key={hour.key}
+                tabIndex={hour.key === tabStopKey ? 0 : -1}
+                onClick={() => setSelectedKey(hour.key)}
+              >
+                <span className="ts-h">{hour.shortLabel}</span>
+                <strong>{m.main}</strong>
+                <span className="ts-sub">{m.sub}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }

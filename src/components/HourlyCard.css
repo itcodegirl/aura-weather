@@ -7,12 +7,9 @@
   min-width: 0;
 }
 
-/* Force full-width for the hourly chart regardless of .bento-chart span
-   (two-class specificity beats responsive single-class overrides in
-   WeatherDashboard.css at all breakpoints). */
+/* Force full-width for the hourly chart regardless of .bento-chart span. */
 .bento-chart.hourly-chart {
   grid-column: 1 / -1;
-  min-height: clamp(220px, 26vw, 310px);
 }
 
 /* ── Card header ─────────────────────────────────────────────────────────── */
@@ -29,245 +26,543 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display);
-  font-size: var(--section-title-size);
+  font-family: var(--font-display, inherit);
+  font-size: var(--section-title-size, 18px);
   font-weight: 650;
   margin: 0;
   letter-spacing: 0;
 }
 
 .chart-title svg {
-  color: rgba(198, 229, 255, 0.95);
+  color: var(--glacier, #6fb7f2);
 }
 
-/* ── Metric selector (segmented control) ──────────────────────────────────── */
+/* ── View tabs (segmented control) ─────────────────────────────────────────── */
 
-.hourly-metric-selector {
-  display: inline-flex;
-  gap: 3px;
-  padding: 3px;
-  border-radius: 11px;
-  background: rgba(8, 17, 36, 0.45);
+.hourly-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
 }
 
-.hourly-metric-btn {
-  font-family: inherit;
-  font-size: 11.5px;
-  letter-spacing: 0.01em;
-  padding: 6px 11px;
-  border-radius: 8px;
-  border: none;
+.hourly-tab {
+  flex: 1;
+  appearance: none;
+  border: 0;
   background: transparent;
-  color: rgba(238, 241, 248, 0.65);
+  color: rgba(238, 241, 248, 0.64);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 11px 6px;
+  border-radius: 9px;
   cursor: pointer;
+  touch-action: manipulation;
   transition:
-    background var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard);
-  white-space: nowrap;
+    background var(--motion-fast, 0.15s) var(--ease-standard, ease),
+    color var(--motion-fast, 0.15s) var(--ease-standard, ease),
+    box-shadow var(--motion-fast, 0.15s) var(--ease-standard, ease);
 }
 
-.hourly-metric-btn:hover {
+.hourly-tab:hover {
   color: #eef1f8;
 }
 
-.hourly-metric-btn.is-active {
-  background: var(--glacier, #6fb7f2);
-  color: #06223c;
-  font-weight: 600;
-  box-shadow: 0 2px 10px -2px rgba(111, 183, 242, 0.6);
+.hourly-tab.is-active {
+  background: rgba(111, 183, 242, 0.16);
+  color: #eef1f8;
+  box-shadow: inset 0 0 0 1px rgba(111, 183, 242, 0.42);
 }
 
-.hourly-metric-btn:focus-visible {
+.hourly-tab:active {
+  transform: translateY(0.5px);
+}
+
+.hourly-tab:focus-visible {
   outline: 2px solid rgba(111, 183, 242, 0.72);
   outline-offset: 2px;
 }
 
-/* ── Time + condition icon row ────────────────────────────────────────────── */
+/* ── Legend ────────────────────────────────────────────────────────────────── */
 
-.hourly-time-icon-row {
+.hourly-legend {
   display: flex;
-  gap: 0;
-}
-
-.hourly-icon-slot {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-height: 16px;
+  font-size: 11.5px;
+  color: rgba(238, 241, 248, 0.66);
 }
 
-.hourly-icon-time {
-  font-size: 12px;
-  color: rgba(238, 241, 248, 0.62);
-  font-weight: 400;
-  text-align: center;
-  line-height: 1;
-  white-space: nowrap;
+.hourly-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.hourly-icon-time.is-now {
-  color: #eef1f8;
-  font-weight: 600;
-}
-
-.hourly-cond-icon {
-  width: 23px;
-  height: 23px;
-  display: block;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
-}
-
-/* ── SVG chart plot area ──────────────────────────────────────────────────── */
-
-.hourly-plot {
+.lg-line {
+  width: 16px;
+  height: 0;
+  border-top: 2.5px solid #f3b765;
   position: relative;
-  height: 96px;
-  flex-shrink: 0;
+}
+
+.lg-line::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f3b765;
+  box-shadow: 0 0 0 1.5px #0d1b2e;
+}
+
+.lg-bar {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.lg-bar.b-mid {
+  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+}
+
+.lg-bar.b-hi {
+  background: linear-gradient(180deg, #9be7b4, #5fc88c);
+}
+
+.lg-bar.b-gust {
+  background: rgba(127, 182, 239, 0.3);
+}
+
+.lg-dash {
+  width: 16px;
+  height: 0;
+  border-top: 1.5px dashed rgba(255, 255, 255, 0.5);
+}
+
+.lg-arrow {
+  font-size: 13px;
+  line-height: 1;
+  color: #9cc9f2;
+}
+
+/* ── Scrollable chart ──────────────────────────────────────────────────────── */
+
+.hourly-scroll-wrap {
+  position: relative;
   margin-top: 2px;
 }
 
-/* SVG is absolutely positioned so it can bleed to the container edges. */
+.hourly-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  padding: 10px 4px 0;
+  margin: 0 -4px;
+  scrollbar-width: none;
+}
+
+.hourly-scroll::-webkit-scrollbar {
+  height: 0;
+}
+
+.hourly-plot {
+  position: relative;
+  height: 182px;
+  width: 100%;
+}
+
+.hourly-bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+}
+
+.hourly-col {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  scroll-snap-align: center;
+}
+
+.hourly-col:focus-visible {
+  outline: 2px solid rgba(111, 183, 242, 0.72);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.hourly-col.is-past .hourly-bar,
+.hourly-col.is-past .hourly-wbar,
+.hourly-col.is-past .hourly-wval {
+  opacity: 0.42;
+}
+
+/* rain / chance bars */
+.hourly-bar {
+  width: 96%;
+  border-radius: 2px 2px 0 0;
+  transition: filter 0.12s ease;
+}
+
+.hourly-bar.b-lo {
+  background: linear-gradient(180deg, rgba(176, 193, 214, 0.32), rgba(176, 193, 214, 0.16));
+}
+
+.hourly-bar.b-mid {
+  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+}
+
+.hourly-bar.b-hi {
+  background: linear-gradient(180deg, #9be7b4, #5fc88c);
+  box-shadow: 0 0 12px rgba(127, 217, 154, 0.35);
+}
+
+.hourly-col.is-sel .hourly-bar {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+/* wind bars */
+.hourly-wbar {
+  width: 64%;
+  position: relative;
+  border-radius: 3px 3px 0 0;
+  background: rgba(127, 182, 239, 0.26);
+}
+
+.hourly-wspd {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+}
+
+.hourly-wcap {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: #bfe0ff;
+  box-shadow: 0 0 6px rgba(150, 200, 255, 0.55);
+}
+
+.hourly-wval {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #cfe3fb;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(6, 13, 28, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-col.is-sel .hourly-wval {
+  color: #fff;
+}
+
+.hourly-col.is-sel .hourly-wbar {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.22);
+}
+
+/* temperature line */
 .hourly-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
+  pointer-events: none;
   overflow: visible;
 }
 
-/* Value chip overlay: HTML elements float above the SVG so they
-   naturally occlude the stroke behind them. No digit is ever
-   crossed by the line. */
-.hourly-chips-overlay {
+/* overlays */
+.hourly-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.hourly-chip {
+.hourly-dot {
   position: absolute;
   transform: translate(-50%, -50%);
-  white-space: nowrap;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  padding: 2px 7px;
-  border-radius: 8px;
-  background: rgba(7, 14, 26, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(3px);
-  transition:
-    top 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.3s;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #f3b765;
+  box-shadow: 0 0 0 2px #0d1b2e, 0 0 8px rgba(243, 183, 101, 0.5);
 }
 
-/* ── Lede ───────────────────────────────────────────────────────────────── */
+.hourly-dot.is-sel {
+  width: 12px;
+  height: 12px;
+  background: #ffd591;
+  box-shadow: 0 0 0 2px #0d1b2e, 0 0 14px rgba(243, 183, 101, 0.8);
+}
+
+.hourly-tchip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #eef1f8;
+  background: rgba(9, 18, 33, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-thresh {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1.5px dashed rgba(255, 255, 255, 0.36);
+}
+
+.hourly-thresh span {
+  position: absolute;
+  right: 0;
+  top: -8px;
+  font-size: 9.5px;
+  color: rgba(238, 241, 248, 0.66);
+  background: rgba(9, 18, 33, 0.6);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.hourly-arrow {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  color: rgba(159, 201, 242, 0.9);
+}
+
+.hourly-arrow.is-sel {
+  color: #ffd591;
+}
+
+/* now marker */
+.hourly-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed rgba(111, 183, 242, 0.55);
+  transform: translateX(-50%);
+}
+
+.hourly-now-tick {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #06223c;
+  background: var(--glacier, #6fb7f2);
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* baseline + axis */
+.hourly-baseline {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 2px;
+}
+
+.hourly-axis {
+  display: flex;
+  margin: 7px 2px 0;
+}
+
+.hourly-ax {
+  flex: 1;
+  text-align: center;
+  font-size: 10.5px;
+  color: rgba(238, 241, 248, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.hourly-ax.is-past {
+  opacity: 0.5;
+}
+
+.hourly-ax.is-sel {
+  color: #eef1f8;
+  font-weight: 500;
+}
+
+.hourly-ax.is-now {
+  color: var(--glacier, #6fb7f2);
+  font-weight: 600;
+}
+
+/* right-edge fade — the day continues */
+.hourly-edge-fade {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  bottom: 0;
+  width: 36px;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgba(13, 24, 38, 0),
+    rgba(13, 24, 38, 0.92)
+  );
+}
+
+.hourly-empty-note {
+  margin: 4px 2px 0;
+  font-size: 12px;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+/* ── Lede ──────────────────────────────────────────────────────────────────── */
 
 .chart-lede {
-  margin: 0;
-  color: rgba(238, 241, 248, 0.66);
+  margin: 4px 2px 0;
+  color: rgba(238, 241, 248, 0.7);
   font-size: 12.5px;
+  font-weight: 300;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Selected-hour detail + pill strip ─────────────────────────────────────── */
+
+.hourly-touch-explorer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.hourly-detail.hourly-selected-sample {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(238, 241, 248, 0.66);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.hourly-detail.hourly-selected-sample strong {
+  color: #f7fbff;
+  font-family: var(--font-display, inherit);
+  font-size: 23px;
   font-weight: 300;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Touch / keyboard sample explorer ────────────────────────────────────── */
-
-.hourly-touch-explorer {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.hourly-detail.hourly-selected-sample strong small {
+  font-size: 13px;
+  color: rgba(238, 241, 248, 0.6);
+  font-weight: 400;
 }
 
-/*
- * Above the touch breakpoint: visually hidden until a sample button
- * receives focus (reveal-on-focus, identical to the skip-link pattern).
- */
-@media (min-width: 641px) {
-  .hourly-touch-explorer:not(:focus-within) {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    border: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
-.hourly-selected-sample {
-  display: grid;
-  grid-template-columns: minmax(44px, auto) minmax(54px, auto) 1fr;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: var(--subcard-padding);
-  border-radius: var(--radius-sm);
-  border: var(--subcard-border);
-  background: var(--surface-2);
-  color: rgba(222, 236, 255, 0.9);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.hourly-selected-sample strong {
-  color: #f7fbff;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
+.hourly-detail-meta {
+  font-size: 12.5px;
+  color: rgba(238, 241, 248, 0.68);
 }
 
 .hourly-touch-strip {
   display: flex;
-  gap: 8px;
+  gap: 9px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-  padding: 1px 2px 8px;
+  padding: 1px 2px 4px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.hourly-touch-strip::-webkit-scrollbar {
+  height: 0;
 }
 
 .hourly-touch-sample {
-  flex: 0 0 64px;
-  min-height: 52px;
-  scroll-snap-align: start;
+  flex: 0 0 80px;
+  scroll-snap-align: center;
   display: grid;
   place-items: center;
   gap: 2px;
-  padding: 7px 8px;
-  border-radius: var(--radius-sm);
-  border: var(--subcard-border);
-  background: var(--surface-2);
-  color: rgba(220, 234, 255, 0.84);
-  font-size: 11px;
-  font-weight: 700;
+  padding: 10px 6px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(238, 241, 248, 0.7);
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.1;
+  cursor: pointer;
+  touch-action: manipulation;
   font-variant-numeric: tabular-nums;
 }
 
 .hourly-touch-sample strong {
   color: #f6fbff;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
+.hourly-touch-sample .ts-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9cc9f2;
+}
+
+.hourly-touch-sample.is-past {
+  opacity: 0.55;
+}
+
+.hourly-touch-sample.is-now strong {
+  color: #fff;
+}
+
 .hourly-touch-sample.is-selected {
-  border-color: rgba(111, 183, 242, 0.56);
-  background: rgba(73, 124, 214, 0.3);
-  box-shadow: inset 0 0 0 1px rgba(111, 183, 242, 0.18);
+  background: rgba(243, 183, 101, 0.14);
+  border-color: rgba(243, 183, 101, 0.42);
+  opacity: 1;
 }
 
 .hourly-touch-sample:focus-visible {
@@ -275,76 +570,38 @@
   outline-offset: 2px;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+/* ── Responsive ────────────────────────────────────────────────────────────── */
 
-/* The two-class selector (.bento-chart.hourly-chart) keeps specificity
-   above the single-class responsive rules in WeatherDashboard.css. */
-@media (max-width: 980px) {
-  .bento-chart.hourly-chart {
-    grid-column: 1 / -1;
-    min-height: clamp(200px, 28vw, 280px);
-  }
-
-  .hourly-icon-time {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 760px) {
-  .chart-header {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  .chart-title {
-    font-size: 17px;
-  }
-
-  .hourly-cond-icon {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-@media (max-width: 640px) {
-  .bento-chart.hourly-chart {
-    min-height: 0;
-  }
-
-  .hourly-icon-time {
-    font-size: 10px;
-  }
-
-  .hourly-metric-btn {
-    font-size: 11px;
-    padding: 5px 8px;
-  }
-}
-
-@media (max-width: 420px) {
+@media (max-width: 430px) {
   .chart-title {
     font-size: 16px;
   }
 
-  .hourly-chip {
-    font-size: 11px;
-    padding: 2px 5px;
+  .hourly-tab {
+    font-size: 11.5px;
+    padding: 10px 4px;
+  }
+
+  .hourly-touch-sample {
+    flex-basis: 68px;
   }
 
   .chart-lede {
     font-size: 12px;
-    line-height: 1.35;
+    line-height: 1.4;
+  }
+
+  .hourly-legend {
+    gap: 10px;
+    font-size: 11px;
   }
 }
 
-/* ── Motion reduction ────────────────────────────────────────────────────── */
+/* ── Motion reduction ──────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-  .hourly-metric-btn {
-    transition: none;
-  }
-
-  .hourly-chip {
+  .hourly-tab,
+  .hourly-bar {
     transition: none;
   }
 }

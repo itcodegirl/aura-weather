@@ -361,12 +361,3 @@
     display: none;
   }
 }
-
-/* ---------------------------------------------------------------------------
- * Single-column stack at every width (desktop included). Every card spans the
- * full grid, so nothing renders half-width — no orphan half cards on desktop,
- * and no implicit-column collapse from cards that still declare span 6 / 12.
- * ------------------------------------------------------------------------- */
-.bento > section {
-  grid-column: 1 / -1;
-}

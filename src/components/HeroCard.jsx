@@ -12,6 +12,7 @@ import { isMissingPlaceholder } from "../utils/numbers";
 import { formatDisplayCountry } from "../utils/locationDisplay";
 import { useTimeNow } from "../hooks/useTimeNow";
 import { buildHeroData } from "./heroCard/buildHeroData";
+import { Stat } from "./ui";
 import "./HeroCard.css";
 
 // Sunlight phase + day-name label only change a few times per day.
@@ -170,8 +171,13 @@ function HeroCard({
     currentTempDisplay,
     isCurrentTempMissing,
     feelsLikeDisplay,
+    dewPointDisplay,
     todayHighDisplay,
     todayLowDisplay,
+    windDisplay,
+    humidityDisplay,
+    pressureDisplay,
+    heroStatsHaveAnyMissing,
     sunlightPhase,
     atmosphereReading,
     hasClimateComparison,
@@ -321,6 +327,33 @@ function HeroCard({
           )}
         </div>
       </div>
+      <div className="hero-stats" aria-label="Current weather details">
+        <Stat
+          icon={<Droplets size={16} aria-hidden="true" />}
+          label="Humidity"
+          value={humidityDisplay}
+        />
+        <Stat
+          icon={<Wind size={16} aria-hidden="true" />}
+          label="Wind"
+          value={windDisplay}
+        />
+        <Stat
+          icon={<Sun size={16} aria-hidden="true" />}
+          label="Dew Point"
+          value={dewPointDisplay}
+        />
+        <Stat
+          icon={<Leaf size={16} aria-hidden="true" />}
+          label="Pressure"
+          value={pressureDisplay}
+        />
+      </div>
+      {heroStatsHaveAnyMissing ? (
+        <p className="hero-stats-note" role="status">
+          Some readings are unavailable from the provider.
+        </p>
+      ) : null}
 
       <div className="hero-bottom">
         <div className="hero-bottom-left">

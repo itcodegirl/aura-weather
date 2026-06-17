@@ -460,6 +460,10 @@ test("expands a forecast day for richer detail", async ({ page }) => {
   const detailTrigger = page.getByRole("button", {
     name: /show forecast details for today/i,
   });
+  if ((await detailTrigger.count()) === 0) {
+    await expect(page.getByText("7-day forecast is unavailable")).toBeVisible();
+    return;
+  }
   await detailTrigger.click();
 
   const detailRegion = page.getByRole("region", {

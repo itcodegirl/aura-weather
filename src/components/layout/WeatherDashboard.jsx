@@ -78,8 +78,10 @@ function WeatherDashboard({
   const climateStatus = trustMeta?.climateStatus ?? "idle";
   const alertsStatus = trustMeta?.alertsStatus ?? weather?.alertsStatus ?? "idle";
   // Severe-alert banner only renders when there are active alerts for this
-  // area (trust contract: no fake "all clear" card occupying space).
+  // area, or when coverage/feed status itself is informative.
   const hasAlerts = Array.isArray(weather?.alerts) && weather.alerts.length > 0;
+  const showAlertsPanel =
+    hasAlerts || alertsStatus === "unsupported" || alertsStatus === "unavailable";
 
   const dashboardLocationName =
     typeof location?.name === "string" ? location.name.trim() : "";
@@ -101,7 +103,7 @@ function WeatherDashboard({
       tabIndex={-1}
     >
       {/* Severe-alert banner — top of the page, only when alerts are active */}
-      {hasAlerts && (
+      {showAlertsPanel && (
         <PanelErrorBoundary
           label="Severe alerts"
           className="bento-alerts"
@@ -149,7 +151,7 @@ function WeatherDashboard({
         className="bento-group-label"
         style={GROUP_LABEL_STYLE_VARIABLES[1]}
       >
-        Hourly Forecast
+        Near-Term Outlook
       </h2>
       <PanelErrorBoundary
         label="Hourly forecast"

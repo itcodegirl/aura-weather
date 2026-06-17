@@ -42,7 +42,7 @@ function SupplementalWeatherPanels({
         className="bento-group-label"
         style={groupLabelStyleVariables[4]}
       >
-        Atmosphere
+        Risk Signals
       </h2>
       <PanelErrorBoundary
         label="Atmosphere"
@@ -74,7 +74,7 @@ function SupplementalWeatherPanels({
         className="bento-group-label"
         style={groupLabelStyleVariables[5]}
       >
-        Rain Outlook
+        Precipitation Outlook
       </h2>
       <PanelErrorBoundary
         label="Rain outlook"

@@ -300,7 +300,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
         <div className="chart-header">
           <h3 id={titleId} className="chart-title">
             <LineIcon size={16} aria-hidden="true" />
-            <span>Hourly forecast</span>
+            <span>Hourly Temperature</span>
           </h3>
         </div>
         <div className="card-empty" role="status">
@@ -402,7 +402,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
       <div className="chart-header">
         <h3 id={titleId} className="chart-title">
           <LineIcon size={16} aria-hidden="true" />
-          <span>Hourly forecast</span>
+          <span>Hourly Temperature</span>
         </h3>
       </div>
 

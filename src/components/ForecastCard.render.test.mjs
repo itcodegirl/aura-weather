@@ -97,9 +97,12 @@ describe("ForecastCard missing daily readings", () => {
       windDirectionDominant: [235],
     });
 
-    // Today's row auto-opens on mount; details are immediately visible.
+    const trigger = screen.getByRole("button", {
+      name: /show forecast details for/i,
+    });
+    fireEvent.click(trigger);
     assert.ok(
-      screen.getByRole("region", { name: "Today forecast details" })
+      screen.getByRole("region", { name: /forecast details/i })
     );
     assert.ok(screen.getByText("Peak UV"));
     assert.ok(screen.getByText("Sunrise"));
@@ -108,12 +111,12 @@ describe("ForecastCard missing daily readings", () => {
     assert.ok(screen.getByText("Gusts 27 mph"));
 
     // The trigger now says "Hide" (pill label flips on expand).
-    const trigger = screen.getByRole("button", {
-      name: /hide forecast details for today/i,
+    const collapseTrigger = screen.getByRole("button", {
+      name: /hide forecast details for/i,
     });
-    fireEvent.click(trigger);
+    fireEvent.click(collapseTrigger);
     assert.equal(
-      screen.queryByRole("region", { name: "Today forecast details" }),
+      screen.queryByRole("region", { name: /forecast details/i }),
       null,
       "detail panel collapses on second click"
     );

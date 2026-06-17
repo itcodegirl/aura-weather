@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronDown, Droplets } from "lucide-react";
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useId, useMemo, useRef, useState } from "react";
 import { formatWindSpeed, windDirectionName } from "../domain/wind";
 import { getWeather } from "../domain/weatherCodes";
 import {
@@ -130,7 +130,7 @@ function buildForecastDays(weatherDaily, timeZone, todayIsoOverride) {
   // line (e.g. reading a Honolulu forecast from Tokyo).
   const todayIso = todayIsoOverride ?? getIsoDateInTimeZone(timeZone);
 
-  return times
+  const validDays = times
     .map((date, index) => ({
       date,
       conditionCode: toFiniteNumber(weatherCodes[index], 0),
@@ -150,10 +150,12 @@ function buildForecastDays(weatherDaily, timeZone, todayIsoOverride) {
     .filter((day) => {
       const dayDate = parseLocalDate(day.date);
       if (!dayDate || Number.isNaN(dayDate.getTime())) return false;
-      // Validated ISO dates compare correctly as strings.
-      return day.date.trim() >= todayIso;
-    })
-    .slice(0, 7);
+      return true;
+    });
+
+  // Validated ISO dates compare correctly as strings.
+  const upcomingDays = validDays.filter((day) => day.date.trim() >= todayIso);
+  return (upcomingDays.length > 0 ? upcomingDays : validDays).slice(0, 7);
 }
 
 function getForecastRangeGradient(weekMin, weekMax) {
@@ -284,7 +286,7 @@ function DayRow({
         className="forecast-row-trigger"
         aria-expanded={isExpanded}
         aria-controls={detailPanelId}
-        aria-label={`${isExpanded ? "Hide" : "Show"} forecast details for ${label}`}
+        aria-label={`${isExpanded ? "Hide" : "Show"} forecast details for ${isToday ? "today" : label}`}
         onClick={() => onToggle(day.date)}
       >
         <div className="forecast-day-wrap">
@@ -486,7 +488,6 @@ function ForecastCard({
 }) {
   const titleId = useId();
   const [expandedDate, setExpandedDate] = useState(null);
-  const hasAutoOpenedRef = useRef(false);
   const timeZone = weather?.meta?.timezone;
   // Minute tick -> day-granular todayIso. Rows therefore relabel at the
   // location's midnight (a tab left open overnight used to keep
@@ -525,12 +526,6 @@ function ForecastCard({
     () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso),
     [days, weekMin, weekMax, unit, timeZone, todayIso]
   );
-  useEffect(() => {
-    if (!hasAutoOpenedRef.current && days.length > 0) {
-      hasAutoOpenedRef.current = true;
-      setExpandedDate(days[0].date);
-    }
-  }, [days]);
   const handleToggleDay = useCallback((date) => {
     setExpandedDate((currentDate) => (currentDate === date ? null : date));
   }, []);
@@ -567,6 +562,7 @@ function ForecastCard({
       </section>
     );
   }
+  const hasTodayEntry = days.some((day) => day.date === todayIso);
 
   return (
     <section
@@ -590,7 +586,7 @@ function ForecastCard({
         subtitleClassName="forecast-subtitle"
       />
       <ul className="forecast-list" role="list">
-        {days.map((day) => (
+        {days.map((day, index) => (
           <MemoizedDayRow
             key={day.date}
             day={day}
@@ -602,7 +598,7 @@ function ForecastCard({
             rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
-            isToday={day.date === todayIso}
+            isToday={day.date === todayIso || (!hasTodayEntry && index === 0)}
           />
         ))}
       </ul>

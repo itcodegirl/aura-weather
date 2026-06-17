@@ -105,14 +105,12 @@ function NowcastCard({
   }, [nowcast]);
 
   const chartPoints = useMemo(() => {
-    if (!nowcast.hasData || !Array.isArray(weather?.nowcast?.rainChance)) return [];
-    const vals = weather.nowcast.rainChance.slice(0, 9);
-    if (!vals.some(v => toStrictFiniteNumber(v) !== null)) return [];
-    return vals.map(v => {
-      const p = toStrictFiniteNumber(v);
-      return p === null ? 0 : Math.max(0, Math.min(100, p));
-    });
-  }, [nowcast.hasData, weather?.nowcast?.rainChance]);
+    // Use the now-anchored probability window from analyzeNowcast so the
+    // curve matches the headline/peak (not the raw, past-shifted array).
+    const series = Array.isArray(nowcast.series) ? nowcast.series : [];
+    if (!nowcast.hasData || series.length < 2) return [];
+    return series.map((v) => Math.max(0, Math.min(100, v)));
+  }, [nowcast.hasData, nowcast.series]);
 
   const chartGeo = useMemo(() => buildNowcastChartGeometry(chartPoints), [chartPoints]);
 

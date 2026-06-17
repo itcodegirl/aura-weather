@@ -363,20 +363,10 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Below 980px the grid drops to 3 then 2 explicit columns, but several cards
- * still declare span 6 / span 12 in their component CSS (which out-specify the
- * per-card responsive resets). Those oversized spans spawn implicit columns
- * that collapse the explicit tracks, which in turn shrinks every full-bleed
- * `grid-column: 1 / -1` card (hourly, radar, atmosphere bento) to a sliver.
- * Collapsing the bento to a single full-width column at this range removes the
- * implicit-column distortion entirely and stacks every card cleanly.
+ * Single-column stack at every width (desktop included). Every card spans the
+ * full grid, so nothing renders half-width — no orphan half cards on desktop,
+ * and no implicit-column collapse from cards that still declare span 6 / 12.
  * ------------------------------------------------------------------------- */
-@media (max-width: 980px) {
-  .bento {
-    grid-template-columns: 1fr !important;
-  }
-
-  .bento > section {
-    grid-column: 1 / -1 !important;
-  }
+.bento > section {
+  grid-column: 1 / -1;
 }

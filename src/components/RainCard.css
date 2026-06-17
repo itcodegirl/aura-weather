@@ -160,11 +160,11 @@
 }
 
 .rain-stat-value--observed {
-  color: #9cc9f2;
+  color: #f3b765;
 }
 
 .rain-stat-value--projected {
-  color: #6fb7f2;
+  color: #f3b765;
 }
 
 .rain-stat-value--peak {
@@ -219,9 +219,9 @@
 }
 
 .rain-history-pill-value {
-  color: #eef5ff;
-  font-size: 13px;
-  font-weight: 700;
+  color: #f3b765;
+  font-size: 14px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 

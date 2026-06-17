@@ -155,6 +155,33 @@ function RainCard({
             ? `${hour.probability}%`
             : formatPrecipitation(hour.amount, unit, dataUnit);
       const timeLabel = formatHour(hour.time);
+      const prob = isMissing ? null : hour.probability;
+      const tier = isMissing
+        ? "na"
+        : mode === "chance"
+          ? prob >= 50 ? "hi" : prob >= 30 ? "mid" : "lo"
+          : safePeakAmount > 0
+            ? hour.amount >= safePeakAmount * 0.66
+              ? "hi"
+              : hour.amount >= safePeakAmount * 0.33
+                ? "mid"
+                : "lo"
+            : "lo";
+      const isPeak =
+        peak?.time instanceof Date &&
+        hour.time instanceof Date &&
+        hour.time.getTime() === peak.time.getTime();
+      const meta = isMissing
+        ? "data unavailable"
+        : mode === "chance"
+          ? prob >= 50
+            ? "showers likely"
+            : prob >= 30
+              ? "scattered chance"
+              : prob >= 15
+                ? "slight chance"
+                : "mostly dry"
+          : "projected amount";
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
@@ -166,6 +193,9 @@ function RainCard({
         valueLabel,
         timeLabel,
         isMissing,
+        tier,
+        isPeak,
+        meta,
       };
     });
     const accessibleText = bars.length
@@ -295,7 +325,7 @@ function RainCard({
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value">
+                <div className="rain-stat-value rain-stat-value--observed">
                   {observedTodayLabel}
                 </div>
                 <div className="rain-stat-label">Observed today</div>
@@ -304,7 +334,7 @@ function RainCard({
             <div className="rain-stat">
               <CloudRain size={14} />
               <div>
-                <div className="rain-stat-value">
+                <div className="rain-stat-value rain-stat-value--projected">
                   {projectedTotalLabel}
                 </div>
                 <div className="rain-stat-label">Projected 24h total</div>
@@ -313,7 +343,7 @@ function RainCard({
             <div className="rain-stat">
               <Clock size={14} />
               <div>
-                <div className={`rain-stat-value${peakProbability === null ? " is-missing" : ""}`}>
+                <div className={`rain-stat-value rain-stat-value--peak${peakProbability === null ? " is-missing" : ""}`}>
                   {peakProbabilityLabel}
                 </div>
                 <div className="rain-stat-label">Peak near {peakTimeLabel}</div>
@@ -348,24 +378,42 @@ function RainCard({
       <div className="rain-timeline-wrap">
         <div
           className="rain-timeline"
-          role="img"
+          role="group"
           aria-label={
             mode === "chance"
-          ? "Hourly precipitation chance over the next 24 hours"
-              : `Hourly precipitation amount in ${getPrecipUnitLabel(unit)} over the next 24 hours`
+              ? "Hourly rain chance over the next 24 hours \u2014 tap an hour to inspect"
+              : `Hourly rain amount in ${getPrecipUnitLabel(unit)} over the next 24 hours \u2014 tap an hour to inspect`
           }
           aria-describedby={`${timelineSummaryId} ${timelineDetailsId}`}
         >
+          {mode === "chance" ? (
+            <div className="rain-thresh" aria-hidden="true">
+              <span>50%</span>
+            </div>
+          ) : null}
           {timelineBars.map((bar) => (
-            <div
+            <button
+              type="button"
               key={bar.key}
-              className={`rain-bar${bar.isMissing ? " rain-bar--missing" : ""}`}
-              style={{ height: `${bar.heightPct}%`, opacity: bar.opacity }}
+              className={`rain-bar${selectedSample?.key === bar.key ? " is-sel" : ""}`}
               title={bar.tooltip}
-              aria-hidden="true"
-            />
+              aria-label={`Select ${bar.tooltip}`}
+              onClick={() => setSelectedSampleKey(bar.key)}
+            >
+              <span
+                className={`rain-bar-fill b-${bar.tier}${bar.isMissing ? " rain-bar--missing" : ""}${bar.isPeak ? " is-peak" : ""}`}
+                style={{ height: `${bar.heightPct}%` }}
+              />
+            </button>
           ))}
         </div>
+        {selectedSample ? (
+          <p className="rain-detail">
+            <span className="rain-detail-time">{selectedSample.timeLabel}</span>
+            <strong className="rain-detail-value">{selectedSample.valueLabel}</strong>
+            <span className="rain-detail-meta">{selectedSample.meta}</span>
+          </p>
+        ) : null}
         <p id={timelineSummaryId} className="rain-timeline-summary">{timelineSummary}</p>
         {hasData && missingSlots > 0 ? (
           <p className="rain-missing-note" role="status">

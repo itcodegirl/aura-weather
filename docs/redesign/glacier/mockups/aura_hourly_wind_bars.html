@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura · Glacier — Hourly (Wind) as bars</title>
+<style>
+  :root{ --font:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; --glacier:#6fb7f2; --amber:#f3b765; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:28px 18px; font-family:var(--font); color:#eef1f8;
+    background:radial-gradient(120% 90% at 80% 0%,#16314f 0%,#0a1626 50%,#060d1c 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start; }
+  .stage{ width:100%; max-width:600px; }
+  .cap-eyebrow{ font:500 11px/1.4 var(--font); letter-spacing:.14em; text-transform:uppercase;
+        color:var(--glacier); border-left:3px solid var(--glacier); padding-left:8px; margin:0 0 14px; }
+
+  .card{ background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+         border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:18px; }
+  .chead{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+  .chead .ttl{ display:flex; align-items:center; gap:9px; font-size:18px; font-weight:600; }
+  .chead .ttl svg{ color:var(--glacier); }
+  .seg{ display:inline-flex; gap:3px; padding:4px; border-radius:11px; background:rgba(8,17,36,.45); border:1px solid rgba(255,255,255,.1); }
+  .seg button{ font-family:inherit; font-size:12.5px; padding:7px 13px; border-radius:8px; border:none; background:transparent; color:rgba(238,241,248,.66); cursor:pointer; }
+  .seg button.on{ background:var(--glacier); color:#06223c; font-weight:600; }
+
+  /* ===== bar chart ===== */
+  .chart{ display:flex; align-items:flex-end; gap:0; height:172px; margin:0 2px; }
+  .hr{ flex:1; min-width:0; position:relative; height:100%; display:flex; flex-direction:column; align-items:center; }
+  .track{ position:relative; width:100%; flex:1; }
+  .bar,.gust{ position:absolute; left:18%; right:18%; bottom:0; border-radius:5px 5px 0 0; }
+  .bar{ background:linear-gradient(180deg,#9fd0ff,#5aa0e4); box-shadow:0 0 0 1px rgba(255,255,255,.05) inset; }
+  .gust{ background:rgba(111,183,242,.24); }
+  .hr.sel .bar{ background:linear-gradient(180deg,#bfe2ff,#6fb7f2); box-shadow:0 0 14px rgba(111,183,242,.55), 0 0 0 1px rgba(191,226,255,.6) inset; }
+  .vlabel{ position:absolute; left:0; right:0; text-align:center; font-size:11.5px; font-weight:600; color:#eef1f8; }
+  .vlabel.sel{ color:#bfe2ff; }
+  .vlabel small{ font-size:9px; font-weight:500; color:rgba(238,241,248,.6); }
+  .dir{ margin-top:7px; color:rgba(111,183,242,.65); }
+  .hr.sel .dir{ color:var(--glacier); }
+  .hlabel{ margin-top:5px; font-size:10.5px; color:rgba(238,241,248,.6); white-space:nowrap; }
+  .hr.sel .hlabel{ color:#eef1f8; font-weight:500; }
+  .baseline{ height:1px; background:rgba(255,255,255,.12); margin:0 2px 0; }
+
+  .legend{ display:flex; align-items:center; gap:14px; margin-top:14px; font-size:11.5px; color:rgba(238,241,248,.6); }
+  .legend i{ display:inline-flex; align-items:center; gap:6px; }
+  .sw{ width:11px; height:11px; border-radius:3px; }
+  .sw.solid{ background:linear-gradient(180deg,#9fd0ff,#5aa0e4); }
+  .sw.gust{ background:rgba(111,183,242,.24); border:1px solid rgba(111,183,242,.4); }
+
+  .summary{ font-size:13px; color:rgba(238,241,248,.7); font-weight:300; margin:15px 2px 0; }
+  .summary b{ color:#eef1f8; font-weight:500; }
+
+  .detail{ display:flex; align-items:baseline; gap:10px; margin-top:13px; padding:13px 15px; border-radius:12px;
+           background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); }
+  .detail .t{ font-size:13px; color:rgba(238,241,248,.66); }
+  .detail .v{ font-size:23px; font-weight:300; }
+  .detail .meta{ font-size:12.5px; color:rgba(238,241,248,.68); }
+
+  .scroll{ display:flex; gap:9px; margin-top:13px; overflow-x:auto; padding-bottom:4px; }
+  .pill{ flex:0 0 auto; width:74px; text-align:center; padding:11px 0; border-radius:13px;
+         background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); }
+  .pill.sel{ background:rgba(111,183,242,.16); border-color:rgba(111,183,242,.45); }
+  .pill .h{ font-size:12px; color:rgba(238,241,248,.7); }
+  .pill .s{ font-size:15px; font-weight:600; margin-top:3px; }
+  .pill .s small{ font-size:10px; font-weight:500; color:rgba(238,241,248,.6); display:block; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="cap-eyebrow">Aura · Glacier · hourly — Wind as bars (replaces curve+chips for this metric)</div>
+
+  <!--WIDGET-START-->
+  <div class="card">
+    <div class="chead">
+      <div class="ttl"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3M3 14h15a3 3 0 1 1-3 3M3 11h7"/></svg>Hourly forecast</div>
+      <div class="seg"><button>Precipitation</button><button>Temperature</button><button class="on">Wind</button></div>
+    </div>
+
+    <!-- bars: bottom=mph (scale 0–40, track 130px) · faint cap = gusts -->
+    <div class="chart">
+      <div class="hr sel"><div class="track"><span class="vlabel sel" style="bottom:53px">15<small> mph</small></span><span class="gust" style="height:68px"></span><span class="bar" style="height:49px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(205 12 12)"/></svg><div class="hlabel">7P</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:43px">12</span><span class="gust" style="height:58px"></span><span class="bar" style="height:39px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(210 12 12)"/></svg><div class="hlabel">8P</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:53px">15</span><span class="gust" style="height:71px"></span><span class="bar" style="height:49px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(208 12 12)"/></svg><div class="hlabel">9P</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:56px">16</span><span class="gust" style="height:75px"></span><span class="bar" style="height:52px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(212 12 12)"/></svg><div class="hlabel">10P</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:59px">17</span><span class="gust" style="height:78px"></span><span class="bar" style="height:55px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(216 12 12)"/></svg><div class="hlabel">11P</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:62px">18</span><span class="gust" style="height:85px"></span><span class="bar" style="height:58px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(218 12 12)"/></svg><div class="hlabel">12A</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:95px">28</span><span class="gust" style="height:124px"></span><span class="bar" style="height:91px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(224 12 12)"/></svg><div class="hlabel">1A</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:92px">27</span><span class="gust" style="height:117px"></span><span class="bar" style="height:88px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(226 12 12)"/></svg><div class="hlabel">2A</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:98px">29</span><span class="gust" style="height:127px"></span><span class="bar" style="height:94px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(228 12 12)"/></svg><div class="hlabel">3A</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:101px">30</span><span class="gust" style="height:124px"></span><span class="bar" style="height:98px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(230 12 12)"/></svg><div class="hlabel">4A</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:114px">34</span><span class="gust" style="height:130px"></span><span class="bar" style="height:110px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(232 12 12)"/></svg><div class="hlabel">5A</div></div>
+      <div class="hr"><div class="track"><span class="vlabel" style="bottom:108px">32</span><span class="gust" style="height:127px"></span><span class="bar" style="height:104px"></span></div><svg class="dir" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l5 9h-3v9h-4v-9H7z" transform="rotate(234 12 12)"/></svg><div class="hlabel">6A</div></div>
+    </div>
+    <div class="baseline"></div>
+
+    <div class="legend">
+      <i><span class="sw solid"></span>Sustained</i>
+      <i><span class="sw gust"></span>Gusts</i>
+      <i><svg width="12" height="12" viewBox="0 0 24 24" fill="rgba(111,183,242,.7)"><path d="M12 2l5 9h-3v9h-4v-9H7z"/></svg>Direction</i>
+    </div>
+
+    <p class="summary"><b>Building overnight.</b> Steady 12–18 mph this evening, then a front pushes gusts past 30 mph after midnight — peak 34 mph around 5 AM.</p>
+
+    <div class="detail"><span class="t">7 PM</span><span class="v">15 <small style="font-size:12px;color:rgba(238,241,248,.6)">mph</small></span><span class="meta">· gusts to 21 · from SSW · Clear</span></div>
+
+    <div class="scroll">
+      <div class="pill sel"><div class="h">7 PM</div><div class="s">15<small>mph</small></div></div>
+      <div class="pill"><div class="h">8 PM</div><div class="s">12<small>mph</small></div></div>
+      <div class="pill"><div class="h">9 PM</div><div class="s">15<small>mph</small></div></div>
+      <div class="pill"><div class="h">10 PM</div><div class="s">16<small>mph</small></div></div>
+      <div class="pill"><div class="h">11 PM</div><div class="s">17<small>mph</small></div></div>
+      <div class="pill"><div class="h">12 AM</div><div class="s">18<small>mph</small></div></div>
+    </div>
+  </div>
+  <!--WIDGET-END-->
+</div>
+</body>
+</html>

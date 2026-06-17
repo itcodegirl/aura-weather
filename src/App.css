@@ -1,6 +1,6 @@
 ﻿:root {
   --font-sans: "Inter", "Manrope", "Segoe UI", sans-serif;
-  --font-display: "Space Grotesk", "Manrope", sans-serif;
+  --font-display: "Inter", "Manrope", sans-serif;
 
   --text: #eef1f8;
   --text-muted: rgba(238, 241, 248, 0.7);
@@ -42,11 +42,10 @@
   --shadow-raise: 0 10px 22px rgba(3, 9, 24, 0.26);
   --shadow-raise-lg: 0 18px 44px rgba(3, 9, 24, 0.32);
 
-  --bg-card: rgba(11, 19, 37, 0.68);
-  --bg-card-hover: rgba(16, 29, 55, 0.76);
-  --panel: rgba(9, 17, 34, 0.78);
-  --panel-soft: rgba(12, 22, 42, 0.66);
-  --subcard-bg: rgba(11, 20, 38, 0.62);
+  /* Glacier glass pass: removed the dark-navy surface tokens --bg-card,
+     --bg-card-hover, --panel, --panel-soft, and --subcard-bg. They have
+     zero consumers — cards use --bg-large-card, hover/tiles --bg-tile,
+     and wells now reference --bg-well directly. */
   --subcard-border: 1px solid rgba(196, 213, 241, 0.15);
   --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
 
@@ -70,12 +69,15 @@
   --green-good-light: #a9e2bd;
 
   /* Card surface tiers — Glacier glass system.
-     Tile (.16) → large card (.11) → inset well (.055) → outer panel (.04).
-     Nesting rule: outer is always darker so inner tiles read as elevated. */
+     Tile (+.16) and large card (+.11) are ADDITIVE white over the dusk
+     gradient. The inset WELL is SUBTRACTIVE (a dark overlay), so nested
+     stats read recessed AND keep muted/dim text above AA 4.5:1 even on
+     the brightest dusk — a .055 white well composited brighter than its
+     card (raised, backwards from §1) and failed AA on bright conditions. */
   --bg-tile: rgba(255, 255, 255, 0.16);
   --bg-tile-border: rgba(255, 255, 255, 0.22);
   --bg-large-card: rgba(255, 255, 255, 0.11);
-  --bg-well: rgba(255, 255, 255, 0.055);
+  --bg-well: rgba(0, 0, 0, 0.3);
   --bg-panel-outer: rgba(255, 255, 255, 0.04);
 
   --hero-unit-size: 28px;
@@ -329,7 +331,7 @@ a:focus-visible,
   background:
     radial-gradient(circle at 14% 16%, rgba(188, 166, 255, 0.12), transparent 42%),
     radial-gradient(circle at 84% 12%, rgba(123, 199, 255, 0.12), transparent 44%),
-    radial-gradient(circle at 74% 82%, rgba(246, 196, 83, 0.07), transparent 42%),
+    radial-gradient(circle at 74% 82%, rgba(243, 183, 101, 0.07), transparent 42%),
     linear-gradient(180deg, rgba(222, 236, 255, 0.04) 0%, rgba(17, 26, 50, 0.04) 42%, rgba(5, 10, 23, 0.24) 100%);
   opacity: 0.84;
 }

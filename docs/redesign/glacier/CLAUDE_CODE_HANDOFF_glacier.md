@@ -19,16 +19,16 @@ A prior build (closed PR #81, and the not-yet-merged PR #82) did palette + cards
 - (The good foundation from the prior real attempt — deep Glacier theme, card system, Details pill — may be cherry-picked if clean: `f0892cd`, `5f99104`. Rebuild everything else from the spec + mockups; do not trust the prior hero/hourly/bento work.)
 
 ## Confirm before editing
-Before writing any files, **print: (a) the exact file list you intend to touch per phase, (b) the two resolved decisions you'll honor — bento = build, accent = `#6fb7f2` (change the app's `#8bd3ff`), (c) confirmation the preview MCP will NOT be used for visual verification (it hangs on this app's particle loop — use `npm run screenshots`).** Then wait for Jenna's go. Do not scaffold until she confirms.
+Before writing any files, **print: (a) the exact file list you intend to touch per phase, (b) the resolved decisions you'll honor (spec §5: bento enriched = build, Environmental Exposure retired, Storm watch = synthesis, accent `#6fb7f2` replacing `#8bd3ff`), (c) confirmation the preview MCP will NOT be used for visual verification (it hangs on this app's particle loop — use `npm run screenshots`).** Then wait for Jenna's go. Do not scaffold until she confirms.
 
 ## Scope constraint (hard)
 - **Surgical restyle + the named new pieces only.** Keep all engineering, data layer, the missing-data trust contract, and a11y. Restyle the surface; add only what the spec's §3 components require.
 - **Build exactly the CANONICAL components in `GLACIER_BUILD_SPEC.md` §3.** Nothing outside them.
-- **Two decisions are resolved (spec §5) — execute them, don't re-litigate:** (1) **Bento = build** — the Atmosphere bento (§3.7) is in scope; build it to its mockup, just don't duplicate a metric's primary home. (2) **Accent = `#6fb7f2`** — change the app's `#8bd3ff` → `#6fb7f2` everywhere (grep for it). Echo both at the top of the PR.
+- **The resolved decisions are in spec §5 — execute them, don't re-litigate:** (1) **Atmosphere bento = build, enriched** (§3.7) — 9 metrics, each with a qualifier pill + labeled scale + plain-English caption; it is the single home for AQI + UV; Sun + Moon full-width; AQI ships its missing-data state. (2) **Environmental Exposure section = retired** — do NOT build a separate AQI/UV section; those metrics live in the bento. (3) **Storm watch = risk synthesis** (§3.6) — storm-risk level + CAPE + peak window + why-line only; no Pressure/Wind/Dew-point gauges (those are in the bento). (4) **Accent = `#6fb7f2`** — change the app's `#8bd3ff` → `#6fb7f2` everywhere (grep for it). Echo these at the top of the PR.
 - If any component lacks a CANONICAL mockup, **stop and ask** — do not invent.
 
 ## Commits (one per component/phase)
-Logical chunks, e.g.: tokens/theme (incl. `#8bd3ff`→`#6fb7f2`) → reactive hero → flowing-curve hourly → near-term outlook → storm-watch restyle → atmosphere bento → 7-day (pill + drawer + mini-hourly) → trust footer. Commit locally per phase.
+Logical chunks, e.g.: tokens/theme (incl. `#8bd3ff`→`#6fb7f2`) → reactive hero (**longer**; + UV index panel + sunrise/sunset/daylight) → **hourly module** (3 tabs: Temp & Rain combo · Precipitation · Wind; **24h horizontally scrollable**; **tap-to-select** any hour; **mph value on every wind bar**; pill strip scroll-synced; touch-coded + responsive) → atmosphere bento (enriched) → nowcast → rain outlook → storm-watch slim to risk synthesis → 7-day (pill + drawer + mini-hourly) → trust footer. Assemble in the **§2 stacking order**; retire the Environmental Exposure section. Commit locally per phase.
 
 ## Verification (the gate — spec §6/§7)
 - **Per component:** build → `npm run screenshots` (NOT the preview MCP) → read the PNGs → open the matching mockup → confirm **every** acceptance checkbox in spec §3 for that component.

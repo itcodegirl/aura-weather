@@ -308,9 +308,9 @@ export async function fetchWeather(lat, lon, options = {}) {
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     current:
-      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,visibility",
+      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,visibility,is_day",
     hourly:
-      "temperature_2m,weather_code,precipitation_probability,precipitation,surface_pressure,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m",
+      "temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,weather_code,precipitation_probability,precipitation,surface_pressure,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,visibility",
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant",
     minutely_15:

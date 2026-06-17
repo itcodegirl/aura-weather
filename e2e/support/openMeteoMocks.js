@@ -53,6 +53,17 @@ function buildWeatherPayload(latitude, longitude) {
   const hourlyWindDirection = Array.from({ length: hourlySize }, (_, index) =>
     Math.round((180 + index * 6) % 360)
   );
+  const hourlyHumidity = Array.from({ length: hourlySize }, (_, index) =>
+    Math.round(60 + Math.sin(index / 5) * 20)
+  );
+  const hourlyDewPoint = Array.from({ length: hourlySize }, (_, index) =>
+    Number((50 + Math.sin(index / 6) * 4).toFixed(1))
+  );
+  const hourlyFeelsLike = hourlyTemperature.map((t) => Number((t - 1).toFixed(1)));
+  const hourlyUvIndex = Array.from({ length: hourlySize }, (_, index) =>
+    Math.max(0, Math.round(Math.sin((index - 6) / 4) * 5 + 2))
+  );
+  const hourlyVisibility = Array.from({ length: hourlySize }, () => 24140);
 
   const dailySize = 7;
   const dailyTime = Array.from({ length: dailySize }, (_, index) => {
@@ -100,6 +111,7 @@ function buildWeatherPayload(latitude, longitude) {
       wind_speed_10m: 9.8,
       wind_gusts_10m: 15.4,
       wind_direction_10m: 220,
+      is_day: 1,
       surface_pressure: 1014.2,
       dew_point_2m: 52.1,
       cloud_cover: 34,
@@ -116,6 +128,11 @@ function buildWeatherPayload(latitude, longitude) {
       wind_speed_10m: hourlyWindSpeed,
       wind_gusts_10m: hourlyWindGust,
       wind_direction_10m: hourlyWindDirection,
+      relative_humidity_2m: hourlyHumidity,
+      dew_point_2m: hourlyDewPoint,
+      apparent_temperature: hourlyFeelsLike,
+      uv_index: hourlyUvIndex,
+      visibility: hourlyVisibility,
     },
     daily: {
       time: dailyTime,

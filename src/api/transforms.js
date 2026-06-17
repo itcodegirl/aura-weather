@@ -54,6 +54,7 @@ export function normalizeWeatherResponse(raw) {
       dewPoint: toNumber(current.dew_point_2m),
       cloudCover: toNumber(current.cloud_cover),
       visibility: toNumber(current.visibility),
+      isDay: toNumber(current.is_day),
     },
     hourly: {
       ...model.hourly,
@@ -67,6 +68,11 @@ export function normalizeWeatherResponse(raw) {
       windSpeed: asArray(hourly.wind_speed_10m),
       windGust: asArray(hourly.wind_gusts_10m),
       windDirection: asArray(hourly.wind_direction_10m),
+      humidity: asArray(hourly.relative_humidity_2m),
+      dewPoint: asArray(hourly.dew_point_2m),
+      feelsLike: asArray(hourly.apparent_temperature),
+      uvIndex: asArray(hourly.uv_index),
+      visibility: asArray(hourly.visibility),
     },
     daily: {
       ...model.daily,

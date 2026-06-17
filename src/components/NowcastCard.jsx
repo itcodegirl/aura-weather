@@ -9,7 +9,7 @@ const NC_SVG_W = 1000;
 const NC_SVG_H = 150;
 const NC_TOP_PAD = 20;
 const NC_BOT_PAD = 24;
-const NC_DOMAIN = 50;
+const NC_DOMAIN = 100; // full 0-100% range so high-rain windows slope instead of pegging flat at the cap
 
 function buildNowcastChartGeometry(points) {
   const n = points.length;

@@ -53,6 +53,45 @@ function RecenterMap({ lat, lon }) {
   return null;
 }
 
+// Touch standard: on touch devices, one finger scrolls the page (so the
+// map never traps the scroll) and two fingers pan/pinch the map. On a
+// mouse (fine pointer) we leave Leaflet's normal one-pointer drag alone.
+function CooperativeGestures() {
+  const map = useMap();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return undefined;
+    }
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    if (!coarse) {
+      return undefined;
+    }
+    const el = map.getContainer();
+    map.dragging.disable();
+    const onTouchStart = (event) => {
+      if (event.touches && event.touches.length >= 2) {
+        map.dragging.enable();
+      }
+    };
+    const onTouchEnd = (event) => {
+      if (!event.touches || event.touches.length < 2) {
+        map.dragging.disable();
+      }
+    };
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [map]);
+
+  return null;
+}
+
 function RadarMap({ host, frames, activeIndex, center, retina = false }) {
   const [lat, lon] = center;
 
@@ -103,6 +142,7 @@ function RadarMap({ host, frames, activeIndex, center, retina = false }) {
       <CircleMarker center={center} radius={13} pathOptions={HALO_OPTIONS} />
       <CircleMarker center={center} radius={5} pathOptions={DOT_OPTIONS} />
 
+      <CooperativeGestures />
       <RecenterMap lat={lat} lon={lon} />
     </MapContainer>
   );

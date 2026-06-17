@@ -182,6 +182,7 @@
   width: var(--control-height-sm);
   height: var(--control-height-sm);
   flex: 0 0 auto;
+  touch-action: manipulation;
   border-radius: var(--radius-control);
   border: var(--border-default);
   background: var(--surface-1);
@@ -454,5 +455,38 @@
 
   .radar-timeline-controls {
     gap: 8px;
+  }
+}
+
+/* ── Touch standard: >=44px targets + grabbier scrubber on touch ─────────────
+ * Matches the 44px touch floor the hourly/rain controls meet. Coarse-pointer
+ * only, so desktop density is untouched. The slider keeps its thin 6px visual
+ * track (centred background) while its hit area grows to 28px for fingers.
+ * ------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .radar-control {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .radar-slider {
+    height: 28px;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(111, 183, 242, 0.5),
+        rgba(196, 213, 241, 0.22)
+      )
+      center / 100% 6px no-repeat;
+  }
+
+  .radar-slider::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .radar-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
   }
 }

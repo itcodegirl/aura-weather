@@ -383,4 +383,139 @@
   }
 }
 
+/* ── Slimmed risk-synthesis layout ─────────────────────────────────────────── */
+.storm-synth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
 
+.storm-risk-block,
+.storm-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--subcard-padding, 13px 15px);
+  border-radius: var(--radius-sm, 12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.storm-readout {
+  justify-content: center;
+  gap: 12px;
+}
+
+.cape-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cape-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+.cape-label abbr {
+  text-decoration: none;
+  border: 0;
+}
+
+.cape-value {
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f3b765;
+  font-variant-numeric: tabular-nums;
+}
+
+.cape-value.is-missing {
+  color: rgba(238, 241, 248, 0.5);
+}
+
+.cape-scale {
+  position: relative;
+  height: 7px;
+  border-radius: 4px;
+  overflow: visible;
+}
+
+.cape-scale-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #7fd99a 0%, #f3b765 55%, #e2574a 100%);
+  opacity: 0.85;
+}
+
+.cape-marker {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #0d1b2e;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.cape-scale-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.55);
+}
+
+.storm-window {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.storm-window-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+.storm-window-pill {
+  align-self: flex-start;
+  font-family: var(--font-display, inherit);
+  font-size: 20px;
+  font-weight: 500;
+  color: #f3b765;
+  font-variant-numeric: tabular-nums;
+}
+
+.storm-window-sub {
+  font-size: 12px;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+.storm-why {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgba(238, 241, 248, 0.82);
+}
+
+@media (max-width: 560px) {
+  .storm-synth {
+    grid-template-columns: 1fr;
+  }
+}

@@ -144,6 +144,30 @@ describe("Open-Meteo alert coverage helpers", () => {
     assert.equal(result.alerts[1].id, "minor-alert");
   });
 
+  test("severe alert with future urgency gets high priority (not moderate)", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse({
+        features: [
+          {
+            properties: {
+              id: "flood-watch",
+              event: "Flood Watch",
+              severity: "Severe",
+              urgency: "Future",
+              expires: "2026-06-17T21:00:00Z",
+            },
+          },
+        ],
+      }, {
+        status: 200,
+        headers: { "Content-Type": "application/geo+json" },
+      });
+
+    const result = await fetchSevereWeatherAlerts(41.698, -87.8349);
+
+    assert.equal(result.alerts[0].priority, "high");
+  });
+
   test("marks 400 responses as unsupported regional coverage", async () => {
     globalThis.fetch = async () => createJsonResponse({}, { status: 400 });
 

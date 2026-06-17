@@ -258,9 +258,9 @@ function mapAlertUrgencyScore(urgency) {
   return 0;
 }
 
-function getAlertPriority(score) {
+function getAlertPriority(score, severityScore) {
   if (score >= 6) return "critical";
-  if (score >= 4) return "high";
+  if (score >= 4 || severityScore >= 3) return "high";
   if (score >= 2) return "moderate";
   return "low";
 }
@@ -272,7 +272,8 @@ function normalizeAlert(feature, index) {
       : {};
   const severity = typeof properties.severity === "string" ? properties.severity : "Unknown";
   const urgency = typeof properties.urgency === "string" ? properties.urgency : "Unknown";
-  const alertScore = mapAlertSeverityScore(severity) + mapAlertUrgencyScore(urgency);
+  const severityScore = mapAlertSeverityScore(severity);
+  const alertScore = severityScore + mapAlertUrgencyScore(urgency);
 
   return {
     id: typeof properties.id === "string" ? properties.id : `alert-${index}`,
@@ -286,7 +287,7 @@ function normalizeAlert(feature, index) {
     endsAt: typeof properties.expires === "string" ? properties.expires : null,
     sender: typeof properties.senderName === "string" ? properties.senderName : "National Weather Service",
     description: typeof properties.description === "string" ? properties.description : "",
-    priority: getAlertPriority(alertScore),
+    priority: getAlertPriority(alertScore, severityScore),
     priorityScore: alertScore,
   };
 }

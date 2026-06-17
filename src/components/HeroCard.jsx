@@ -5,15 +5,12 @@ import {
   MapPin,
   Wind,
   Droplets,
-  Sunrise,
-  Sunset,
   Sun,
   Leaf,
 } from "lucide-react";
 import { isMissingPlaceholder } from "../utils/numbers";
 import { formatDisplayCountry } from "../utils/locationDisplay";
 import { useTimeNow } from "../hooks/useTimeNow";
-import WeatherIcon from "./WeatherIcon";
 import { buildHeroData } from "./heroCard/buildHeroData";
 import "./HeroCard.css";
 
@@ -167,7 +164,6 @@ function HeroCard({
   }
 
   const {
-    current,
     info,
     safeLocationName,
     safeLocationCountry,
@@ -176,11 +172,6 @@ function HeroCard({
     feelsLikeDisplay,
     todayHighDisplay,
     todayLowDisplay,
-    sunriseValue,
-    sunsetValue,
-    sunriseLabel,
-    sunsetLabel,
-    daylightLabel,
     sunlightPhase,
     atmosphereReading,
     hasClimateComparison,
@@ -303,9 +294,6 @@ function HeroCard({
                 <span className="hero-temp-unit">{tempUnit}</span>
               )}
             </div>
-            <div className="hero-icon">
-              <WeatherIcon code={current.conditionCode} size={124} animated />
-            </div>
           </div>
           <p className="hero-condition-line">
             <span className="hero-condition">{info.label}</span>
@@ -355,50 +343,6 @@ function HeroCard({
               High confidence · {ageLabel}
             </div>
           )}
-
-          <div
-            className="hero-daylight-strip"
-            role="group"
-            aria-label={`Sunrise ${sunriseLabel}, sunset ${sunsetLabel}, ${daylightLabel} of daylight`}
-          >
-            <span className="hero-daylight-item">
-              <span className="hero-daylight-icon" aria-hidden="true">
-                <Sunrise size={14} />
-              </span>
-              <span className="hero-daylight-copy">
-                <span className="hero-daylight-label">Sunrise</span>
-                <time
-                  className="hero-daylight-value"
-                  dateTime={sunriseValue || undefined}
-                >
-                  {sunriseLabel}
-                </time>
-              </span>
-            </span>
-            <span className="hero-daylight-item">
-              <span className="hero-daylight-icon" aria-hidden="true">
-                <Sunset size={14} />
-              </span>
-              <span className="hero-daylight-copy">
-                <span className="hero-daylight-label">Sunset</span>
-                <time
-                  className="hero-daylight-value"
-                  dateTime={sunsetValue || undefined}
-                >
-                  {sunsetLabel}
-                </time>
-              </span>
-            </span>
-            <span className="hero-daylight-item hero-daylight-item--duration">
-              <span className="hero-daylight-icon" aria-hidden="true">
-                <Sun size={14} />
-              </span>
-              <span className="hero-daylight-copy">
-                <span className="hero-daylight-label">Daylight</span>
-                <span className="hero-daylight-value">{daylightLabel}</span>
-              </span>
-            </span>
-          </div>
         </div>
 
       </div>

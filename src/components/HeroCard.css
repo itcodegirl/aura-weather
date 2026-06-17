@@ -235,22 +235,6 @@
   font-size: var(--hero-unit-size);
   font-weight: 600;
 }
-
-.hero-icon {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: clamp(114px, 12vw, 150px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.28), rgba(111, 183, 242, 0.1) 62%, transparent 76%),
-    rgba(10, 18, 34, 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(240, 247, 255, 0.14),
-    0 16px 34px rgba(4, 9, 23, 0.34);
-}
-
 .hero-condition {
   margin-top: 8px;
   font-size: 22px;
@@ -410,65 +394,6 @@
 .hero-guidance-item--unavailable {
   border-color: rgba(148, 163, 184, 0.24);
 }
-
-.hero-daylight-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(198, 215, 242, 0.16);
-  background:
-    linear-gradient(135deg, rgba(139, 211, 255, 0.08), rgba(246, 196, 83, 0.08)),
-    rgba(8, 17, 36, 0.42);
-}
-
-.hero-daylight-item {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  padding: 8px 9px;
-  border-radius: calc(var(--radius-sm) - 2px);
-  background: rgba(11, 20, 38, 0.58);
-  border: 1px solid rgba(198, 215, 242, 0.12);
-  box-shadow: var(--subcard-shadow);
-}
-
-.hero-daylight-icon {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  color: #fde68a;
-  background: rgba(246, 196, 83, 0.12);
-}
-
-.hero-daylight-copy {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.hero-daylight-label {
-  color: rgba(211, 223, 248, 0.78);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: var(--track-default);
-  text-transform: uppercase;
-}
-
-.hero-daylight-value {
-  color: #f8fbff;
-  font-size: 13px;
-  font-weight: 760;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -561,11 +486,6 @@
   .hero-temp {
     font-size: clamp(76px, 10vw, 96px);
   }
-
-  .hero-icon {
-    width: clamp(98px, 14vw, 126px);
-  }
-
   .hero-condition {
     font-size: 20px;
   }
@@ -586,8 +506,7 @@
   }
 
   .hero-high-low {
-    width: 100%;
-    justify-content: space-between;
+    align-self: flex-start;
   }
 
   .hero-temp-row {
@@ -641,10 +560,6 @@
 }
 
 @media (max-width: 560px) {
-  .hero-icon {
-    width: 102px;
-  }
-
   /* 2×2 stat grid halves vertical height vs 4×1 stack */
   .hero-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -672,11 +587,6 @@
   .hero-temp {
     font-size: clamp(62px, 15vw, 74px);
   }
-
-  .hero-icon {
-    width: 88px;
-  }
-
   .hero-condition {
     font-size: 18px;
   }
@@ -751,13 +661,6 @@
   color: rgba(244, 241, 234, 0.72);
   font-weight: 400;
 }
-
-.hero-icon {
-  background:
-    radial-gradient(circle at 34% 30%, rgba(255, 235, 200, 0.24), rgba(244, 189, 111, 0.08) 60%, transparent 76%),
-    rgba(14, 18, 30, 0.42);
-}
-
 .hero-condition {
   font-weight: 500;
 }
@@ -792,29 +695,6 @@
 .hero-trust-dot {
   background: #7fd99a;
 }
-
-.hero-daylight-strip {
-  border: 1px solid rgba(255, 238, 214, 0.1);
-  background: rgba(255, 243, 225, 0.045);
-}
-
-.hero-daylight-item {
-  border: 1px solid rgba(255, 238, 214, 0.08);
-  background: rgba(255, 243, 225, 0.05);
-  box-shadow: none;
-}
-
-.hero-daylight-label {
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: rgba(244, 241, 234, 0.68);
-}
-
-.hero-daylight-value {
-  color: #f6f2ea;
-  font-weight: 500;
-}
-
 .hero-stats {
   border-top: 1px solid rgba(255, 238, 214, 0.12);
 }
@@ -847,7 +727,7 @@
  * let the soft glow halo that icon (lower-right, clear of the High/Low).
  * ------------------------------------------------------------------------- */
 .hero-sky-glow {
-  top: 96px;
+  top: 40px;
   right: 14px;
   width: 152px;
   height: 152px;
@@ -856,44 +736,6 @@
 .hero-sky-orb {
   display: none;
 }
-
-/* Daylight strip — one cohesive warm panel with hairline dividers instead of
-   three separate bordered boxes. */
-.hero-daylight-strip {
-  gap: 0;
-  padding: 2px;
-  border: 1px solid rgba(255, 238, 214, 0.1);
-  background: rgba(255, 243, 225, 0.05);
-}
-
-.hero-daylight-item {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 11px 13px;
-}
-
-.hero-daylight-item + .hero-daylight-item {
-  border-left: 1px solid rgba(255, 238, 214, 0.09);
-}
-
-.hero-daylight-icon {
-  width: 22px;
-  height: 22px;
-  background: transparent;
-  color: #f3c98a;
-}
-
-.hero-daylight-label {
-  color: rgba(244, 241, 234, 0.62);
-}
-
-.hero-daylight-value {
-  font-size: 14px;
-  color: #f8f4ec;
-}
-
 /* Feels-like: give the condition line room so "Feels like ___" sits clearly
    beside the condition rather than crowding it. */
 .hero-condition-line {

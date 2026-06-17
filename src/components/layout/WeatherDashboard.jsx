@@ -1,6 +1,5 @@
 import { lazy, memo, Suspense, useCallback, useState } from "react";
 import HeroCard from "../HeroCard";
-import ExposureSection from "../ExposureSection";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
@@ -88,7 +87,6 @@ function WeatherDashboard({
     fallbackDelay: 4200,
   });
 
-  const aqiStatus = trustMeta?.aqiStatus ?? "idle";
   const climateStatus = trustMeta?.climateStatus ?? "idle";
 
   // Append the active location to the first heading for assistive
@@ -140,21 +138,6 @@ function WeatherDashboard({
           isRefreshing={isBackgroundLoading}
           aqi={weather?.aqi}
           trustMeta={trustMeta}
-        />
-      </PanelErrorBoundary>
-
-      <PanelErrorBoundary
-        label="Environmental exposure"
-        className="bento-exposure"
-        style={CARD_STYLE_VARIABLES[1]}
-      >
-        <ExposureSection
-          aqi={weather?.aqi}
-          aqiStatus={aqiStatus}
-          uvIndex={weather?.daily?.uvIndexMax?.[0]}
-          alert={weather?.alerts?.[0]}
-          style={CARD_STYLE_VARIABLES[1]}
-          isRefreshing={isBackgroundLoading}
         />
       </PanelErrorBoundary>
 

@@ -6,6 +6,7 @@ import { formatWindSpeed, windDirectionName, classifyWind } from "../domain/wind
 import { classifyComfort } from "../domain";
 import { convertTemp } from "../utils/temperature";
 import { toFiniteNumber } from "../utils/numbers";
+import { useTimeNow } from "../hooks/useTimeNow";
 import "./AtmosphereBento.css";
 
 const ARC_PATH = "M8 50 A44 44 0 0 1 92 50";
@@ -219,6 +220,7 @@ function formatSunTime(d) {
 }
 
 function SunTile({ sunrise, sunset }) {
+  const nowMs = useTimeNow(60_000);
   const riseDate = sunrise ? new Date(sunrise) : null;
   const setDate = sunset ? new Date(sunset) : null;
   const hasDat =
@@ -227,8 +229,7 @@ function SunTile({ sunrise, sunset }) {
 
   let sunCx = 140, sunCy = 28;
   if (hasDat) {
-    const now = Date.now();
-    const t = Math.max(0, Math.min(1, (now - riseDate.getTime()) / (setDate.getTime() - riseDate.getTime())));
+    const t = Math.max(0, Math.min(1, (nowMs - riseDate.getTime()) / (setDate.getTime() - riseDate.getTime())));
     sunCx = (1 - t) * (1 - t) * 14 + 2 * (1 - t) * t * 140 + t * t * 266;
     sunCy = (1 - t) * (1 - t) * 58 + 2 * (1 - t) * t * (-8) + t * t * 58;
   }

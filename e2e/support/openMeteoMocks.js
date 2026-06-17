@@ -47,6 +47,12 @@ function buildWeatherPayload(latitude, longitude) {
   const hourlyWindGust = Array.from({ length: hourlySize }, (_, index) =>
     Number((12 + Math.sin(index / 9) * 6).toFixed(1))
   );
+  const hourlyWindSpeed = Array.from({ length: hourlySize }, (_, index) =>
+    Number((7 + Math.sin(index / 9) * 4).toFixed(1))
+  );
+  const hourlyWindDirection = Array.from({ length: hourlySize }, (_, index) =>
+    Math.round((180 + index * 6) % 360)
+  );
 
   const dailySize = 7;
   const dailyTime = Array.from({ length: dailySize }, (_, index) => {
@@ -107,7 +113,9 @@ function buildWeatherPayload(latitude, longitude) {
       precipitation: hourlyRainAmount,
       surface_pressure: hourlyPressure,
       cape: hourlyCape,
+      wind_speed_10m: hourlyWindSpeed,
       wind_gusts_10m: hourlyWindGust,
+      wind_direction_10m: hourlyWindDirection,
     },
     daily: {
       time: dailyTime,

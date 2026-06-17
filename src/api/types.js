@@ -23,7 +23,9 @@
  *   rainAmount: number[],
  *   pressure: number[],
  *   cape: number[],
- *   windGust: number[]
+ *   windSpeed: number[],
+ *   windGust: number[],
+ *   windDirection: number[]
  * }} WeatherHourly
  * @typedef {{
  *   time: string[],
@@ -88,7 +90,9 @@ export function createEmptyWeatherModel() {
       rainAmount: [],
       pressure: [],
       cape: [],
+      windSpeed: [],
       windGust: [],
+      windDirection: [],
     },
     daily: {
       time: [],

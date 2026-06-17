@@ -64,7 +64,9 @@ export function normalizeWeatherResponse(raw) {
       rainAmount: asArray(hourly.precipitation),
       pressure: asArray(hourly.surface_pressure),
       cape: asArray(hourly.cape),
+      windSpeed: asArray(hourly.wind_speed_10m),
       windGust: asArray(hourly.wind_gusts_10m),
+      windDirection: asArray(hourly.wind_direction_10m),
     },
     daily: {
       ...model.daily,

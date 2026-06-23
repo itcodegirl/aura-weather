@@ -457,11 +457,16 @@ test("expands a forecast day for richer detail", async ({ page }) => {
 
   await openDashboard(page);
 
+  // SupplementalWeatherPanels is deferred via useDeferredMount; wait for
+  // the "Week Ahead" heading so the ForecastCard has had a chance to mount
+  // before we check for the detail-trigger button.
+  await expect(page.getByRole("heading", { name: "Week Ahead" })).toBeVisible();
+
   const detailTrigger = page.getByRole("button", {
     name: /show forecast details for today/i,
   });
   if ((await detailTrigger.count()) === 0) {
-    await expect(page.getByText("7-day forecast is unavailable")).toBeVisible();
+    await expect(page.getByText("7-day outlook unavailable")).toBeVisible();
     return;
   }
   await detailTrigger.click();

@@ -5,6 +5,7 @@ import { useRadarFrames } from "../../hooks/useRadarFrames.js";
 import { useRadarAnimation } from "../../hooks/useRadarAnimation.js";
 import { useTimeNow } from "../../hooks/useTimeNow.js";
 import { RADAR_FRAME_KIND, RADAR_STATUS } from "../../api/rainviewer.js";
+import { parseCoordinates } from "../../utils/weatherUnits.js";
 import RadarMap from "./RadarMap.jsx";
 import RadarTimeline from "./RadarTimeline.jsx";
 import RadarLegend from "./RadarLegend.jsx";
@@ -40,9 +41,11 @@ function RadarPanel({ location, style, isRefreshing = false }) {
   const nowMs = useTimeNow();
 
   const center = useMemo(() => {
-    const lat = Number(location?.lat);
-    const lon = Number(location?.lon);
-    return Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : null;
+    // Route through the strict shared parser so a null/empty/invalid
+    // coordinate is rejected instead of coercing to (0, 0) Null Island —
+    // the radar's slice of the project-wide coordinate trust contract.
+    const coordinates = parseCoordinates(location?.lat, location?.lon);
+    return coordinates ? [coordinates.latitude, coordinates.longitude] : null;
   }, [location?.lat, location?.lon]);
 
   const boundaryIndex = useMemo(

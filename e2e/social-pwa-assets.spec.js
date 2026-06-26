@@ -80,7 +80,7 @@ test.describe("social and PWA manifest assets", () => {
 
     // Dismiss the location-onboarding banner so the card is the branded
     // header plus the full hero conditions, not setup copy.
-    const keepDefaultCity = page.getByRole("button", { name: "Keep Chicago for now" });
+    const keepDefaultCity = page.getByRole("button", { name: "Keep Palos Hills for now" });
     if (await keepDefaultCity.isVisible()) {
       await keepDefaultCity.click();
       await expect(keepDefaultCity).toHaveCount(0);

@@ -200,7 +200,7 @@ npm run test:lighthouse
 
 ## Demo Expectations
 
-- First load opens to a usable Chicago forecast immediately instead of stalling on a geolocation permission prompt.
+- First load opens to a usable Palos Hills, IL forecast immediately instead of stalling on a geolocation permission prompt.
 - Initial loading uses a lightweight dashboard skeleton and provider status copy rather than fake forecast values.
 - Browser location is opt-in. Users can keep the fallback city, search manually, or grant location access.
 - Device-location success upgrades to a friendly nearby place label when reverse geocoding succeeds.
@@ -399,7 +399,7 @@ bug, the contract, and the test pyramid.
 
 - **U.S.-only severe alerts.** NOAA / NWS coverage stops at the U.S. border; non-U.S. locations fall back to explanatory messaging instead of a false all-clear.
 - **Lightweight cloud sync.** The optional sync flow uses a public jsonblob.com store and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`. It is not encrypted at rest and is not a substitute for an account system.
-- **Geolocation falls back fast.** If the browser's geolocation prompt does not resolve in 5 seconds the app drops to the Chicago default rather than blocking the dashboard. Reverse geocoding is best-effort, so a successful GPS lookup can still fall back to a generic label if the naming request fails.
+- **Geolocation falls back fast.** If the browser's geolocation prompt does not resolve in 5 seconds the app drops to the Palos Hills, IL default rather than blocking the dashboard. Reverse geocoding is best-effort, so a successful GPS lookup can still fall back to a generic label if the naming request fails.
 - **Historical archive lag.** The Open-Meteo archive is updated daily and may not include the most recent week; on those days the climate-context panel shows "Climate context unavailable" instead of a stale comparison.
 - **Service worker is shell-only.** After one successful production visit, Aura can restore same-origin app-shell/build assets offline. Live weather providers remain network truth sources and still degrade through the saved-forecast banner.
 - **Lighthouse budget passes locally** against the deterministic `?mock=missing` app shell, but real-world performance varies with live provider latency. The CSS and JS footprint shrunk substantially during the audit (App.css 2,067 → ~500 lines), but image pre-caching and paint-cost tuning would still be useful next wins.

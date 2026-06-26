@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import {
   CURRENT_LOCATION_NAME,
   CURRENT_LOCATION_NOTICE,
+  DEFAULT_LOCATION,
   useLocation,
   persistLocation,
   clearPersistedLocation,
@@ -292,7 +293,7 @@ export function useWeather(options = {}) {
     setStartupLocation(null);
     setHasPersistedLocation(false);
     const removedSavedLocationNotice =
-      "Saved startup location removed. Aura will open to Chicago next time.";
+      `Saved startup location removed. Aura will open to ${DEFAULT_LOCATION.name} next time.`;
     setLocationNotice(removedSavedLocationNotice);
     locationNoticeRef.current = removedSavedLocationNotice;
   }, []);

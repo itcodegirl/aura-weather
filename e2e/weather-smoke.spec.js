@@ -21,10 +21,10 @@ test.beforeEach(async ({ page, context }) => {
 test("loads the dashboard with fallback location and core controls", async ({ page }) => {
   await openDashboard(page);
 
-  await expect(page.locator(".hero-location")).toContainText("Chicago, United States");
+  await expect(page.locator(".hero-location")).toContainText("Palos Hills, United States");
   await expect(
     page.getByText(
-      "Chicago is loaded as a useful starting point. Use your location for local conditions or search any city when you're ready."
+      "Palos Hills is loaded as a useful starting point. Use your location for local conditions or search any city when you're ready."
     )
   ).toBeVisible();
   await expect(
@@ -164,7 +164,7 @@ test("renders a cached forecast on cold start when the browser is offline", asyn
 
   await openDashboard(page);
 
-  await expect(page.locator(".hero-location")).toContainText("Chicago, United States");
+  await expect(page.locator(".hero-location")).toContainText("Palos Hills, United States");
   await expect(page.locator(".hero-temp")).toContainText("61");
   await expect(
     page.getByText(/Browser is offline\. Showing your most recent saved forecast from/)
@@ -383,7 +383,7 @@ test("removing the active saved city clears its startup persistence", async ({ p
   await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
   await page.getByRole("button", { name: "Remove Tokyo from saved cities" }).click();
   await expect(
-    page.getByText("Saved startup location removed. Aura will open to Chicago next time.")
+    page.getByText("Saved startup location removed. Aura will open to Palos Hills next time.")
   ).toBeVisible();
 
   const persistedLocation = await page.evaluate(() =>

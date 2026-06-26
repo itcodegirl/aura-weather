@@ -177,6 +177,7 @@ function HeroCard({
     hasClimateComparison,
     climateMessage,
     characteristicChips,
+    dailyGuidance,
     today,
     tempUnit,
   } = heroData;
@@ -321,6 +322,39 @@ function HeroCard({
           )}
         </div>
       </div>
+
+      {/*
+       * Daily planning guidance — the hero's answer to "what does today
+       * need from me?". buildHeroData already filters out "calm" tones,
+       * so this row only appears when rain, UV, or wind warrants a
+       * decision (notice/watch) or a reading is missing (unavailable).
+       * On a genuinely mild day it renders nothing rather than narrate a
+       * non-event, matching the atmosphere-reading philosophy above.
+       */}
+      {Array.isArray(dailyGuidance) && dailyGuidance.length > 0 && (
+        <ul className="hero-guidance" aria-label="Today's planning guidance">
+          {dailyGuidance.map((item) => {
+            const GuidanceIcon = GUIDANCE_ICONS[item.kind] ?? Sun;
+            return (
+              <li
+                key={item.kind}
+                className={`hero-guidance-item hero-guidance-item--${item.tone}`}
+              >
+                <span className="hero-guidance-icon" aria-hidden="true">
+                  <GuidanceIcon size={16} />
+                </span>
+                <div className="hero-guidance-copy">
+                  <span className="hero-guidance-label">{item.label}</span>
+                  <span className="hero-guidance-value">{item.value}</span>
+                  {item.detail && (
+                    <span className="hero-guidance-detail">{item.detail}</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <div className="hero-bottom">
         <div className="hero-bottom-left">

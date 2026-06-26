@@ -96,6 +96,78 @@ describe("HeroCard with missing readings", () => {
 
 });
 
+describe("HeroCard daily planning guidance", () => {
+  test("surfaces the actionable rain/UV/wind guidance the hero computes", () => {
+    const weather = buildWeather({
+      current: { windSpeed: 22, windGust: 34 },
+      daily: { rainChanceMax: [68], rainAmountTotal: [0.18], uvIndexMax: [8.4] },
+    });
+
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather,
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    const guidance = container.querySelector(".hero-guidance");
+    assert.ok(guidance, "guidance grid renders when conditions warrant a decision");
+    assert.equal(
+      guidance.getAttribute("aria-label"),
+      "Today's planning guidance"
+    );
+    const text = guidance.textContent || "";
+    assert.ok(text.includes("Bring rain gear"), "surfaces rain-gear guidance");
+    assert.ok(text.includes("Very high exposure"), "surfaces UV guidance");
+    assert.ok(text.includes("Gusty conditions"), "surfaces wind guidance");
+  });
+
+  test("renders no guidance grid on a calm day so it never narrates a non-event", () => {
+    const weather = buildWeather({
+      current: { windSpeed: 4, windGust: 6 },
+      daily: { rainChanceMax: [3], rainAmountTotal: [0], uvIndexMax: [1.2] },
+    });
+
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather,
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    assert.equal(
+      container.querySelector(".hero-guidance"),
+      null,
+      "calm-only guidance is filtered out before render"
+    );
+  });
+
+  test("labels guidance unavailable instead of inventing a reading", () => {
+    const weather = buildWeather({
+      current: { windSpeed: null, windGust: null },
+      daily: { rainChanceMax: [null], rainAmountTotal: [null], uvIndexMax: [null] },
+    });
+
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather,
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    const guidance = container.querySelector(".hero-guidance");
+    assert.ok(guidance, "missing guidance is shown honestly, not hidden");
+    assert.ok(
+      container.querySelector(".hero-guidance-item--unavailable"),
+      "uses the unavailable tone modifier for missing readings"
+    );
+    assert.ok((guidance.textContent || "").includes("unavailable"));
+  });
+});
+
 describe("HeroCard accessibility scaffolding", () => {
   test("emits a visually-hidden h3 that names the section by location", () => {
     const { container } = render(

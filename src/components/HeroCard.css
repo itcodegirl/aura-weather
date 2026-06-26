@@ -314,6 +314,17 @@
   background: var(--glacier);
 }
 
+/* Honest confidence states. "live" keeps the default (green dot); a
+   restored cache or a stale reading shifts the dot so the downgrade is
+   legible at a glance, matching the GlobalUpdateIndicator vocabulary. */
+.hero-trust-pill--saved .hero-trust-dot {
+  background: #9ab6e0;
+}
+
+.hero-trust-pill--stale .hero-trust-dot {
+  background: #f3c98a;
+}
+
 /* Keep guidance items for the daily guidance that still shows on
    notice/watch conditions (rain-gear alerts etc.) */
 .hero-guidance {

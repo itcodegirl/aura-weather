@@ -10,6 +10,11 @@ const NC_SVG_H = 150;
 const NC_TOP_PAD = 20;
 const NC_BOT_PAD = 24;
 const NC_DOMAIN = 100; // full 0-100% range so high-rain windows slope instead of pegging flat at the cap
+// The "Rain likely" reference line. 50% is the app-wide "likely" cutoff —
+// RainCard and HourlyCard both draw their likely threshold at 50% — so the
+// same word means the same probability everywhere. (Previously 40%, which
+// disagreed with the rest of the dashboard.)
+const NC_LIKELY_THRESHOLD = 50;
 
 function buildNowcastChartGeometry(points) {
   const n = points.length;
@@ -26,7 +31,7 @@ function buildNowcastChartGeometry(points) {
   core += ` L${xs[n - 1].toFixed(1)},${ys[n - 1].toFixed(1)}`;
   const strokeD = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}${core}`;
   const fillD = `${strokeD} L${NC_SVG_W},${NC_SVG_H} L0,${NC_SVG_H} Z`;
-  const thresholdY = NC_TOP_PAD + (1 - 40 / NC_DOMAIN) * span;
+  const thresholdY = NC_TOP_PAD + (1 - NC_LIKELY_THRESHOLD / NC_DOMAIN) * span;
   const peakIdx = points.indexOf(Math.max(...points));
   return { strokeD, fillD, thresholdY, xs, ys, peakIdx };
 }

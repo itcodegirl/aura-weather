@@ -41,7 +41,7 @@ test("loads the dashboard with fallback location and core controls", async ({ pa
 
   await expect(page.getByRole("heading", { name: "Current Conditions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Near-Term Outlook" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Risk Signals" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Atmospheric Conditions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Week Ahead" })).toBeVisible();
 });
 
@@ -576,7 +576,7 @@ test("does not leak literal unicode escape sequences into rendered text", async 
 
   // Wait until supplemental panels (which include the hourly chart axis
   // and AQI/UV cards) have mounted past the deferred-render gate.
-  await expect(page.getByRole("heading", { name: "Risk Signals" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Atmospheric Conditions" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Week Ahead" })).toBeVisible();
 
   const documentText = await page.evaluate(() => document.body.innerText);

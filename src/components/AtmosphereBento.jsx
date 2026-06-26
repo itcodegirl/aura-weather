@@ -1,6 +1,6 @@
 // src/components/AtmosphereBento.jsx
 import { memo, useId } from "react";
-import { Wind, Droplets, Sun, Eye, Moon, Gauge, Thermometer } from "lucide-react";
+import { Wind, Droplets, Sun, Eye, Gauge, Thermometer } from "lucide-react";
 import { getAqiStatus, getUvStatus } from "../domain/exposure";
 import { formatWindSpeed, windDirectionName, classifyWind } from "../domain/wind";
 import { classifyComfort } from "../domain";
@@ -362,26 +362,6 @@ function VisibilityTile({ visibility, unit }) {
   );
 }
 
-function MoonTile() {
-  return (
-    <div className="atm-tile atm-tile--missing atm-tile--center">
-      <div className="atm-label">
-        <Moon size={13} aria-hidden="true" />
-        Moon
-      </div>
-      <svg
-        viewBox="0 0 60 60"
-        className="atm-moon-svg"
-        role="img"
-        aria-label="Moon phase not in forecast"
-      >
-        <circle cx="30" cy="30" r="20" fill="rgba(255,255,255,.07)" stroke="rgba(255,255,255,.18)" strokeWidth="1.2" />
-      </svg>
-      <div className="atm-sub atm-sub--moon">Not in forecast</div>
-    </div>
-  );
-}
-
 function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false }) {
   const titleId = useId();
   return (
@@ -411,7 +391,6 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
         />
         <DewPointTile dewPoint={weather?.current?.dewPoint} unit={unit} />
         <VisibilityTile visibility={weather?.current?.visibility} unit={unit} />
-        <MoonTile />
       </div>
     </section>
   );

@@ -8,8 +8,9 @@ import {
   Sun,
   Leaf,
 } from "lucide-react";
-import { isMissingPlaceholder } from "../utils/numbers";
+import { isMissingPlaceholder, toFiniteNumber } from "../utils/numbers";
 import { formatDisplayCountry } from "../utils/locationDisplay";
+import { getAgeMinutes } from "../utils/dataTrust";
 import { useTimeNow } from "../hooks/useTimeNow";
 import { buildHeroData } from "./heroCard/buildHeroData";
 import "./HeroCard.css";
@@ -18,6 +19,11 @@ import "./HeroCard.css";
 // A 5-minute bucket keeps the hero useMemo stable for most ticks
 // while still rolling over at midnight and around sunrise/sunset.
 const HERO_NOW_BUCKET_MS = 5 * 60_000;
+
+// Matches GlobalUpdateIndicator's threshold so the hero's confidence
+// wording and the global freshness pill agree on when a reading has
+// gone stale.
+const HERO_STALE_AFTER_MINUTES = 25;
 
 const GUIDANCE_ICONS = {
   rain: Droplets,
@@ -182,7 +188,33 @@ function HeroCard({
     tempUnit,
   } = heroData;
 
-  const ageLabel = formatAge(trustMeta?.weatherFetchedAt, nowMs);
+  // Freshness + confidence for the hero trust pill. The pill used to
+  // assert "High confidence" unconditionally — even on a forecast
+  // restored from cache or one well past the stale threshold — which
+  // is the one place the dashboard overstated its own certainty. Mirror
+  // GlobalUpdateIndicator's classification so the wording is honest: a
+  // restored cache reads "Saved forecast", a reading past the stale
+  // window reads "Confidence fading", and only genuinely fresh live
+  // data reads "High confidence".
+  const cacheStatus = trustMeta?.cacheStatus ?? "idle";
+  const isCachedForecast = cacheStatus === "restored";
+  const freshnessAt = isCachedForecast
+    ? toFiniteNumber(trustMeta?.cacheCapturedAt) ?? trustMeta?.weatherFetchedAt
+    : trustMeta?.weatherFetchedAt;
+  const ageLabel = formatAge(freshnessAt, nowMs);
+  const ageMinutes = getAgeMinutes(freshnessAt, nowMs);
+  const isStaleReading =
+    Number.isFinite(ageMinutes) && ageMinutes >= HERO_STALE_AFTER_MINUTES;
+  const trustState = isCachedForecast
+    ? "saved"
+    : isStaleReading
+      ? "stale"
+      : "live";
+  const trustLabel = isCachedForecast
+    ? "Saved forecast"
+    : isStaleReading
+      ? "Confidence fading"
+      : "High confidence";
 
   // Climate-context loading and unavailable states used to render a
   // placeholder sentence between the temperature and the bottom block,
@@ -372,9 +404,13 @@ function HeroCard({
             </ul>
           )}
           {ageLabel && (
-            <div className="hero-trust-pill" role="status" aria-live="polite">
+            <div
+              className={`hero-trust-pill hero-trust-pill--${trustState}`}
+              role="status"
+              aria-live="polite"
+            >
               <span className="hero-trust-dot" aria-hidden="true" />
-              High confidence · {ageLabel}
+              {trustLabel} · {ageLabel}
             </div>
           )}
         </div>

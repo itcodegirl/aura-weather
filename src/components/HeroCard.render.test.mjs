@@ -168,6 +168,66 @@ describe("HeroCard daily planning guidance", () => {
   });
 });
 
+describe("HeroCard trust pill confidence", () => {
+  const MINUTE = 60_000;
+
+  test("reads 'High confidence' only for a fresh live reading", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() - 2 * MINUTE },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill, "trust pill renders when a fetch timestamp exists");
+    assert.ok(pill.classList.contains("hero-trust-pill--live"));
+    assert.match(pill.textContent, /High confidence/);
+  });
+
+  test("does not claim 'High confidence' for a forecast restored from cache", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: {
+          cacheStatus: "restored",
+          cacheCapturedAt: Date.now() - 90 * MINUTE,
+          weatherFetchedAt: null,
+        },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill.classList.contains("hero-trust-pill--saved"));
+    assert.match(pill.textContent, /Saved forecast/);
+    assert.doesNotMatch(
+      pill.textContent,
+      /High confidence/,
+      "cached data must not assert high confidence"
+    );
+  });
+
+  test("downgrades to 'Confidence fading' once a live reading goes stale", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() - 40 * MINUTE },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill.classList.contains("hero-trust-pill--stale"));
+    assert.match(pill.textContent, /Confidence fading/);
+    assert.doesNotMatch(pill.textContent, /High confidence/);
+  });
+});
+
 describe("HeroCard accessibility scaffolding", () => {
   test("emits a visually-hidden h3 that names the section by location", () => {
     const { container } = render(

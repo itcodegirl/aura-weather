@@ -100,7 +100,7 @@ async function bootstrapMissingMockState(page, context, viewport) {
   // fully-laid-out page rather than a transient mid-mount state where
   // page height changes as panels appear.
   await expect(
-    page.getByRole("heading", { name: "Risk Signals" })
+    page.getByRole("heading", { name: "Atmospheric Conditions" })
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Week Ahead" })

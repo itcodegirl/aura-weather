@@ -25,7 +25,7 @@ CI runs the same gate serially for Playwright with
       yours" with a "Welcome" kicker, value-preview copy, and three
       CTAs (Use my location · Search a city · Keep showing Chicago)
 - [ ] Bento groups render in order: Current Conditions → Near-Term
-      Outlook → Risk Signals → Week Ahead
+      Outlook → Atmospheric Conditions → Week Ahead
 
 ## Search
 

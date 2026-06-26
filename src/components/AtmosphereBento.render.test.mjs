@@ -74,20 +74,30 @@ describe("AtmosphereBento", () => {
       })
     );
     const missing = container.querySelectorAll(".atm-tile--missing");
-    assert.ok(missing.length >= 1, "at least one missing tile (AQI + Moon)");
+    assert.ok(missing.length >= 1, "AQI tile renders as a missing tile when aqi is null");
   });
 
-  test("Moon tile is always rendered as missing", () => {
-    render(
+  test("does not render a permanently-empty placeholder tile", () => {
+    // The Moon tile used to render a structurally-always-empty
+    // "Not in forecast" slot — the one place the dashboard showed a
+    // gap for data it never has. With full weather + AQI present,
+    // nothing should report itself as missing.
+    const { container } = render(
       React.createElement(AtmosphereBento, {
         weather: FULL_WEATHER,
         aqi: 42,
         unit: "F",
       })
     );
-    assert.ok(
-      screen.getByText("Not in forecast"),
-      "Moon tile shows 'Not in forecast'"
+    assert.equal(
+      screen.queryByText("Not in forecast"),
+      null,
+      "no 'Not in forecast' placeholder tile remains"
+    );
+    assert.equal(
+      container.querySelectorAll(".atm-tile--missing").length,
+      0,
+      "every rendered tile carries real data when the provider supplies it"
     );
   });
 

@@ -367,7 +367,7 @@ function CitySearch({ onSelect, savedCities, recentCities }, ref) {
               aria-live="polite"
               aria-atomic="true"
             >
-              Recent and saved places will show up here after you switch cities.
+              Recent and saved places will appear here as you switch between cities.
             </div>
           )}
         </div>

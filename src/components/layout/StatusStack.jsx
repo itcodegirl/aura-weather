@@ -121,11 +121,11 @@ function StatusStack({
       {showSetupPrompts && showPermissionOnboarding && (
         <section className="permission-onboarding" aria-label="Location onboarding">
           <p className="permission-onboarding-kicker">First-time setup</p>
-          <h2 className="permission-onboarding-title">Start with Chicago, switch anytime</h2>
+          <h2 className="permission-onboarding-title">Start with Palos Hills, switch anytime</h2>
           <p className="permission-onboarding-copy">
             {isGeolocationSupported
-              ? "Chicago is loaded as a useful starting point. Use your location for local conditions or search any city when you're ready."
-              : "Chicago is loaded as a useful starting point. Browser location is unavailable here, so search any city when you're ready."}
+              ? "Palos Hills is loaded as a useful starting point. Use your location for local conditions or search any city when you're ready."
+              : "Palos Hills is loaded as a useful starting point. Browser location is unavailable here, so search any city when you're ready."}
           </p>
           <div className="permission-onboarding-actions">
             {isGeolocationSupported ? (
@@ -152,7 +152,7 @@ function StatusStack({
               className="location-setup-btn"
               onClick={onDismissPermissionOnboarding}
             >
-              Keep Chicago for now
+              Keep Palos Hills for now
             </button>
           </div>
         </section>

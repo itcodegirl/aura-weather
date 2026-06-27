@@ -86,3 +86,47 @@ export function usePanelPreload(loaders, options = {}) {
     };
   }, [loaders, enabled, idleTimeout, fallbackDelay]);
 }
+
+/**
+ * Asks the browser to mark this origin's storage as persistent so the
+ * saved location, saved cities, and last-known forecast survive eviction.
+ *
+ * iOS Safari (and Chrome under storage pressure) routinely evict a site's
+ * localStorage — for an installed home-screen PWA that can wipe the user's
+ * chosen location between visits, which reads as "it forgot where I am
+ * every time." `navigator.storage.persist()` requests an exemption. It is
+ * best-effort: the browser may grant it silently (common for installed
+ * PWAs / engaged sites) or decline, and either way the app keeps working.
+ * We only ask when not already persisted, and never throw on unsupported
+ * engines.
+ */
+export function usePersistentStorage() {
+  useEffect(() => {
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.storage ||
+      typeof navigator.storage.persist !== "function" ||
+      typeof navigator.storage.persisted !== "function"
+    ) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    Promise.resolve(navigator.storage.persisted())
+      .then((alreadyPersistent) => {
+        if (cancelled || alreadyPersistent) {
+          return undefined;
+        }
+        return navigator.storage.persist();
+      })
+      .catch(() => {
+        // Storage manager can reject in restricted contexts; durable
+        // storage is an enhancement, so a failure is non-fatal.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+}

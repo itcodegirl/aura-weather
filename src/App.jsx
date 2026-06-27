@@ -8,6 +8,7 @@ import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { useThemeColor } from "./hooks/useThemeColor";
 import { useUrlLocationSync } from "./hooks/useUrlLocationSync";
 import { useWeatherDashboardViewModel } from "./hooks/useWeatherDashboardViewModel";
+import { usePersistentStorage } from "./hooks/useAppShellEffects";
 import {
   AppShell,
   AppLoadingState,
@@ -100,6 +101,10 @@ function App() {
   useThemeColor(weatherInfo?.gradient);
   useUrlLocationSync(location);
   useDocumentTitle(location);
+  // Best-effort: ask the browser to keep our storage (saved location +
+  // cities) durable so an installed PWA reopens where the user left off
+  // instead of being evicted back to the default location.
+  usePersistentStorage();
 
   useEffect(() => {
     if (!isFallbackLocation && showPermissionOnboarding) {

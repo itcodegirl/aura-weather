@@ -3,15 +3,15 @@ import { reverseGeocode } from "../api/index.js";
 import { parseCoordinates } from "../utils/weatherUnits.js";
 
 export const DEFAULT_LOCATION = {
-  lat: 41.8781,
-  lon: -87.6298,
-  name: "Chicago",
+  lat: 41.6967,
+  lon: -87.817,
+  name: "Palos Hills",
   country: "United States",
 };
 export const LOCATION_FALLBACK_NOTICE =
-  "Showing Chicago until you choose a location";
+  "Showing Palos Hills until you choose a location";
 export const LOCATION_PERMISSION_BLOCKED_NOTICE =
-  "Location access is blocked for this site. Showing Chicago - search for a city, or allow location in your browser settings.";
+  "Location access is blocked for this site. Showing Palos Hills - search for a city, or allow location in your browser settings.";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 export const LOCATION_UNSUPPORTED_NOTICE =
   "Location access is unavailable in this browser. Search for a city instead.";

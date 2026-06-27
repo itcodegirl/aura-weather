@@ -349,3 +349,56 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(staleWhileRevalidate(request));
   }
 });
+
+// Rain push alerts: render the payload sent by the check-rain-alerts Edge
+// Function. Falls back to plain text if the payload isn't JSON.
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = { title: "Aura Weather", body: event.data ? event.data.text() : "" };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "Aura Weather", {
+      body: payload.body || "",
+      tag: payload.tag || "aura-alert",
+      icon: "/apple-touch-icon.png",
+      badge: "/favicon.svg",
+      data: { url: payload.url || "/" },
+    })
+  );
+});
+
+// Tapping a notification focuses an open Aura tab (deep-linking to the alert's
+// location) or opens a new one.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of allClients) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client && targetUrl) {
+            try {
+              await client.navigate(targetUrl);
+            } catch {
+              // Same-origin navigation can still fail (e.g. bfcache); ignore.
+            }
+          }
+          return;
+        }
+      }
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(targetUrl);
+      }
+    })()
+  );
+});

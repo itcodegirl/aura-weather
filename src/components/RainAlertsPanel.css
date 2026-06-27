@@ -1,0 +1,154 @@
+.bento-alerts-card.rain-alerts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 18px;
+}
+
+.rain-alerts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rain-alerts-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.rain-alerts-status {
+  font-size: 12.5px;
+  color: rgba(238, 241, 248, 0.66);
+}
+
+.rain-alerts-types {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rain-alerts-type {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.rain-alerts-type-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #9cc6f5;
+}
+
+.rain-alerts-type-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rain-alerts-type-label {
+  font-size: 14px;
+  color: #eef1f8;
+}
+
+.rain-alerts-type-detail {
+  font-size: 12px;
+  color: rgba(238, 241, 248, 0.6);
+}
+
+.rain-alerts-toggle {
+  flex-shrink: 0;
+  min-width: 52px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(224, 237, 255, 0.82);
+  border: 1px solid rgba(181, 210, 252, 0.22);
+  background: rgba(7, 16, 35, 0.4);
+  cursor: pointer;
+  transition:
+    color var(--motion-fast, 0.15s) ease,
+    background var(--motion-fast, 0.15s) ease,
+    border-color var(--motion-fast, 0.15s) ease;
+}
+
+.rain-alerts-toggle.is-on {
+  color: #06210f;
+  background: #7fd99a;
+  border-color: #7fd99a;
+}
+
+.rain-alerts-toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rain-alerts-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rain-alerts-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #eef1f8;
+  border: 1px solid rgba(181, 210, 252, 0.24);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.rain-alerts-btn--primary {
+  color: #06210f;
+  background: #7fd99a;
+  border-color: #7fd99a;
+}
+
+.rain-alerts-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rain-alerts-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(238, 241, 248, 0.7);
+}
+
+.rain-alerts-note--ok {
+  color: #9be3b1;
+}
+
+.rain-alerts-note--error {
+  color: #fda4af;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rain-alerts-toggle {
+    transition: none;
+  }
+}

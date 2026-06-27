@@ -1,6 +1,7 @@
 import { lazy, memo, Suspense, useCallback, useState } from "react";
 import HeroCard from "../HeroCard";
 import AlertsCard from "../AlertsCard";
+import RainAlertsPanel from "../RainAlertsPanel";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
@@ -254,6 +255,10 @@ function WeatherDashboard({
           isRefreshing={isBackgroundLoading}
         />
       )}
+      <PanelErrorBoundary label="Rain alerts" className="bento-alerts-card">
+        <RainAlertsPanel location={location} />
+      </PanelErrorBoundary>
+
       <details
         className="data-status-disclosure"
         onToggle={handleSourceHealthToggle}

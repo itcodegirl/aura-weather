@@ -17,6 +17,11 @@ blob-report
 lhci-reports
 .lighthouseci
 
+# Local environment files (use .env.example as the template).
+.env
+.env.local
+.env.*.local
+
 # docs/screenshots/*.png are committed: the README embeds them
 # directly, so ignoring them rendered broken images on GitHub.
 # Regenerate deterministically with `npm run screenshots`.

@@ -21,6 +21,7 @@ function SupplementalWeatherPanels({
       <h2
         id="group-nowcast"
         className="bento-group-label"
+        data-tier="act-now"
         style={groupLabelStyleVariables[3]}
       >
         Nowcast
@@ -41,6 +42,7 @@ function SupplementalWeatherPanels({
       <h2
         id="group-atmosphere"
         className="bento-group-label"
+        data-tier="ambient"
         style={groupLabelStyleVariables[4]}
       >
         Atmospheric Conditions
@@ -73,6 +75,7 @@ function SupplementalWeatherPanels({
       <h2
         id="group-rain-outlook"
         className="bento-group-label"
+        data-tier="act-now"
         style={groupLabelStyleVariables[5]}
       >
         Precipitation Outlook

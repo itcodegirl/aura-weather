@@ -94,17 +94,17 @@ test("renders a cached forecast on cold start when the browser is offline", asyn
       JSON.stringify({
         version: 1,
         snapshots: {
-          "41.8781,-87.6298": {
+          "41.6967,-87.8170": {
             version: 1,
             cachedAt: cachedAtValue,
             coordinates: {
-              latitude: 41.8781,
-              longitude: -87.6298,
+              latitude: 41.6967,
+              longitude: -87.817,
             },
             weather: {
               meta: {
-                latitude: 41.8781,
-                longitude: -87.6298,
+                latitude: 41.6967,
+                longitude: -87.817,
                 timezone: "America/Chicago",
               },
               current: {

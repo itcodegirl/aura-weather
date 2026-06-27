@@ -65,6 +65,38 @@
   white-space: nowrap;
 }
 
+/* ── Decision hierarchy (audit #4) ──────────────────────────────────
+ * The dashboard used to read at one flat weight. Tier the section
+ * headers so the rain decisions a user reaches for stand out, and the
+ * ambient instrument panel recedes — without reordering or resizing
+ * cards (which would tangle with the deferred-mount + animation order). */
+
+/* Act-now: imminent-rain sections get a warm, brighter header. */
+.bento-group-label[data-tier="act-now"] {
+  color: #fbeede;
+}
+
+.bento-group-label[data-tier="act-now"]::before {
+  height: 16px;
+  background: #f3b765;
+  box-shadow: 0 0 10px rgba(243, 183, 101, 0.6);
+}
+
+/* Ambient: the atmosphere panel is reference, not a decision — quiet its
+   header so it doesn't compete with the act-now sections. */
+.bento-group-label[data-tier="ambient"] {
+  color: rgba(230, 238, 250, 0.5);
+}
+
+.bento-group-label[data-tier="ambient"]::before {
+  background: rgba(190, 207, 232, 0.3);
+  box-shadow: none;
+}
+
+.bento-group-label[data-tier="ambient"]::after {
+  opacity: 0.5;
+}
+
 .bento > section {
   position: relative;
   min-width: 0;

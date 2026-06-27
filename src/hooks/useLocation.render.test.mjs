@@ -8,6 +8,7 @@ const { render, cleanup, act, waitFor } = await import("@testing-library/react")
 const {
   CURRENT_LOCATION_NAME,
   CURRENT_LOCATION_NOTICE,
+  CURRENT_LOCATION_UNNAMED_NOTICE,
   useLocation,
 } = await import("./useLocation.js");
 
@@ -38,9 +39,10 @@ afterEach(() => {
 });
 
 describe("useLocation", () => {
-  test("labels GPS coordinates as device location instead of a fallback city", async () => {
-    // Reverse-geocode enrichment is best-effort; stub it out so this
-    // test only exercises the immediate-resolve contract.
+  test("surfaces an honest hint when reverse geocoding can't name the GPS fix", async () => {
+    // reverseGeocode resolves to null on failure (network / no usable name),
+    // so the label stays the generic device-location one — and the notice
+    // should say *why* it's generic rather than look like a real lookup.
     globalThis.fetch = async () => {
       throw new Error("reverse geocode disabled in test");
     };
@@ -76,9 +78,20 @@ describe("useLocation", () => {
       locationApi.loadCurrentLocation();
     });
 
+    // The immediate GPS resolve uses the plain device-location notice...
     await waitFor(() => {
-      const latest = resolvedLocations.at(-1);
-      assert.equal(latest?.[2], CURRENT_LOCATION_NAME);
+      assert.ok(
+        resolvedLocations.some((entry) => entry[4] === CURRENT_LOCATION_NOTICE),
+        "the immediate device-location notice is emitted first"
+      );
+    });
+
+    // ...and once naming fails, the latest notice becomes the honest hint.
+    await waitFor(() => {
+      assert.equal(
+        resolvedLocations.at(-1)?.[4],
+        CURRENT_LOCATION_UNNAMED_NOTICE
+      );
     });
 
     const latest = resolvedLocations.at(-1);
@@ -86,7 +99,7 @@ describe("useLocation", () => {
     assert.equal(latest[1], -88.5678);
     assert.equal(latest[2], CURRENT_LOCATION_NAME);
     assert.equal(latest[3], "");
-    assert.equal(latest[4], CURRENT_LOCATION_NOTICE);
+    assert.equal(latest[4], CURRENT_LOCATION_UNNAMED_NOTICE);
   });
 
   test("upgrades the GPS label to a real place name once reverse geocoding resolves", async () => {

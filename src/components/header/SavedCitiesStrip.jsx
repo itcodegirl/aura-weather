@@ -216,7 +216,12 @@ function SavedCitiesStrip({
                   </>
                 )}
                 {isStartup ? (
-                  <span className="saved-city-startup-badge">Startup</span>
+                  <span
+                    className="saved-city-startup-badge"
+                    title="Opens when Aura starts"
+                  >
+                    Startup
+                  </span>
                 ) : (
                   <button
                     type="button"
@@ -225,7 +230,7 @@ function SavedCitiesStrip({
                     aria-label={`Make ${city.name} your startup city`}
                     title={`Make ${city.name} your startup city`}
                   >
-                    Start
+                    Set startup
                   </button>
                 )}
                 <button

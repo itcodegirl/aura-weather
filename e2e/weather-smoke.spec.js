@@ -281,15 +281,15 @@ test("keeps startup city explicit when switching between saved cities", async ({
     has: page.getByRole("button", { name: "London", exact: true }),
   });
 
-  await expect(tokyoChip.getByText("Startup")).toBeVisible();
+  await expect(tokyoChip.locator(".saved-city-startup-badge")).toBeVisible();
   await page.getByRole("button", { name: "London", exact: true }).click();
   await expect(page.locator(".hero-location")).toContainText("London, United Kingdom");
-  await expect(tokyoChip.getByText("Startup")).toBeVisible();
+  await expect(tokyoChip.locator(".saved-city-startup-badge")).toBeVisible();
 
   await londonChip.getByRole("button", { name: "Make London your startup city" }).click();
   await expect(page.getByText("London is now your startup city.")).toBeVisible();
-  await expect(londonChip.getByText("Startup")).toBeVisible();
-  await expect(tokyoChip.getByText("Startup")).toHaveCount(0);
+  await expect(londonChip.locator(".saved-city-startup-badge")).toBeVisible();
+  await expect(tokyoChip.locator(".saved-city-startup-badge")).toHaveCount(0);
 });
 
 test("shows a searching state before empty search results resolve", async ({ page }) => {

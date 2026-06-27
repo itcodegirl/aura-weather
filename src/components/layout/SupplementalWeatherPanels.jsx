@@ -5,6 +5,9 @@ import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { StormWatchPanel, AtmospherePanel, RainPanel } from "../lazyPanels";
 
+// Tier order (audit #4): the rain decisions a user reaches for come first
+// (act-now), then the planning panels, and the ambient instrument panel
+// (Atmosphere) sits last so it recedes instead of competing.
 function SupplementalWeatherPanels({
   weather,
   unit,
@@ -37,39 +40,6 @@ function SupplementalWeatherPanels({
           style={cardStyleVariables[3]}
           isRefreshing={isBackgroundLoading}
         />
-      </PanelErrorBoundary>
-
-      <h2
-        id="group-atmosphere"
-        className="bento-group-label"
-        data-tier="ambient"
-        style={groupLabelStyleVariables[4]}
-      >
-        Atmospheric Conditions
-      </h2>
-      <PanelErrorBoundary
-        label="Atmosphere"
-        className="bento-atm"
-        style={cardStyleVariables[8]}
-      >
-        <Suspense
-          fallback={(
-            <CardFallback
-              className="bento-atm"
-              style={cardStyleVariables[8]}
-              title="Loading atmosphere..."
-              isRefreshing={isBackgroundLoading}
-            />
-          )}
-        >
-          <AtmospherePanel
-            weather={weather}
-            aqi={weather?.aqi}
-            unit={unit}
-            style={cardStyleVariables[8]}
-            isRefreshing={isBackgroundLoading}
-          />
-        </Suspense>
       </PanelErrorBoundary>
 
       <h2
@@ -155,6 +125,40 @@ function SupplementalWeatherPanels({
           style={cardStyleVariables[7]}
           isRefreshing={isBackgroundLoading}
         />
+      </PanelErrorBoundary>
+
+      {/* Ambient tier — last, so the instrument panel recedes. */}
+      <h2
+        id="group-atmosphere"
+        className="bento-group-label"
+        data-tier="ambient"
+        style={groupLabelStyleVariables[4]}
+      >
+        Atmospheric Conditions
+      </h2>
+      <PanelErrorBoundary
+        label="Atmosphere"
+        className="bento-atm"
+        style={cardStyleVariables[8]}
+      >
+        <Suspense
+          fallback={(
+            <CardFallback
+              className="bento-atm"
+              style={cardStyleVariables[8]}
+              title="Loading atmosphere..."
+              isRefreshing={isBackgroundLoading}
+            />
+          )}
+        >
+          <AtmospherePanel
+            weather={weather}
+            aqi={weather?.aqi}
+            unit={unit}
+            style={cardStyleVariables[8]}
+            isRefreshing={isBackgroundLoading}
+          />
+        </Suspense>
       </PanelErrorBoundary>
     </>
   );

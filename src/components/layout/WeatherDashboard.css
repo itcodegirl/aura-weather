@@ -97,6 +97,15 @@
   opacity: 0.5;
 }
 
+/* Reweight the act-now rain cards: a subtle warm ring lifts them above the
+   plan-today / ambient panels. Outline follows the card's radius and adds no
+   layout shift, leaving the glass background + shadow intact. */
+.bento-nowcast,
+.bento-rain {
+  outline: 1.5px solid rgba(243, 183, 101, 0.3);
+  outline-offset: -1.5px;
+}
+
 .bento > section {
   position: relative;
   min-width: 0;

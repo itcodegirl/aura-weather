@@ -17,6 +17,11 @@ export const LOCATION_UNSUPPORTED_NOTICE =
   "Location access is unavailable in this browser. Search for a city instead.";
 export const CURRENT_LOCATION_NAME = "Current location";
 export const CURRENT_LOCATION_NOTICE = "Showing your device location";
+// Shown when GPS resolved but reverse-geocoding couldn't name the place, so
+// the generic "Current location" label is honest about why it's generic
+// instead of silently looking like a real place lookup.
+export const CURRENT_LOCATION_UNNAMED_NOTICE =
+  "Showing your device location - couldn't look up the place name";
 const LAST_LOCATION_KEY = "aura-weather-last-location";
 const SAVED_CITIES_KEY = "aura-weather-saved-cities";
 const RECENT_CITIES_KEY = "aura-weather-recent-cities";
@@ -550,7 +555,13 @@ export function useLocation(onResolved) {
                 longitude,
                 normalizeLocationName(reverseResult?.name, CURRENT_LOCATION_NAME),
                 normalizeLocationName(reverseResult?.country, ""),
-                CURRENT_LOCATION_NOTICE,
+                // reverseGeocode resolves to null (not a throw) when it can't
+                // name the place — surface the honest hint in that case so a
+                // generic "Current location" label isn't mistaken for a real
+                // lookup; a real name uses the normal "near {place}" notice.
+                reverseResult?.name
+                  ? CURRENT_LOCATION_NOTICE
+                  : CURRENT_LOCATION_UNNAMED_NOTICE,
                 {
                   saveCity: true,
                   persistLocation: true,
@@ -573,7 +584,7 @@ export function useLocation(onResolved) {
                 longitude,
                 CURRENT_LOCATION_NAME,
                 "",
-                CURRENT_LOCATION_NOTICE,
+                CURRENT_LOCATION_UNNAMED_NOTICE,
                 {
                   saveCity: true,
                   persistLocation: true,

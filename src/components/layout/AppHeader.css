@@ -173,6 +173,7 @@
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .saved-city-startup-badge {

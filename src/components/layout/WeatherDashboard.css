@@ -47,6 +47,24 @@
   background: linear-gradient(90deg, rgba(190, 207, 232, 0.42), rgba(190, 207, 232, 0.04));
 }
 
+/* Time-horizon chip on the rain sections (now / next 2h / rest of today),
+   so the overlapping rain surfaces read as a single timeline instead of
+   feeling redundant. Sits between the section name and the trailing line. */
+.bento-group-scope {
+  flex-shrink: 0;
+  margin-left: 10px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(111, 183, 242, 0.28);
+  background: rgba(111, 183, 242, 0.14);
+  color: #cfe6fb;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
 .bento > section {
   position: relative;
   min-width: 0;

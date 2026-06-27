@@ -24,6 +24,7 @@ function SupplementalWeatherPanels({
         style={groupLabelStyleVariables[3]}
       >
         Nowcast
+        <span className="bento-group-scope">Next 2 hours</span>
       </h2>
       <PanelErrorBoundary
         label="Nowcast"
@@ -75,6 +76,7 @@ function SupplementalWeatherPanels({
         style={groupLabelStyleVariables[5]}
       >
         Precipitation Outlook
+        <span className="bento-group-scope">Rest of today</span>
       </h2>
       <PanelErrorBoundary
         label="Rain outlook"

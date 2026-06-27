@@ -193,6 +193,7 @@ function WeatherDashboard({
         style={GROUP_LABEL_STYLE_VARIABLES[2]}
       >
         Precipitation Radar
+        <span className="bento-group-scope">Right now</span>
       </h2>
       <PanelErrorBoundary
         label="Precipitation radar"

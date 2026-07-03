@@ -156,3 +156,85 @@ describe("useWeatherData supplemental merge", () => {
     assert.equal(snapshot.trustMeta.forecastStatus, "ready");
   });
 });
+
+describe("useWeatherData auto-refresh listener stability", () => {
+  test("does not re-register online/visibilitychange listeners on location change", async () => {
+    installImmediateFetch();
+
+    const origWinAdd = window.addEventListener;
+    const origDocAdd = document.addEventListener;
+    let onlineCount = 0;
+    let visCount = 0;
+    window.addEventListener = function patchedWindowAdd(type, ...rest) {
+      if (type === "online") onlineCount += 1;
+      return origWinAdd.call(this, type, ...rest);
+    };
+    document.addEventListener = function patchedDocAdd(type, ...rest) {
+      if (type === "visibilitychange") visCount += 1;
+      return origDocAdd.call(this, type, ...rest);
+    };
+
+    try {
+      let latest = null;
+      const onState = (api) => {
+        latest = api;
+      };
+
+      let rerender = null;
+      await act(async () => {
+        const result = render(
+          React.createElement(WeatherDataProbe, {
+            location: PROBE_LOCATION,
+            onState,
+          })
+        );
+        rerender = result.rerender;
+      });
+      await waitFor(() => assert.ok(latest?.weather, "initial forecast loads"));
+
+      const onlineAfterMount = onlineCount;
+      const visAfterMount = visCount;
+      assert.ok(
+        onlineAfterMount >= 1,
+        "the auto-refresh effect registers an online listener on mount"
+      );
+      assert.ok(
+        visAfterMount >= 1,
+        "the auto-refresh effect registers a visibilitychange listener on mount"
+      );
+
+      // Switch to a different location. requestWeatherData changes identity,
+      // but the auto-refresh effect must NOT re-run (and so must not tear down
+      // and re-register its listeners) since it no longer depends on it.
+      await act(async () => {
+        rerender(
+          React.createElement(WeatherDataProbe, {
+            location: { lat: 40.7128, lon: -74.006, name: "New York" },
+            onState,
+          })
+        );
+      });
+      await waitFor(() =>
+        assert.equal(
+          latest?.weather?.meta?.longitude,
+          -74.006,
+          "forecast follows the new location"
+        )
+      );
+
+      assert.equal(
+        onlineCount,
+        onlineAfterMount,
+        "online listener must not be re-registered on a location change"
+      );
+      assert.equal(
+        visCount,
+        visAfterMount,
+        "visibilitychange listener must not be re-registered on a location change"
+      );
+    } finally {
+      window.addEventListener = origWinAdd;
+      document.addEventListener = origDocAdd;
+    }
+  });
+});

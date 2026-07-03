@@ -536,6 +536,16 @@ export function useWeatherData(location, options = {}) {
   }, [trustMeta.weatherFetchedAt, trustMeta.forecastStatus, error]);
   const lastAutoRefreshAttemptRef = useRef(null);
 
+  // Hold the latest requestWeatherData in a ref so the auto-refresh effect
+  // below can depend only on [backgroundRefreshEnabled, enabled]. Otherwise it
+  // depends on requestWeatherData — which is recreated on every location
+  // change — and tears down + reinstalls its online/visibilitychange listeners
+  // and restarts the poll timer on each city switch.
+  const requestWeatherDataRef = useRef(requestWeatherData);
+  useEffect(() => {
+    requestWeatherDataRef.current = requestWeatherData;
+  }, [requestWeatherData]);
+
   useEffect(() => {
     if (!enabled || typeof window === "undefined") {
       return undefined;
@@ -562,7 +572,7 @@ export function useWeatherData(location, options = {}) {
       }
 
       lastAutoRefreshAttemptRef.current = Date.now();
-      void requestWeatherData();
+      void requestWeatherDataRef.current();
     };
 
     const handleOnline = () => attemptAutoRefresh();
@@ -595,7 +605,7 @@ export function useWeatherData(location, options = {}) {
         clearInterval(pollTimerId);
       }
     };
-  }, [backgroundRefreshEnabled, enabled, requestWeatherData]);
+  }, [backgroundRefreshEnabled, enabled]);
 
   // Project climate state back into trustMeta so existing consumers keep
   // working without prop-shape churn.

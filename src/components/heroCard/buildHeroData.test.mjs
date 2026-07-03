@@ -240,6 +240,27 @@ describe("buildHeroData", () => {
     assert.equal(data.tempUnit, "°C");
   });
 
+  test("classifies comfort and wind chips against source °F/mph regardless of display unit", () => {
+    // dewPoint and windSpeed are always sourced in °F/mph; the comfort/wind labels must
+    // not shift with the display unit. Regression guard for the double-conversion that
+    // mislabeled a dry 52°F dew point as "Muggy" and a 30 mph "Gusty" wind as "Breezy"
+    // for °C users.
+    const weather = {
+      ...baseWeather,
+      current: { ...baseWeather.current, dewPoint: 52, windSpeed: 30 },
+    };
+    const labelFor = (data, id) =>
+      data.characteristicChips.find((chip) => chip.id === id)?.label;
+
+    const fahrenheit = buildHeroData({ weather, location: baseLocation, unit: "F" });
+    const celsius = buildHeroData({ weather, location: baseLocation, unit: "C" });
+
+    assert.equal(labelFor(fahrenheit, "comfort"), "Comfortable");
+    assert.equal(labelFor(celsius, "comfort"), "Comfortable");
+    assert.equal(labelFor(fahrenheit, "wind"), "Gusty");
+    assert.equal(labelFor(celsius, "wind"), "Gusty");
+  });
+
   test("renders missing placeholders without misleading unit suffixes", () => {
     const data = buildHeroData({
       weather: {

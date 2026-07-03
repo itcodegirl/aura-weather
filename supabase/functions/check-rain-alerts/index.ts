@@ -81,8 +81,15 @@ type Decision = { dedupeKey: string; title: string; body: string } | null;
 function evaluateRainIncoming(rule: any, forecast: any): Decision {
   const probs: unknown[] = forecast?.minutely_15?.precipitation_probability ?? [];
   const times: unknown[] = forecast?.minutely_15?.time ?? [];
-  const lead = Number(rule.lead_time_min) || RAIN_LEAD_DEFAULT_MIN;
-  const threshold = Number(rule.min_probability) || RAIN_LIKELY_DEFAULT;
+  // Finite check, not `|| default`: a legitimate 0 is a real setting —
+  // min_probability 0 means "any rain chance", lead_time_min 0 means "right
+  // now" — and must not be coerced to the default.
+  const leadRaw = Number(rule.lead_time_min);
+  const lead = Number.isFinite(leadRaw) ? leadRaw : RAIN_LEAD_DEFAULT_MIN;
+  const thresholdRaw = Number(rule.min_probability);
+  const threshold = Number.isFinite(thresholdRaw)
+    ? thresholdRaw
+    : RAIN_LIKELY_DEFAULT;
   const steps = Math.max(1, Math.ceil(lead / 15));
   let peak = -1;
   let peakIdx = -1;
@@ -145,7 +152,16 @@ async function sendPush(sub: any, payload: Record<string, unknown>): Promise<"ok
 }
 
 Deno.serve(async (req) => {
-  if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) {
+  // Fail closed: an unset CRON_SECRET is a misconfiguration, not license to
+  // accept every caller. Require the secret to be configured (500 if not) and
+  // to match the caller's header (403 if not) before doing any work.
+  if (!CRON_SECRET) {
+    return new Response(JSON.stringify({ error: "CRON_SECRET is not configured" }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  if (req.headers.get("x-cron-secret") !== CRON_SECRET) {
     return new Response("forbidden", { status: 403 });
   }
   if (!VAPID_PRIVATE_KEY || !VAPID_PUBLIC_KEY) {

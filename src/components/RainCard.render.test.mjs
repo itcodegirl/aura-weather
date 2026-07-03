@@ -148,3 +148,55 @@ describe("RainCard touch-sample announcement contract (mirrors HourlyCard)", () 
     );
   });
 });
+
+describe("RainCard roving tabindex + valid strip role", () => {
+  test("exactly one chart bar is a tab stop, and ArrowRight moves it forward", () => {
+    const { container } = renderWithRainyHours();
+    const bars = [...container.querySelectorAll(".rain-bar")];
+    if (bars.length < 2) return;
+
+    assert.equal(
+      bars.filter((button) => button.tabIndex === 0).length,
+      1,
+      "the ~24 rain chart bars should expose one tab stop, not one per hour"
+    );
+
+    const beforeIdx = bars.findIndex((button) => button.tabIndex === 0);
+    fireEvent.keyDown(bars[beforeIdx], { key: "ArrowRight" });
+
+    const updated = [...container.querySelectorAll(".rain-bar")];
+    assert.equal(
+      updated.filter((button) => button.tabIndex === 0).length,
+      1,
+      "still exactly one chart tab stop after arrowing"
+    );
+    assert.equal(
+      updated.findIndex((button) => button.tabIndex === 0),
+      Math.min(beforeIdx + 1, updated.length - 1),
+      "ArrowRight moves the chart tab stop one hour forward"
+    );
+  });
+
+  test("exactly one touch-sample is a tab stop (the strip roves too)", () => {
+    const { container } = renderWithRainyHours();
+    const samples = [...container.querySelectorAll(".rain-touch-sample")];
+    if (samples.length < 2) return;
+    assert.equal(
+      samples.filter((button) => button.tabIndex === 0).length,
+      1,
+      "the sample strip should expose one tab stop, not one per hour"
+    );
+  });
+
+  test("the sample strip uses role=group, not the invalid role=list with button children", () => {
+    const { container } = renderWithRainyHours();
+    const strip = container.querySelector(".rain-touch-strip");
+    if (!strip) return;
+    assert.equal(strip.getAttribute("role"), "group");
+    assert.equal(
+      container.querySelector('.rain-touch-strip[role="list"]'),
+      null,
+      "role=list with direct button children is invalid ARIA (list requires listitem children)"
+    );
+  });
+});

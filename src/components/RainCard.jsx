@@ -245,6 +245,28 @@ function RainCard({
     timelineBars[0] ||
     null;
 
+  // Roving-tabindex navigation shared by the chart bars and the sample strip,
+  // so each set of ~24 hour buttons is a single tab stop (arrow keys move
+  // within) instead of ~24 separate ones. querySelector is scoped to
+  // event.currentTarget, so one handler drives whichever group fired it.
+  const onBarsKeyDown = (event) => {
+    const keys = timelineBars.map((bar) => bar.key);
+    const activeKey =
+      event.target instanceof HTMLElement ? event.target.dataset.barKey : null;
+    const active = Math.max(0, keys.indexOf(activeKey));
+    let next = null;
+    if (event.key === "ArrowRight") next = Math.min(keys.length - 1, active + 1);
+    else if (event.key === "ArrowLeft") next = Math.max(0, active - 1);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = keys.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    setSelectedSampleKey(keys[next]);
+    event.currentTarget
+      .querySelector(`[data-bar-key="${keys[next]}"]`)
+      ?.focus();
+  };
+
   return (
     <section
       className="bento-rain rain-card glass"
@@ -379,6 +401,7 @@ function RainCard({
         <div
           className="rain-timeline"
           role="group"
+          onKeyDown={onBarsKeyDown}
           aria-label={
             mode === "chance"
               ? "Hourly rain chance over the next 24 hours \u2014 tap an hour to inspect"
@@ -395,6 +418,8 @@ function RainCard({
             <button
               type="button"
               key={bar.key}
+              data-bar-key={bar.key}
+              tabIndex={bar.key === selectedSample?.key ? 0 : -1}
               className={`rain-bar${selectedSample?.key === bar.key ? " is-sel" : ""}`}
               title={bar.tooltip}
               aria-label={`Select ${bar.tooltip}`}
@@ -446,7 +471,12 @@ function RainCard({
                 <span>{mode === "chance" ? "Rain confidence" : "Rain amount"}</span>
               </p>
             ) : null}
-            <div className="rain-touch-strip" role="list" aria-label="Hourly rain samples">
+            <div
+              className="rain-touch-strip"
+              role="group"
+              onKeyDown={onBarsKeyDown}
+              aria-label="Hourly rain samples"
+            >
               {timelineBars.map((bar) => {
                 const isUserSelection = selectedSampleKey === bar.key;
                 const isShown = selectedSample?.key === bar.key;
@@ -454,6 +484,8 @@ function RainCard({
                   <button
                     key={`sample-${bar.key}`}
                     type="button"
+                    data-bar-key={bar.key}
+                    tabIndex={bar.key === selectedSample?.key ? 0 : -1}
                     className={`rain-touch-sample ${isShown ? "is-selected" : ""}`.trim()}
                     aria-current={isUserSelection ? "true" : undefined}
                     aria-label={`Show ${bar.tooltip}`}

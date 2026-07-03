@@ -50,15 +50,48 @@ export function useRadarAnimation(
 
   // Auto-play loop. setState here runs inside the interval callback (not
   // synchronously in the effect body), so it advances frames without a
-  // cascading render.
+  // cascading render. The advance is paused while the tab is hidden — a
+  // backgrounded player otherwise keeps flipping ~15 radar tile-layer
+  // opacities twice a second for a view nobody is looking at.
   useEffect(() => {
     if (!isPlaying || frameCount <= 1) {
       return undefined;
     }
-    const intervalId = setInterval(() => {
-      setActiveIndex((idx) => (idx + 1) % frameCount);
-    }, RADAR_FRAME_DELAY_MS);
-    return () => clearInterval(intervalId);
+    const advance = () => setActiveIndex((idx) => (idx + 1) % frameCount);
+
+    if (typeof document === "undefined") {
+      const intervalId = setInterval(advance, RADAR_FRAME_DELAY_MS);
+      return () => clearInterval(intervalId);
+    }
+
+    let intervalId = null;
+    const start = () => {
+      if (intervalId === null) {
+        intervalId = setInterval(advance, RADAR_FRAME_DELAY_MS);
+      }
+    };
+    const stop = () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        start();
+      }
+    };
+
+    if (!document.hidden) {
+      start();
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [isPlaying, frameCount]);
 
   const pause = useCallback(() => setIsPlaying(false), []);

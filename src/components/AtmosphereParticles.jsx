@@ -53,6 +53,27 @@ function usePrefersReducedMotion() {
   return prefersReduced;
 }
 
+// Pause the infinite particle animations while the tab is hidden. Browsers
+// throttle rAF in background tabs but do not reliably pause CSS animations,
+// so a backgrounded rain/snow layer keeps the compositor animating up to 40
+// elements for a view nobody can see.
+function useDocumentHidden() {
+  const [hidden, setHidden] = useState(
+    () => typeof document !== "undefined" && document.hidden === true
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+    const handleChange = () => setHidden(document.hidden === true);
+    document.addEventListener("visibilitychange", handleChange);
+    return () => document.removeEventListener("visibilitychange", handleChange);
+  }, []);
+
+  return hidden;
+}
+
 function classifyCondition(code) {
   if (RAIN_CODES.has(code)) {
     return "rain";
@@ -130,6 +151,7 @@ function useIsMobileViewport() {
 
 function AtmosphereParticles({ conditionCode, prefersReducedData = false }) {
   const prefersReducedMotion = usePrefersReducedMotion();
+  const documentHidden = useDocumentHidden();
   const kind = useMemo(() => classifyCondition(conditionCode), [conditionCode]);
   const isMobile = useIsMobileViewport();
   // Skip rendering when reduced-motion is set — the CSS @media rule would
@@ -161,7 +183,11 @@ function AtmosphereParticles({ conditionCode, prefersReducedData = false }) {
         <span
           key={particle.key}
           className={`atmosphere-particle atmosphere-particle--${kind}`}
-          style={particle.style}
+          style={
+            documentHidden
+              ? { ...particle.style, animationPlayState: "paused" }
+              : particle.style
+          }
         />
       ))}
     </div>

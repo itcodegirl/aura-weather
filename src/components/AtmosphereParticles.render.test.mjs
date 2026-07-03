@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import "../../scripts/test-render-setup.mjs";
 
 const React = (await import("react")).default;
-const { cleanup, render } = await import("@testing-library/react");
+const { cleanup, render, act } = await import("@testing-library/react");
 const AtmosphereParticles = (
   await import("./AtmosphereParticles.jsx")
 ).default;
@@ -80,5 +80,44 @@ describe("AtmosphereParticles", () => {
     ).map((node) => node.getAttribute("style"));
 
     assert.deepEqual(firstStyles, secondStyles);
+  });
+
+  test("pauses particle animations while the tab is hidden", () => {
+    const { container } = render(
+      React.createElement(AtmosphereParticles, { conditionCode: 63 })
+    );
+    const before = [
+      ...container.querySelectorAll(".atmosphere-particle--rain"),
+    ];
+    assert.ok(before.length > 0, "expected rain particles to render");
+    assert.equal(
+      (before[0].getAttribute("style") || "").includes(
+        "animation-play-state: paused"
+      ),
+      false,
+      "particles should animate while the tab is visible"
+    );
+
+    try {
+      Object.defineProperty(document, "hidden", {
+        configurable: true,
+        get: () => true,
+      });
+      act(() => {
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+
+      const after = [
+        ...container.querySelectorAll(".atmosphere-particle--rain"),
+      ];
+      assert.ok(
+        (after[0].getAttribute("style") || "").includes(
+          "animation-play-state: paused"
+        ),
+        "particles must pause their animation when the tab is hidden"
+      );
+    } finally {
+      delete document.hidden;
+    }
   });
 });

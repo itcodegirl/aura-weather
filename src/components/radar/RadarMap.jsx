@@ -119,6 +119,11 @@ function RadarMap({ host, frames, activeIndex, center, retina = false }) {
        * Leaflet cache; only the active frame is shown (opacity 0.8) while
        * the rest sit at opacity 0. Scrubbing/playing then just toggles
        * opacity on already-loaded tiles — no fetch, no flicker.
+       *
+       * Inactive (invisible) layers set updateWhenIdle so they only reload
+       * tiles once the map settles, instead of refetching ~14 hidden tile
+       * pyramids on every pan/zoom frame; the active layer keeps
+       * updateWhenIdle=false so the visible frame stays immediately sharp.
        */}
       {frames.map((frame, index) => {
         const url = radarTileUrlTemplate(host, frame, { retina });
@@ -134,7 +139,7 @@ function RadarMap({ host, frames, activeIndex, center, retina = false }) {
             opacity={isActive ? RADAR_OPACITY : 0}
             zIndex={isActive ? 12 : 10}
             maxNativeZoom={RADAR_MAX_ZOOM}
-            updateWhenIdle={false}
+            updateWhenIdle={!isActive}
           />
         );
       })}

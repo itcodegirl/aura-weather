@@ -223,6 +223,34 @@ describe("HourlyCard touch-sample announcement contract", () => {
     );
   });
 
+  test("roving tabindex: the chart columns are a single tab stop, arrows move selection", () => {
+    const { container } = renderPopulated();
+    const cols = [...container.querySelectorAll(".hourly-col")];
+    if (cols.length < 2) return;
+
+    const tabStops = cols.filter((button) => button.tabIndex === 0);
+    assert.equal(
+      tabStops.length,
+      1,
+      "the ~24 chart columns should expose one tab stop, not one per hour"
+    );
+
+    const beforeIdx = cols.findIndex((button) => button.tabIndex === 0);
+    fireEvent.keyDown(cols[beforeIdx], { key: "ArrowRight" });
+
+    const updated = [...container.querySelectorAll(".hourly-col")];
+    assert.equal(
+      updated.filter((button) => button.tabIndex === 0).length,
+      1,
+      "still exactly one chart tab stop after arrowing"
+    );
+    assert.equal(
+      updated.findIndex((button) => button.tabIndex === 0),
+      Math.min(beforeIdx + 1, updated.length - 1),
+      "ArrowRight moves the chart tab stop one hour forward"
+    );
+  });
+
   test("svg-point tooltip uses middle-dot separators, not ASCII hyphens", () => {
     const { container } = renderPopulated();
     const titles = container.querySelectorAll(".hourly-point-hit title");

@@ -92,10 +92,13 @@ function AlertsCard({
       aria-busy={isRefreshing || undefined}
     >
       <header className="alerts-header">
-        <h3 id={titleId} className="alerts-title">
+        {/* h2, not h3: this card renders at the top of <main> before the
+            first <h2> group label, so an <h3> here would skip a heading
+            level (h1 -> h3) for the most urgent element on the page. */}
+        <h2 id={titleId} className="alerts-title">
           <Siren size={16} aria-hidden="true" />
           <span>Severe Alerts</span>
-        </h3>
+        </h2>
         <span className="alerts-subtitle">{emptyState.subtitle}</span>
       </header>
 

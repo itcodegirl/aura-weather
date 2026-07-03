@@ -73,6 +73,22 @@ describe("AlertsCard render gating (don't narrate non-events)", () => {
   });
 });
 
+describe("AlertsCard heading level", () => {
+  test("renders the alert title as an h2 (it sits above the first h2 group label)", () => {
+    // AlertsCard renders at the top of <main> before the first <h2> group
+    // label; an <h3> title there skips a heading level (h1 -> h3) for the
+    // most urgent element on the page.
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert()],
+        alertsStatus: "ready",
+      })
+    );
+    const heading = screen.getByRole("heading", { name: /Severe Alerts/ });
+    assert.equal(heading.tagName, "H2");
+  });
+});
+
 describe("AlertsCard priority badge a11y", () => {
   test("priority badge text content is normal-case, not all-caps", () => {
     render(

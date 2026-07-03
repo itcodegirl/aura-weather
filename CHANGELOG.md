@@ -5,7 +5,16 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — Visible-tab refresh cadence (2026-06)
+## [1.0.0] — 2026-07-03
+
+First tagged release. Cuts the accumulated audit batches below into a
+version that matches `package.json`. Everything that made Aura
+portfolio-grade is in: the four-layer data-trust contract, NOAA/NWS
+severe-alert coverage, offline snapshot restore, and the installable PWA
+shell. The three batches that follow — previously carried as
+`[Unreleased]` — ship as part of this milestone.
+
+## [1.0.0] — Visible-tab refresh cadence (2026-06)
 
 ### Added
 
@@ -22,7 +31,7 @@ portfolio-grade product. Format roughly follows
   `?mock=missing` demo route. Four new policy tests pin the cadence
   contracts.
 
-## [Unreleased] — Restore lost severity-badge & data-status styling (2026-06)
+## [1.0.0] — Restore lost severity-badge & data-status styling (2026-06)
 
 ### Fixed
 
@@ -41,7 +50,7 @@ portfolio-grade product. Format roughly follows
   Restored the disclosure, summary, label, hint, and chevron styling
   (the hint is hidden on phones at ≤640px, as designed).
 
-## [Unreleased] — Mobile UX audit: safe-area, iOS input zoom, layout stability (2026-06)
+## [1.0.0] — Mobile UX audit: safe-area, iOS input zoom, layout stability (2026-06)
 
 ### Fixed
 

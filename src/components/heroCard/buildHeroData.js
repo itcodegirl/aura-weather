@@ -377,12 +377,17 @@ const WIND_GUSTY_MPH = 25;
 const AQI_GOOD = 50;
 const AQI_MODERATE = 100;
 
-function buildCharacteristicChips(weather, unit, aqi) {
+function buildCharacteristicChips(weather, aqi) {
   const chips = [];
 
   const dewPoint = toFiniteNumber(weather?.current?.dewPoint);
   if (dewPoint !== null) {
-    const dpF = unit === "C" ? dewPoint * 9 / 5 + 32 : dewPoint;
+    // dewPoint is always sourced in °F — the forecast is fetched in Fahrenheit
+    // regardless of the display unit (useWeatherData API_TEMPERATURE_UNIT) — and the
+    // comfort thresholds below are defined in °F, so classify the raw value. Do NOT
+    // re-convert by display unit; that double-converts an already-°F reading and
+    // mislabels comfort for every °C user.
+    const dpF = dewPoint;
     chips.push({
       id: "comfort",
       icon: "droplets",
@@ -397,7 +402,10 @@ function buildCharacteristicChips(weather, unit, aqi) {
 
   const windSpeed = toFiniteNumber(weather?.current?.windSpeed);
   if (windSpeed !== null) {
-    const wMph = unit === "C" ? windSpeed * 0.621371 : windSpeed;
+    // windSpeed is always sourced in mph (getApiWindSpeedUnit() === "mph") and the wind
+    // thresholds below are defined in mph, so classify the raw value. Do NOT re-convert
+    // by display unit; that shrinks an already-mph reading and mislabels wind severity.
+    const wMph = windSpeed;
     chips.push({
       id: "wind",
       icon: "wind",
@@ -526,7 +534,7 @@ export function buildHeroData({
     windDisplay,
   ].some((value) => isMissingPlaceholder(value));
 
-  const characteristicChips = buildCharacteristicChips(weather, unit, aqi);
+  const characteristicChips = buildCharacteristicChips(weather, aqi);
 
   return {
     current,

@@ -54,7 +54,7 @@ function RainCard({
   const timelineDetailsId = `${timelineId}-details`;
   const [mode, setMode] = useState("chance");
   const [selectedSampleKey, setSelectedSampleKey] = useState(null);
-  const rainAnalysis = useRainAnalysis(weather?.hourly);
+  const rainAnalysis = useRainAnalysis(weather?.hourly, weather?.meta?.timezone);
   const {
     hasData,
     hours,

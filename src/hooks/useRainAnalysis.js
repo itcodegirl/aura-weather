@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { findWindowStartIndex } from "../utils/timeSeries.js";
 import { toFiniteNumber } from "../utils/numbers.js";
+import { getZonedNow } from "../utils/dates.js";
 
 function getEmptyRainAnalysis() {
   return {
@@ -34,7 +35,7 @@ function sumFiniteValues(values) {
   return count === 0 ? null : total;
 }
 
-export function analyzeRain(hourly) {
+export function analyzeRain(hourly, timeZone, now = Date.now()) {
   if (
     !Array.isArray(hourly?.time) ||
     !Array.isArray(hourly?.rainChance) ||
@@ -50,7 +51,15 @@ export function analyzeRain(hourly) {
     : [];
   const hourlyAmounts = Array.isArray(hourly.rainAmount) ? hourly.rainAmount : [];
 
-  const idx = findWindowStartIndex(hourlyTimes, { windowSize: 24 });
+  // Reframe "now" into the location's timezone. Open-Meteo timestamps are
+  // naive location wall-clock (timezone=auto), parsed as device-local; the
+  // real clock must be reframed the same way or the window start and day
+  // boundary drift by the device/location offset for a remote city.
+  const zonedNow = getZonedNow(timeZone, now);
+  const idx = findWindowStartIndex(hourlyTimes, {
+    windowSize: 24,
+    now: zonedNow.getTime(),
+  });
   if (idx < 0) {
     return getEmptyRainAnalysis();
   }
@@ -109,7 +118,9 @@ export function analyzeRain(hourly) {
     ? amountHours.reduce((sum, h) => sum + Math.max(h.amount, 0), 0)
     : null;
 
-  const today = new Date();
+  // Location's midnight, in the same device-local frame the forecast
+  // timestamps are parsed in — not the device's midnight.
+  const today = new Date(zonedNow);
   today.setHours(0, 0, 0, 0);
   const todayMs = today.getTime();
   const todayStartIdx = hourly.time.findIndex((t) => {
@@ -149,6 +160,6 @@ export function analyzeRain(hourly) {
   };
 }
 
-export function useRainAnalysis(hourly) {
-  return useMemo(() => analyzeRain(hourly), [hourly]);
+export function useRainAnalysis(hourly, timeZone) {
+  return useMemo(() => analyzeRain(hourly, timeZone), [hourly, timeZone]);
 }

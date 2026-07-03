@@ -390,6 +390,27 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
       ?.focus();
   };
 
+  // Same roving-tabindex navigation for the chart columns, so the 24 hour
+  // bars are a single tab stop (arrow keys move within) instead of 24
+  // separate ones — matching the pill strip below.
+  const onColsKeyDown = (event) => {
+    const keys = cells.map((c) => c.hour.key);
+    const activeKey =
+      event.target instanceof HTMLElement ? event.target.dataset.colKey : null;
+    const active = Math.max(0, keys.indexOf(activeKey));
+    let next = null;
+    if (event.key === "ArrowRight") next = Math.min(keys.length - 1, active + 1);
+    else if (event.key === "ArrowLeft") next = Math.max(0, active - 1);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = keys.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    setSelectedKey(keys[next]);
+    event.currentTarget
+      .querySelector(`[data-col-key="${keys[next]}"]`)
+      ?.focus();
+  };
+
   return (
     <section
       className="bento-chart hourly-chart glass"
@@ -440,7 +461,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
         <div className="hourly-scroll" ref={chartRef}>
           <div className="hourly-track" style={{ width: `${n * COL}px` }}>
             <div className="hourly-plot">
-              <div className="hourly-bars">
+              <div className="hourly-bars" onKeyDown={onColsKeyDown}>
                 {cells.map(({ hour }) => {
                   const isSel = hour.key === selected?.key;
                   const colCls = `hourly-col${isSel ? " is-sel" : ""}${hour.isPast ? " is-past" : ""}`;
@@ -458,6 +479,8 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                         type="button"
                         className={colCls}
                         key={hour.key}
+                        data-col-key={hour.key}
+                        tabIndex={hour.key === tabStopKey ? 0 : -1}
                         aria-label={`Select ${hour.label}`}
                         onClick={() => setSelectedKey(hour.key)}
                       >
@@ -493,6 +516,8 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                       type="button"
                       className={colCls}
                       key={hour.key}
+                      data-col-key={hour.key}
+                      tabIndex={hour.key === tabStopKey ? 0 : -1}
                       aria-label={`Select ${hour.label}`}
                       onClick={() => setSelectedKey(hour.key)}
                     >

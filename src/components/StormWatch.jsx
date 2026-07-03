@@ -22,6 +22,18 @@ import "./StormWatch.css";
 
 const CAPE_MAX = 4000; // J/kg — top of the Calm→Explosive scale
 
+// Storm-risk scores map 1:1 onto the app-wide severity scale
+// (App.css .severity-badge--*), so Storm Watch speaks the same
+// Low/Moderate/High/Severe language as Nowcast and Alerts rather than a
+// private "Level N of 4" vocabulary. Indexed by risk.score (0–4).
+const STORM_RISK_SEVERITY_TONE = [
+  "minimal",
+  "low",
+  "moderate",
+  "high",
+  "critical",
+];
+
 function capeScalePct(cape) {
   return Math.max(0, Math.min(1, cape / CAPE_MAX)) * 100;
 }
@@ -115,6 +127,7 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
     [hasCape, cape, conditionCode]
   );
   const active = hasCape && risk.score > 0;
+  const stormTone = STORM_RISK_SEVERITY_TONE[risk.score] ?? "minimal";
 
   const win = useMemo(
     () => buildPeakWindow(weather?.hourly, weather?.meta?.timezone),
@@ -134,9 +147,9 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
   const summary = !hasCape
     ? "Live storm energy reading unavailable"
     : active
-      ? `Risk level ${risk.score} of 4`
+      ? `${risk.level} storm risk from live storm energy`
       : "No thunderstorm signal in the air mass";
-  const eyebrow = !hasCape ? "Storm watch" : active ? `Level ${risk.score} of 4` : "All clear";
+  const eyebrow = !hasCape ? "Storm watch" : "All clear";
 
   return (
     <section
@@ -155,7 +168,13 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
           </h3>
           <p className="storm-lede">Storm-risk synthesis for the hours ahead.</p>
         </div>
-        <span className="storm-subtitle eyebrow-pill">{eyebrow}</span>
+        {active ? (
+          <span className={`severity-badge severity-badge--${stormTone}`}>
+            {risk.level} risk
+          </span>
+        ) : (
+          <span className="storm-subtitle eyebrow-pill">{eyebrow}</span>
+        )}
       </header>
 
       <div className="storm-synth">

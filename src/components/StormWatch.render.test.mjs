@@ -143,4 +143,32 @@ describe("StormWatch (slimmed risk synthesis)", () => {
       "CAPE value should render the missing-data placeholder"
     );
   });
+
+  test("active risk uses the shared severity badge, not a private 'Level N of 4'", () => {
+    // cape 600 → classifyStormRisk → "Moderate", score 2 (active).
+    const { container } = render(
+      React.createElement(StormWatch, {
+        weather: buildWeather({ cape: 600 }),
+        unit: "F",
+        isRefreshing: false,
+      })
+    );
+    const badge = container.querySelector(".severity-badge");
+    assert.ok(badge, "active storm risk should render the shared severity-badge");
+    assert.ok(
+      badge.classList.contains("severity-badge--moderate"),
+      "risk score 2 maps 1:1 to the shared 'moderate' tone"
+    );
+    assert.match(badge.textContent || "", /Moderate/);
+    assert.equal(
+      screen.queryByText(/Level \d of 4/),
+      null,
+      "the private numeric 'Level N of 4' vocabulary must be gone"
+    );
+    assert.equal(
+      screen.queryByText(/Risk level \d of 4/),
+      null,
+      "the numeric summary vocabulary must be gone too"
+    );
+  });
 });

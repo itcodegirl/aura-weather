@@ -71,4 +71,22 @@ describe("analyzeNowcast", () => {
     );
     assert.equal(typeof result.summary, "string");
   });
+
+  test("keeps missing probability slots as null in the chart series (no fake 0%)", () => {
+    // A slot with no probability reading must not be drawn as a confident 0%;
+    // it must reach the chart as null so the curve can gap there.
+    const result = analyzeNowcast(
+      {
+        time: TIME,
+        rainChance: [80, null, 60, 0, 0, 0, 0, 0],
+        rainAmount: [0.1, 0.1, 0.1, 0, 0, 0, 0, 0],
+        conditionCode: [61, 61, 61, 3, 3, 3, 3, 3],
+      },
+      { now: atSlot("2026-04-21T18:00") }
+    );
+    assert.equal(result.hasData, true);
+    assert.equal(result.series[0], 80);
+    assert.equal(result.series[1], null);
+    assert.equal(result.series[2], 60);
+  });
 });

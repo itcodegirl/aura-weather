@@ -8,7 +8,9 @@ const NOWCAST_WINDOW_SIZE = 8; // next 2 hours with 15-min resolution
 
 function clampProbability(value) {
   const clamped = Math.max(0, Math.min(100, Math.round(value)));
-  return Number.isFinite(clamped) ? clamped : 0;
+  // A non-finite input is missing data, not a confident 0% — surface it as
+  // null so the trust contract holds even if a caller skips normalizeProbability.
+  return Number.isFinite(clamped) ? clamped : null;
 }
 
 function normalizeProbability(value) {
@@ -125,9 +127,9 @@ export function analyzeNowcast(nowcast, options = {}) {
   // The chart and the readouts must share one now-anchored window so the
   // curve matches the headline (previously the chart sliced the raw array
   // from index 0, which is in the past, and rendered a flat line).
-  const probabilitySeries = rows.map((row) =>
-    row.probability === null ? 0 : row.probability
-  );
+  // Carry missing probability slots through as null so the chart can gap the
+  // curve at those points instead of drawing a confident 0% over unknown data.
+  const probabilitySeries = rows.map((row) => row.probability);
 
   const firstWetIndex = rows.findIndex((row) => row.isWet);
   if (firstWetIndex === -1) {

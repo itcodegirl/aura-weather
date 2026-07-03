@@ -21,18 +21,59 @@ function buildNowcastChartGeometry(points) {
   if (n < 2) return null;
   const span = NC_SVG_H - NC_TOP_PAD - NC_BOT_PAD;
   const xs = points.map((_, i) => (i / (n - 1)) * NC_SVG_W);
-  const ys = points.map(v => NC_TOP_PAD + (1 - Math.min(v, NC_DOMAIN) / NC_DOMAIN) * span);
-  let core = "";
-  for (let i = 0; i < n - 1; i++) {
-    const xc = (xs[i] + xs[i + 1]) / 2;
-    const yc = (ys[i] + ys[i + 1]) / 2;
-    core += ` Q${xs[i].toFixed(1)},${ys[i].toFixed(1)} ${xc.toFixed(1)},${yc.toFixed(1)}`;
+  const isMissing = (v) => v === null || v === undefined;
+  const ys = points.map((v) =>
+    isMissing(v) ? null : NC_TOP_PAD + (1 - Math.min(v, NC_DOMAIN) / NC_DOMAIN) * span
+  );
+
+  // Split the window into contiguous runs of present points so a missing
+  // 15-minute slot breaks the curve into a visible gap instead of being
+  // drawn as a confident 0%. With no gaps this collapses to a single run
+  // whose path is identical to the previous single-segment geometry.
+  const segments = [];
+  let run = [];
+  for (let i = 0; i < n; i += 1) {
+    if (ys[i] === null) {
+      if (run.length) segments.push(run);
+      run = [];
+    } else {
+      run.push(i);
+    }
   }
-  core += ` L${xs[n - 1].toFixed(1)},${ys[n - 1].toFixed(1)}`;
-  const strokeD = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}${core}`;
-  const fillD = `${strokeD} L${NC_SVG_W},${NC_SVG_H} L0,${NC_SVG_H} Z`;
+  if (run.length) segments.push(run);
+  if (segments.length === 0) return null;
+
+  let strokeD = "";
+  let fillD = "";
+  for (const seg of segments) {
+    const first = seg[0];
+    const last = seg[seg.length - 1];
+    if (seg.length === 1) {
+      // Isolated present point: a round-capped zero-length subpath draws a dot.
+      strokeD += `M${xs[first].toFixed(1)},${ys[first].toFixed(1)} L${xs[first].toFixed(1)},${ys[first].toFixed(1)}`;
+      continue;
+    }
+    let core = "";
+    for (let k = 0; k < seg.length - 1; k += 1) {
+      const i = seg[k];
+      const j = seg[k + 1];
+      const xc = (xs[i] + xs[j]) / 2;
+      const yc = (ys[i] + ys[j]) / 2;
+      core += ` Q${xs[i].toFixed(1)},${ys[i].toFixed(1)} ${xc.toFixed(1)},${yc.toFixed(1)}`;
+    }
+    core += ` L${xs[last].toFixed(1)},${ys[last].toFixed(1)}`;
+    strokeD += `M${xs[first].toFixed(1)},${ys[first].toFixed(1)}${core}`;
+    // Fill under this run down to the baseline, closed within the run only.
+    fillD += `M${xs[first].toFixed(1)},${NC_SVG_H} L${xs[first].toFixed(1)},${ys[first].toFixed(1)}${core} L${xs[last].toFixed(1)},${NC_SVG_H} Z`;
+  }
+
   const thresholdY = NC_TOP_PAD + (1 - NC_LIKELY_THRESHOLD / NC_DOMAIN) * span;
-  const peakIdx = points.indexOf(Math.max(...points));
+  // Peak marker sits on the highest present point, ignoring gaps.
+  let peakIdx = -1;
+  for (let i = 0; i < n; i += 1) {
+    if (isMissing(points[i])) continue;
+    if (peakIdx === -1 || points[i] > points[peakIdx]) peakIdx = i;
+  }
   return { strokeD, fillD, thresholdY, xs, ys, peakIdx };
 }
 
@@ -114,7 +155,11 @@ function NowcastCard({
     // curve matches the headline/peak (not the raw, past-shifted array).
     const series = Array.isArray(nowcast.series) ? nowcast.series : [];
     if (!nowcast.hasData || series.length < 2) return [];
-    return series.map((v) => Math.max(0, Math.min(100, v)));
+    // Preserve missing slots as null so the geometry gaps the curve there
+    // rather than clamping the gap to a confident 0%.
+    return series.map((v) =>
+      v === null || v === undefined ? null : Math.max(0, Math.min(100, v))
+    );
   }, [nowcast.hasData, nowcast.series]);
 
   const chartGeo = useMemo(() => buildNowcastChartGeometry(chartPoints), [chartPoints]);

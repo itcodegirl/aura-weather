@@ -149,6 +149,69 @@ describe("RainCard touch-sample announcement contract (mirrors HourlyCard)", () 
   });
 });
 
+describe("RainCard amount-mode running total (tracks inches of rain)", () => {
+  function renderAndSwitchToInches() {
+    // Distinct per-hour amounts so the cumulative total visibly climbs.
+    const hourly = buildHourly({
+      rainChance: Array.from({ length: 24 }, () => 60),
+      rainAmount: Array.from({ length: 24 }, () => 0.05),
+    });
+    const view = render(
+      React.createElement(RainCard, {
+        weather: { hourly },
+        unit: "F",
+        dataUnit: "F",
+      })
+    );
+    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
+      (b) => b.textContent.trim() === "in"
+    );
+    fireEvent.click(inBtn);
+    return view;
+  }
+
+  test("readout shows a running total that grows as later hours are tapped", () => {
+    const { container } = renderAndSwitchToInches();
+    const samples = container.querySelectorAll(".rain-touch-sample");
+    if (samples.length < 4) return;
+
+    const readTotal = () =>
+      container.querySelector(".rain-selected-sample span:last-child")
+        ?.textContent || "";
+
+    fireEvent.click(samples[0]);
+    const firstTotal = readTotal();
+    fireEvent.click(samples[3]);
+    const laterTotal = readTotal();
+
+    assert.match(
+      firstTotal,
+      /total by then/,
+      "amount-mode readout should label the running total"
+    );
+    // 0.05 in/hr: hour 1 => 0.05 total, hour 4 => 0.20 total.
+    assert.match(firstTotal, /0\.05 in/);
+    assert.match(laterTotal, /0\.20 in/);
+  });
+
+  test("running total at the final hour equals the projected 24h total", () => {
+    const { container } = renderAndSwitchToInches();
+    const samples = container.querySelectorAll(".rain-touch-sample");
+    if (samples.length === 0) return;
+
+    fireEvent.click(samples[samples.length - 1]);
+    const finalTotal =
+      container.querySelector(".rain-selected-sample span:last-child")
+        ?.textContent || "";
+    const projected = getRainStatValue("Projected 24h total").textContent.trim();
+
+    assert.ok(
+      finalTotal.includes(projected),
+      `final running total "${finalTotal}" should include projected total "${projected}"`
+    );
+  });
+});
+
 describe("RainCard roving tabindex + valid strip role", () => {
   test("exactly one chart bar is a tab stop, and ArrowRight moves it forward", () => {
     const { container } = renderWithRainyHours();

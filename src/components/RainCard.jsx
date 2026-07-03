@@ -121,9 +121,26 @@ function RainCard({
     const safePeakTimeLabel = formatHour(peak?.time);
     const safeNextRainTimeLabel = nextRain ? formatHour(nextRain.time) : "";
     const safePeakAmount = toFiniteNumber(peakAmount);
-    const bars = hours.map((hour) => {
+    // Running rainfall accumulation across the window so the amount-mode
+    // readout can show inches "so far" rather than the per-hour value, which
+    // is often ~0.00 and reads as if nothing is being tracked. Summed in the
+    // source precip unit (same basis as `total`) and formatted per hour.
+    // Prefix sums via slice keep this a pure render (no mutable accumulator);
+    // the window is capped at 24 hours so the O(n^2) cost is trivial.
+    const cumulativeLabels = hours.map((_, index) =>
+      formatPrecipitation(
+        hours.slice(0, index + 1).reduce((sum, entry) => {
+          const entryAmount = toFiniteNumber(entry.amount);
+          return sum + (entryAmount === null ? 0 : Math.max(entryAmount, 0));
+        }, 0),
+        unit,
+        dataUnit
+      )
+    );
+    const bars = hours.map((hour, index) => {
       const value = mode === "chance" ? hour.probability : hour.amount;
       const isMissing = value === null;
+      const cumulativeLabel = cumulativeLabels[index];
       const heightPct =
         isMissing
           ? 14
@@ -181,7 +198,7 @@ function RainCard({
               : prob >= 15
                 ? "slight chance"
                 : "mostly dry"
-          : "projected amount";
+          : `${cumulativeLabel} total by ${timeLabel}`;
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
@@ -192,6 +209,7 @@ function RainCard({
         tooltip,
         valueLabel,
         timeLabel,
+        cumulativeLabel,
         isMissing,
         tier,
         isPeak,
@@ -468,7 +486,11 @@ function RainCard({
               <p className="rain-selected-sample">
                 <span>{selectedSample.timeLabel}</span>
                 <strong>{selectedSample.valueLabel}</strong>
-                <span>{mode === "chance" ? "Rain confidence" : "Rain amount"}</span>
+                <span>
+                  {mode === "chance"
+                    ? "Rain confidence"
+                    : `${selectedSample.cumulativeLabel} total by then`}
+                </span>
               </p>
             ) : null}
             <div

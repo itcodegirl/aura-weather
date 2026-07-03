@@ -188,17 +188,33 @@ function RainCard({
         peak?.time instanceof Date &&
         hour.time instanceof Date &&
         hour.time.getTime() === peak.time.getTime();
-      const meta = isMissing
+      // The sample strip and its readout are the "rain tracker": in amount
+      // mode they lead with the running accumulation (climbs across the row),
+      // with the per-hour amount as the secondary line. The chart bars above
+      // stay per-hour intensity (their tooltip/valueLabel are unchanged).
+      const trackValueLabel = isMissing
+        ? MISSING_PLACEHOLDER
+        : mode === "chance"
+          ? valueLabel
+          : cumulativeLabel;
+      const chanceMeta =
+        prob >= 50
+          ? "showers likely"
+          : prob >= 30
+            ? "scattered chance"
+            : prob >= 15
+              ? "slight chance"
+              : "mostly dry";
+      const trackMeta = isMissing
         ? "data unavailable"
         : mode === "chance"
-          ? prob >= 50
-            ? "showers likely"
-            : prob >= 30
-              ? "scattered chance"
-              : prob >= 15
-                ? "slight chance"
-                : "mostly dry"
-          : `${cumulativeLabel} total by ${timeLabel}`;
+          ? chanceMeta
+          : `${valueLabel} this hour`;
+      const sampleAnnounce = isMissing
+        ? `${timeLabel} — data unavailable`
+        : mode === "chance"
+          ? `${timeLabel} — ${hour.probability}%`
+          : `${timeLabel} — ${cumulativeLabel} total, ${valueLabel} this hour`;
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
@@ -207,13 +223,13 @@ function RainCard({
         heightPct,
         opacity,
         tooltip,
-        valueLabel,
         timeLabel,
-        cumulativeLabel,
+        trackValueLabel,
+        trackMeta,
+        sampleAnnounce,
         isMissing,
         tier,
         isPeak,
-        meta,
       };
     });
     const accessibleText = bars.length
@@ -453,8 +469,8 @@ function RainCard({
         {selectedSample ? (
           <p className="rain-detail">
             <span className="rain-detail-time">{selectedSample.timeLabel}</span>
-            <strong className="rain-detail-value">{selectedSample.valueLabel}</strong>
-            <span className="rain-detail-meta">{selectedSample.meta}</span>
+            <strong className="rain-detail-value">{selectedSample.trackValueLabel}</strong>
+            <span className="rain-detail-meta">{selectedSample.trackMeta}</span>
           </p>
         ) : null}
         <p id={timelineSummaryId} className="rain-timeline-summary">{timelineSummary}</p>
@@ -485,11 +501,11 @@ function RainCard({
             {selectedSample ? (
               <p className="rain-selected-sample">
                 <span>{selectedSample.timeLabel}</span>
-                <strong>{selectedSample.valueLabel}</strong>
+                <strong>{selectedSample.trackValueLabel}</strong>
                 <span>
                   {mode === "chance"
                     ? "Rain confidence"
-                    : `${selectedSample.cumulativeLabel} total by then`}
+                    : `running total · ${selectedSample.trackMeta}`}
                 </span>
               </p>
             ) : null}
@@ -510,11 +526,11 @@ function RainCard({
                     tabIndex={bar.key === selectedSample?.key ? 0 : -1}
                     className={`rain-touch-sample ${isShown ? "is-selected" : ""}`.trim()}
                     aria-current={isUserSelection ? "true" : undefined}
-                    aria-label={`Show ${bar.tooltip}`}
+                    aria-label={`Show ${bar.sampleAnnounce}`}
                     onClick={() => setSelectedSampleKey(bar.key)}
                   >
                     <span>{bar.timeLabel}</span>
-                    <strong>{bar.valueLabel}</strong>
+                    <strong>{bar.trackValueLabel}</strong>
                   </button>
                 );
               })}

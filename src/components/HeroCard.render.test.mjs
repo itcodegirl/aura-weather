@@ -168,6 +168,47 @@ describe("HeroCard daily planning guidance", () => {
   });
 });
 
+describe("HeroCard UV panel", () => {
+  test("renders the computed UV panel (level, peak, guidance) when the reading exists", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ daily: { uvIndexMax: [7] } }),
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+
+    const panel = container.querySelector(".hero-uv-panel");
+    assert.ok(panel, "UV panel renders when the daily UV peak is present");
+    const text = panel.textContent || "";
+    assert.match(text, /UV High/, "shows the severity level word");
+    assert.match(text, /Peak UV 7\.0/, "shows the peak reading");
+    assert.match(text, /High UV today/, "shows the plain-language guidance line");
+
+    const marker = panel.querySelector(".hero-uv-marker");
+    assert.ok(marker, "the graded track carries a position marker");
+    assert.ok(
+      marker.style.left.startsWith("63.6"),
+      `marker sits at 7/11 ≈ 63.6% (got ${marker.style.left})`
+    );
+  });
+
+  test("drops the UV panel entirely when the UV reading is missing", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ daily: { uvIndexMax: [null] } }),
+        location: baseLocation,
+        unit: "F",
+      })
+    );
+    assert.equal(
+      container.querySelector(".hero-uv-panel"),
+      null,
+      "missing UV must drop the whole panel, not paint an empty graded bar"
+    );
+  });
+});
+
 describe("HeroCard trust pill confidence", () => {
   const MINUTE = 60_000;
 

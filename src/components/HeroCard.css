@@ -291,6 +291,77 @@
   flex-shrink: 0;
 }
 
+/* UV index panel — the hero's data-driven sun-exposure readout. Renders for
+   every UV level and drops entirely when the reading is missing. The graded
+   track is decorative (aria-hidden); the level, peak, and line carry the
+   information for assistive tech. */
+.hero-uv-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  max-width: 340px;
+}
+
+.hero-uv-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1;
+}
+
+.hero-uv-icon {
+  color: #f3c98a;
+  flex-shrink: 0;
+}
+
+.hero-uv-level {
+  font-weight: 600;
+  color: rgba(245, 242, 235, 0.95);
+}
+
+.hero-uv-peak {
+  margin-left: auto;
+  color: rgba(245, 242, 235, 0.62);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-uv-track {
+  position: relative;
+  height: 6px;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(
+    90deg,
+    #22c55e 0%,
+    #a3e635 20%,
+    #eab308 40%,
+    #f97316 60%,
+    #ef4444 78%,
+    #a855f7 100%
+  );
+  opacity: 0.85;
+}
+
+.hero-uv-marker {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(11, 22, 38, 0.85);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.hero-uv-line {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(245, 242, 235, 0.72);
+}
+
 /* Trust pill — freshness + confidence indicator */
 .hero-trust-pill {
   display: inline-flex;

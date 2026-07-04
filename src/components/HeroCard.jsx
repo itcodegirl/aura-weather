@@ -183,6 +183,7 @@ function HeroCard({
     hasClimateComparison,
     climateMessage,
     characteristicChips,
+    uvPanel,
     dailyGuidance,
     today,
     tempUnit,
@@ -402,6 +403,22 @@ function HeroCard({
                 );
               })}
             </ul>
+          )}
+          {uvPanel && (
+            <div className="hero-uv-panel">
+              <div className="hero-uv-head">
+                <Sun size={13} aria-hidden="true" className="hero-uv-icon" />
+                <span className="hero-uv-level">UV {uvPanel.level}</span>
+                <span className="hero-uv-peak">{uvPanel.peakLabel}</span>
+              </div>
+              <div className="hero-uv-track" aria-hidden="true">
+                <span
+                  className="hero-uv-marker"
+                  style={{ left: `${uvPanel.markerPct}%` }}
+                />
+              </div>
+              <p className="hero-uv-line">{uvPanel.line}</p>
+            </div>
           )}
           {ageLabel && (
             <div

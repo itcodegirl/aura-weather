@@ -121,12 +121,15 @@ function RainCard({
     const safePeakTimeLabel = formatHour(peak?.time);
     const safeNextRainTimeLabel = nextRain ? formatHour(nextRain.time) : "";
     const safePeakAmount = toFiniteNumber(peakAmount);
-    // Running rainfall accumulation across the window so the amount-mode
-    // readout can show inches "so far" rather than the per-hour value, which
-    // is often ~0.00 and reads as if nothing is being tracked. Summed in the
-    // source precip unit (same basis as `total`) and formatted per hour.
-    // Prefix sums via slice keep this a pure render (no mutable accumulator);
-    // the window is capped at 24 hours so the O(n^2) cost is trivial.
+    // Running rainfall accumulation across the window, shown as secondary
+    // "total so far" context beneath each hour's own amount. (Leading with
+    // the cumulative total made every hour after the rain stopped display an
+    // identical plateaued value — e.g. "0.42 in" repeated for 20+ hours —
+    // which read as stuck/duplicated data rather than a per-hour forecast.)
+    // Summed in the source precip unit (same basis as `total`) and formatted
+    // per hour. Prefix sums via slice keep this a pure render (no mutable
+    // accumulator); the window is capped at 24 hours so the O(n^2) cost is
+    // trivial.
     const cumulativeLabels = hours.map((_, index) =>
       formatPrecipitation(
         hours.slice(0, index + 1).reduce((sum, entry) => {
@@ -189,14 +192,12 @@ function RainCard({
         hour.time instanceof Date &&
         hour.time.getTime() === peak.time.getTime();
       // The sample strip and its readout are the "rain tracker": in amount
-      // mode they lead with the running accumulation (climbs across the row),
-      // with the per-hour amount as the secondary line. The chart bars above
-      // stay per-hour intensity (their tooltip/valueLabel are unchanged).
-      const trackValueLabel = isMissing
-        ? MISSING_PLACEHOLDER
-        : mode === "chance"
-          ? valueLabel
-          : cumulativeLabel;
+      // mode each chip leads with that hour's own precipitation, with the
+      // running accumulation ("total so far") as the secondary line. This
+      // keeps every hour distinct — leading with the cumulative total made
+      // all the post-rain hours show one identical plateaued value. The
+      // chart bars above stay per-hour intensity (tooltip/valueLabel too).
+      const trackValueLabel = valueLabel;
       const chanceMeta =
         prob >= 50
           ? "showers likely"
@@ -209,12 +210,12 @@ function RainCard({
         ? "data unavailable"
         : mode === "chance"
           ? chanceMeta
-          : `${valueLabel} this hour`;
+          : `${cumulativeLabel} total so far`;
       const sampleAnnounce = isMissing
         ? `${timeLabel} — data unavailable`
         : mode === "chance"
           ? `${timeLabel} — ${hour.probability}%`
-          : `${timeLabel} — ${cumulativeLabel} total, ${valueLabel} this hour`;
+          : `${timeLabel} — ${valueLabel} this hour, ${cumulativeLabel} total so far`;
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
@@ -505,7 +506,7 @@ function RainCard({
                 <span>
                   {mode === "chance"
                     ? "Rain confidence"
-                    : `running total · ${selectedSample.trackMeta}`}
+                    : selectedSample.trackMeta}
                 </span>
               </p>
             ) : null}

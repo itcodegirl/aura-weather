@@ -149,9 +149,10 @@ describe("RainCard touch-sample announcement contract (mirrors HourlyCard)", () 
   });
 });
 
-describe("RainCard amount-mode running total (tracks inches of rain)", () => {
+describe("RainCard amount-mode per-hour readout (with running total as context)", () => {
   function renderAndSwitchToInches() {
-    // Distinct per-hour amounts so the cumulative total visibly climbs.
+    // Constant per-hour amount: each chip should read the same per-hour
+    // value, while the "total so far" context climbs across the row.
     const hourly = buildHourly({
       rainChance: Array.from({ length: 24 }, () => 60),
       rainAmount: Array.from({ length: 24 }, () => 0.05),
@@ -170,7 +171,7 @@ describe("RainCard amount-mode running total (tracks inches of rain)", () => {
     return view;
   }
 
-  test("the chips themselves show a running total that climbs across the row", () => {
+  test("each chip shows that hour's own amount, not a plateauing running total", () => {
     const { container } = renderAndSwitchToInches();
     const samples = [...container.querySelectorAll(".rain-touch-sample")];
     if (samples.length < 4) return;
@@ -178,13 +179,14 @@ describe("RainCard amount-mode running total (tracks inches of rain)", () => {
     const chipValue = (sample) =>
       sample.querySelector("strong")?.textContent || "";
 
-    // 0.05 in/hr constant: chip 1 => 0.05, chip 2 => 0.10, chip 4 => 0.20.
+    // 0.05 in/hr constant: every chip reads the per-hour amount (0.05),
+    // rather than a cumulative total that would climb/plateau across the row.
     assert.equal(chipValue(samples[0]), "0.05 in");
-    assert.equal(chipValue(samples[1]), "0.10 in");
-    assert.equal(chipValue(samples[3]), "0.20 in");
+    assert.equal(chipValue(samples[1]), "0.05 in");
+    assert.equal(chipValue(samples[3]), "0.05 in");
   });
 
-  test("readout headline shows the running total, with per-hour as context", () => {
+  test("readout headline shows the per-hour amount, with running total as context", () => {
     const { container } = renderAndSwitchToInches();
     const samples = container.querySelectorAll(".rain-touch-sample");
     if (samples.length < 4) return;
@@ -196,32 +198,38 @@ describe("RainCard amount-mode running total (tracks inches of rain)", () => {
         ?.textContent || "";
 
     fireEvent.click(samples[0]);
-    assert.equal(headline(), "0.05 in", "headline is the running total");
+    assert.equal(headline(), "0.05 in", "headline is the per-hour amount");
     assert.match(
       context(),
-      /running total/,
-      "secondary line labels the headline as the running total"
+      /total so far/,
+      "secondary line labels the running total as 'total so far'"
     );
-    assert.match(context(), /0\.05 in this hour/, "per-hour amount is shown as context");
+    assert.match(context(), /0\.05 in total so far/, "running total is shown as context");
 
     fireEvent.click(samples[3]);
-    assert.equal(headline(), "0.20 in", "running total grows for later hours");
+    assert.equal(headline(), "0.05 in", "per-hour amount stays constant across hours");
+    assert.match(
+      context(),
+      /0\.20 in total so far/,
+      "running-total context grows for later hours"
+    );
   });
 
-  test("running total at the final hour equals the projected 24h total", () => {
+  test("running-total context at the final hour equals the projected 24h total", () => {
     const { container } = renderAndSwitchToInches();
     const samples = container.querySelectorAll(".rain-touch-sample");
     if (samples.length === 0) return;
 
     fireEvent.click(samples[samples.length - 1]);
-    const finalTotal =
-      container.querySelector(".rain-selected-sample strong")?.textContent || "";
+    const context =
+      container.querySelector(".rain-selected-sample span:last-child")
+        ?.textContent || "";
     const projected = getRainStatValue("Projected 24h total").textContent.trim();
 
-    assert.equal(
-      finalTotal,
-      projected,
-      `final running total "${finalTotal}" should equal projected total "${projected}"`
+    assert.match(
+      context,
+      new RegExp(`${projected.replace(/\./g, "\\.")} total so far`),
+      `final running total context "${context}" should include projected total "${projected}"`
     );
   });
 });

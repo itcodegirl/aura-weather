@@ -167,12 +167,11 @@ export function getSavedCities() {
     if (typeof window === "undefined" || !window.localStorage) return [];
     const saved = window.localStorage.getItem(SAVED_CITIES_KEY);
     if (!saved) return [];
-    const parsed = JSON.parse(saved);
-    const normalized = normalizeSavedCities(parsed);
-    if (!Array.isArray(parsed) || parsed.length !== normalized.length) {
-      window.localStorage.setItem(SAVED_CITIES_KEY, JSON.stringify(normalized));
-    }
-    return normalized;
+    // Pure read: normalize for display but do NOT write back here. A getter
+    // that mutates storage can throw QuotaExceededError on a render-time read
+    // (and the catch below would then wipe the whole list). Any legacy/dirty
+    // stored shape is re-persisted on the next persistSavedCities() call.
+    return normalizeSavedCities(JSON.parse(saved));
   } catch {
     try {
       window.localStorage.removeItem(SAVED_CITIES_KEY);
@@ -188,12 +187,10 @@ export function getRecentCities() {
     if (typeof window === "undefined" || !window.localStorage) return [];
     const saved = window.localStorage.getItem(RECENT_CITIES_KEY);
     if (!saved) return [];
-    const parsed = JSON.parse(saved);
-    const normalized = normalizeRecentCities(parsed);
-    if (!Array.isArray(parsed) || parsed.length !== normalized.length) {
-      window.localStorage.setItem(RECENT_CITIES_KEY, JSON.stringify(normalized));
-    }
-    return normalized;
+    // Pure read: normalize for display but do NOT write back here (see
+    // getSavedCities). Legacy/dirty stored shapes are re-persisted on the
+    // next persistRecentCities() call, not on read.
+    return normalizeRecentCities(JSON.parse(saved));
   } catch {
     try {
       window.localStorage.removeItem(RECENT_CITIES_KEY);

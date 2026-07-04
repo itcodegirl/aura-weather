@@ -267,6 +267,27 @@ describe("location persistence helpers", () => {
     assert.equal(store.has(STORAGE_KEYS.savedCities), false);
   });
 
+  test("getSavedCities is a pure read — it does not write back to storage", () => {
+    installWindow();
+    // A dirty-but-valid stored shape (a duplicate that normalization collapses).
+    // The old getter rewrote storage on every such read, which could throw
+    // QuotaExceededError on a render-time read and then wipe the whole list.
+    const dirty = JSON.stringify([
+      { lat: 35.6762, lon: 139.6503, name: "Tokyo", country: "Japan" },
+      { lat: 35.6762, lon: 139.6503, name: "Tokyo again", country: "Japan" },
+    ]);
+    store.set(STORAGE_KEYS.savedCities, dirty);
+
+    const result = getSavedCities();
+    assert.equal(result.length, 1, "read still normalizes (dedupes) for the caller");
+    assert.equal(result[0].name, "Tokyo");
+    assert.equal(
+      store.get(STORAGE_KEYS.savedCities),
+      dirty,
+      "the read must leave storage untouched (normalization re-persists on the next mutation)"
+    );
+  });
+
   test("normalizeLocationName trims and falls back when empty", () => {
     assert.equal(normalizeLocationName("  Chicago  "), "Chicago");
     assert.equal(normalizeLocationName("", "fallback"), "fallback");

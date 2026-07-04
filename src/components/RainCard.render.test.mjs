@@ -149,6 +149,83 @@ describe("RainCard touch-sample announcement contract (mirrors HourlyCard)", () 
   });
 });
 
+describe("RainCard amount-mode running total (tracks inches of rain)", () => {
+  function renderAndSwitchToInches() {
+    // Distinct per-hour amounts so the cumulative total visibly climbs.
+    const hourly = buildHourly({
+      rainChance: Array.from({ length: 24 }, () => 60),
+      rainAmount: Array.from({ length: 24 }, () => 0.05),
+    });
+    const view = render(
+      React.createElement(RainCard, {
+        weather: { hourly },
+        unit: "F",
+        dataUnit: "F",
+      })
+    );
+    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
+      (b) => b.textContent.trim() === "in"
+    );
+    fireEvent.click(inBtn);
+    return view;
+  }
+
+  test("the chips themselves show a running total that climbs across the row", () => {
+    const { container } = renderAndSwitchToInches();
+    const samples = [...container.querySelectorAll(".rain-touch-sample")];
+    if (samples.length < 4) return;
+
+    const chipValue = (sample) =>
+      sample.querySelector("strong")?.textContent || "";
+
+    // 0.05 in/hr constant: chip 1 => 0.05, chip 2 => 0.10, chip 4 => 0.20.
+    assert.equal(chipValue(samples[0]), "0.05 in");
+    assert.equal(chipValue(samples[1]), "0.10 in");
+    assert.equal(chipValue(samples[3]), "0.20 in");
+  });
+
+  test("readout headline shows the running total, with per-hour as context", () => {
+    const { container } = renderAndSwitchToInches();
+    const samples = container.querySelectorAll(".rain-touch-sample");
+    if (samples.length < 4) return;
+
+    const headline = () =>
+      container.querySelector(".rain-selected-sample strong")?.textContent || "";
+    const context = () =>
+      container.querySelector(".rain-selected-sample span:last-child")
+        ?.textContent || "";
+
+    fireEvent.click(samples[0]);
+    assert.equal(headline(), "0.05 in", "headline is the running total");
+    assert.match(
+      context(),
+      /running total/,
+      "secondary line labels the headline as the running total"
+    );
+    assert.match(context(), /0\.05 in this hour/, "per-hour amount is shown as context");
+
+    fireEvent.click(samples[3]);
+    assert.equal(headline(), "0.20 in", "running total grows for later hours");
+  });
+
+  test("running total at the final hour equals the projected 24h total", () => {
+    const { container } = renderAndSwitchToInches();
+    const samples = container.querySelectorAll(".rain-touch-sample");
+    if (samples.length === 0) return;
+
+    fireEvent.click(samples[samples.length - 1]);
+    const finalTotal =
+      container.querySelector(".rain-selected-sample strong")?.textContent || "";
+    const projected = getRainStatValue("Projected 24h total").textContent.trim();
+
+    assert.equal(
+      finalTotal,
+      projected,
+      `final running total "${finalTotal}" should equal projected total "${projected}"`
+    );
+  });
+});
+
 describe("RainCard roving tabindex + valid strip role", () => {
   test("exactly one chart bar is a tab stop, and ArrowRight moves it forward", () => {
     const { container } = renderWithRainyHours();

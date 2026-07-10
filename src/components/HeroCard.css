@@ -396,6 +396,25 @@
   background: #f3c98a;
 }
 
+/* No current reading to be confident about. Unlike saved/stale — which still
+   front real (if older) data and keep the blue chrome — the missing case must
+   not signal confidence on any channel, so the whole pill goes neutral slate,
+   matching the "Not reported" language used across the missing-data states.
+   The chrome selector is doubled (`.hero-trust-pill.hero-trust-pill--unavailable`)
+   on purpose: a second base `.hero-trust-pill` rule lower in this file (the warm
+   skin, ~line 785) has equal specificity and would otherwise win on source
+   order and repaint the chrome. The doubled class outranks it at every
+   breakpoint. */
+.hero-trust-pill.hero-trust-pill--unavailable {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+.hero-trust-pill--unavailable .hero-trust-dot {
+  background: #94a3b8;
+}
+
 /* Keep guidance items for the daily guidance that still shows on
    notice/watch conditions (rain-gear alerts etc.) */
 .hero-guidance {

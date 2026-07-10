@@ -1,4 +1,4 @@
-import { getWeather } from "../../domain/weatherCodes.js";
+import { getWeather, UNKNOWN_WEATHER } from "../../domain/weatherCodes.js";
 import {
   formatTemperatureValue,
   formatTemperatureWithUnit,
@@ -527,6 +527,12 @@ export function buildHeroData({
   const dailyGuidance = buildDailyGuidance(weather, unit);
 
   const isCurrentTempMissing = isMissingPlaceholder(currentTempDisplay);
+  // The headline condition is "missing" exactly when getWeather fell back to
+  // UNKNOWN_WEATHER (absent or unrecognised code) — the same descriptor whose
+  // label renders as "Not reported". Identity check, because getWeather returns
+  // that object by reference. Paired with isCurrentTempMissing so the hero can
+  // tell when either half of its headline is absent.
+  const isConditionMissing = info === UNKNOWN_WEATHER;
   const heroStatsHaveAnyMissing = [
     humidityDisplay,
     pressureDisplay,
@@ -544,6 +550,7 @@ export function buildHeroData({
     safeLocationCountry,
     currentTempDisplay,
     isCurrentTempMissing,
+    isConditionMissing,
     feelsLikeDisplay,
     dewPointDisplay,
     todayHighDisplay,

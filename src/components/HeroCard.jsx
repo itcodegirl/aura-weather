@@ -175,6 +175,7 @@ function HeroCard({
     safeLocationCountry,
     currentTempDisplay,
     isCurrentTempMissing,
+    isConditionMissing,
     feelsLikeDisplay,
     todayHighDisplay,
     todayLowDisplay,
@@ -206,16 +207,30 @@ function HeroCard({
   const ageMinutes = getAgeMinutes(freshnessAt, nowMs);
   const isStaleReading =
     Number.isFinite(ageMinutes) && ageMinutes >= HERO_STALE_AFTER_MINUTES;
-  const trustState = isCachedForecast
-    ? "saved"
-    : isStaleReading
-      ? "stale"
-      : "live";
-  const trustLabel = isCachedForecast
-    ? "Saved forecast"
-    : isStaleReading
-      ? "Confidence fading"
-      : "High confidence";
+  // Freshness answers "how recent is the fetch", not "is there anything to be
+  // confident about". When the hero's own headline is absent — the big
+  // temperature number OR the condition word (both render "Not reported") — a
+  // "High confidence" pill asserts certainty over data we don't have, the exact
+  // contradiction the trust contract exists to prevent. This consults only the
+  // two headline fields, never the lesser sub-readings: a present temp +
+  // condition with a missing humidity or dew point is still a confident current
+  // reading and stays "live". The absence outranks freshness; the honest age
+  // ("· just now") is kept so the pill says the absence is current, not stale.
+  const isHeadlineMissing = isCurrentTempMissing || isConditionMissing;
+  const trustState = isHeadlineMissing
+    ? "unavailable"
+    : isCachedForecast
+      ? "saved"
+      : isStaleReading
+        ? "stale"
+        : "live";
+  const trustLabel = isHeadlineMissing
+    ? "Current data unavailable"
+    : isCachedForecast
+      ? "Saved forecast"
+      : isStaleReading
+        ? "Confidence fading"
+        : "High confidence";
 
   // Climate-context loading and unavailable states used to render a
   // placeholder sentence between the temperature and the bottom block,

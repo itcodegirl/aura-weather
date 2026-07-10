@@ -447,7 +447,7 @@
   right: 0;
   top: -8px;
   font-size: 9px;
-  color: rgba(238, 241, 248, 0.62);
+  color: var(--text-dim);
   background: rgba(9, 18, 33, 0.6);
   padding: 0 4px;
   border-radius: 4px;
@@ -466,7 +466,7 @@
 
 .rain-detail-time {
   font-size: 12.5px;
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
 }
 
 .rain-detail-value {

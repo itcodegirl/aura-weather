@@ -3,8 +3,17 @@
   --font-display: "Inter", "Manrope", sans-serif;
 
   --text: #eef1f8;
-  --text-muted: rgba(238, 241, 248, 0.7);
-  --text-dim: rgba(238, 241, 248, 0.6);
+  /*
+   * Alphas are floored at the WCAG AA (4.5:1) threshold for small text
+   * against the worst-case backdrop this app can paint: the lightest
+   * sky gradient stop (#2e353f, Rime Fog) seen through the most opaque
+   * glass (--bg-tile, white @ 0.16), i.e. an effective rgb(79,85,94).
+   * Below ~0.742 alpha both tokens fail AA there. axe cannot catch this
+   * because the backdrop is a gradient, so the floor is enforced here.
+   *   --text-muted -> 5.57:1    --text-dim -> 4.63:1
+   */
+  --text-muted: rgba(238, 241, 248, 0.88);
+  --text-dim: rgba(238, 241, 248, 0.78);
 
   --content-max-width: 1460px;
   --content-gutter: 2.4rem;

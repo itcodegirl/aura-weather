@@ -3,7 +3,11 @@
 // Function evaluates. Everything is feature-detected and degrades gracefully
 // when alerts are unconfigured or unsupported (e.g. a non-installed browser).
 
-import { getSupabaseClient, isAlertsConfigured } from "./supabaseClient.js";
+import {
+  getSupabaseClient,
+  isAlertsConfigured,
+  ensureSession,
+} from "./supabaseClient.js";
 
 const VAPID_PUBLIC_KEY = (import.meta.env ?? {}).VITE_VAPID_PUBLIC_KEY ?? "";
 
@@ -51,17 +55,10 @@ async function getRegistration() {
   return navigator.serviceWorker.ready;
 }
 
-// Anonymous Supabase session — created once per device, reused thereafter.
-// Upgradeable to Sign in with Apple later without losing the rows.
-export async function ensureSession() {
-  const supabase = await getSupabaseClient();
-  if (!supabase) return null;
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) return session.user;
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error) throw error;
-  return data.user;
-}
+// The anonymous session now lives in supabaseClient.js: saved-city backup
+// needs the same identity, and a device should have exactly one. Re-exported
+// so existing importers of `ensureSession` from this module keep working.
+export { ensureSession };
 
 export async function getExistingSubscription() {
   const registration = await getRegistration();

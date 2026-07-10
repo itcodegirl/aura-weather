@@ -77,7 +77,17 @@ jobs:
       - name: Playwright E2E, accessibility, and visual checks
         run: npm run test:e2e -- --workers=1
 
+      # The Playwright run overwrites docs/screenshots in place. Nothing used
+      # to compare the result with what is committed, so the README images
+      # drifted for two weeks behind a fully green pipeline. This compares
+      # them with a tolerance (they are not byte-stable) and fails on any
+      # size change, which is always a real layout move.
+      - name: Committed README screenshots match the rendered app
+        run: npm run check:screenshots
+
       - name: Upload trust-contract screenshots
+        # Uploaded even when the check above fails — that artifact IS the
+        # regenerated set to review and commit.
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -193,3 +203,44 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+
+  record-trust-contract-demo:
+    # Manual only: trigger from the Actions tab ("Run workflow") when the
+    # missing-data UI has changed and docs/screenshots/trust-contract-demo.webm
+    # needs re-recording. Recording needs a Chromium plus Playwright's bundled
+    # ffmpeg, which is why this runs here rather than on a developer laptop.
+    # Download the `trust-contract-demo` artifact, watch the clip, copy it over
+    # docs/screenshots/trust-contract-demo.webm, and commit on a branch — the
+    # same review-by-a-human rule the visual baselines follow.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser, ffmpeg, and system dependencies
+        run: npx playwright install --with-deps chromium ffmpeg
+
+      - name: Install fonts so the recording matches the committed screenshots
+        run: sudo apt-get install -y fonts-liberation
+
+      - name: Record the trust-contract demo
+        run: npm run record:trust-contract-demo
+
+      - name: Upload the recording
+        uses: actions/upload-artifact@v4
+        with:
+          name: trust-contract-demo
+          path: docs/screenshots/trust-contract-demo.webm
+          if-no-files-found: error
+          retention-days: 14

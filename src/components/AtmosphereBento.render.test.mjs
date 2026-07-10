@@ -149,6 +149,10 @@ describe("AtmosphereBento", () => {
     const footnote = container.querySelector(".atm-footnote");
     assert.ok(footnote, "a footnote explains the dash when one is on screen");
     assert.match(footnote.textContent, /isn’t a zero/);
+    // These readings come from a forecast model, not a weather station on the
+    // corner. Naming the wrong source inside the honesty message is a lie.
+    assert.match(footnote.textContent, /the provider didn’t report/);
+    assert.doesNotMatch(footnote.textContent, /station/i);
   });
 
   test("omits the placeholder footnote when every reading is present", () => {

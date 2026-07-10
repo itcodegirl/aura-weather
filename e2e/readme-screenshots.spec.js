@@ -3,7 +3,11 @@ import {
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks.js";
-import { forceLazyPanelsToPaint } from "./support/visualCapture.js";
+import {
+  applyVisualOverrides,
+  bootstrapVisualState,
+  installFixedClock,
+} from "./support/visualCapture.js";
 
 /**
  * Captures the dashboard screenshots that the README references for
@@ -17,65 +21,13 @@ import { forceLazyPanelsToPaint } from "./support/visualCapture.js";
  * The two trust-contract shots (?mock=missing) are captured by the sibling
  * `trust-contract-screenshot.spec.js`. Run both via `npm run screenshots`.
  *
- * Time is frozen to 2026-04-21T12:00:00-05:00 (matches the visual-regression
- * baseline) so generated images stay byte-stable across runs.
+ * The clock is frozen, motion is disabled and fonts are pinned (see
+ * support/visualCapture.js), which removes the large sources of run-to-run
+ * variation but NOT all of it — sub-pixel rasterisation still moves a small
+ * number of pixels between runs. scripts/check-readme-screenshots.mjs compares
+ * these against the committed copies with a tolerance measured from real runs,
+ * rather than assuming byte equality.
  */
-const FIXED_TIMESTAMP_ISO = "2026-04-21T12:00:00-05:00";
-
-async function freezeTime(page) {
-  await page.addInitScript(({ fixedIso }) => {
-    window.localStorage.clear();
-    const fixedTime = new Date(fixedIso).valueOf();
-    const RealDate = Date;
-
-    class MockDate extends RealDate {
-      constructor(...args) {
-        if (args.length === 0) {
-          super(fixedTime);
-          return;
-        }
-        super(...args);
-      }
-
-      static now() {
-        return fixedTime;
-      }
-    }
-
-    Object.setPrototypeOf(MockDate, RealDate);
-    globalThis.Date = MockDate;
-  }, { fixedIso: FIXED_TIMESTAMP_ISO });
-}
-
-async function disableMotionAndPinFont(page) {
-  await forceLazyPanelsToPaint(page);
-  await page.addStyleTag({
-    content: `
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-        caret-color: transparent !important;
-      }
-      :root {
-        --font-sans: Arial, sans-serif !important;
-        --font-display: Arial, sans-serif !important;
-      }
-    `,
-  });
-}
-
-async function bootstrapDashboard(page, context, viewport) {
-  await page.setViewportSize(viewport);
-  await mockDeniedGeolocation(context);
-  await installOpenMeteoMocks(page);
-  await freezeTime(page);
-
-  await page.goto("/");
-  await expect(page.getByRole("main")).toBeVisible();
-  await expect(page.locator(".bento-chart .chart-title")).toBeVisible();
-  await expect(page.locator(".bento-storm .storm-title")).toBeVisible();
-  await disableMotionAndPinFont(page);
-}
 
 function buildAlertFeature(index) {
   const events = [
@@ -107,7 +59,7 @@ function buildAlertFeature(index) {
 
 test.describe("README dashboard screenshots", () => {
   test("captures the desktop dashboard hero", async ({ page, context }) => {
-    await bootstrapDashboard(page, context, { width: 1366, height: 900 });
+    await bootstrapVisualState(page, context, { width: 1366, height: 900 });
     await page.screenshot({
       path: "docs/screenshots/dashboard-desktop.png",
       fullPage: true,
@@ -115,7 +67,7 @@ test.describe("README dashboard screenshots", () => {
   });
 
   test("captures the mobile stacked dashboard", async ({ page, context }) => {
-    await bootstrapDashboard(page, context, { width: 390, height: 844 });
+    await bootstrapVisualState(page, context, { width: 390, height: 844 });
     await page.screenshot({
       path: "docs/screenshots/dashboard-mobile.png",
       fullPage: true,
@@ -138,13 +90,14 @@ test.describe("README dashboard screenshots", () => {
       });
     });
 
-    await freezeTime(page);
+    await installFixedClock(page);
     await page.goto("/");
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.locator(".bento-alerts")).toBeVisible();
-    await disableMotionAndPinFont(page);
+    await applyVisualOverrides(page);
 
-    // Crop to the alerts card so the overflow chip is the focal point.
+    // Crop to the alerts card so the overflow chip is the focal point. A
+    // single card does not need the full-page mount waits.
     const alertsCard = page.locator(".bento-alerts");
     await alertsCard.screenshot({
       path: "docs/screenshots/alert-overflow.png",

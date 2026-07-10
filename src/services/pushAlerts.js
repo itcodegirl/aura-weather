@@ -7,6 +7,7 @@ import {
   getSupabaseClient,
   isAlertsConfigured,
   ensureSession,
+  getSessionUser,
 } from "./supabaseClient.js";
 
 const VAPID_PUBLIC_KEY = (import.meta.env ?? {}).VITE_VAPID_PUBLIC_KEY ?? "";
@@ -121,10 +122,13 @@ export async function disablePush() {
   }
 }
 
+// Runs on every dashboard mount, via useRainAlerts. It must NOT create a
+// session: a visitor who never enabled alerts owns no rules, and signing them
+// in anonymously to discover that wrote an auth.users row per visitor.
 export async function listRules() {
   const supabase = await getSupabaseClient();
   if (!supabase) return [];
-  const user = await ensureSession();
+  const user = await getSessionUser(supabase);
   if (!user) return [];
   const { data } = await supabase
     .from("alert_rules")

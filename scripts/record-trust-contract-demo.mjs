@@ -73,6 +73,10 @@ function startDevServer() {
       cwd: projectRoot,
       stdio: ["ignore", "pipe", "pipe"],
       shell: process.platform === "win32",
+      // npm spawns vite as a grandchild. Killing npm alone orphans vite, whose
+      // open pipes keep this process — and the CI step running it — alive
+      // forever. A detached child owns a process group we can signal whole.
+      detached: process.platform !== "win32",
     }
   );
 
@@ -107,7 +111,12 @@ async function record() {
   log(`loading ${BASE_URL}/?mock=missing (trust-contract frame) ...`);
   await page.goto(`${BASE_URL}/?mock=missing`, { waitUntil: "domcontentloaded" });
   // Wait long enough for the user to read the missing-data state
-  await page.waitForSelector(".hero-stats-note", { timeout: 5_000 });
+  // The hero's "some readings unavailable" note retired when those readings
+  // moved into the Atmosphere bento, so this selector never matched and the
+  // step always threw. Anchor on the missing-data cue that still exists.
+  await page.waitForSelector('span[aria-label="No data available"]', {
+    timeout: 15_000,
+  });
   await page.waitForTimeout(2000);
 
   await context.close();
@@ -128,13 +137,27 @@ async function record() {
   rmSync(tempVideoDir, { recursive: true, force: true });
 }
 
+function stopDevServer(server) {
+  if (!server?.pid) return;
+  try {
+    if (process.platform === "win32") {
+      server.kill();
+    } else {
+      // Negative pid signals the whole process group, so vite dies with npm.
+      process.kill(-server.pid, "SIGTERM");
+    }
+  } catch {
+    // Already gone.
+  }
+}
+
 async function main() {
   const server = startDevServer();
   try {
     await waitForServer(`${BASE_URL}/`);
     await record();
   } finally {
-    server.kill();
+    stopDevServer(server);
   }
 }
 

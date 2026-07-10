@@ -56,12 +56,32 @@ export async function ensureSession(client) {
   const supabase = client ?? (await getSupabaseClient());
   if (!supabase) return null;
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (session?.user) return session.user;
+  const existing = await getSessionUser(supabase);
+  if (existing) return existing;
 
   const { data, error } = await supabase.auth.signInAnonymously();
   if (error) throw error;
   return data.user;
+}
+
+/**
+ * This device's user if it already has a session, otherwise null. Never signs
+ * anyone in.
+ *
+ * Reads must use this rather than {@link ensureSession}. A visitor who has
+ * never enabled alerts or started a backup owns no rows, and asking "what are
+ * my rows?" should not conjure an identity in order to answer "none". Doing so
+ * minted an `auth.users` row for every visitor, which is how the project came
+ * to hold dozens of anonymous users against a handful of alert rules.
+ *
+ * An identity is created only when the user asks for something that persists.
+ */
+export async function getSessionUser(client) {
+  const supabase = client ?? (await getSupabaseClient());
+  if (!supabase) return null;
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user ?? null;
 }

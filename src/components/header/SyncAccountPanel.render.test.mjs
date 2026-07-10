@@ -185,4 +185,35 @@ describe("SyncAccountPanel makes no cross-device promise", () => {
       "an un-backed-up device must not be told its cities are backed up"
     );
   });
+
+  test("a failed stop surfaces the cause and never reads as a clean stop", () => {
+    // The state buildStopBackupState produces when the cloud delete rejects.
+    render(
+      React.createElement(SyncAccountPanel, {
+        syncConnected: false,
+        syncState: {
+          status: "error",
+          message: "Backup stopped, cloud copy remains",
+          error: "permission denied for table saved_cities",
+          lastSyncedAt: null,
+        },
+        onCreateSyncAccount: noop,
+        onDisconnectSyncAccount: noop,
+        onSyncNow: noop,
+      })
+    );
+
+    // The error force-opens the panel, so the user sees the cause without
+    // having to expand anything.
+    const alert = screen.getByRole("alert");
+    assert.match(alert.textContent, /permission denied for table saved_cities/);
+
+    const status = document.querySelector(".sync-account-status");
+    assert.equal(status.textContent, "Backup stopped, cloud copy remains");
+    assert.notEqual(
+      status.textContent,
+      "Backup stopped",
+      "a surviving cloud row must not be reported as a completed stop"
+    );
+  });
 });

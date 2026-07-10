@@ -149,3 +149,30 @@ export async function runStopBackupSequence({
 
   await deleteBackup();
 }
+
+/**
+ * The sync state shown after "Stop backup", given whatever went wrong.
+ *
+ * The message is the panel's most prominent line, so it must not overstate
+ * what happened. A plain "Backup stopped" is true only when the cloud row was
+ * actually removed; if the delete failed, the row is still live and the
+ * headline has to say so rather than leaving that fact to the error text
+ * underneath it. Extracted from the hook so both branches are tested.
+ */
+export function buildStopBackupState(deleteError) {
+  if (deleteError) {
+    return {
+      status: "error",
+      message: "Backup stopped, cloud copy remains",
+      error: deleteError,
+      lastSyncedAt: null,
+    };
+  }
+
+  return {
+    status: "idle",
+    message: "Backup stopped",
+    error: null,
+    lastSyncedAt: null,
+  };
+}

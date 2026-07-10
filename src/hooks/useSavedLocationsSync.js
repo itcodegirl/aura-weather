@@ -9,6 +9,7 @@ import {
   getSyncErrorMessage,
 } from "../services/savedLocationsSync";
 import {
+  buildStopBackupState,
   deserializeSyncAccount,
   formatPullSuccessMessage,
   getSavedCitiesSignature,
@@ -254,17 +255,16 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     } catch (syncError) {
       deleteError = getSyncErrorMessage(
         syncError,
-        "Backup stopped on this device, but the cloud copy could not be removed."
+        "The cloud copy could not be removed. Your saved cities are still on this device."
       );
     }
 
+    // Local state clears either way: stranding the user in a backed-up state
+    // they asked to leave is worse than a row only they can read. Starting the
+    // backup again lands on the same anonymous user, so a failed delete can be
+    // retried by stopping it once more.
     setSyncAccount(null);
-    setSyncState({
-      status: deleteError ? "error" : "idle",
-      message: "Backup stopped",
-      error: deleteError,
-      lastSyncedAt: null,
-    });
+    setSyncState(buildStopBackupState(deleteError));
   }, [setSyncAccount]);
 
   const syncSavedCitiesNow = useCallback(async () => {

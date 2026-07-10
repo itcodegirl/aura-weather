@@ -165,7 +165,12 @@ export async function deleteSavedLocationsBackup(options = {}) {
 
   const { error } = await supabase.from(TABLE).delete().eq("user_id", user.id);
   if (error) {
-    throw new Error(getErrorMessage(error, "Could not remove your backup."));
+    // The panel shows this verbatim beneath its headline. The headline states
+    // the outcome ("cloud copy remains"); this states the cause, using the
+    // database's own words when it gave us any.
+    throw new Error(
+      getErrorMessage(error, "The cloud copy could not be removed.")
+    );
   }
 }
 

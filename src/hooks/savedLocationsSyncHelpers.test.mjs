@@ -6,6 +6,7 @@ import {
   formatPullSuccessMessage,
   getSavedCitiesSignature,
   mergeSavedCities,
+  buildStopBackupState,
   runStopBackupSequence,
   serializeSyncAccount,
 } from "./savedLocationsSyncHelpers.js";
@@ -272,5 +273,39 @@ describe("runStopBackupSequence", () => {
       }),
       /permission denied/
     );
+  });
+});
+
+describe("buildStopBackupState", () => {
+  test("reports a clean stop when the cloud row was removed", () => {
+    assert.deepEqual(buildStopBackupState(null), {
+      status: "idle",
+      message: "Backup stopped",
+      error: null,
+      lastSyncedAt: null,
+    });
+  });
+
+  test("says the cloud copy remains when the delete failed", () => {
+    const state = buildStopBackupState("permission denied for table saved_cities");
+
+    // The headline is the panel's most prominent line. A bare "Backup stopped"
+    // here would assert a removal that did not happen, leaving the truth to
+    // the error text underneath it.
+    assert.equal(state.status, "error");
+    assert.equal(state.message, "Backup stopped, cloud copy remains");
+    assert.equal(state.error, "permission denied for table saved_cities");
+  });
+
+  test("never claims a clean stop while carrying an error", () => {
+    for (const failure of ["network down", "permission denied", "boom"]) {
+      const state = buildStopBackupState(failure);
+      assert.notEqual(
+        state.message,
+        "Backup stopped",
+        "an unremoved cloud copy must not read as a completed stop"
+      );
+      assert.equal(state.status, "error");
+    }
   });
 });

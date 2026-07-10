@@ -1,5 +1,6 @@
 import { parseCoordinates } from "../utils/weatherUnits.js";
-import { MAX_SAVED_CITIES, normalizeLocationName } from "./useLocation.js";
+import { MAX_SAVED_CITIES } from "../domain/savedCities.js";
+import { normalizeLocationName } from "./useLocation.js";
 
 /**
  * Parses a stored sync-account string. Returns null when the value

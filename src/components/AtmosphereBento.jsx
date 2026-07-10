@@ -1,7 +1,8 @@
 // src/components/AtmosphereBento.jsx
 import { memo, useId } from "react";
 import { Wind, Droplets, Sun, Eye, Gauge, Thermometer } from "lucide-react";
-import { getAqiStatus, getUvStatus } from "../domain/exposure";
+import { getAqiStatus, getAqiGuidance, getUvStatus } from "../domain/exposure";
+import { InfoDrawer } from "./ui";
 import { formatWindSpeed, windDirectionName, classifyWind } from "../domain/wind";
 import { classifyComfort } from "../domain";
 import { convertTemp } from "../utils/temperature";
@@ -41,6 +42,75 @@ function ArcGauge({ fraction, color, ariaLabel, missing }) {
   );
 }
 
+/*
+ * Every tile was a bare gauge: a number, a word, a coloured arc, and no way to
+ * find out what any of it meant. Dew point and pressure in particular are
+ * readings most people cannot act on without being told what they imply.
+ *
+ * The explanation is opt-in, behind the same InfoDrawer that MetricCard already
+ * uses elsewhere in this codebase, so the scannable surface stays scannable.
+ * Each entry says what the reading is and what a reader should do with it —
+ * enough to teach, short enough not to become a second dashboard.
+ */
+const TILE_HELP = {
+  humidity: {
+    title: "Humidity",
+    body: "The share of moisture the air is holding, as a percentage of the most it could hold at this temperature. High humidity slows how fast sweat evaporates, which is why a humid 80° feels hotter than a dry one.",
+  },
+  uv: {
+    title: "UV index",
+    body: "How strong the sun's ultraviolet radiation is right now, from 0 to 11+. At 3 or above, unprotected skin can start to burn — 6 to 7 in under half an hour for fair skin. Shade, a hat and sunscreen all move the number that matters.",
+  },
+  aqi: {
+    title: "Air quality index",
+    body: "The US EPA's index for how polluted the air is, from 0 to 500. Below 50 is clean; above 100, people with asthma or heart and lung conditions start to feel it; above 150 it affects everyone. The line under the number says what to do about it.",
+  },
+  pressure: {
+    title: "Barometric pressure",
+    body: "The weight of the atmosphere overhead. The absolute number matters less than which way it is moving: falling pressure usually means unsettled weather approaching, rising pressure means it is clearing.",
+  },
+  wind: {
+    title: "Wind",
+    body: "Sustained speed with the direction it blows from, plus the peak gust. Gusts are what knock over garden furniture and make cycling unpleasant, so they are worth more of your attention than the sustained figure.",
+  },
+  sun: {
+    title: "Sunrise and sunset",
+    body: "Today's sunrise and sunset for this location, with the arc showing where the sun currently sits between them. Useful light lingers for roughly half an hour past sunset.",
+  },
+  dewPoint: {
+    title: "Dew point",
+    body: "The temperature the air would need to cool to before moisture condenses out of it. It tracks how muggy the air feels far better than humidity does: below 55° feels dry, above 65° feels sticky, above 70° feels oppressive whatever the humidity reads.",
+  },
+  visibility: {
+    title: "Visibility",
+    body: "How far you can see before haze, fog or precipitation obscures things. Ten miles is a clear day. Under about a mile is fog dense enough to slow driving.",
+  },
+};
+
+/*
+ * The label row: icon, text, and an optional help drawer pinned to the right.
+ * `dim` preserves the missing-data variant the AQI tile uses.
+ */
+function TileLabel({ icon: Icon, help, dim = false, children }) {
+  return (
+    <div className="atm-label-row">
+      <div className={`atm-label${dim ? " atm-label--dim" : ""}`}>
+        <Icon size={13} aria-hidden="true" />
+        {children}
+      </div>
+      {help && (
+        <InfoDrawer
+          label={`About ${help.title}`}
+          title={help.title}
+          className="atm-help-drawer"
+        >
+          {help.body}
+        </InfoDrawer>
+      )}
+    </div>
+  );
+}
+
 function HumidityTile({ humidity }) {
   const h = toFiniteNumber(humidity);
   const hasDat = h !== null;
@@ -50,10 +120,9 @@ function HumidityTile({ humidity }) {
     : "Unavailable";
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
-      <div className="atm-label">
-        <Droplets size={13} aria-hidden="true" />
+      <TileLabel icon={Droplets} help={TILE_HELP.humidity}>
         Humidity
-      </div>
+      </TileLabel>
       <ArcGauge
         fraction={fraction}
         color="#7fb2e8"
@@ -75,10 +144,9 @@ function UvTile({ uvIndex }) {
   const { label, color } = getUvStatus(uv);
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
-      <div className="atm-label">
-        <Sun size={13} aria-hidden="true" />
+      <TileLabel icon={Sun} help={TILE_HELP.uv}>
         UV index
-      </div>
+      </TileLabel>
       <ArcGauge
         fraction={fraction}
         color={color}
@@ -100,10 +168,9 @@ function AqiTile({ aqi }) {
   const { label, color } = getAqiStatus(aqiVal);
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
-      <div className={`atm-label${hasDat ? "" : " atm-label--dim"}`}>
-        <Wind size={13} aria-hidden="true" />
+      <TileLabel icon={Wind} help={TILE_HELP.aqi} dim={!hasDat}>
         Air quality
-      </div>
+      </TileLabel>
       <ArcGauge
         fraction={fraction}
         color={color}
@@ -120,6 +187,12 @@ function AqiTile({ aqi }) {
         </span>
         <span className="atm-sub">{hasDat ? label : "Unavailable"}</span>
       </div>
+      {/*
+        The number and its EPA label answer "how bad is it". This answers
+        "so what do I do", which is the question a reader actually has. Only
+        rendered when there is a reading: a missing AQI is not a safe AQI.
+      */}
+      {hasDat && <p className="atm-guidance">{getAqiGuidance(aqiVal)}</p>}
       {!hasDat && <p className="atm-missing-note">Not reported here</p>}
     </div>
   );
@@ -137,10 +210,9 @@ function PressureTile({ pressureHpa, unit }) {
   const displayUnit = unit === "C" ? "hPa" : "in";
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
-      <div className="atm-label">
-        <Gauge size={13} aria-hidden="true" />
+      <TileLabel icon={Gauge} help={TILE_HELP.pressure}>
         Pressure
-      </div>
+      </TileLabel>
       <ArcGauge
         fraction={fraction}
         color="#a88cf5"
@@ -173,10 +245,9 @@ function WindTile({ weather, unit }) {
   return (
     <div className="atm-tile atm-tile--wide">
       <div className="atm-tile-row">
-        <div className="atm-label">
-          <Wind size={13} aria-hidden="true" />
+        <TileLabel icon={Wind} help={TILE_HELP.wind}>
           Wind
-        </div>
+        </TileLabel>
         <span className="atm-sub">{strength}</span>
       </div>
       <div className="atm-wind-body">
@@ -237,10 +308,9 @@ function SunTile({ sunrise, sunset }) {
   return (
     <div className="atm-tile atm-tile--wide">
       <div className="atm-tile-row">
-        <div className="atm-label">
-          <Sun size={13} aria-hidden="true" />
+        <TileLabel icon={Sun} help={TILE_HELP.sun}>
           Sun
-        </div>
+        </TileLabel>
         {hasDat && <span className="atm-sub atm-sub--sm">daylight arc</span>}
       </div>
       <svg
@@ -279,10 +349,9 @@ function DewPointTile({ dewPoint, unit }) {
   return (
     <div className="atm-tile atm-tile--wide">
       <div className="atm-tile-row">
-        <div className="atm-label">
-          <Thermometer size={13} aria-hidden="true" />
+        <TileLabel icon={Thermometer} help={TILE_HELP.dewPoint}>
           Dew point · comfort
-        </div>
+        </TileLabel>
         {comfort && <span className="atm-sub">{comfort.level}</span>}
       </div>
       <div className="atm-dewpoint-body">
@@ -328,10 +397,9 @@ function VisibilityTile({ visibility, unit }) {
     : 0;
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
-      <div className="atm-label">
-        <Eye size={13} aria-hidden="true" />
+      <TileLabel icon={Eye} help={TILE_HELP.visibility}>
         Visibility
-      </div>
+      </TileLabel>
       <svg
         viewBox="0 0 120 38"
         className="atm-vis-svg"

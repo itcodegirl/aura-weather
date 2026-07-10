@@ -4,7 +4,7 @@ import { InfoDrawer } from "../ui";
 import { useRadarFrames } from "../../hooks/useRadarFrames.js";
 import { useRadarAnimation } from "../../hooks/useRadarAnimation.js";
 import { useTimeNow } from "../../hooks/useTimeNow.js";
-import { RADAR_FRAME_KIND, RADAR_STATUS } from "../../api/rainviewer.js";
+import { RADAR_FRAME_KIND, RADAR_STATUS } from "../../domain/radar.js";
 import { parseCoordinates } from "../../utils/weatherUnits.js";
 import RadarMap from "./RadarMap.jsx";
 import RadarTimeline from "./RadarTimeline.jsx";

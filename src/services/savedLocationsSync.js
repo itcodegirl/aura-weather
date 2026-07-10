@@ -17,7 +17,7 @@
 // what it does. It was removed rather than kept as decoration.
 
 import { parseCoordinates } from "../utils/weatherUnits.js";
-import { MAX_SAVED_CITIES } from "../hooks/useLocation.js";
+import { MAX_SAVED_CITIES } from "../domain/savedCities.js";
 import { getSupabaseClient, ensureSession } from "./supabaseClient.js";
 
 const TABLE = "saved_cities";

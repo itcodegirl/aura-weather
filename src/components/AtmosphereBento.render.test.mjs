@@ -170,3 +170,63 @@ describe("AtmosphereBento", () => {
     );
   });
 });
+
+describe("AtmosphereBento explains its readings", () => {
+  test("every tile carries a help drawer", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 42,
+        unit: "F",
+      })
+    );
+
+    // Eight tiles: humidity, UV, AQI, pressure, wind, sun, dew point,
+    // visibility. Each was previously a bare gauge with no way to learn what
+    // it meant.
+    assert.equal(container.querySelectorAll(".atm-help-drawer").length, 8);
+  });
+
+  test("the help is opt-in, not printed on the tile face", () => {
+    render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 42,
+        unit: "F",
+      })
+    );
+
+    // The scannable surface has to stay scannable: the explanation lives
+    // behind the drawer trigger, closed until asked for.
+    assert.equal(screen.queryByText(/moisture condenses out of it/i), null);
+    assert.ok(screen.getByRole("button", { name: "About Dew point" }));
+  });
+
+  test("air quality says what to do, not just how bad it is", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 156,
+        unit: "F",
+      })
+    );
+
+    const guidance = container.querySelector(".atm-guidance");
+    assert.ok(guidance, "an unhealthy reading carries an action line");
+    assert.match(guidance.textContent, /cut back on long or intense outdoor/i);
+  });
+
+  test("a missing air-quality reading offers no reassurance", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: null,
+        unit: "F",
+      })
+    );
+
+    // Absent AQI must not render "Air is clean. No precautions needed."
+    assert.equal(container.querySelector(".atm-guidance"), null);
+    assert.ok(screen.getByText("Not reported here"));
+  });
+});

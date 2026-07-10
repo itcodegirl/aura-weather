@@ -153,15 +153,30 @@ export async function applyVisualOverrides(page) {
 
 /**
  * The supplemental panels mount through Suspense + an idle callback, so the
- * page keeps growing after `main` becomes visible. Waiting for the last two
- * groups is what stops a full-page screenshot from capturing a transient,
- * shorter layout.
+ * page keeps growing after `main` becomes visible.
+ *
+ * Waiting for the section HEADINGS is not enough, and quietly was not: the
+ * headings live in SupplementalWeatherPanels' static markup, while the cards
+ * beneath them are lazy chunks (lazyPanels.js). A capture could satisfy both
+ * heading waits and still photograph an empty "Atmospheric Conditions" section
+ * — which is exactly what happened once the bento grew eight help drawers and
+ * its chunk took a moment longer to arrive. The dashboard screenshot came out
+ * 749px shorter with the bento simply absent.
+ *
+ * So wait for the CONTENT of the last panels to exist, not their labels.
  */
 async function waitForSupplementalPanels(page) {
   await expect(
     page.getByRole("heading", { name: "Atmospheric Conditions" })
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Week Ahead" })).toBeVisible();
+
+  // The bento's own tiles, not the heading above them.
+  await expect(page.locator(".bento-atm .atm-tile").first()).toBeVisible();
+  await page.waitForFunction(
+    () => document.querySelectorAll(".bento-atm .atm-tile").length === 8
+  );
+  await expect(page.locator(".bento-forecast").first()).toBeVisible();
 }
 
 export async function bootstrapVisualState(page, context, viewport) {

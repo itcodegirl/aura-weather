@@ -250,7 +250,7 @@ describe("fetchAirQuality", () => {
       }
       return createJsonResponse({
         current: {
-          european_aqi: 42,
+          us_aqi: 42,
         },
       });
     };
@@ -261,6 +261,24 @@ describe("fetchAirQuality", () => {
 
     assert.equal(result, 42);
     assert.equal(requestCount, 2);
+  });
+
+  test("requests the US EPA index, not the European one", async () => {
+    // The app classifies AQI with EPA breakpoints and draws the gauge as a
+    // fraction of 500. european_aqi is a different index on a different scale
+    // (0-20 good, 60-80 poor), so feeding it to those thresholds understated
+    // the risk on the only health-relevant reading in the app.
+    let requestedUrl = "";
+    globalThis.fetch = async (url) => {
+      requestedUrl = String(url);
+      return createJsonResponse({ current: { us_aqi: 156 } });
+    };
+
+    const result = await fetchAirQuality(41.8781, -87.6298);
+
+    assert.match(requestedUrl, /current=us_aqi/);
+    assert.doesNotMatch(requestedUrl, /european_aqi/);
+    assert.equal(result, 156);
   });
 });
 

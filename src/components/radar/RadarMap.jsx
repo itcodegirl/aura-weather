@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { radarTileUrlTemplate, RADAR_MAX_ZOOM } from "../../api/rainviewer.js";
+import { radarTileUrlTemplate, RADAR_MAX_ZOOM } from "../../domain/radar.js";
 
 // Carto Positron raster — key-less, clean light basemap that reads as a
 // calm inset beneath Aura's dark glass shell. `{r}` lets Leaflet request

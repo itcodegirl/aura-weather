@@ -310,9 +310,15 @@ function buildHeroUvPanel(weather) {
 function buildWindGuidance(weather, unit) {
   const windSpeed = toFiniteNumber(weather?.current?.windSpeed);
   const windGust = toFiniteNumber(weather?.current?.windGust);
-  const strongestWind = Math.max(windSpeed ?? 0, windGust ?? 0);
 
-  if (windSpeed === null && windGust === null) {
+  // Validate, then compute. The old order derived `strongestWind` from
+  // `Math.max(windSpeed ?? 0, windGust ?? 0)` above this guard, which reads
+  // like a fabricated 0 mph waiting to happen. It never was one: the guard
+  // returned first when both readings were missing, and with one present the
+  // `?? 0` could only lose to the real value, wind being non-negative. This
+  // order means nobody has to reconstruct that argument to trust the function.
+  const readings = [windSpeed, windGust].filter((reading) => reading !== null);
+  if (readings.length === 0) {
     return {
       kind: "wind",
       tone: "unavailable",
@@ -321,6 +327,8 @@ function buildWindGuidance(weather, unit) {
       detail: "Surface wind data did not return",
     };
   }
+
+  const strongestWind = Math.max(...readings);
 
   if (strongestWind >= GUSTY_WIND_MPH) {
     return {

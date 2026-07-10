@@ -16,30 +16,28 @@
 // tagged distinctly from observed (past) frames so the UI can keep the
 // two visually separate and never present a forecast frame as observed.
 
+import {
+  RADAR_FRAME_KIND,
+  RADAR_STATUS,
+} from "../domain/radar.js";
+
 export const RAINVIEWER_WEATHER_MAPS_URL =
   "https://api.rainviewer.com/public/weather-maps.json";
 
-// Free / personal tier render options: Universal Blue (color 4),
-// smoothing on, snow on. Higher zoom, extra colour schemes, and nowcast
-// frames are gated on paid tiers.
-export const RADAR_COLOR_SCHEME = 4; // Universal Blue
-export const RADAR_SMOOTH = 1;
-export const RADAR_SNOW = 1;
-export const RADAR_MAX_ZOOM = 7; // free-tier radar zoom ceiling
-
 const FETCH_TIMEOUT_MS = 10_000;
 
-export const RADAR_FRAME_KIND = Object.freeze({
-  PAST: "past",
-  NOWCAST: "nowcast",
-});
-
-export const RADAR_STATUS = Object.freeze({
-  LOADING: "loading",
-  READY: "ready",
-  EMPTY: "empty",
-  ERROR: "error",
-});
+// Radar vocabulary lives in the domain layer so the radar components can read
+// it without importing from here. Re-exported for this module’s existing
+// consumers and tests.
+export {
+  RADAR_COLOR_SCHEME,
+  RADAR_SMOOTH,
+  RADAR_SNOW,
+  RADAR_MAX_ZOOM,
+  RADAR_FRAME_KIND,
+  RADAR_STATUS,
+  radarTileUrlTemplate,
+} from "../domain/radar.js";
 
 // Demo / QA overrides, read from the URL (`?radar=error|empty|loading|
 // nocoverage`). They force an honest degraded state so each path can be
@@ -128,21 +126,6 @@ export function deriveRadarState(payload) {
     frames: parsed.frames,
     status: RADAR_STATUS.READY,
   };
-}
-
-/**
- * Builds the Leaflet tile-URL template for one radar frame. The tile
- * coordinate scheme is identical for the 256 and 512 pixel variants —
- * 512 simply returns a double-resolution image for the same {z}/{x}/{y}
- * — so callers keep Leaflet's `tileSize` at 256 (aligned with the base
- * map) and pass `retina: true` only to request the sharper image.
- */
-export function radarTileUrlTemplate(host, frame, { retina = false } = {}) {
-  if (!host || !frame?.path) {
-    return null;
-  }
-  const pixelSize = retina ? 512 : 256;
-  return `${host}${frame.path}/${pixelSize}/{z}/{x}/{y}/${RADAR_COLOR_SCHEME}/${RADAR_SMOOTH}_${RADAR_SNOW}.png`;
 }
 
 function getSignal(externalSignal) {

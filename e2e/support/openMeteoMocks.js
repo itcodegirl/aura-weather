@@ -199,7 +199,7 @@ export async function installOpenMeteoMocks(page) {
       contentType: "application/json",
       body: JSON.stringify({
         current: {
-          european_aqi: 42,
+          us_aqi: 42,
         },
       }),
     });

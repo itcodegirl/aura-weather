@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { MAX_SAVED_CITIES } from "../domain/savedCities.js";
 import { reverseGeocode } from "../api/index.js";
 import { parseCoordinates } from "../utils/weatherUnits.js";
 
@@ -25,7 +26,8 @@ export const CURRENT_LOCATION_UNNAMED_NOTICE =
 const LAST_LOCATION_KEY = "aura-weather-last-location";
 const SAVED_CITIES_KEY = "aura-weather-saved-cities";
 const RECENT_CITIES_KEY = "aura-weather-recent-cities";
-export const MAX_SAVED_CITIES = 6;
+// Product policy; lives in the domain layer so services can read it too.
+export { MAX_SAVED_CITIES } from "../domain/savedCities.js";
 export const MAX_RECENT_CITIES = 4;
 const LAST_LOCATION_TTL_DAYS = 30;
 const GEOLOCATION_TIMEOUT_MS = 5000;

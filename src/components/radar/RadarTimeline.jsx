@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
-import { RADAR_FRAME_KIND } from "../../api/rainviewer.js";
+import { RADAR_FRAME_KIND } from "../../domain/radar.js";
 
 function formatClock(unixSeconds) {
   const date = new Date(unixSeconds * 1000);

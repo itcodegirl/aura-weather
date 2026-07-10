@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { getAqiStatus, getUvStatus } from "./exposure.js";
+import { getAqiStatus, getAqiGuidance, getUvStatus } from "./exposure.js";
 
 describe("getAqiStatus", () => {
   test("returns no-data status for null/undefined", () => {
@@ -90,5 +90,38 @@ describe("getUvStatus", () => {
       getUvStatus(11).color,
     ]);
     assert.equal(colors.size, 5);
+  });
+});
+
+describe("getAqiGuidance", () => {
+  test("gives an action for every EPA tier", () => {
+    const tiers = [25, 75, 130, 175, 250, 400];
+    for (const aqi of tiers) {
+      const guidance = getAqiGuidance(aqi);
+      assert.ok(guidance.length > 0, `AQI ${aqi} must carry guidance`);
+      assert.match(guidance, /\.$/, `AQI ${aqi} guidance should be a sentence`);
+    }
+  });
+
+  test("says nothing when the reading is missing", () => {
+    // An absent AQI is not a safe AQI. Rendering "no precautions needed" for
+    // data we never received is the fake certainty this codebase exists to
+    // avoid — so the caller gets an empty string and renders nothing.
+    assert.equal(getAqiGuidance(null), "");
+    assert.equal(getAqiGuidance(undefined), "");
+  });
+
+  test("escalates: clean air needs no precautions, hazardous air means stay in", () => {
+    assert.match(getAqiGuidance(25), /no precautions/i);
+    assert.match(getAqiGuidance(130), /sensitive groups/i);
+    assert.match(getAqiGuidance(400), /stay indoors/i);
+  });
+
+  test("names sensitive groups on the tier whose label abbreviates them", () => {
+    // getAqiStatus shortens EPA's "Unhealthy for Sensitive Groups" to
+    // "Sensitive" so it fits the tile. The guidance has to spell out who that
+    // means, or the label is jargon.
+    assert.equal(getAqiStatus(130).label, "Sensitive");
+    assert.match(getAqiGuidance(130), /asthma/i);
   });
 });

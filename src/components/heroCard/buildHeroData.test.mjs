@@ -469,3 +469,60 @@ describe("buildHeroData", () => {
     assert.equal(data.uvPanel.markerPct, 100);
   });
 });
+
+describe("wind guidance never invents a reading", () => {
+  function windGuidanceFor(current) {
+    const data = buildHeroData({
+      weather: {
+        ...baseWeather,
+        current: { ...baseWeather.current, ...current },
+      },
+      location: baseLocation,
+      unit: "F",
+    });
+    return data.dailyGuidance.find((item) => item.kind === "wind") ?? null;
+  }
+
+  test("reports wind as unavailable when neither speed nor gust returned", () => {
+    // The failure this guards: deriving strongest wind as
+    // Math.max(speed ?? 0, gust ?? 0) and then reporting a confident
+    // "Comfortable wind, up to 0 mph" for data that never arrived.
+    const wind = windGuidanceFor({ windSpeed: null, windGust: null });
+
+    assert.equal(wind.tone, "unavailable");
+    assert.equal(wind.value, "Wind unavailable");
+    assert.doesNotMatch(wind.detail, /0/);
+  });
+
+  test("uses the gust when only the gust returned", () => {
+    const wind = windGuidanceFor({ windSpeed: null, windGust: 34 });
+
+    assert.equal(wind.value, "Gusty conditions");
+    assert.match(wind.detail, /34/);
+  });
+
+  test("uses the sustained speed when only the speed returned", () => {
+    const wind = windGuidanceFor({ windSpeed: 34, windGust: null });
+
+    assert.equal(wind.value, "Gusty conditions");
+    assert.match(wind.detail, /34/);
+  });
+
+  test("a genuine calm zero is a reading, and a missing one is not", () => {
+    // Distinguishing missing from zero is the whole contract. 0 mph is real
+    // weather: it resolves to the calm tone, which guidance drops as a
+    // non-event. Absent readings take the unavailable branch and are shown.
+    // Asserting both halves keeps this from passing vacuously — a filtered
+    // item and an absent item both read as undefined if you only check one.
+    assert.equal(
+      windGuidanceFor({ windSpeed: 0, windGust: null }),
+      null,
+      "calm wind is a real reading, filtered out as a non-event"
+    );
+    assert.equal(
+      windGuidanceFor({ windSpeed: null, windGust: null }).tone,
+      "unavailable",
+      "absent wind is surfaced, not silently dropped as calm"
+    );
+  });
+});

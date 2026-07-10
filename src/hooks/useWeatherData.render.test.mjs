@@ -91,7 +91,7 @@ function installImmediateFetch() {
       );
     }
     if (parsed.hostname === "air-quality-api.open-meteo.com") {
-      return Promise.resolve(jsonResponse({ current: { european_aqi: 42 } }));
+      return Promise.resolve(jsonResponse({ current: { us_aqi: 42 } }));
     }
     if (parsed.hostname === "api.weather.gov") {
       return Promise.resolve(

@@ -102,7 +102,7 @@ function buildMissingForecastPayload(latitude, longitude) {
 }
 
 function buildMissingAirQualityPayload() {
-  return { current: { european_aqi: null } };
+  return { current: { us_aqi: null } };
 }
 
 function buildMissingArchivePayload() {

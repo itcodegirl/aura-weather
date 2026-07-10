@@ -427,13 +427,22 @@ export async function fetchHistoricalTemperatureAverage(
 export async function fetchAirQuality(lat, lon, options = {}) {
   const coordinates = validateCoordinates(lat, lon);
   try {
+    // `us_aqi`, not `european_aqi`. They are different indices on different
+    // scales: the European AQI runs roughly 0-100+ (0-20 good, 60-80 poor),
+    // while the US EPA index runs 0-500 with its own breakpoints. This app
+    // classifies and colours air quality with the EPA's six tiers
+    // (domain/exposure.js) and draws the gauge as a fraction of 500, so it has
+    // to be fed the EPA index. Reading the European value against EPA
+    // thresholds understated the risk on the one health-relevant reading in the
+    // app: a European 65 ("Poor") rendered as "Moderate", 13% along a gauge it
+    // should have filled two-thirds of.
     const data = await fetchJsonWithRetry(
-      `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=european_aqi`,
+      `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=us_aqi`,
       { signal: options.signal, retryDelaysMs: options.retryDelaysMs }
     );
     // toFiniteNumber returns null for nullish/empty inputs; the legacy
     // Number()-based check would have surfaced a null AQI as 0.
-    return toFiniteNumber(data?.current?.european_aqi);
+    return toFiniteNumber(data?.current?.us_aqi);
   } catch (error) {
     if (isAbortError(error)) {
       throw error;

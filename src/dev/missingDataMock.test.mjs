@@ -75,7 +75,7 @@ describe("installMissingDataMockIfRequested", () => {
       "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=1&longitude=2"
     );
     const payload = await response.json();
-    assert.equal(payload.current.european_aqi, null);
+    assert.equal(payload.current.us_aqi, null);
   });
 
   test("returns an empty NWS feature collection when ?mock=missing is set", async () => {

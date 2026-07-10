@@ -407,8 +407,12 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
       </div>
 
       {hasMissingReading && (
+        // "the provider", not "this station": these readings come from a
+        // forecast model (Open-Meteo), not a weather station on the corner.
+        // Naming the wrong source in the sentence that explains our data
+        // honesty would be a small lie inside the honesty message itself.
         <p className="atm-footnote">
-          {MISSING_VALUE_PLACEHOLDER} means this station didn&rsquo;t report that
+          {MISSING_VALUE_PLACEHOLDER} means the provider didn&rsquo;t report that
           reading. It isn&rsquo;t a zero.
         </p>
       )}

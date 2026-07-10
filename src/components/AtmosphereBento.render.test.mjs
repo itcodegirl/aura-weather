@@ -137,4 +137,32 @@ describe("AtmosphereBento", () => {
     );
     assert.ok(screen.getByText("hPa"), "metric pressure unit rendered");
   });
+
+  test("explains the em-dash placeholder when a reading is missing", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: null,
+        unit: "F",
+      })
+    );
+    const footnote = container.querySelector(".atm-footnote");
+    assert.ok(footnote, "a footnote explains the dash when one is on screen");
+    assert.match(footnote.textContent, /isn’t a zero/);
+  });
+
+  test("omits the placeholder footnote when every reading is present", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 42,
+        unit: "F",
+      })
+    );
+    assert.equal(
+      container.querySelector(".atm-footnote"),
+      null,
+      "no dash on screen means no footnote"
+    );
+  });
 });

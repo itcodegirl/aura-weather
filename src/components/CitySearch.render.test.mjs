@@ -176,6 +176,37 @@ describe("CitySearch keyboard navigation", () => {
   });
 });
 
+describe("CitySearch result-count announcement", () => {
+  test("announces how many options are available when the listbox opens", () => {
+    const view = render(
+      React.createElement(CitySearch, {
+        onSelect: noop,
+        savedCities: [TOKYO_SAVED],
+      })
+    );
+
+    const input = view.getByRole("combobox", { name: "Search for a city" });
+    act(() => input.focus());
+
+    // The visible in-dropdown status region only mounts while loading,
+    // on error, or on no-results, so a successful open used to announce
+    // nothing at all to a screen reader.
+    const live = view.container.querySelector('[role="status"][aria-live="polite"]');
+    assert.ok(live, "a polite live region is mounted");
+    assert.match(live.textContent, /1 result available/);
+  });
+
+  test("stays silent when there is nothing to announce", () => {
+    const view = render(
+      React.createElement(CitySearch, { onSelect: noop, savedCities: [] })
+    );
+
+    const live = view.container.querySelector('[role="status"][aria-live="polite"]');
+    assert.ok(live, "the live region stays mounted so updates are announced");
+    assert.equal(live.textContent.trim(), "");
+  });
+});
+
 // Tiny references so the imports are not flagged unused if a test branch
 // above is later trimmed.
 void screen;

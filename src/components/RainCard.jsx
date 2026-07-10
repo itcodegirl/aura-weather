@@ -350,7 +350,8 @@ function RainCard({
           </div>
           <p className="card-empty__title">Rain guidance unavailable</p>
           <p className="card-empty__copy">
-            Precipitation readings are unavailable right now.
+            The rest of the forecast is still live, but precipitation readings
+            did not come through. Refresh to try again.
           </p>
         </div>
       ) : isDry ? (

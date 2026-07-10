@@ -1,5 +1,61 @@
+import { Buffer } from "node:buffer";
 import { expect } from "@playwright/test";
 import { installOpenMeteoMocks, mockDeniedGeolocation } from "./openMeteoMocks.js";
+
+// A 256x256 fully transparent PNG. Radar tiles are the only imagery in these
+// captures that changes with the real weather; serving a fixed tile keeps the
+// map itself (basemap, controls, legend, timeline) in the picture while making
+// the overlay reproducible.
+const BLANK_TILE = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEAAQMAAABmvDolAAAAA1BMVEUAAACnej3aAAAAAXRSTlMAQObYZgAAADFJREFUeNrtwQENAAAAwqD3T20ON6AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOA3TAAAAdW1S9EAAAAASUVORK5CYII=",
+  "base64"
+);
+
+const RADAR_FRAME_EPOCH = 1776000000; // fixed; the timeline prints frame ages
+
+/**
+ * The radar card fetches its frame catalogue from RainViewer and its tiles
+ * from a CDN. Live weather made these captures nondeterministic in two ways:
+ * the tile imagery changed, and — worse — the card's height changed depending
+ * on whether the frames had arrived, swinging the full-page screenshot by more
+ * than 100px between runs of identical code.
+ *
+ * Playwright's `toHaveScreenshot` hides that by retrying until the image
+ * matches, which is why the visual baselines looked stable while the docs
+ * screenshots (a plain `page.screenshot()`) did not.
+ */
+export async function mockRadar(page) {
+  await page.route("https://api.rainviewer.com/public/weather-maps.json", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        version: "2.0",
+        host: "https://tilecache.rainviewer.com",
+        radar: {
+          // Observed frames only. No nowcast, so the timeline renders its
+          // honest "no forecast frames available" line rather than inventing
+          // a forecast loop.
+          past: [0, 1, 2].map((index) => ({
+            time: RADAR_FRAME_EPOCH + index * 600,
+            path: `/v2/radar/${RADAR_FRAME_EPOCH + index * 600}`,
+          })),
+          nowcast: [],
+        },
+      }),
+    })
+  );
+
+  await page.route("https://tilecache.rainviewer.com/**", (route) =>
+    route.fulfill({ status: 200, contentType: "image/png", body: BLANK_TILE })
+  );
+}
+
+/** The radar card settles into a map; wait for it before capturing. */
+async function waitForRadar(page) {
+  await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.getByText("Tuning in the latest radar")).toHaveCount(0);
+}
 
 /**
  * One bootstrap for every image this repo captures.
@@ -93,6 +149,7 @@ export async function bootstrapVisualState(page, context, viewport) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await mockDeniedGeolocation(context);
   await installOpenMeteoMocks(page);
+  await mockRadar(page);
   await installFixedClock(page);
 
   await page.goto("/");
@@ -100,6 +157,7 @@ export async function bootstrapVisualState(page, context, viewport) {
   await expect(page.locator(".bento-chart .chart-title")).toBeVisible();
   await expect(page.locator(".bento-storm .storm-title")).toBeVisible();
   await waitForSupplementalPanels(page);
+  await waitForRadar(page);
 
   await applyVisualOverrides(page);
 }
@@ -110,6 +168,7 @@ export async function bootstrapMissingMockState(page, context, viewport) {
   // keeps the visual identical between local + CI runs in case any other
   // permission prompt nudges layout.
   await mockDeniedGeolocation(context);
+  await mockRadar(page);
   await installFixedClock(page);
 
   await page.goto("/?mock=missing");
@@ -123,6 +182,7 @@ export async function bootstrapMissingMockState(page, context, viewport) {
     page.locator("span[aria-label='No data available']").first()
   ).toBeVisible();
   await waitForSupplementalPanels(page);
+  await waitForRadar(page);
 
   await applyVisualOverrides(page);
 }

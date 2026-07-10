@@ -51,10 +51,22 @@ export async function mockRadar(page) {
   );
 }
 
-/** The radar card settles into a map; wait for it before capturing. */
+/**
+ * The radar card settles into a map; wait for it before capturing.
+ *
+ * Tiles are also waited on. The basemap is left live because those tiles are
+ * static for a fixed centre and zoom — but a tile still in flight paints as
+ * blank, which is how ~14k pixels of the mobile dashboard kept moving between
+ * runs while staying just inside the tolerance.
+ */
 async function waitForRadar(page) {
   await expect(page.locator(".leaflet-container")).toBeVisible();
   await expect(page.getByText("Tuning in the latest radar")).toHaveCount(0);
+  await page.waitForFunction(() => {
+    const tiles = document.querySelectorAll(".leaflet-tile");
+    if (tiles.length === 0) return false;
+    return [...tiles].every((tile) => tile.classList.contains("leaflet-tile-loaded"));
+  });
 }
 
 /**

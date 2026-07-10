@@ -55,6 +55,28 @@
   grid-column: span 2;
 }
 
+/*
+ * Label row: the label itself plus its help drawer, pushed to the tile's
+ * trailing edge. The drawer is 30x30 (WCAG 2.5.8 AA), so the row is given a
+ * matching min-height and the label centres against it — otherwise adding the
+ * trigger would shift every gauge down by a few pixels.
+ */
+.atm-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 22px;
+}
+
+/* Explains what to do about the reading (AQI). */
+.atm-guidance {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 /* Label row (icon + text) */
 .atm-label {
   display: inline-flex;

@@ -6,6 +6,7 @@ import {
   formatPullSuccessMessage,
   getSavedCitiesSignature,
   mergeSavedCities,
+  runStopBackupSequence,
   serializeSyncAccount,
 } from "./savedLocationsSyncHelpers.js";
 
@@ -143,7 +144,7 @@ describe("saved locations sync helpers", () => {
     test("uses the singular form for one location", () => {
       assert.equal(
         formatPullSuccessMessage([{ lat: 1, lon: 2 }], 1, false),
-        "Synced 1 saved location"
+        "Restored 1 saved location"
       );
     });
 
@@ -154,7 +155,7 @@ describe("saved locations sync helpers", () => {
           2,
           false
         ),
-        "Synced 2 saved locations"
+        "Restored 2 saved locations"
       );
     });
 
@@ -165,16 +166,111 @@ describe("saved locations sync helpers", () => {
           6,
           true
         ),
-        "Synced 6 saved locations (kept newest 6)"
+        "Restored 6 saved locations (kept newest 6)"
       );
     });
 
     test("returns the connected fallback when no remote cities exist", () => {
-      assert.equal(formatPullSuccessMessage([], 0, false), "Sync connected");
+      assert.equal(formatPullSuccessMessage([], 0, false), "Backed up");
       assert.equal(
         formatPullSuccessMessage(null, 0, false),
-        "Sync connected"
+        "Backed up"
       );
     });
+  });
+});
+
+describe("runStopBackupSequence", () => {
+  test("cancels the pending push before awaiting anything", async () => {
+    const calls = [];
+    let cancelledBeforeFirstAwait = false;
+
+    await runStopBackupSequence({
+      cancelPendingPush: () => {
+        calls.push("cancel");
+        // Synchronous by contract: the debounce timer is a live macrotask, so
+        // any await before this gives it a window to fire and re-upsert.
+        cancelledBeforeFirstAwait = true;
+      },
+      waitForInFlightPush: () => {
+        assert.ok(cancelledBeforeFirstAwait, "cancel must run before the first await");
+        calls.push("wait");
+        return Promise.resolve();
+      },
+      deleteBackup: () => {
+        calls.push("delete");
+        return Promise.resolve();
+      },
+    });
+
+    assert.deepEqual(calls, ["cancel", "wait", "delete"]);
+  });
+
+  test("deletes only after an in-flight push has settled", async () => {
+    const calls = [];
+    let releasePush;
+    const pushPromise = new Promise((resolve) => {
+      releasePush = resolve;
+    });
+
+    const sequence = runStopBackupSequence({
+      cancelPendingPush: () => calls.push("cancel"),
+      waitForInFlightPush: () => pushPromise.then(() => calls.push("push settled")),
+      deleteBackup: () => {
+        calls.push("delete");
+        return Promise.resolve();
+      },
+    });
+
+    await Promise.resolve();
+    assert.ok(!calls.includes("delete"), "the delete must wait for the push on the wire");
+
+    releasePush();
+    await sequence;
+
+    // Reversed, the push's upsert would land after the delete and silently
+    // recreate the row the user asked to remove.
+    assert.deepEqual(calls, ["cancel", "push settled", "delete"]);
+  });
+
+  test("still deletes when the in-flight push failed", async () => {
+    const calls = [];
+
+    await runStopBackupSequence({
+      cancelPendingPush: () => calls.push("cancel"),
+      waitForInFlightPush: () => Promise.reject(new Error("network down")),
+      deleteBackup: () => {
+        calls.push("delete");
+        return Promise.resolve();
+      },
+    });
+
+    assert.deepEqual(calls, ["cancel", "delete"], "a failed push must not block stopping");
+  });
+
+  test("tolerates no push being in flight", async () => {
+    const calls = [];
+
+    await runStopBackupSequence({
+      cancelPendingPush: () => calls.push("cancel"),
+      waitForInFlightPush: () => null,
+      deleteBackup: () => {
+        calls.push("delete");
+        return Promise.resolve();
+      },
+    });
+
+    assert.deepEqual(calls, ["cancel", "delete"]);
+  });
+
+  test("surfaces a failed delete so the caller can report it honestly", async () => {
+    await assert.rejects(
+      runStopBackupSequence({
+        cancelPendingPush: () => {},
+        waitForInFlightPush: () => Promise.resolve(),
+        deleteBackup: () => Promise.reject(new Error("permission denied")),
+      }),
+      /permission denied/
+    );
   });
 });

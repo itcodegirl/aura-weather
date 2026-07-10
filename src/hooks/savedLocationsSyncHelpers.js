@@ -100,8 +100,11 @@ export function formatPullSuccessMessage(
   savedCitiesCount,
   wasTrimmed
 ) {
+  // This string lands in the always-visible status line under the "Cloud
+  // Backup" title, so it must not say "synced": backup is per-device, and
+  // "synced" would imply the cross-device behaviour that no longer exists.
   if (!Array.isArray(remoteCities) || remoteCities.length === 0) {
-    return "Sync connected";
+    return "Backed up";
   }
 
   const locationCount = Number.isFinite(savedCitiesCount)
@@ -109,8 +112,40 @@ export function formatPullSuccessMessage(
     : remoteCities.length;
   const label = locationCount === 1 ? "location" : "locations";
   if (wasTrimmed) {
-    return `Synced ${locationCount} saved ${label} (kept newest ${MAX_SAVED_CITIES})`;
+    return `Restored ${locationCount} saved ${label} (kept newest ${MAX_SAVED_CITIES})`;
   }
 
-  return `Synced ${locationCount} saved ${label}`;
+  return `Restored ${locationCount} saved ${label}`;
+}
+
+/**
+ * Runs the "Stop backup" steps in the only order that leaves the cloud row
+ * actually deleted. Extracted from the hook because the ordering — not the
+ * React plumbing — is the part that must never regress, and because it is
+ * only testable once it is separated from timers and effects.
+ *
+ * 1. `cancelPendingPush()` runs SYNCHRONOUSLY, before the first await. The
+ *    auto-push debounce is a live timer; awaiting anything first gives it a
+ *    window to elapse and upsert the row we are about to delete.
+ * 2. `waitForInFlightPush()` drains a push already on the wire. Deleting
+ *    first would let its upsert land afterwards and resurrect the row. A
+ *    failed push is not a reason to refuse to stop the backup, so its
+ *    rejection is swallowed.
+ * 3. `deleteBackup()` runs last, and its rejection propagates: the caller
+ *    decides how to report a delete that did not happen.
+ */
+export async function runStopBackupSequence({
+  cancelPendingPush,
+  waitForInFlightPush,
+  deleteBackup,
+}) {
+  cancelPendingPush();
+
+  try {
+    await waitForInFlightPush();
+  } catch {
+    // Ignored on purpose — see above.
+  }
+
+  await deleteBackup();
 }

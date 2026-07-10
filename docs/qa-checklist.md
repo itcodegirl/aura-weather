@@ -123,16 +123,56 @@ CI runs the same gate serially for Playwright with
 - [ ] When more than 4 alerts are present, the "+ N more alerts not
       shown" footnote appears at the bottom of the card
 
-## Cloud sync (optional flow)
+## Cloud backup (optional flow)
 
-- [ ] Cloud Sync is hidden on fresh first load with no saved cities
-- [ ] Selecting or saving a city reveals Cloud Sync below the saved-city
+- [ ] Cloud Backup is hidden on fresh first load with no saved cities
+- [ ] Selecting or saving a city reveals Cloud Backup below the saved-city
       strip
-- [ ] Create sync key → key appears, ellipsised at 32 characters,
-      tooltip + aria-label expose the full key
-- [ ] Pasting an invalid sync URL produces a `role="alert"` error and
-      the panel stays disconnected
-- [ ] Disconnect clears the panel back to the not-connected state
+- [ ] Start backup → the toggle reads "Backed up"; no sync key, no
+      pasteable value, and no "across devices" claim appears anywhere
+- [ ] Saving another city auto-backs-up after ~1s and "Last backed up"
+      updates
+- [ ] Reload the page → saved cities are still present and the panel still
+      reads "Backed up" (the anonymous session persists in localStorage)
+- [ ] Stop backup → the panel returns to "Not backed up", the row is gone
+      from `public.saved_cities`, and local saved cities are unchanged
+- [ ] A backup failure produces a `role="alert"` error in the panel
+
+### Cloud backup — RLS isolation (manual, pre-release)
+
+Row-level security is a Postgres guarantee, not app logic. The automated
+suite cannot prove it: `npm test` is bare `node --test` with no network, and
+CI injects no Supabase credentials. The service tests exercise the storage
+layer against a fake client and deliberately stop short of claiming
+otherwise. Verify isolation by hand before any release that touches
+`public.saved_cities` or its policies.
+
+Two anonymous sessions must not see or touch each other's rows. The check is
+scripted so it can actually be re-run, rather than described:
+
+```bash
+SUPABASE_URL=https://<ref>.supabase.co \
+SUPABASE_ANON_KEY=<publishable key> \
+node supabase/tests/saved-cities-rls.mjs
+```
+
+- [ ] The script exits `0` with **11/11 checks passed**. It signs in two real
+      anonymous users over the same REST path the app uses and asserts that B
+      reads zero of A's rows, updates zero, deletes zero, is refused (`403`,
+      `new row violates row-level security policy`) when forging a row owned
+      by A, that the publishable key with no session can neither read nor
+      write, and that A's row survives all of it. It removes the rows it
+      wrote. Pass `SUPABASE_SERVICE_ROLE_KEY` as well to delete the two
+      anonymous users it created; otherwise remove them from the dashboard.
+
+Then confirm the two things the script cannot see, in a browser:
+
+- [ ] Start a backup and save a city. In a **private/incognito** window (a
+      separate anonymous session) start a backup too — it must show **none**
+      of the first window's cities.
+- [ ] Clearing browser data discards the session; the next visit is a **new**
+      anonymous user with an empty backup and no route back to the old rows.
+      That is expected, not a bug.
 
 ## Accessibility
 

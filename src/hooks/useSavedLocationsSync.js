@@ -5,17 +5,28 @@ import {
   createSavedLocationsSyncAccount,
   pullSavedLocationsFromSync,
   pushSavedLocationsToSync,
+  deleteSavedLocationsBackup,
   getSyncErrorMessage,
 } from "../services/savedLocationsSync";
 import {
+  buildStopBackupState,
   deserializeSyncAccount,
   formatPullSuccessMessage,
   getSavedCitiesSignature,
   mergeSavedCities,
+  runStopBackupSequence,
   serializeSyncAccount,
 } from "./savedLocationsSyncHelpers";
 
-const SYNC_ACCOUNT_KEY = "aura-weather-sync-account-v1";
+/*
+ * v2 because every v1 record holds a jsonblob.com URL as its syncKey. Backup
+ * now resolves the row from the Supabase session's JWT, so a stale jsonblob
+ * URL means nothing — but a leftover v1 record would still read as
+ * "connected" and drive the backup effects. Bumping the key retires those
+ * records and asks the user to opt in again. Saved cities themselves live
+ * under a different key (aura-weather-saved-cities) and are untouched.
+ */
+const SYNC_ACCOUNT_KEY = "aura-weather-sync-account-v2";
 const AUTO_PUSH_DEBOUNCE_MS = 900;
 
 export function useSavedLocationsSync(savedCities, setSavedCities) {
@@ -38,6 +49,16 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
   const skipNextSyncPushRef = useRef(false);
   const skipNextAutoPullRef = useRef(false);
   const lastSyncedSignatureRef = useRef("");
+  /*
+   * Stopping the backup has to beat the auto-push debounce to the database.
+   * `syncRequestRef` only gates whether a completed request is allowed to
+   * write state — it cannot cancel a timer or an in-flight upsert. So we
+   * track both directly: the pending debounce timer, and the promise of any
+   * push already on the wire. Without these, a push armed moments before
+   * "Stop backup" lands after the delete and silently recreates the row.
+   */
+  const autoPushTimerRef = useRef(null);
+  const inFlightPushRef = useRef(null);
 
   useEffect(() => {
     savedCitiesRef.current = savedCities;
@@ -60,12 +81,12 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     setSyncState((previousState) => ({
       ...previousState,
       status: "syncing",
-      message: options.initial ? "Connecting to sync account..." : "Syncing locations...",
+      message: options.initial ? "Restoring your backup..." : "Backing up...",
       error: null,
     }));
 
     try {
-      const remoteCities = await pullSavedLocationsFromSync(accountToUse.syncKey);
+      const remoteCities = await pullSavedLocationsFromSync();
       if (requestId !== syncRequestRef.current) {
         return [];
       }
@@ -100,8 +121,8 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       setSyncState((previousState) => ({
         ...previousState,
         status: "error",
-        message: "Sync failed",
-        error: getSyncErrorMessage(syncError, "Could not sync saved locations."),
+        message: "Backup failed",
+        error: getSyncErrorMessage(syncError, "Could not restore your backup."),
       }));
 
       return null;
@@ -119,12 +140,12 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     setSyncState((previousState) => ({
       ...previousState,
       status: "syncing",
-      message: options.auto ? "Syncing changes..." : "Syncing now...",
+      message: options.auto ? "Backing up changes..." : "Backing up now...",
       error: null,
     }));
 
     try {
-      await pushSavedLocationsToSync(accountToUse.syncKey, citiesToSync);
+      await pushSavedLocationsToSync(citiesToSync);
       if (requestId !== syncRequestRef.current) {
         return;
       }
@@ -134,7 +155,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       setSyncState((previousState) => ({
         ...previousState,
         status: "ready",
-        message: "Sync complete",
+        message: "Backed up",
         error: null,
         lastSyncedAt: Date.now(),
       }));
@@ -146,17 +167,36 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       setSyncState((previousState) => ({
         ...previousState,
         status: "error",
-        message: "Sync failed",
-        error: getSyncErrorMessage(syncError, "Could not push saved locations."),
+        message: "Backup failed",
+        error: getSyncErrorMessage(
+          syncError,
+          "Could not back up your saved cities."
+        ),
       }));
     }
   }, []);
+
+  // Every push goes through here so `disconnectSyncAccount` can await one
+  // that is already on the wire before it issues the delete.
+  const trackedPush = useCallback(
+    (accountToUse, citiesToSync, options) => {
+      const pushPromise = pushToSyncAccount(accountToUse, citiesToSync, options);
+      inFlightPushRef.current = pushPromise;
+      void pushPromise.finally(() => {
+        if (inFlightPushRef.current === pushPromise) {
+          inFlightPushRef.current = null;
+        }
+      });
+      return pushPromise;
+    },
+    [pushToSyncAccount]
+  );
 
   const createSyncAccount = useCallback(async () => {
     setSyncState((previousState) => ({
       ...previousState,
       status: "syncing",
-      message: "Creating sync account...",
+      message: "Starting backup...",
       error: null,
     }));
 
@@ -168,7 +208,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       lastSyncedSignatureRef.current = savedCitiesSignature;
       setSyncState({
         status: "ready",
-        message: "Sync account created",
+        message: "Backed up",
         error: null,
         lastSyncedAt: Date.now(),
       });
@@ -176,43 +216,55 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       setSyncState((previousState) => ({
         ...previousState,
         status: "error",
-        message: "Could not create sync account",
+        message: "Could not start backup",
         error: getSyncErrorMessage(syncError, "Try again in a moment."),
       }));
     }
   }, [savedCities, savedCitiesSignature, setSyncAccount]);
 
-  const connectSyncAccount = useCallback(async (syncKey) => {
-    const normalizedSyncKey = typeof syncKey === "string" ? syncKey.trim() : "";
-    if (!normalizedSyncKey) {
-      setSyncState((previousState) => ({
-        ...previousState,
-        status: "error",
-        message: "Sync key required",
-        error: "Paste your sync key or URL to connect.",
-      }));
-      return;
-    }
-
-    const nextAccount = { syncKey: normalizedSyncKey };
-    const connectedCities = await pullFromSyncAccount(nextAccount, { initial: true });
-    if (connectedCities === null) {
-      return;
-    }
-
-    skipNextAutoPullRef.current = true;
-    setSyncAccount(nextAccount);
-  }, [pullFromSyncAccount, setSyncAccount]);
-
-  const disconnectSyncAccount = useCallback(() => {
+  /*
+   * Stopping the backup deletes the cloud row, not just the local record —
+   * "Stop backup" should mean the cloud copy is gone. The user's cities live
+   * in localStorage regardless, so nothing they can see is lost.
+   *
+   * If the delete fails we still disconnect locally: stranding the user in a
+   * backed-up state they asked to leave is worse than an orphaned row only
+   * they can read. The failure is surfaced, not swallowed.
+   */
+  const disconnectSyncAccount = useCallback(async () => {
     syncRequestRef.current += 1;
+
+    // The ordering contract lives in runStopBackupSequence, which is where it
+    // is tested. Get it wrong and "Stop backup" reports success while the
+    // user's coordinates are still in the cloud.
+    let deleteError = null;
+    try {
+      await runStopBackupSequence({
+        cancelPendingPush: () => {
+          if (autoPushTimerRef.current !== null) {
+            clearTimeout(autoPushTimerRef.current);
+            autoPushTimerRef.current = null;
+          }
+          // Stop the re-render that follows from arming a fresh timer
+          // against the account we are about to drop.
+          skipNextSyncPushRef.current = true;
+        },
+        waitForInFlightPush: () => inFlightPushRef.current,
+        deleteBackup: () => deleteSavedLocationsBackup(),
+      });
+    } catch (syncError) {
+      deleteError = getSyncErrorMessage(
+        syncError,
+        "The cloud copy could not be removed. Your saved cities are still on this device."
+      );
+    }
+
+    // Local state clears either way: stranding the user in a backed-up state
+    // they asked to leave is worse than a row only they can read. Starting the
+    // backup again lands on the same anonymous user, so a failed delete can be
+    // retried by stopping it once more.
     setSyncAccount(null);
-    setSyncState({
-      status: "idle",
-      message: "Sync disconnected",
-      error: null,
-      lastSyncedAt: null,
-    });
+    setSyncState(buildStopBackupState(deleteError));
   }, [setSyncAccount]);
 
   const syncSavedCitiesNow = useCallback(async () => {
@@ -220,8 +272,8 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       return;
     }
 
-    await pushToSyncAccount(syncAccount, savedCities, { auto: false });
-  }, [pushToSyncAccount, savedCities, syncAccount]);
+    await trackedPush(syncAccount, savedCities, { auto: false });
+  }, [trackedPush, savedCities, syncAccount]);
 
   useEffect(() => {
     if (!syncAccount?.syncKey) {
@@ -253,20 +305,24 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     }
 
     const timerId = setTimeout(() => {
-      void pushToSyncAccount(syncAccount, savedCities, { auto: true });
+      autoPushTimerRef.current = null;
+      void trackedPush(syncAccount, savedCities, { auto: true });
     }, AUTO_PUSH_DEBOUNCE_MS);
+    autoPushTimerRef.current = timerId;
 
     return () => {
       clearTimeout(timerId);
+      if (autoPushTimerRef.current === timerId) {
+        autoPushTimerRef.current = null;
+      }
     };
-  }, [pushToSyncAccount, savedCities, savedCitiesSignature, syncAccount]);
+  }, [trackedPush, savedCities, savedCitiesSignature, syncAccount]);
 
   return {
     syncConnected,
     syncAccount,
     syncState,
     createSyncAccount,
-    connectSyncAccount,
     disconnectSyncAccount,
     syncSavedCitiesNow,
   };

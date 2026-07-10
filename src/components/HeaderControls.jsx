@@ -21,10 +21,8 @@ function HeaderControls({
   forgetSavedCity,
   moveSavedCity,
   syncConnected,
-  syncAccount,
   syncState,
   createSyncAccount,
-  connectSyncAccount,
   disconnectSyncAccount,
   syncSavedCitiesNow,
   isLocatingCurrent,
@@ -134,15 +132,11 @@ function HeaderControls({
     }
   }, [createSyncAccount]);
 
-  const handleConnectSyncAccount = useCallback((nextSyncKey) => {
-    if (typeof connectSyncAccount === "function") {
-      void connectSyncAccount(nextSyncKey);
-    }
-  }, [connectSyncAccount]);
-
   const handleDisconnectSyncAccount = useCallback(() => {
     if (typeof disconnectSyncAccount === "function") {
-      disconnectSyncAccount();
+      // Async since it now deletes the cloud row; the hook owns the
+      // resulting state, so nothing here needs to await it.
+      void disconnectSyncAccount();
     }
   }, [disconnectSyncAccount]);
 
@@ -217,10 +211,8 @@ function HeaderControls({
           <Suspense fallback={null}>
             <SyncAccountPanel
               syncConnected={syncConnected}
-              syncAccount={syncAccount}
               syncState={syncState}
               onCreateSyncAccount={handleCreateSyncAccount}
-              onConnectSyncAccount={handleConnectSyncAccount}
               onDisconnectSyncAccount={handleDisconnectSyncAccount}
               onSyncNow={handleSyncNow}
             />

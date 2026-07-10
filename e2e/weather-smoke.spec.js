@@ -31,7 +31,7 @@ test("loads the dashboard with fallback location and core controls", async ({ pa
     page.getByLabel("Location onboarding").getByRole("button", { name: "Allow location access" })
   ).toBeVisible();
   await expect(page.locator(".location-notice")).toHaveCount(0);
-  await expect(page.getByText("Cloud Sync")).toHaveCount(0);
+  await expect(page.getByText("Cloud Backup")).toHaveCount(0);
   await expect(
     page.locator(".header-control-label").filter({ hasText: "Climate Context" })
   ).toBeVisible();
@@ -184,7 +184,7 @@ test("updates hero location when a city is selected from search", async ({ page 
   await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
   await expect(searchInput).toHaveValue("");
   await expect(page.locator(".location-notice")).toHaveCount(0);
-  await expect(page.getByText("Cloud Sync")).toBeVisible();
+  await expect(page.getByText("Cloud Backup")).toBeVisible();
 
   await searchInput.focus();
   await expect(
@@ -348,29 +348,36 @@ test("switches display units without refetching the forecast", async ({ page }) 
   expect(archiveRequests).toBe(baselineArchiveRequests);
 });
 
-test("keeps cloud sync disconnected when a manual connect attempt fails", async ({ page }) => {
-  await page.route(/https:\/\/jsonblob\.com\/api\/jsonBlob\/broken-sync$/, async (route) => {
-    await route.fulfill({
-      status: 503,
-      contentType: "application/json",
-      body: JSON.stringify({ message: "Could not load synced locations (503)" }),
-    });
-  });
+test("keeps the device not-backed-up when starting a backup fails", async ({ page }) => {
+  // Fail every Supabase call this flow could make. When the preview build has
+  // no Supabase env (the CI case) none of these fire and the service reports
+  // "not available in this build" instead — either way the user must end up
+  // with a visible error and an un-backed-up device, never a false "Backed up".
+  await page.route(/\/auth\/v1\/(signup|token).*/, (route) =>
+    route.fulfill({ status: 503, contentType: "application/json", body: "{}" })
+  );
+  await page.route(/\/rest\/v1\/saved_cities.*/, (route) =>
+    route.fulfill({ status: 503, contentType: "application/json", body: "{}" })
+  );
 
   await openDashboard(page);
-  await expect(page.getByText("Cloud Sync")).toHaveCount(0);
+  await expect(page.getByText("Cloud Backup")).toHaveCount(0);
 
   const searchInput = page.getByRole("combobox", { name: "Search for a city" });
   await searchInput.fill("tok");
   await page.getByRole("option", { name: /tokyo/i }).click();
 
-  await page.getByRole("button", { name: /cloud sync/i }).click();
-  await page.getByLabel("Sync key").fill("https://jsonblob.com/api/jsonBlob/broken-sync");
-  await page.getByRole("button", { name: "Connect", exact: true }).click();
+  await page.getByRole("button", { name: /cloud backup/i }).click();
+  await page.getByRole("button", { name: "Start backup" }).click();
 
-  await expect(page.getByText("Could not load synced locations (503)")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Disconnect" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Connect", exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Stop backup" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Start backup" })).toBeVisible();
+
+  // And the old paste-a-key affordance is gone for good: an anonymous session
+  // cannot be moved to another device, so there is nothing to paste.
+  await expect(page.getByLabel("Sync key")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Connect", exact: true })).toHaveCount(0);
 });
 
 test("removing the active saved city clears its startup persistence", async ({ page }) => {

@@ -60,10 +60,8 @@ function App() {
     forgetSavedCity,
     moveSavedCity,
     syncConnected,
-    syncAccount,
     syncState,
     createSyncAccount,
-    connectSyncAccount,
     disconnectSyncAccount,
     syncSavedCitiesNow,
     retryWeather,
@@ -161,10 +159,8 @@ function App() {
         forgetSavedCity={forgetSavedCity}
         moveSavedCity={moveSavedCity}
         syncConnected={syncConnected}
-        syncAccount={syncAccount}
         syncState={syncState}
         createSyncAccount={createSyncAccount}
-        connectSyncAccount={connectSyncAccount}
         disconnectSyncAccount={disconnectSyncAccount}
         syncSavedCitiesNow={syncSavedCitiesNow}
         isLocatingCurrent={isLocatingCurrent}

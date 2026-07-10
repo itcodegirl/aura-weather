@@ -121,7 +121,7 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
 
   const cape = toFiniteNumber(weather?.hourly?.cape?.[0]);
   const hasCape = cape !== null;
-  const conditionCode = weather?.current?.conditionCode ?? 0;
+  const conditionCode = toFiniteNumber(weather?.current?.conditionCode);
   const risk = useMemo(
     () => classifyStormRisk(hasCape ? cape : 0, conditionCode),
     [hasCape, cape, conditionCode]

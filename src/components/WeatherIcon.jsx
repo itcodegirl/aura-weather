@@ -13,6 +13,7 @@ import {
   CloudSnow,
   Snowflake,
   Tornado,
+  CloudOff,
 } from "lucide-react";
 import { toFiniteNumber } from "../utils/numbers";
 import "./WeatherIcon.css";
@@ -79,6 +80,9 @@ const iconColors = {
   99: "#6d28d9",
 };
 
+/** Neutral slate for the "condition not reported" icon. */
+const UNKNOWN_ICON_COLOR = "#94a3b8";
+
 export default function WeatherIcon({ code, size = 24, className = "", animated = false }) {
   const weatherCode = toFiniteNumber(code);
   const normalizedCode = weatherCode !== null ? Math.trunc(weatherCode) : null;
@@ -86,8 +90,11 @@ export default function WeatherIcon({ code, size = 24, className = "", animated 
   const iconSize = parsedSize !== null && parsedSize > 0 ? parsedSize : 24;
   const safeClassName = typeof className === "string" ? className : "";
 
-  const Icon = iconMap[normalizedCode] || iconMap[0];
-  const color = iconColors[normalizedCode] || iconColors[0];
+  // A missing or unrecognised code must not borrow code 0's sun icon:
+  // that would render "no reading" as "clear sky".
+  const isUnknown = normalizedCode === null || !(normalizedCode in iconMap);
+  const Icon = isUnknown ? CloudOff : iconMap[normalizedCode];
+  const color = isUnknown ? UNKNOWN_ICON_COLOR : iconColors[normalizedCode];
   const isSunny = normalizedCode === 0 || normalizedCode === 1;
   const isCloudy = [2, 3, 45, 48].includes(normalizedCode);
   const animatedVariant = isSunny

@@ -147,25 +147,32 @@ layer against a fake client and deliberately stop short of claiming
 otherwise. Verify isolation by hand before any release that touches
 `public.saved_cities` or its policies.
 
-Two anonymous sessions must not see or touch each other's rows.
+Two anonymous sessions must not see or touch each other's rows. The check is
+scripted so it can actually be re-run, rather than described:
 
-1. Open the app in a normal window, start a backup, save a city.
-2. Open a **private/incognito** window (a separate anonymous session) and
-   start a backup there too. It must show **none** of the first window's
-   cities.
-3. Against the project's REST API, using each session's `access_token`
-   (`supabase.auth.getSession()` in the console) plus the publishable key:
-   - [ ] B reads `saved_cities` → **0 rows** (A's row is invisible)
-   - [ ] B updates `saved_cities?user_id=eq.<A>` → **0 rows affected**
-   - [ ] B deletes `saved_cities?user_id=eq.<A>` → **0 rows affected**
-   - [ ] B inserts a row with `user_id = <A>` → **HTTP 403**,
-         `new row violates row-level security policy`
-   - [ ] The publishable key with **no** session reads `saved_cities` → no
-         rows (the `anon` role has no policy at all)
-   - [ ] A re-reads its own row → still intact
-4. Clearing browser data must discard the session; the next visit is a
-   **new** anonymous user with an empty backup and no route back to the old
-   rows. That is expected, not a bug.
+```bash
+SUPABASE_URL=https://<ref>.supabase.co \
+SUPABASE_ANON_KEY=<publishable key> \
+node supabase/tests/saved-cities-rls.mjs
+```
+
+- [ ] The script exits `0` with **11/11 checks passed**. It signs in two real
+      anonymous users over the same REST path the app uses and asserts that B
+      reads zero of A's rows, updates zero, deletes zero, is refused (`403`,
+      `new row violates row-level security policy`) when forging a row owned
+      by A, that the publishable key with no session can neither read nor
+      write, and that A's row survives all of it. It removes the rows it
+      wrote. Pass `SUPABASE_SERVICE_ROLE_KEY` as well to delete the two
+      anonymous users it created; otherwise remove them from the dashboard.
+
+Then confirm the two things the script cannot see, in a browser:
+
+- [ ] Start a backup and save a city. In a **private/incognito** window (a
+      separate anonymous session) start a backup too — it must show **none**
+      of the first window's cities.
+- [ ] Clearing browser data discards the session; the next visit is a **new**
+      anonymous user with an empty backup and no route back to the old rows.
+      That is expected, not a bug.
 
 ## Accessibility
 

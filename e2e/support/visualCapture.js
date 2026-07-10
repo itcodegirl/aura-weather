@@ -2,6 +2,8 @@ import { Buffer } from "node:buffer";
 import { expect } from "@playwright/test";
 import { installOpenMeteoMocks, mockDeniedGeolocation } from "./openMeteoMocks.js";
 
+const FIXED_TIMESTAMP_ISO = "2026-04-21T12:00:00-05:00";
+
 // A 256x256 fully transparent PNG. Radar tiles are the only imagery in these
 // captures that changes with the real weather; serving a fixed tile keeps the
 // map itself (basemap, controls, legend, timeline) in the picture while making
@@ -11,7 +13,12 @@ const BLANK_TILE = Buffer.from(
   "base64"
 );
 
-const RADAR_FRAME_EPOCH = 1776000000; // fixed; the timeline prints frame ages
+// Frames are dated from the same frozen clock the rest of the capture uses.
+// Pinning them to an unrelated epoch made the radar timeline honestly report
+// "131600m ago" in the README screenshot.
+const RADAR_FRAME_EPOCH = Math.floor(
+  new Date(FIXED_TIMESTAMP_ISO).valueOf() / 1000
+);
 
 /**
  * The radar card fetches its frame catalogue from RainViewer and its tiles
@@ -36,9 +43,9 @@ export async function mockRadar(page) {
           // Observed frames only. No nowcast, so the timeline renders its
           // honest "no forecast frames available" line rather than inventing
           // a forecast loop.
-          past: [0, 1, 2].map((index) => ({
-            time: RADAR_FRAME_EPOCH + index * 600,
-            path: `/v2/radar/${RADAR_FRAME_EPOCH + index * 600}`,
+          past: [-1200, -600, 0].map((offset) => ({
+            time: RADAR_FRAME_EPOCH + offset,
+            path: `/v2/radar/${RADAR_FRAME_EPOCH + offset}`,
           })),
           nowcast: [],
         },
@@ -83,7 +90,7 @@ async function waitForRadar(page) {
  * can be taken of a half-mounted page.
  */
 
-const FIXED_TIMESTAMP_ISO = "2026-04-21T12:00:00-05:00";
+
 
 export async function forceLazyPanelsToPaint(page) {
   await page.addStyleTag({

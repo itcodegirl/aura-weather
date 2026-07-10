@@ -261,7 +261,7 @@
   font-size: 11px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
   font-weight: 500;
 }
 
@@ -292,7 +292,7 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(238, 241, 248, 0.6);
+  color: var(--text-dim);
   pointer-events: none;
 }
 
@@ -304,7 +304,7 @@
 
 .nowcast-chart-ticks span {
   font-size: 11px;
-  color: rgba(238, 241, 248, 0.62);
+  color: var(--text-dim);
   font-weight: 400;
 }
 

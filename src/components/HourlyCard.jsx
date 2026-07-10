@@ -121,7 +121,7 @@ function buildHours(hourly, unit, timeZone) {
         windSpeed: toDisplayWind(toFiniteNumber(hourly.windSpeed?.[src]), unit),
         windGust: toDisplayWind(toFiniteNumber(hourly.windGust?.[src]), unit),
         windDir: toFiniteNumber(hourly.windDirection?.[src]),
-        code: hourly.conditionCode?.[src] ?? 0,
+        code: toFiniteNumber(hourly.conditionCode?.[src]),
       };
     })
     .filter(Boolean);

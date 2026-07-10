@@ -140,6 +140,13 @@ function CitySearch({ onSelect, savedCities, recentCities }, ref) {
       : undefined;
   const hasResultOptions = results.length > 0;
   const shouldShowStatus = loading || Boolean(error) || canShowNoResults;
+
+  // Empty while loading/erroring so we never talk over the visible
+  // status region, which already covers those states.
+  const resultCountAnnouncement =
+    showDropdown && hasResultOptions && !loading && !error
+      ? `${results.length} ${results.length === 1 ? "result" : "results"} available. Use the arrow keys to review them.`
+      : "";
   const shouldShowIdleGroups = normalizedQuery.length === 0;
   const shouldShowIdleEmptyState =
     showDropdown &&
@@ -210,6 +217,17 @@ function CitySearch({ onSelect, savedCities, recentCities }, ref) {
 
   return (
     <div className="city-search" ref={containerRef}>
+      {/*
+       * The in-dropdown status region only mounts while searching, on
+       * error, or on no-results — so a successful search announced
+       * nothing at all. This region stays mounted (a live region must
+       * exist before its content changes to be announced reliably) and
+       * carries only the result count.
+       */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {resultCountAnnouncement}
+      </div>
+
       <div className="city-search-input-wrap">
         <Search size={14} className="city-search-icon" />
         <input

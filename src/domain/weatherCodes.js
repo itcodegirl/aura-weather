@@ -44,14 +44,32 @@ export const weatherCodes = {
   99: { label: "Severe Storm", icon: "severe", gradient: ["#161a26", "#0e111a", "#06080e"] },
 };
 
+/**
+ * Descriptor returned when the provider gave us no usable condition
+ * code. Code 0 means "Clear" in WMO, so falling back to it would paint
+ * a confident sunny sky over an absent reading — the exact fake
+ * certainty the data trust contract exists to prevent. The gradient is
+ * a neutral slate that reads as "unlit", not as a weather state.
+ */
+export const UNKNOWN_WEATHER = {
+  label: "Not reported",
+  icon: "unknown",
+  gradient: ["#2b313a", "#1b2027", "#0d1116"],
+};
+
+/**
+ * Resolves a WMO code to its descriptor. Missing, non-numeric, and
+ * unrecognised codes all resolve to {@link UNKNOWN_WEATHER} rather than
+ * to code 0.
+ */
 export function getWeather(code) {
   const numericCode = toFiniteNumber(code);
   if (numericCode === null) {
-    return weatherCodes[0];
+    return UNKNOWN_WEATHER;
   }
 
   const normalizedCode = Math.trunc(numericCode);
-  return weatherCodes[normalizedCode] || weatherCodes[0];
+  return weatherCodes[normalizedCode] ?? UNKNOWN_WEATHER;
 }
 
 export function gradientCss(gradient) {

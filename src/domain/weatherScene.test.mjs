@@ -60,14 +60,17 @@ describe("weather scene derivation", () => {
     assert.equal(scene.weatherInfo.label, "Mostly Clear");
   });
 
-  test("falls back to the clear scene when weather lacks a condition code", () => {
+  test("reports an unknown scene when weather lacks a condition code", () => {
     const scene = deriveWeatherScene({
       weather: { current: {} },
       loading: false,
       error: null,
     });
 
-    assert.equal(scene.weatherInfo.label, "Clear");
+    // Arrived with data but no condition code: say so, rather than
+    // painting a clear sky we have no evidence for.
+    assert.equal(scene.weatherInfo.label, "Not reported");
+    assert.ok(scene.background.startsWith("linear-gradient("));
     assert.equal(scene.showGlobalLoading, false);
     assert.equal(scene.showGlobalError, false);
   });

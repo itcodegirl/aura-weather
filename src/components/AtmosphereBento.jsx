@@ -5,7 +5,7 @@ import { getAqiStatus, getUvStatus } from "../domain/exposure";
 import { formatWindSpeed, windDirectionName, classifyWind } from "../domain/wind";
 import { classifyComfort } from "../domain";
 import { convertTemp } from "../utils/temperature";
-import { toFiniteNumber } from "../utils/numbers";
+import { toFiniteNumber, MISSING_VALUE_PLACEHOLDER } from "../utils/numbers";
 import { useTimeNow } from "../hooks/useTimeNow";
 import "./AtmosphereBento.css";
 
@@ -187,7 +187,7 @@ function WindTile({ weather, unit }) {
           aria-label={dir !== null ? `Wind from ${dirName}` : "Wind direction unavailable"}
         >
           <circle cx="40" cy="40" r="31" fill="rgba(111,183,242,.08)" stroke="rgba(255,255,255,.2)" strokeWidth="1.4" />
-          <text x="40" y="14" fill="rgba(238,241,248,.5)" fontSize="9" textAnchor="middle" fontFamily="Inter">N</text>
+          <text x="40" y="14" fill="rgba(238, 241, 248, 0.78)" fontSize="9" textAnchor="middle" fontFamily="Inter">N</text>
           {dir !== null && (
             <g transform={`rotate(${compassRotation} 40 40)`}>
               <line x1="40" y1="23" x2="40" y2="57" stroke="#6fb7f2" strokeWidth="2.6" strokeLinecap="round" />
@@ -364,6 +364,19 @@ function VisibilityTile({ visibility, unit }) {
 
 function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false }) {
   const titleId = useId();
+
+  // Individual tiles already say "Unavailable", but nothing told the
+  // reader what the dash itself means. Explain it once, and only when a
+  // dash is actually on screen.
+  const hasMissingReading = [
+    weather?.current?.humidity,
+    weather?.daily?.uvIndexMax?.[0],
+    aqi,
+    weather?.current?.pressure,
+    weather?.current?.dewPoint,
+    weather?.current?.visibility,
+  ].some((reading) => toFiniteNumber(reading) === null);
+
   return (
     <section
       className="bento-atm atm-bento glass"
@@ -392,6 +405,13 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
         <DewPointTile dewPoint={weather?.current?.dewPoint} unit={unit} />
         <VisibilityTile visibility={weather?.current?.visibility} unit={unit} />
       </div>
+
+      {hasMissingReading && (
+        <p className="atm-footnote">
+          {MISSING_VALUE_PLACEHOLDER} means this station didn&rsquo;t report that
+          reading. It isn&rsquo;t a zero.
+        </p>
+      )}
     </section>
   );
 }

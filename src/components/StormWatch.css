@@ -90,7 +90,7 @@
   border-radius: var(--radius-pill);
   border: var(--border-soft);
   background: var(--surface-1);
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: var(--track-default);
@@ -116,7 +116,7 @@
 
 .storm-module-summary {
   margin: -2px 0 0;
-  color: rgba(238, 241, 248, 0.68);
+  color: var(--text-dim);
   font-size: 13px;
   font-weight: 400;
   line-height: 1.45;
@@ -139,7 +139,7 @@
 }
 
 .storm-detail-label {
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -419,7 +419,7 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
 }
 
 .cape-label abbr {
@@ -436,7 +436,7 @@
 }
 
 .cape-value.is-missing {
-  color: rgba(238, 241, 248, 0.5);
+  color: var(--text-dim);
 }
 
 .cape-scale {
@@ -472,7 +472,7 @@
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(238, 241, 248, 0.55);
+  color: var(--text-dim);
 }
 
 .storm-window {
@@ -489,7 +489,7 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
 }
 
 .storm-window-pill {
@@ -503,7 +503,7 @@
 
 .storm-window-sub {
   font-size: 12px;
-  color: rgba(238, 241, 248, 0.66);
+  color: var(--text-dim);
 }
 
 .storm-why {

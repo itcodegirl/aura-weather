@@ -5,6 +5,7 @@ import {
   getWeather,
   gradientCss,
   weatherCodes,
+  UNKNOWN_WEATHER,
 } from "./weatherCodes.js";
 
 describe("getWeather", () => {
@@ -14,15 +15,27 @@ describe("getWeather", () => {
     assert.equal(getWeather(95).label, "Thunderstorm");
   });
 
-  test("falls back to the clear descriptor for unknown numeric codes", () => {
-    assert.equal(getWeather(999).label, "Clear");
+  test("reports an unrecognised numeric code as unknown, not as clear", () => {
+    assert.equal(getWeather(999), UNKNOWN_WEATHER);
   });
 
-  test("falls back to the clear descriptor for non-numeric input", () => {
-    assert.equal(getWeather(null).label, "Clear");
-    assert.equal(getWeather(undefined).label, "Clear");
-    assert.equal(getWeather("not-a-code").label, "Clear");
-    assert.equal(getWeather(NaN).label, "Clear");
+  test("reports missing or non-numeric input as unknown, not as clear", () => {
+    // WMO code 0 means "Clear". Coercing an absent reading to 0 would
+    // paint a confident sunny sky over data we never received.
+    for (const absent of [null, undefined, "not-a-code", NaN, "", true, {}]) {
+      assert.equal(getWeather(absent), UNKNOWN_WEATHER);
+    }
+  });
+
+  test("still resolves a genuine zero to Clear", () => {
+    // The contract distinguishes "missing" from "zero": code 0 is a real
+    // reading and must not be swept into the unknown descriptor.
+    assert.equal(getWeather(0).label, "Clear");
+  });
+
+  test("the unknown descriptor exposes a usable 3-stop gradient", () => {
+    assert.equal(UNKNOWN_WEATHER.gradient.length, 3);
+    assert.ok(gradientCss(UNKNOWN_WEATHER.gradient).startsWith("linear-gradient("));
   });
 
   test("truncates non-integer codes before lookup", () => {

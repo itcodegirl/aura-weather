@@ -1,24 +1,29 @@
 import { ChevronDown, Cloud } from "lucide-react";
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useId, useMemo, useState } from "react";
 import { toFiniteNumber } from "../../utils/numbers";
 
+/*
+ * Cloud backup, not cloud sync.
+ *
+ * Saved cities are stored against this device's anonymous Supabase session.
+ * A second device is a different anonymous user and, by RLS, cannot see these
+ * rows. There is therefore no sync key to share and no way to reconnect from
+ * elsewhere — the paste-a-key "Connect" flow was removed rather than left in
+ * place promising something the storage layer cannot do.
+ */
 function SyncAccountPanel({
   syncConnected,
-  syncAccount,
   syncState,
   onCreateSyncAccount,
-  onConnectSyncAccount,
   onDisconnectSyncAccount,
   onSyncNow,
 }) {
-  const [syncKeyInput, setSyncKeyInput] = useState("");
-  const wasConnectedRef = useRef(syncConnected);
   const syncStatusText =
     typeof syncState?.message === "string" && syncState.message.trim()
       ? syncState.message.trim()
       : syncConnected
-        ? "Sync connected"
-        : "Sync not connected";
+        ? "Backed up"
+        : "Not backed up";
   const syncErrorText =
     typeof syncState?.error === "string" && syncState.error.trim()
       ? syncState.error.trim()
@@ -26,19 +31,19 @@ function SyncAccountPanel({
   const isSyncing = syncState?.status === "syncing";
   const panelId = useId();
   /*
-   * Cloud Sync stays collapsed by default. The audit flagged the
+   * The panel stays collapsed by default. The audit flagged the
    * always-expanded body (when connected) as an outsized header
    * footprint for a feature most users never touch. The toggle
    * itself is enough on every page load — the user expands it
-   * intentionally when they need to manage the connection. A
-   * syncing state or live error still force-opens the panel so
-   * the user can act on the situation.
+   * intentionally when they need to manage the backup. A syncing
+   * state or live error still force-opens the panel so the user
+   * can act on the situation.
    */
   const [isExpanded, setIsExpanded] = useState(false);
   const isPanelVisible = isExpanded || isSyncing || Boolean(syncErrorText);
   const syncSummaryHint = useMemo(() => {
     if (syncConnected) {
-      return "Connected";
+      return "Backed up";
     }
     if (syncErrorText) {
       return "Needs attention";
@@ -47,7 +52,7 @@ function SyncAccountPanel({
   }, [syncConnected, syncErrorText]);
   const syncLastUpdatedLabel = useMemo(() => {
     // Strict coercion: a null syncState.lastSyncedAt would otherwise
-    // coerce to 0 and render as "Last synced 12:00 AM" (epoch).
+    // coerce to 0 and render as "Last backed up 12:00 AM" (epoch).
     const lastSyncedAt = toFiniteNumber(syncState?.lastSyncedAt);
     if (lastSyncedAt === null) {
       return "";
@@ -58,22 +63,6 @@ function SyncAccountPanel({
       minute: "2-digit",
     });
   }, [syncState?.lastSyncedAt]);
-  const handleConnect = useCallback(() => {
-    if (typeof onConnectSyncAccount === "function") {
-      void onConnectSyncAccount(syncKeyInput);
-    }
-  }, [onConnectSyncAccount, syncKeyInput]);
-
-  useEffect(() => {
-    const wasConnected = wasConnectedRef.current;
-    if (syncConnected || wasConnected !== syncConnected) {
-      if (syncConnected || wasConnected) {
-        setSyncKeyInput("");
-      }
-    }
-
-    wasConnectedRef.current = syncConnected;
-  }, [syncConnected]);
 
   return (
     <div className="sync-account-shell">
@@ -84,15 +73,15 @@ function SyncAccountPanel({
         aria-controls={panelId}
         aria-label={
           isPanelVisible
-            ? "Collapse cloud sync controls"
-            : "Expand cloud sync controls"
+            ? "Collapse cloud backup controls"
+            : "Expand cloud backup controls"
         }
         onClick={() => setIsExpanded((currentValue) => !currentValue)}
       >
         <span className="sync-account-toggle-copy">
           <span className="sync-account-title">
             <Cloud size={13} aria-hidden="true" />
-            <span>Cloud Sync</span>
+            <span>Cloud Backup</span>
           </span>
           <span className="sync-account-status">{syncStatusText}</span>
         </span>
@@ -106,12 +95,19 @@ function SyncAccountPanel({
 
       {isPanelVisible && (
         <div id={panelId} className="sync-account-panel">
+          {/*
+            The note states a fact, so it has to track the actual state. The
+            backed-up sentence renders only when the device really is backed
+            up; before that it would be a claim about data we have not stored.
+          */}
           <p className="sync-account-note">
-            Keep your saved cities in sync across devices with a shareable sync key.
+            {syncConnected
+              ? "Your saved cities are backed up to the cloud from this device. Clearing your browser data starts a fresh backup."
+              : "Your saved cities are stored on this device only. Back them up to the cloud, and note that clearing your browser data starts a fresh backup."}
           </p>
           {syncLastUpdatedLabel ? (
             <p className="sync-account-meta" role="status">
-              Last synced {syncLastUpdatedLabel}
+              Last backed up {syncLastUpdatedLabel}
             </p>
           ) : null}
           {syncConnected ? (
@@ -123,7 +119,7 @@ function SyncAccountPanel({
                 disabled={isSyncing}
                 aria-busy={isSyncing || undefined}
               >
-                Sync now
+                Back up now
               </button>
               <button
                 type="button"
@@ -132,11 +128,11 @@ function SyncAccountPanel({
                 disabled={isSyncing}
                 aria-busy={isSyncing || undefined}
               >
-                Disconnect
+                Stop backup
               </button>
             </div>
           ) : (
-            <div className="sync-account-connect">
+            <div className="sync-account-actions">
               <button
                 type="button"
                 className="sync-account-btn"
@@ -144,40 +140,9 @@ function SyncAccountPanel({
                 disabled={isSyncing}
                 aria-busy={isSyncing || undefined}
               >
-                Create sync key
+                Start backup
               </button>
-              <div className="sync-account-manual">
-                <input
-                  type="text"
-                  className="sync-account-input"
-                  value={syncKeyInput}
-                  onChange={(event) => setSyncKeyInput(event.target.value)}
-                  placeholder="Paste sync key or URL"
-                  aria-label="Sync key"
-                  disabled={isSyncing}
-                />
-                <button
-                  type="button"
-                  className="sync-account-btn sync-account-btn--subtle"
-                  onClick={handleConnect}
-                  disabled={isSyncing || !syncKeyInput.trim()}
-                >
-                  Connect
-                </button>
-              </div>
             </div>
-          )}
-          {syncConnected && typeof syncAccount?.syncKey === "string" && (
-            <p
-              className="sync-account-key"
-              title={syncAccount.syncKey}
-              aria-label={`Sync key: ${syncAccount.syncKey}`}
-            >
-              Key:{" "}
-              {syncAccount.syncKey.length > 32
-                ? `${syncAccount.syncKey.slice(0, 32)}…`
-                : syncAccount.syncKey}
-            </p>
           )}
           {syncErrorText && (
             <p className="sync-account-error" role="alert">

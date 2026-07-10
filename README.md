@@ -20,7 +20,7 @@ The portfolio story is simple: **Aura never turns missing provider data into fak
 - Compare today's temperature against historical Open-Meteo archive context when available.
 - See NOAA/NWS severe-alert coverage with explicit unsupported-region messaging.
 - Restore a last-known forecast on offline starts without pretending stale data is fresh.
-- Save cities, switch between them quickly, reorder them, set any saved city as startup, and optionally sync saved locations.
+- Save cities, switch between them quickly, reorder them, set any saved city as startup, and optionally back them up to the cloud from this device.
 - Toggle Fahrenheit/Celsius locally without refetching forecast data.
 - Install the app shell as a PWA after a first successful production visit.
 
@@ -79,7 +79,7 @@ src/
     useWeatherData.js        #   forecast + supplemental fetch lifecycle
     useClimateComparison.js  #   historical archive lifecycle
     useLocation.js           #   geolocation + persisted/saved cities
-    useSavedLocationsSync.js #   pull/push cloud sync orchestration
+    useSavedLocationsSync.js #   cloud-backup restore/push orchestration
     useCitySearch.js         #   debounced abortable geocoder
     useRainAnalysis.js  useDeferredMount.js  useDisplayPreferences.js
     useLocalStorageState.js  useAppShellEffects.js
@@ -93,7 +93,7 @@ src/
     StormWatch, HourlyCard, AlertsCard, ExposureSection,
     CitySearch, WeatherIcon, AppErrorBoundary
   services/                  # Cross-cutting services
-    savedLocationsSync.js    #   sync key + jsonblob persistence
+    savedLocationsSync.js    #   per-device saved-city backup (Supabase + RLS)
     weatherSnapshotCache.js  #   last-successful forecast restore cache
     serviceWorkerRegistration.js # production-only PWA registration
   utils/                     # Pure helpers
@@ -115,7 +115,7 @@ never imports a React module.
 npm ci
 ```
 
-2. Copy the optional env file if you want key-based sync URLs:
+2. Copy the optional env file if you want cloud backup or rain alerts locally:
 
 ```bash
 Copy-Item .env.example .env
@@ -137,9 +137,11 @@ Optional variables:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `VITE_AURA_SYNC_API_BASE` | No | Base URL for saved-location sync when users enter a short key instead of a full sync URL |
+| `VITE_SUPABASE_URL` | No | Supabase project URL. Enables the optional saved-city cloud backup and rain alerts. |
+| `VITE_SUPABASE_ANON_KEY` | No | Supabase publishable key. Safe to ship in the client; RLS protects the data. |
 
-If `VITE_AURA_SYNC_API_BASE` is not set, sync still works when the stored account value is a full URL.
+Without these, saved cities still work — they are stored on the device — and
+the Cloud Backup panel reports that backup is unavailable rather than failing.
 
 ## Future Improvements
 
@@ -182,7 +184,7 @@ npm run test:lighthouse
   - city search and location switching
   - recent and saved location sections on empty search focus
   - expandable forecast-day details
-  - cloud sync staying hidden until a saved city exists
+  - cloud backup staying hidden until a saved city exists
   - search loading feedback before empty-result states resolve
   - unit switching without refetching forecast/climate data
   - failed cloud-sync connection attempts staying disconnected with an explicit error
@@ -211,9 +213,9 @@ npm run test:lighthouse
 - Switching to a saved city does not silently rewrite the startup preference; startup remains an explicit choice.
 - Search shows a loading state before empty results, so users do not get a premature "No matching cities" response.
 - Startup-city controls stay hidden until a startup preference actually exists.
-- Cloud sync stays out of the header until a saved city exists, while existing connected/error states still remain recoverable.
-- Failed cloud sync connection attempts surface an error and stay disconnected instead of leaving a stale connected-looking state.
-- Cloud sync is optional and intentionally secondary to the main forecast workflow.
+- Cloud backup stays out of the header until a saved city exists, while existing backed-up/error states still remain recoverable.
+- Failed cloud backup attempts surface an error and stay in the not-backed-up state instead of leaving a stale backed-up-looking state.
+- Cloud backup is optional and intentionally secondary to the main forecast workflow.
 - After a successful production visit, the service worker can serve the app shell offline and acknowledges when the shell is ready; live weather API failures still surface through the saved-forecast trust state instead of pretending fresh data exists.
 - Supported browsers surface an optional "Install Aura" prompt for faster daily access without blocking the forecast workflow.
 
@@ -398,7 +400,7 @@ bug, the contract, and the test pyramid.
 ## Known Limitations
 
 - **U.S.-only severe alerts.** NOAA / NWS coverage stops at the U.S. border; non-U.S. locations fall back to explanatory messaging instead of a false all-clear.
-- **Lightweight cloud sync.** The optional sync flow uses a public jsonblob.com store and expects either a full sync URL or a configured `VITE_AURA_SYNC_API_BASE`. It is not encrypted at rest and is not a substitute for an account system.
+- **Backup is per-device, not cross-device.** Saved cities back up to Supabase against an anonymous session that lives in this browser's storage, protected by row-level security. There is no account and no sync key: a second device is a different anonymous user and cannot see the first device's cities. Clearing site data discards the session and starts a fresh backup, with no route back to the old rows.
 - **Geolocation falls back fast.** If the browser's geolocation prompt does not resolve in 5 seconds the app drops to the Palos Hills, IL default rather than blocking the dashboard. Reverse geocoding is best-effort, so a successful GPS lookup can still fall back to a generic label if the naming request fails.
 - **Historical archive lag.** The Open-Meteo archive is updated daily and may not include the most recent week; on those days the climate-context panel shows "Climate context unavailable" instead of a stale comparison.
 - **Service worker is shell-only.** After one successful production visit, Aura can restore same-origin app-shell/build assets offline. Live weather providers remain network truth sources and still degrade through the saved-forecast banner.

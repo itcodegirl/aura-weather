@@ -310,10 +310,8 @@ export function useWeather(options = {}) {
   }, []);
   const {
     syncConnected,
-    syncAccount,
     syncState,
     createSyncAccount,
-    connectSyncAccount,
     disconnectSyncAccount,
     syncSavedCitiesNow,
   } = useSavedLocationsSync(savedCities, setSavedCities);
@@ -351,10 +349,8 @@ export function useWeather(options = {}) {
     forgetSavedCity,
     moveSavedCity,
     syncConnected,
-    syncAccount,
     syncState,
     createSyncAccount,
-    connectSyncAccount,
     disconnectSyncAccount,
     syncSavedCitiesNow,
   };

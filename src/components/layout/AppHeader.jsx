@@ -16,10 +16,8 @@ function AppHeader({
   forgetSavedCity,
   moveSavedCity,
   syncConnected,
-  syncAccount,
   syncState,
   createSyncAccount,
-  connectSyncAccount,
   disconnectSyncAccount,
   syncSavedCitiesNow,
   isLocatingCurrent,
@@ -59,10 +57,8 @@ function AppHeader({
         forgetSavedCity={forgetSavedCity}
         moveSavedCity={moveSavedCity}
         syncConnected={syncConnected}
-        syncAccount={syncAccount}
         syncState={syncState}
         createSyncAccount={createSyncAccount}
-        connectSyncAccount={connectSyncAccount}
         disconnectSyncAccount={disconnectSyncAccount}
         syncSavedCitiesNow={syncSavedCitiesNow}
         isLocatingCurrent={isLocatingCurrent}

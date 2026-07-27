@@ -116,7 +116,7 @@
 }
 
 .nowcast-chip-value {
-  color: #a9e2bd;
+  color: var(--green-good-light);
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0;
@@ -267,7 +267,7 @@
 
 .nowcast-chart-peak {
   font-size: 11.5px;
-  color: #a9e2bd;
+  color: var(--green-good-light);
   font-weight: 500;
 }
 

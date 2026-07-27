@@ -287,7 +287,7 @@
 }
 
 .saved-city-remove:focus-visible {
-  color: #fecaca;
+  color: var(--severity-critical-fg);
   background: rgba(127, 29, 29, 0.34);
   box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.34);
 }
@@ -569,7 +569,7 @@
 
 .sync-account-error {
   margin: 0;
-  color: #fecaca;
+  color: var(--severity-critical-fg);
   font-size: 11px;
   line-height: 1.35;
 }
@@ -671,7 +671,7 @@
 .toggle-pill-btn.is-active,
 .unit-btn[aria-pressed="true"],
 .toggle-pill-btn[aria-pressed="true"] {
-  color: #021127;
+  color: var(--active-pill-color);
   background: linear-gradient(145deg, #f9fcff, #d9eaff);
   box-shadow:
     0 6px 14px rgba(4, 12, 28, 0.26),
@@ -708,7 +708,7 @@
 }
 
 .header-secondary-action--danger:hover {
-  color: #fecaca;
+  color: var(--severity-critical-fg);
   background: transparent;
   border-color: transparent;
   box-shadow: none;

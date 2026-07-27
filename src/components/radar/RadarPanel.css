@@ -195,7 +195,7 @@
 }
 
 .radar-control--play {
-  color: #021127;
+  color: var(--active-pill-color);
   background: var(--active-pill-bg);
   border-color: transparent;
   box-shadow: var(--active-pill-shadow);
@@ -347,7 +347,7 @@
   background: linear-gradient(
     90deg,
     #c4e6ff 0%,
-    #6fb7f2 30%,
+    var(--accent) 30%,
     #2f6fd0 58%,
     #5a4fcf 80%,
     #8b3fae 100%

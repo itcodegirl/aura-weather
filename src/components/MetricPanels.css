@@ -40,7 +40,7 @@
   width: 42px;
   height: 42px;
   border-radius: 13px;
-  color: #fed7aa;
+  color: var(--severity-high-fg);
   background: rgba(249, 115, 22, 0.18);
   border: 1px solid rgba(251, 191, 36, 0.22);
 }
@@ -83,7 +83,7 @@
 
 .exposure-alert-priority {
   color: #05101f;
-  background: linear-gradient(145deg, #fed7aa, #f97316);
+  background: linear-gradient(145deg, var(--severity-high-fg), #f97316);
   border: 1px solid rgba(255, 237, 213, 0.36);
 }
 
@@ -110,7 +110,7 @@
 }
 
 .exposure-alert-time {
-  color: #fde68a;
+  color: var(--severity-warn-fg);
   background: rgba(113, 63, 18, 0.26);
   border: 1px solid rgba(251, 191, 36, 0.22);
 }
@@ -136,19 +136,19 @@
 }
 
 .exposure-alert--critical .exposure-alert-priority {
-  background: linear-gradient(145deg, #fecaca, #ef4444);
+  background: linear-gradient(145deg, var(--severity-critical-fg), #ef4444);
 }
 
 .exposure-alert--extreme .exposure-alert-priority {
-  background: linear-gradient(145deg, #fecaca, #ef4444);
+  background: linear-gradient(145deg, var(--severity-critical-fg), #ef4444);
 }
 
 .exposure-alert--high .exposure-alert-priority {
-  background: linear-gradient(145deg, #fed7aa, #f97316);
+  background: linear-gradient(145deg, var(--severity-high-fg), #f97316);
 }
 
 .exposure-alert--moderate .exposure-alert-priority {
-  background: linear-gradient(145deg, #fde68a, #d97706);
+  background: linear-gradient(145deg, var(--severity-warn-fg), #d97706);
 }
 
 .exposure-alert--low .exposure-alert-priority {

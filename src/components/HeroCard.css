@@ -280,7 +280,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.13);
-  color: #eef1f8;
+  color: var(--text);
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
@@ -794,7 +794,7 @@
 }
 
 .hero-trust-dot {
-  background: #7fd99a;
+  background: var(--accent-green);
 }
 .hero-stats {
   border-top: 1px solid rgba(255, 238, 214, 0.12);

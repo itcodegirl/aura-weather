@@ -11,7 +11,18 @@ import {
   removeRule,
   sendTestNotification,
 } from "../services/pushAlerts.js";
-import { sameLocation } from "./rainAlertHelpers.js";
+import {
+  createAlertRequestTracker,
+  sameLocation,
+} from "./rainAlertHelpers.js";
+
+// An aborted load is a superseded load, not a failure: the user moved on
+// before it finished, so it must not surface an error to them. Supabase
+// rejects with a DOMException-shaped AbortError; the signal check covers
+// clients that reject with something plainer.
+function isAbortError(caught, signal) {
+  return caught?.name === "AbortError" || Boolean(signal?.aborted);
+}
 
 function ruleLocation(location) {
   return {
@@ -37,6 +48,10 @@ export function useRainAlerts(location) {
   const [error, setError] = useState("");
   const [testSent, setTestSent] = useState(false);
   const mountedRef = useRef(true);
+  const trackerRef = useRef(null);
+  if (trackerRef.current === null) {
+    trackerRef.current = createAlertRequestTracker();
+  }
 
   useEffect(() => {
     mountedRef.current = true;
@@ -47,11 +62,11 @@ export function useRainAlerts(location) {
 
   // Pure fetch — returns the subscription/rule state for this location
   // without touching React state, so callers control when setState runs.
-  const loadAlertState = useCallback(async () => {
+  const loadAlertState = useCallback(async (signal) => {
     if (!available || !location) return null;
     const [subscription, rules] = await Promise.all([
       getExistingSubscription(),
-      listRules(),
+      listRules({ signal }),
     ]);
     const map = {};
     for (const rule of rules) {
@@ -69,11 +84,14 @@ export function useRainAlerts(location) {
   }, []);
 
   const refresh = useCallback(async () => {
+    const tracker = trackerRef.current;
+    const { id, signal } = tracker.start();
     try {
-      const state = await loadAlertState();
-      if (mountedRef.current) applyState(state);
+      const state = await loadAlertState(signal);
+      if (tracker.isCurrent(id) && mountedRef.current) applyState(state);
     } catch (caught) {
-      if (mountedRef.current) {
+      if (isAbortError(caught, signal)) return;
+      if (tracker.isCurrent(id) && mountedRef.current) {
         setError(caught?.message || "Couldn't load alert settings.");
       }
     }
@@ -81,20 +99,25 @@ export function useRainAlerts(location) {
 
   // Load on mount / location change. setState happens inside the async
   // callback (after await), never synchronously in the effect body.
+  // Changing location aborts the previous location's request rather than
+  // letting it land, and the tracker's id guard discards anything that
+  // resolves anyway.
   useEffect(() => {
-    let cancelled = false;
+    const tracker = trackerRef.current;
+    const { id, signal } = tracker.start();
     (async () => {
       try {
-        const state = await loadAlertState();
-        if (!cancelled && mountedRef.current) applyState(state);
+        const state = await loadAlertState(signal);
+        if (tracker.isCurrent(id) && mountedRef.current) applyState(state);
       } catch (caught) {
-        if (!cancelled && mountedRef.current) {
+        if (isAbortError(caught, signal)) return;
+        if (tracker.isCurrent(id) && mountedRef.current) {
           setError(caught?.message || "Couldn't load alert settings.");
         }
       }
     })();
     return () => {
-      cancelled = true;
+      tracker.abort();
     };
   }, [loadAlertState, applyState]);
 

@@ -19,3 +19,46 @@ export function sameLocation(rule, location) {
   }
   return Math.abs(ruleLat - lat) < 1e-4 && Math.abs(ruleLon - lon) < 1e-4;
 }
+
+/**
+ * Request-lifecycle discipline for the alert-state loads, mirroring what
+ * useWeatherData already does for forecasts: every load takes a ticket,
+ * starting a new one aborts the previous request, and only the newest
+ * ticket may write state.
+ *
+ * Both guards are needed and neither replaces the other. The abort stops
+ * the Supabase rule query for a location the user has already left. The
+ * id guard covers what abort cannot: getExistingSubscription reads the
+ * service worker's PushManager, which takes no signal, so a superseded
+ * call still resolves — its result is discarded rather than applied over
+ * the newer location's state.
+ */
+export function createAlertRequestTracker() {
+  let currentId = 0;
+  let controller = null;
+
+  return {
+    /** Supersedes any in-flight load and returns the new ticket. */
+    start() {
+      currentId += 1;
+      if (controller) controller.abort();
+      controller =
+        typeof AbortController === "undefined" ? null : new AbortController();
+      return { id: currentId, signal: controller?.signal };
+    },
+    /** True only for the most recently issued ticket. */
+    isCurrent(id) {
+      return id === currentId;
+    },
+    /**
+     * Abandons the in-flight load without issuing a ticket — for unmount.
+     * Bumps the id too, so a request that resolves after teardown fails
+     * isCurrent and cannot write state.
+     */
+    abort() {
+      currentId += 1;
+      if (controller) controller.abort();
+      controller = null;
+    },
+  };
+}

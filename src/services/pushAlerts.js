@@ -125,15 +125,16 @@ export async function disablePush() {
 // Runs on every dashboard mount, via useRainAlerts. It must NOT create a
 // session: a visitor who never enabled alerts owns no rules, and signing them
 // in anonymously to discover that wrote an auth.users row per visitor.
-export async function listRules() {
+export async function listRules({ signal } = {}) {
   const supabase = await getSupabaseClient();
   if (!supabase) return [];
   const user = await getSessionUser(supabase);
   if (!user) return [];
-  const { data } = await supabase
-    .from("alert_rules")
-    .select("*")
-    .eq("user_id", user.id);
+  let query = supabase.from("alert_rules").select("*").eq("user_id", user.id);
+  // Only chain when a signal is supplied: callers without one (and older
+  // injected fakes) must keep working against a plain query builder.
+  if (signal) query = query.abortSignal(signal);
+  const { data } = await query;
   return data ?? [];
 }
 

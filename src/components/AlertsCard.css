@@ -52,7 +52,7 @@
 
 .alerts-empty-title {
   margin: 0;
-  color: #ecf4ff;
+  color: var(--paper-dim);
   font-size: 16px;
   font-weight: 700;
 }

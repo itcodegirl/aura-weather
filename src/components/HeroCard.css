@@ -181,7 +181,7 @@
 
 .hero-high-low-value {
   font-family: var(--font-display);
-  color: #eff6ff;
+  color: var(--paper-dim);
   font-size: 20px;
   font-weight: 650;
   letter-spacing: 0;
@@ -443,7 +443,7 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  color: #e8f6ff;
+  color: var(--paper-dim);
   background: rgba(160, 190, 240, 0.12);
 }
 
@@ -463,7 +463,7 @@
 
 .hero-guidance-value {
   overflow-wrap: anywhere;
-  color: #f4f9ff;
+  color: var(--paper);
   font-size: 14px;
   line-height: 1.2;
   font-weight: 780;
@@ -535,7 +535,7 @@
 
 .stat-value {
   margin-top: 3px;
-  color: #eff6ff;
+  color: var(--paper-dim);
   font-size: 16px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

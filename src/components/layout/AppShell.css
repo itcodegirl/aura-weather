@@ -117,7 +117,7 @@
 
 .loading-dashboard-brand {
   margin: 0 0 3px;
-  color: #f8fbff;
+  color: var(--paper);
   font-family: var(--font-display);
   font-size: 26px;
   line-height: 1;

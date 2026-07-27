@@ -81,12 +81,12 @@
 }
 
 .city-search-clear:hover {
-  color: #f8fbff;
+  color: var(--paper);
   background: rgba(176, 204, 255, 0.18);
 }
 
 .city-search-clear:focus-visible {
-  color: #f8fbff;
+  color: var(--paper);
   background: rgba(176, 204, 255, 0.22);
   box-shadow: 0 0 0 2px rgba(116, 212, 255, 0.34);
 }
@@ -259,7 +259,7 @@
 }
 
 .city-search-result.is-active .city-search-result-name {
-  color: #f7fbff;
+  color: var(--paper);
 }
 
 .city-search-result-text {

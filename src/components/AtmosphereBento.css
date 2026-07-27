@@ -119,7 +119,7 @@
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: #eef1f8;
+  color: var(--text);
   line-height: 1;
 }
 
@@ -232,7 +232,7 @@
   position: relative;
   height: 8px;
   border-radius: 5px;
-  background: linear-gradient(90deg, #6fb7f2, #7fd99a, #f3d765, #e8745b);
+  background: linear-gradient(90deg, var(--accent), var(--accent-green), #f3d765, #e8745b);
   overflow: visible;
 }
 

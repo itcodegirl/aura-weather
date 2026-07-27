@@ -308,7 +308,7 @@
   border-radius: var(--radius-pill);
   background: rgba(111, 183, 242, 0.14);
   border: 1px solid rgba(111, 183, 242, 0.38);
-  color: #bcdcfa;
+  color: var(--glacier-light);
   font-size: 11.5px;
   white-space: nowrap;
   flex-shrink: 0;

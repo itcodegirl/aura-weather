@@ -160,15 +160,15 @@
 }
 
 .rain-stat-value--observed {
-  color: #f3b765;
+  color: var(--accent-warm);
 }
 
 .rain-stat-value--projected {
-  color: #f3b765;
+  color: var(--accent-warm);
 }
 
 .rain-stat-value--peak {
-  color: #f3b765;
+  color: var(--accent-warm);
 }
 
 .rain-stat-value.is-missing {
@@ -219,7 +219,7 @@
 }
 
 .rain-history-pill-value {
-  color: #f3b765;
+  color: var(--accent-warm);
   font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;

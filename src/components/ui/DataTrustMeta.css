@@ -30,7 +30,7 @@
 }
 
 .data-stale-warning {
-  color: #fecaca;
+  color: var(--severity-critical-fg);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;

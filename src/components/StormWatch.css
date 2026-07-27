@@ -149,7 +149,7 @@
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  color: #eef1f8;
+  color: var(--text);
 }
 
 .storm-detail-value[data-state="missing"],
@@ -431,7 +431,7 @@
   margin-left: auto;
   font-size: 15px;
   font-weight: 600;
-  color: #f3b765;
+  color: var(--accent-warm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -450,7 +450,7 @@
   position: absolute;
   inset: 0;
   border-radius: 4px;
-  background: linear-gradient(90deg, #7fd99a 0%, #f3b765 55%, #e2574a 100%);
+  background: linear-gradient(90deg, var(--accent-green) 0%, var(--accent-warm) 55%, #e2574a 100%);
   opacity: 0.85;
 }
 
@@ -497,7 +497,7 @@
   font-family: var(--font-display, inherit);
   font-size: 20px;
   font-weight: 500;
-  color: #f3b765;
+  color: var(--accent-warm);
   font-variant-numeric: tabular-nums;
 }
 

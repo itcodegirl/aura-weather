@@ -34,7 +34,7 @@
   height: 14px;
   border-radius: var(--radius-pill);
   transform: translateY(-50%);
-  background: #6fb7f2;
+  background: var(--accent);
   box-shadow: 0 0 8px rgba(111, 183, 242, 0.45);
 }
 
@@ -78,7 +78,7 @@
 
 .bento-group-label[data-tier="act-now"]::before {
   height: 16px;
-  background: #f3b765;
+  background: var(--accent-warm);
   box-shadow: 0 0 10px rgba(243, 183, 101, 0.6);
 }
 

@@ -485,7 +485,7 @@
 }
 
 .hourly-detail.hourly-selected-sample strong {
-  color: #f7fbff;
+  color: var(--paper);
   font-family: var(--font-display, inherit);
   font-size: 23px;
   font-weight: 300;
@@ -539,7 +539,7 @@
 }
 
 .hourly-touch-sample strong {
-  color: #f6fbff;
+  color: var(--paper);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0;

@@ -105,7 +105,7 @@
 }
 
 .forecast-row:first-child .forecast-day {
-  color: #f7fbff;
+  color: var(--paper);
 }
 
 .forecast-row:hover,

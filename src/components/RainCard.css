@@ -473,7 +473,7 @@
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
-  color: #f7fbff;
+  color: var(--paper);
   font-variant-numeric: tabular-nums;
 }
 
@@ -527,7 +527,7 @@
   }
 
   .rain-selected-sample strong {
-    color: #f7fbff;
+    color: var(--paper);
     font-family: var(--font-display);
     font-size: 18px;
     font-weight: 650;
@@ -564,7 +564,7 @@
   }
 
   .rain-touch-sample strong {
-    color: #f6fbff;
+    color: var(--paper);
     font-size: 15px;
     letter-spacing: 0;
   }

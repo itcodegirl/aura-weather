@@ -220,6 +220,15 @@
 
   /* Ready/ok status foreground in the status stack. */
   --status-ready-fg: #dcfce7;
+
+  /* Paper tones — the near-white text/surface pair. Fourteen values
+     within 18/255 of each other had accumulated across the components,
+     two of them (#f8fbff and #f7fbff) differing by a single unit in the
+     red channel across twenty call sites. Standardised on the two most
+     used values; nothing here is a new colour. RadarPanel's #f8fafc is
+     deliberately excluded — it is a neutral grey, not a blue-white. */
+  --paper: #f8fbff;
+  --paper-dim: #edf5ff;
 }
 
 * {

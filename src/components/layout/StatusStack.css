@@ -102,7 +102,7 @@
 .permission-onboarding-title {
   grid-area: title;
   margin: 0;
-  color: #edf5ff;
+  color: var(--paper-dim);
   font-size: 15px;
   font-weight: 650;
   letter-spacing: 0;
@@ -185,7 +185,7 @@
 
 .location-setup-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #f0f6ff;
+  color: var(--paper-dim);
 }
 
 .location-setup-btn:disabled,

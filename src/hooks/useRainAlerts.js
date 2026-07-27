@@ -11,13 +11,7 @@ import {
   removeRule,
   sendTestNotification,
 } from "../services/pushAlerts.js";
-
-function sameLocation(rule, location) {
-  return (
-    Math.abs(Number(rule.location_lat) - Number(location?.lat)) < 1e-4 &&
-    Math.abs(Number(rule.location_lon) - Number(location?.lon)) < 1e-4
-  );
-}
+import { sameLocation } from "./rainAlertHelpers.js";
 
 function ruleLocation(location) {
   return {

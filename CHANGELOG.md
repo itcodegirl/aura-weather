@@ -5,6 +5,103 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+Work landed since the 1.0.0 tag. Two audit passes drive most of it: the
+2026-07-03 production-readiness audit, whose findings are remediated
+below, and the 2026-07-27 follow-up that verified them and filed a fresh
+set. `package.json` still reads `1.0.0`; these entries are the candidate
+contents of the next tag.
+
+### Added
+
+- **UV index panel in the hero.** The UV reading was already computed
+  and then discarded before render. It now has a home in the hero card.
+- **Running rainfall totals on the hour chips.** The cumulative total is
+  readable from the chips themselves and from the amount-mode sample
+  readout, instead of only from the summary line.
+- **Plain-language atmosphere readings.** All eight readings now explain
+  what they measure, and the air-quality entry says what to actually do
+  at each EPA band rather than only naming it.
+- **Cloud backup for saved cities.** An RLS-scoped `saved_cities` table
+  in Supabase, sharing the anonymous session, with a committed
+  isolation check that runs as a script.
+- **Two CI gates.** A screenshot-drift gate fails when the committed
+  README images no longer match the rendered app, and the
+  `check-rain-alerts` edge function auto-deploys from `main`.
+
+### Changed
+
+- **Saved-city backup moved off the public jsonblob service.** Backup
+  now resolves through the Supabase session JWT with a v1 to v2 account
+  key migration. The paste-a-key flow is gone, and the feature is named
+  for what it does.
+- **Storm Watch uses the shared severity scale.** It previously carried
+  a bespoke "Level N of 4" wording that matched nothing else on the
+  dashboard.
+- **The architecture boundaries are machine-enforced.** The dependency
+  chain that `AGENTS.md` describes — components to hooks to
+  api/services to utils/domain — is now a lint failure when violated,
+  via `eslint-plugin-boundaries`.
+
+### Fixed
+
+Data trust:
+
+- **Air quality read the European index, not the US EPA one.** The
+  displayed band and its advice were wrong for US locations.
+- **Hero comfort and wind chips double-converted units.** They now
+  classify against the source °F/mph values rather than the display
+  unit, so the chip and the number agree.
+- **"So far today" rainfall used the device's midnight.** Totals now
+  derive the day boundary from the location's own timezone.
+- **The rain-chance curve drew 0% across missing slots.** It gaps
+  instead, so absent provider data no longer reads as "no rain".
+- **A missing condition code rendered as clear sky.** Absent weather
+  codes now stay unavailable.
+- **The hero asserted confidence over a missing headline reading.** The
+  confidence pill is withheld when the reading it describes is absent.
+- **Alert rules trusted raw `Number()` on stored coordinates.** A
+  malformed rule row coerced to `(0, 0)` and was treated as a real
+  place; non-finite coordinates now match nothing.
+- **The rain-alerts edge function failed open.** It fails closed when
+  `CRON_SECRET` is unset, and a threshold of `0` now means "any rain
+  chance" instead of silently becoming 50.
+- **The hourly strip showed a plateauing total, not per-hour amount.**
+
+Accessibility:
+
+- **Each chart was roughly 24 tab stops.** The hourly columns and the
+  rain chart bars and sample strip use a roving tabindex, so each chart
+  is one stop. An invalid `role="list"` went with it.
+- **The severe-alert title skipped a heading level.** It renders as an
+  `h2`.
+- **Muted text fell below the AA contrast threshold.** It is floored at
+  the threshold.
+- **The missing-data placeholder was unexplained and search results
+  were silent.** Both now carry accessible context.
+
+Performance:
+
+- **Auto-refresh listeners re-registered on every location change.**
+  The effect no longer churns per city.
+- **Radar auto-play and particle animations ran in hidden tabs.** Both
+  pause while the tab is hidden.
+- **Every radar frame eager-loaded its tiles.** Inactive layers defer
+  to map idle; only the visible frame loads eagerly.
+
+Correctness and hygiene:
+
+- **Saved and recent city getters wrote to `localStorage`.** Reads are
+  pure; persistence is explicit.
+- **Every visitor minted an anonymous auth user.**
+- **Backup reported a clean stop while the cloud copy survived.**
+- **The missing-data footnote said "station" where it meant
+  "provider".**
+- **Screenshot and visual-baseline capture depended on live weather.**
+  Captures run through one hardened bootstrap against a stubbed radar
+  dated from the frozen clock, so they are reproducible.
+
 ## [1.0.0] — 2026-07-03
 
 First tagged release. Cuts the accumulated audit batches below into a

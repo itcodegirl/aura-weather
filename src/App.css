@@ -198,6 +198,28 @@
   --severity-info-fg: #dbeafe;
   --severity-info-border: rgba(147, 197, 253, 0.42);
   --severity-info-bg: rgba(30, 64, 175, 0.22);
+
+  /* Risk ramp — the saturated ladder shared by the hero UV track, the
+     Storm Watch severity bar and the exposure-alert priority chips.
+     Distinct from the --severity-*-fg rungs above: those are the soft
+     foregrounds of the badge palette, these are the strong ramp stops. */
+  --risk-low: #22c55e;
+  --risk-moderate: #a3e635;
+  --risk-elevated: #eab308;
+  --risk-high: #f97316;
+  --risk-severe: #ef4444;
+  --risk-extreme: #a855f7;
+
+  /* Chart series — the bar gradients shared by HourlyCard and RainCard. */
+  --chart-rain-top: #7fb6ef;
+  --chart-rain-bottom: #5391d8;
+  --chart-good-top: #9be7b4;
+  --chart-good-bottom: #5fc88c;
+  --chart-outline: #0d1b2e;
+  --chart-selected: #ffd591;
+
+  /* Ready/ok status foreground in the status stack. */
+  --status-ready-fg: #dcfce7;
 }
 
 * {

@@ -407,11 +407,11 @@
 }
 
 .rain-bar-fill.b-mid {
-  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
 }
 
 .rain-bar-fill.b-hi {
-  background: linear-gradient(180deg, #9be7b4, #5fc88c);
+  background: linear-gradient(180deg, var(--chart-good-top), var(--chart-good-bottom));
   box-shadow: 0 0 10px rgba(127, 217, 154, 0.3);
 }
 

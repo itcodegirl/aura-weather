@@ -122,7 +122,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--accent-warm);
-  box-shadow: 0 0 0 1.5px #0d1b2e;
+  box-shadow: 0 0 0 1.5px var(--chart-outline);
 }
 
 .lg-bar {
@@ -132,11 +132,11 @@
 }
 
 .lg-bar.b-mid {
-  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
 }
 
 .lg-bar.b-hi {
-  background: linear-gradient(180deg, #9be7b4, #5fc88c);
+  background: linear-gradient(180deg, var(--chart-good-top), var(--chart-good-bottom));
 }
 
 .lg-bar.b-gust {
@@ -229,11 +229,11 @@
 }
 
 .hourly-bar.b-mid {
-  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
 }
 
 .hourly-bar.b-hi {
-  background: linear-gradient(180deg, #9be7b4, #5fc88c);
+  background: linear-gradient(180deg, var(--chart-good-top), var(--chart-good-bottom));
   box-shadow: 0 0 12px rgba(127, 217, 154, 0.35);
 }
 
@@ -256,7 +256,7 @@
   right: 0;
   bottom: 0;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(180deg, #7fb6ef, #5391d8);
+  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
 }
 
 .hourly-wcap {
@@ -316,14 +316,14 @@
   height: 9px;
   border-radius: 50%;
   background: var(--accent-warm);
-  box-shadow: 0 0 0 2px #0d1b2e, 0 0 8px rgba(243, 183, 101, 0.5);
+  box-shadow: 0 0 0 2px var(--chart-outline), 0 0 8px rgba(243, 183, 101, 0.5);
 }
 
 .hourly-dot.is-sel {
   width: 12px;
   height: 12px;
-  background: #ffd591;
-  box-shadow: 0 0 0 2px #0d1b2e, 0 0 14px rgba(243, 183, 101, 0.8);
+  background: var(--chart-selected);
+  box-shadow: 0 0 0 2px var(--chart-outline), 0 0 14px rgba(243, 183, 101, 0.8);
 }
 
 .hourly-tchip {
@@ -366,7 +366,7 @@
 }
 
 .hourly-arrow.is-sel {
-  color: #ffd591;
+  color: var(--chart-selected);
 }
 
 /* now marker */

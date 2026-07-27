@@ -260,11 +260,11 @@
 
 .app-status--ready {
   border-color: rgba(134, 239, 172, 0.42);
-  color: #dcfce7;
+  color: var(--status-ready-fg);
 }
 
 .app-status--ready::before {
-  background: linear-gradient(180deg, #dcfce7, #86efac);
+  background: linear-gradient(180deg, var(--status-ready-fg), #86efac);
   box-shadow: 0 0 0 3px rgba(134, 239, 172, 0.13);
 }
 

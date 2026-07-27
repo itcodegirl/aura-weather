@@ -268,7 +268,7 @@
   inset: 0;
   border-radius: 6px;
   opacity: 0.76;
-  background: linear-gradient(to right, #38bdf8, #22c55e 28%, #eab308 58%, #f97316 78%, #dc2626);
+  background: linear-gradient(to right, #38bdf8, var(--risk-low) 28%, var(--risk-elevated) 58%, var(--risk-high) 78%, #dc2626);
 }
 
 .comfort-marker {
@@ -461,7 +461,7 @@
   height: 12px;
   border-radius: 50%;
   background: #fff;
-  border: 2px solid #0d1b2e;
+  border: 2px solid var(--chart-outline);
   transform: translate(-50%, -50%);
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }

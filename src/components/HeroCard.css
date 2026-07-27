@@ -333,12 +333,12 @@
   border-radius: var(--radius-pill, 999px);
   background: linear-gradient(
     90deg,
-    #22c55e 0%,
-    #a3e635 20%,
-    #eab308 40%,
-    #f97316 60%,
-    #ef4444 78%,
-    #a855f7 100%
+    var(--risk-low) 0%,
+    var(--risk-moderate) 20%,
+    var(--risk-elevated) 40%,
+    var(--risk-high) 60%,
+    var(--risk-severe) 78%,
+    var(--risk-extreme) 100%
   );
   opacity: 0.85;
 }

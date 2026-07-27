@@ -284,7 +284,7 @@
 
 .error-card-icon {
   margin: 0 auto 10px;
-  color: #d9ecff;
+  color: var(--severity-info-fg);
 }
 
 .error-card h1 {

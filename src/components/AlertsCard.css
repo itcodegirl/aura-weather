@@ -109,7 +109,7 @@
 
 .alerts-event {
   margin: 0;
-  color: #f5f9ff;
+  color: var(--paper);
   font-size: 13px;
   font-weight: 700;
 }

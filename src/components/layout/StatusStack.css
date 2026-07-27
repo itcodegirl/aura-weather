@@ -127,7 +127,7 @@
 
 .location-setup-title {
   margin: 0;
-  color: #e0efff;
+  color: var(--severity-info-fg);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.45;
@@ -180,7 +180,7 @@
 }
 
 .location-setup-btn--primary:hover {
-  background: linear-gradient(145deg, #ffffff, #dcedff);
+  background: linear-gradient(145deg, #ffffff, var(--severity-info-fg));
 }
 
 .location-setup-btn--ghost:hover {
@@ -230,7 +230,7 @@
 
 .app-status--loading {
   border-color: rgba(190, 220, 255, 0.35);
-  color: #d6e9ff;
+  color: var(--severity-info-fg);
 }
 
 .app-status--loading::before {
@@ -320,7 +320,7 @@
 }
 
 .app-status-action--primary:hover {
-  background: linear-gradient(145deg, #ffffff, #dcedff);
+  background: linear-gradient(145deg, #ffffff, var(--severity-info-fg));
 }
 
 .app-status-retry {

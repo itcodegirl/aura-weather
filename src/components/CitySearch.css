@@ -59,7 +59,7 @@
   border: none;
   outline: none;
   background: none;
-  color: #f3f8ff;
+  color: var(--paper);
   font-size: 15px;
   font-weight: 600;
 }
@@ -270,7 +270,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: #f2f7ff;
+  color: var(--paper-dim);
   font-size: 15px;
   font-weight: 700;
 }

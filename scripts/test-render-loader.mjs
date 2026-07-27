@@ -2,9 +2,11 @@
 // the two affordances Vite normally provides during dev:
 //   1. CSS imports become an empty module so React components can
 //      import their stylesheets without crashing the test runner.
-//   2. .jsx files are transformed to plain ESM JavaScript via esbuild
-//      (already a transitive dep through Vite). The transform runs
-//      in-memory; nothing is written to disk.
+//   2. .jsx files are transformed to plain ESM JavaScript via esbuild,
+//      a direct devDependency. It used to be taken on loan from Vite's
+//      dependency tree; Vite 8 bundles with Rolldown/oxc and no longer
+//      pulls esbuild in, so this loader now declares what it imports.
+//      The transform runs in-memory; nothing is written to disk.
 
 import { readFile, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";

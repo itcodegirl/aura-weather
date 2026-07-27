@@ -75,7 +75,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #d5e8ff;
+  color: var(--severity-info-fg);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: var(--track-default);

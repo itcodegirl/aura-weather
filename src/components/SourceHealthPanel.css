@@ -91,7 +91,7 @@
 
 .source-health-name {
   overflow-wrap: anywhere;
-  color: #eff7ff;
+  color: var(--paper-dim);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.2;

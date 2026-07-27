@@ -156,8 +156,8 @@
 
 .saved-city-chip.is-active,
 .saved-city-chip[aria-pressed="true"] {
-  color: #061026;
-  background: linear-gradient(145deg, var(--paper), #dbe9ff);
+  color: var(--active-pill-color);
+  background: linear-gradient(145deg, var(--paper), var(--severity-info-fg));
 }
 
 .saved-city-chip.is-startup:not(.is-active) {
@@ -672,7 +672,7 @@
 .unit-btn[aria-pressed="true"],
 .toggle-pill-btn[aria-pressed="true"] {
   color: var(--active-pill-color);
-  background: linear-gradient(145deg, var(--paper), #d9eaff);
+  background: linear-gradient(145deg, var(--paper), var(--severity-info-fg));
   box-shadow:
     0 6px 14px rgba(4, 12, 28, 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.52);

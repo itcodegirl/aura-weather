@@ -28,7 +28,7 @@
   font-weight: 650;
   margin: 0;
   letter-spacing: 0;
-  color: #f2f7ff;
+  color: var(--paper-dim);
 }
 
 .forecast-summary {
@@ -151,7 +151,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
-  color: #eef5ff;
+  color: var(--paper-dim);
 }
 
 .forecast-condition {
@@ -249,7 +249,7 @@
   line-height: 1;
   font-weight: 650;
   letter-spacing: 0;
-  color: #f4f8ff;
+  color: var(--paper);
   font-variant-numeric: tabular-nums;
 }
 
@@ -399,7 +399,7 @@
 
 .forecast-detail-value {
   margin: 0;
-  color: #f4f8ff;
+  color: var(--paper);
   font-size: 15px;
   font-weight: 700;
   line-height: 1.2;

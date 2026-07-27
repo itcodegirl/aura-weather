@@ -78,7 +78,7 @@
 .radar-map {
   height: 100%;
   width: 100%;
-  background: #e8eef4;
+  background: var(--text);
 }
 
 /* Leaflet control theming — keep it quiet against the light basemap. */
@@ -252,7 +252,7 @@
   width: 16px;
   height: 16px;
   border-radius: var(--radius-pill);
-  background: #f8fafc;
+  background: var(--paper);
   border: 2px solid var(--accent);
   box-shadow: var(--shadow-raise-sm);
 }
@@ -261,7 +261,7 @@
   width: 16px;
   height: 16px;
   border-radius: var(--radius-pill);
-  background: #f8fafc;
+  background: var(--paper);
   border: 2px solid var(--accent);
   box-shadow: var(--shadow-raise-sm);
 }

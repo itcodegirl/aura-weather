@@ -266,7 +266,7 @@
   top: 0;
   height: 2px;
   border-radius: 2px;
-  background: #bfe0ff;
+  background: var(--glacier-light);
   box-shadow: 0 0 6px rgba(150, 200, 255, 0.55);
 }
 

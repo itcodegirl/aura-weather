@@ -384,7 +384,7 @@
 
 .data-status-summary:hover,
 .data-status-summary:focus-visible {
-  color: #f3f8ff;
+  color: var(--paper);
 }
 
 .data-status-summary:focus-visible {

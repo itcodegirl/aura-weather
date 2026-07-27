@@ -267,6 +267,68 @@ describe("HeroCard trust pill confidence", () => {
     assert.match(pill.textContent, /Confidence fading/);
     assert.doesNotMatch(pill.textContent, /High confidence/);
   });
+
+  // The pill sits above the hero's headline reading. Freshness is not the same
+  // as having data to be confident about: when the headline itself is missing,
+  // a fresh fetch must not be dressed up as confidence. Each case below uses a
+  // FRESH weatherFetchedAt, so without the headline check the pill would read
+  // "High confidence" — these prove the absence outranks freshness.
+
+  test("does not claim confidence when the headline temperature is missing", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ current: { temperature: null } }),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill.classList.contains("hero-trust-pill--unavailable"));
+    assert.match(pill.textContent, /Current data unavailable/);
+    assert.doesNotMatch(
+      pill.textContent,
+      /High confidence/,
+      "a missing headline temperature must not read as high confidence"
+    );
+  });
+
+  test("does not claim confidence when the headline condition is missing", () => {
+    // Temperature present, condition code absent → the condition renders
+    // "Not reported". The pill must track the condition too, not just temp.
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ current: { conditionCode: null } }),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill.classList.contains("hero-trust-pill--unavailable"));
+    assert.doesNotMatch(pill.textContent, /High confidence/);
+  });
+
+  test("keeps 'High confidence' when the headline is present but a sub-reading is missing", () => {
+    // Temp + condition present, humidity absent (Atmosphere shows "—"). The
+    // pill fronts a real current reading, so it must stay confident — the fix
+    // must not over-trigger on normal partial data.
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ current: { humidity: null } }),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill.classList.contains("hero-trust-pill--live"));
+    assert.match(pill.textContent, /High confidence/);
+    assert.doesNotMatch(pill.textContent, /Current data unavailable/);
+  });
 });
 
 describe("HeroCard accessibility scaffolding", () => {

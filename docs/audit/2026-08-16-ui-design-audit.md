@@ -2,8 +2,11 @@
 
 **Date:** 2026-08-16
 **Baseline:** `main` @ `52913cf` (post token-consolidation, PR #139)
-**Method:** Full quality-gate run on a clean `npm ci` (`lint`, `test` 583/583, `build`,
-`test:e2e --workers=1` incl. axe + visual regression — all green), review of the committed
+**Method:** Full local quality-gate run on a clean `npm ci` (`lint`, `test` 583/583, `render`
+219/219, `build` — all green); the browser tier (e2e + axe + visual regression) verified via
+the green `browser-quality` CI run on this exact tree rather than locally — the audit
+container's pre-installed Chromium build does not match the pinned Playwright's expected
+build, so local browser runs are not authoritative here. Also: review of the committed
 visual baselines (desktop / tablet / mobile / trust-contract), file:line verification of every
 open item from the 2026-06-26 product-UX audit and the 2026-07-27 follow-up, and a fresh pass
 over the rubric a hiring manager would apply: hierarchy, states, responsiveness, accessibility,

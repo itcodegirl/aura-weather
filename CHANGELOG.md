@@ -5,15 +5,29 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.1.0] — 2026-08-17
 
-Work landed since the 1.0.0 tag. Two audit passes drive most of it: the
-2026-07-03 production-readiness audit, whose findings are remediated
-below, and the 2026-07-27 follow-up that verified them and filed a fresh
-set. `package.json` still reads `1.0.0`; these entries are the candidate
-contents of the next tag.
+Work landed since the 1.0.0 tag. Three audit passes drive most of it:
+the 2026-07-03 production-readiness audit, whose findings are remediated
+below, the 2026-07-27 follow-up that verified them and filed a fresh
+set, and the 2026-08-16 UI/UX design audit that verified *those* and
+found no critical or important defects remaining. The EPA-scale air
+quality correction alone justifies the minor bump; the accumulated
+correctness and accessibility work makes it overdue.
 
 ### Added
+
+- **A plain-language value line in the header.** "Today's conditions,
+  honest about what it doesn't know." — the brand block previously
+  carried only the "Atmospheric Intelligence" tagline, which is mood
+  rather than meaning. Raised by all three audits.
+- **A third dated audit record.** `docs/audit/2026-08-16-ui-design-audit.md`
+  verifies every prior finding against current source with file:line
+  evidence and narrows the open list to owner decisions.
+- **A recorded decision on dashboard breadth.** The case study now
+  states why six surfaces discuss precipitation, with the horizon each
+  one answers and the behavioural trigger that would reverse the call,
+  instead of leaving the question open across audits.
 
 - **UV index panel in the hero.** The UV reading was already computed
   and then discarded before render. It now has a home in the hero card.
@@ -32,6 +46,11 @@ contents of the next tag.
 
 ### Changed
 
+- **Lighthouse bumped to 13.4.1.** The 12.x line pinned `ws`,
+  `@sentry/node`, and OpenTelemetry versions that the advisory database
+  had grown to flag; `npm audit` reported seven high advisories in the
+  dev tree (runtime dependencies were always clean) and now reports
+  zero. The budget gate passes unchanged under the new major.
 - **Saved-city backup moved off the public jsonblob service.** Backup
   now resolves through the Supabase session JWT with a v1 to v2 account
   key migration. The paste-a-key flow is gone, and the feature is named

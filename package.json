@@ -1,7 +1,7 @@
 {
   "name": "aura-weather",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "A resilient, accessible React weather dashboard — live forecast, hourly outlook, air quality, severe-weather alerts, and source-aware data-trust cues, with offline restore and a PWA shell.",
   "keywords": [

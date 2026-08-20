@@ -133,7 +133,14 @@ function buildForecastDays(weatherDaily, timeZone, todayIsoOverride) {
   const validDays = times
     .map((date, index) => ({
       date,
-      conditionCode: toFiniteNumber(weatherCodes[index], 0),
+      // No `0` fallback. This file's local toFiniteNumber (above) takes a
+      // fallback, and passing 0 turned an absent daily weather_code into
+      // WMO 0 — "Clear" — painting a confident amber sun over a reading the
+      // provider never sent, next to real temperatures. If the field was
+      // absent entirely, all seven rows claimed Clear. weatherCodes.js:50
+      // exists to prevent exactly this; letting the value stay NaN routes it
+      // to UNKNOWN_WEATHER ("Not reported") and the CloudOff glyph.
+      conditionCode: toFiniteNumber(weatherCodes[index]),
       temperatureMax: toFiniteNumber(maxTemps[index]),
       temperatureMin: toFiniteNumber(minTemps[index]),
       rainChanceMax: clampPercent(
@@ -246,6 +253,13 @@ function DayRow({
   const rainChance = day.rainChanceMax;
   const hasRainChance = Number.isFinite(rainChance);
   const hasNotableRainChance = hasRainChance && rainChance >= 20;
+  // Shared by the row's accessible name and the precipitation cell, so the
+  // two can never describe the same reading differently.
+  const rainChanceSummary = hasNotableRainChance
+    ? `rain chance ${rainChance} percent`
+    : !hasRainChance
+      ? "rain chance unavailable"
+      : "low rain chance";
   const daySignal = getDaySignal(day, weekMin, weekMax);
   const hasTemperatureRange =
     Number.isFinite(day.temperatureMin) && Number.isFinite(day.temperatureMax);
@@ -286,7 +300,16 @@ function DayRow({
         className="forecast-row-trigger"
         aria-expanded={isExpanded}
         aria-controls={detailPanelId}
-        aria-label={`${isExpanded ? "Hide" : "Show"} forecast details for ${isToday ? "today" : label}`}
+        /*
+         * The name must carry the row's readings, not just the disclosure
+         * verb. `aria-label` on a button replaces its subtree for name
+         * computation, so a label of only "Show forecast details for Wed"
+         * discarded the day, condition, signal, high, low and rain chance —
+         * everything a sighted user reads at a glance. A screen-reader user
+         * heard seven identical-shaped prompts and had to expand every row
+         * one at a time to learn a single temperature.
+         */
+        aria-label={`${isToday ? "Today" : label}, ${info.label}, ${daySignal.label}, high ${high.ariaText}, low ${low.ariaText}, ${rainChanceSummary}. ${isExpanded ? "Hide" : "Show"} forecast details`}
         onClick={() => onToggle(day.date)}
       >
         <div className="forecast-day-wrap">
@@ -345,16 +368,7 @@ function DayRow({
           ) : null}
         </div>
 
-        <div
-          className="forecast-precip"
-          aria-label={
-            hasNotableRainChance
-              ? `Rain chance ${rainChance} percent`
-              : !hasRainChance
-                ? "Rain chance unavailable"
-              : "Low rain chance"
-          }
-        >
+        <div className="forecast-precip">
           {hasNotableRainChance ? (
             <>
               <Droplets size={11} aria-hidden="true" />

@@ -240,7 +240,12 @@ function WindTile({ weather, unit }) {
   const dirName = dir !== null ? windDirectionName(dir) : "";
   const strength = hasDat ? classifyWind(speed, "F") : "—";
   const speedDisplay = hasDat ? formatWindSpeed(speed, unit) : "—";
-  const gustDisplay = gust !== null ? formatWindSpeed(gust, unit) : speedDisplay;
+  // A missing gust is not the sustained speed. Falling back to speedDisplay
+  // printed "Gusts to 12 mph" from wind_speed_10m when wind_gusts_10m was
+  // absent — a fabricated reading presented as measured, which is the one
+  // thing the trust contract forbids. Every sibling tile drops to "—" here.
+  const gustDisplay =
+    gust !== null ? formatWindSpeed(gust, unit) : MISSING_VALUE_PLACEHOLDER;
   const compassRotation = dir !== null ? dir + 180 : 0;
   return (
     <div className="atm-tile atm-tile--wide">

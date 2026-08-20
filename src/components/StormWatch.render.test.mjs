@@ -11,9 +11,18 @@ afterEach(() => {
   cleanup();
 });
 
-function buildHourlyTime(start = new Date("2026-04-21T12:00:00Z").getTime()) {
+const HOUR_MS = 60 * 60 * 1000;
+// Index of "now" within the fixture series. The real forecast request carries
+// past_hours=48, so a series always opens well before the current hour —
+// these fixtures mirror that shape rather than pretending index 0 is now.
+const NOW_INDEX = 2;
+// A deliberately alarming value parked in the past slots. Nothing the
+// component renders may ever come from these.
+const STALE_CAPE = 2600;
+
+function buildHourlyTime(start = Date.now() - NOW_INDEX * HOUR_MS) {
   return Array.from({ length: 6 }, (_, i) =>
-    new Date(start + i * 60 * 60 * 1000).toISOString()
+    new Date(start + i * HOUR_MS).toISOString()
   );
 }
 
@@ -29,7 +38,9 @@ function buildWeather({ cape, conditionCode = 2 } = {}) {
     },
     hourly: {
       time: buildHourlyTime(),
-      cape: [cape],
+      cape: Array.from({ length: 6 }, (_, i) =>
+        i < NOW_INDEX ? STALE_CAPE : cape
+      ),
       pressure: [1012, 1013, 1013, 1014, 1014, 1015],
       rainChance: [10, 20, 35, 55, 40, 20],
     },
@@ -126,6 +137,25 @@ describe("StormWatch (slimmed risk synthesis)", () => {
     assert.ok(
       screen.queryAllByText(/J\/kg/).length >= 1,
       "CAPE J/kg should appear when present"
+    );
+  });
+
+  test("reads CAPE at the current hour, not the start of the series", () => {
+    // Regression guard. The forecast carries past_hours=48, so hourly[0] is
+    // two days old; reading it rendered storm energy from the day before
+    // yesterday as "live storm energy" — headlining "Severe" on a calm day,
+    // or "All clear" while a real build-up was underway.
+    const { container } = render(
+      React.createElement(StormWatch, {
+        weather: buildWeather({ cape: null }),
+        unit: "F",
+        isRefreshing: false,
+      })
+    );
+    assert.equal(
+      container.textContent.includes(String(STALE_CAPE)),
+      false,
+      "must not surface the stale leading CAPE value"
     );
   });
 

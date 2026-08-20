@@ -16,6 +16,7 @@ import {
   classifyWind,
 } from "../domain";
 import { getZonedNow, formatHour } from "../utils/dates";
+import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber, MISSING_VALUE_PLACEHOLDER } from "../utils/numbers";
 import { InfoDrawer } from "./ui";
 import "./StormWatch.css";
@@ -119,7 +120,28 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
   const titleId = useId();
   const whyId = useId();
 
-  const cape = toFiniteNumber(weather?.hourly?.cape?.[0]);
+  /*
+   * The forecast request carries past_hours=48, so hourly index 0 is two
+   * days in the past — reading cape[0] rendered storm energy from 48 hours
+   * ago as "live storm energy", which could headline "Severe" on a calm day
+   * (or "All clear" during a real build-up). Anchor to now the way
+   * HourlyCard and analyzeNowcast already do.
+   */
+  const cape = useMemo(() => {
+    const times = weather?.hourly?.time;
+    const capeSeries = weather?.hourly?.cape;
+    if (!Array.isArray(times) || !Array.isArray(capeSeries)) {
+      return null;
+    }
+    const nowIdx = findWindowStartIndex(times, {
+      now: getZonedNow(weather?.meta?.timezone).getTime(),
+      currentSlotToleranceMs: 60 * 60 * 1000,
+    });
+    if (nowIdx < 0) {
+      return null;
+    }
+    return toFiniteNumber(capeSeries[nowIdx]);
+  }, [weather?.hourly?.time, weather?.hourly?.cape, weather?.meta?.timezone]);
   const hasCape = cape !== null;
   const conditionCode = toFiniteNumber(weather?.current?.conditionCode);
   const risk = useMemo(

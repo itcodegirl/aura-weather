@@ -74,6 +74,7 @@ export function resolveInitialLocationState({
         startupLocation: persistedLocation,
         notice: SAVED_LOCATION_NOTICE,
         hasPersistedLocation: true,
+        source: "persisted",
       };
     }
 
@@ -82,6 +83,7 @@ export function resolveInitialLocationState({
       startupLocation: persistedLocation ?? null,
       notice: null,
       hasPersistedLocation: Boolean(persistedLocation),
+      source: "url",
     };
   }
 
@@ -91,6 +93,7 @@ export function resolveInitialLocationState({
       startupLocation: persistedLocation,
       notice: SAVED_LOCATION_NOTICE,
       hasPersistedLocation: true,
+      source: "persisted",
     };
   }
 
@@ -99,5 +102,6 @@ export function resolveInitialLocationState({
     startupLocation: null,
     notice: LOCATION_FALLBACK_NOTICE,
     hasPersistedLocation: false,
+    source: "default",
   };
 }

@@ -144,4 +144,23 @@ describe("resolveInitialLocationState", () => {
     assert.equal(state.notice, SAVED_LOCATION_NOTICE);
     assert.equal(state.hasPersistedLocation, true);
   });
+  test("tags where the initial location came from so the bootstrap can defer", () => {
+    // Regression guard for shared ?lat&lon links. useLocation used to
+    // bootstrap unconditionally and overwrite a URL-resolved location with
+    // the startup city; useUrlLocationSync then rewrote the URL, destroying
+    // the shared link. useWeather now skips the bootstrap when source is
+    // "url", so the tag is load-bearing, not decorative.
+    const urlLocation = { lat: 35.6762, lon: 139.6503, name: "Tokyo", country: "Japan" };
+    const persisted = { lat: 41.8781, lon: -87.6298, name: "Chicago", country: "United States" };
+
+    assert.equal(
+      resolveInitialLocationState({ urlLocation, persistedLocation: persisted }).source,
+      "url"
+    );
+    assert.equal(
+      resolveInitialLocationState({ urlLocation: null, persistedLocation: persisted }).source,
+      "persisted"
+    );
+    assert.equal(resolveInitialLocationState().source, "default");
+  });
 });

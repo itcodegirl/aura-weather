@@ -43,65 +43,11 @@
  * in StormWatch.jsx. Visual rule lives in App.css.
  */
 
-.storm-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
 
-.storm-module {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 196px;
-  padding: 15px;
-  border-radius: calc(var(--radius-sm) + 2px);
-  border: var(--subcard-border);
-  background:
-    linear-gradient(165deg, rgba(12, 24, 48, 0.56), rgba(7, 15, 32, 0.48)),
-    var(--bg-well);
-  box-shadow: var(--subcard-shadow);
-}
 
-.storm-module-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
 
-.storm-module .storm-module-header {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--severity-info-fg);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: var(--track-default);
-  text-transform: uppercase;
-  margin: 0;
-}
 
-.storm-module-kicker {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  border: var(--border-soft);
-  background: var(--surface-1);
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: var(--track-default);
-  text-transform: uppercase;
-}
 
-.storm-module-subtitle-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
 
 .storm-help-drawer .info-drawer-panel {
   width: min(220px, 72vw);
@@ -122,41 +68,9 @@
   line-height: 1.45;
 }
 
-.storm-term-hint {
-  margin: 0;
-  color: rgba(209, 224, 248, 0.86);
-  font-size: 11px;
-  line-height: 1.35;
-}
 
-.storm-detail {
-  margin-top: auto;
-  padding-top: 10px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  border-top: 1px solid rgba(168, 196, 242, 0.18);
-}
 
-.storm-detail-label {
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-}
 
-.storm-detail-value {
-  font-size: 14px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.storm-detail-value[data-state="missing"],
-.storm-detail[data-state="missing"] .storm-detail-value {
-  color: rgba(226, 232, 240, 0.6);
-  font-weight: 600;
-}
 
 .storm-risk-meter {
   display: flex;
@@ -171,154 +85,28 @@
   transition: background var(--motion-medium) var(--ease-standard);
 }
 
-.storm-risk-accessibility {
-  border: 0;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  position: absolute;
-  width: 1px;
-  white-space: nowrap;
-}
 
-.pressure-sparkline {
-  width: 100%;
-  height: 46px;
-  margin: 0;
-  padding: 4px;
-  border-radius: var(--radius-xs);
-  background: var(--surface-1);
-  border: var(--border-soft);
-}
 
-.wind-compass {
-  display: flex;
-  justify-content: center;
-  margin: 0;
-}
 
-.wind-compass-ring {
-  position: relative;
-  width: 74px;
-  height: 74px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(var(--border-base), 0.26);
-  background: radial-gradient(circle at 30% 30%, rgba(107, 230, 255, 0.12), rgba(7, 14, 32, 0.18));
-}
 
-.wind-compass-label {
-  position: absolute;
-  color: var(--text-dim);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: var(--track-tight);
-}
 
-.wind-compass-n {
-  top: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-}
 
-.wind-compass-e {
-  right: 5px;
-  top: 50%;
-  transform: translateY(-50%);
-}
 
-.wind-compass-s {
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-}
 
-.wind-compass-w {
-  left: 5px;
-  top: 50%;
-  transform: translateY(-50%);
-}
 
-.wind-compass-arrow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: center;
-  transition: transform var(--motion-slow) var(--ease-emphasis);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.32));
-  pointer-events: none;
-  color: var(--paper);
-}
 
-.comfort-scale {
-  position: relative;
-  height: 10px;
-  margin: 0;
-}
 
-.comfort-gradient {
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  opacity: 0.76;
-  background: linear-gradient(to right, #38bdf8, var(--risk-low) 28%, var(--risk-elevated) 58%, var(--risk-high) 78%, var(--risk-severe));
-}
 
-.comfort-marker {
-  position: absolute;
-  top: -3px;
-  width: 4px;
-  height: 16px;
-  border-radius: 2px;
-  background: var(--paper);
-  transform: translateX(-50%);
-  box-shadow: 0 0 0 2px rgba(3, 8, 24, 0.45);
-  transition: left var(--motion-medium) var(--ease-standard);
-}
 
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
-@media (max-width: 980px) {
-  .storm-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 760px) {
   .storm-header {
     flex-direction: column;
     align-items: flex-start;
   }
-
-  /*
-   * Two-column tablet/phone layout for the storm modules. A single
-   * column would stack 4 cards × ~200px = ~800px of solid scroll
-   * inside one section; a 2x2 keeps the section coherent and short.
-   * Mobile single-column kicks in at 560 below.
-   */
-  .storm-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .storm-module {
-    min-height: 0;
-  }
 }
 
 @media (max-width: 560px) {
-  /* Single-column stacking matches the comment at the 760px rule above */
-  .storm-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
   .storm-lede {
     font-size: 13px;
   }
@@ -344,39 +132,19 @@
     gap: 10px;
   }
 
-  .storm-module .storm-module-header {
-    font-size: 11px;
-    letter-spacing: 0.09em;
-  }
-
-  .storm-module-kicker {
-    font-size: 10px;
-    padding: 3px 7px;
-  }
-
   .storm-level {
     font-size: 23px;
   }
 
-  .storm-module-summary,
-  .storm-detail-label,
-  .storm-detail-value {
+  .storm-module-summary {
     font-size: 12px;
   }
 }
 
 /*
  * 10px legibility floor on touch (mirrors the severity-badge floor).
- * Compass cardinal letters sit at 9px at every width; the 420px tier
- * drops the eyebrow and module kickers to 9px too. Pointer-scoped so
- * desktop density and the visual baselines are unaffected.
+ * Pointer-scoped so desktop density is unaffected.
  */
-@media (pointer: coarse) {
-  .wind-compass-label {
-    font-size: 10px;
-  }
-}
-
 @media (pointer: coarse) and (max-width: 420px) {
   .storm-subtitle {
     font-size: 10px;

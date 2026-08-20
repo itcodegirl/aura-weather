@@ -27,9 +27,10 @@ const RADAR_FRAME_EPOCH = Math.floor(
  * on whether the frames had arrived, swinging the full-page screenshot by more
  * than 100px between runs of identical code.
  *
- * Playwright's `toHaveScreenshot` hides that by retrying until the image
- * matches, which is why the visual baselines looked stable while the docs
- * screenshots (a plain `page.screenshot()`) did not.
+ * The waits below are what make a capture reproducible. They were written
+ * when screenshot comparison still gated CI; that gate is gone, but the
+ * docs images are still captured here and a half-loaded radar card would
+ * swing their height, so the waits stay.
  */
 export async function mockRadar(page) {
   await page.route("https://api.rainviewer.com/public/weather-maps.json", (route) =>
@@ -79,12 +80,12 @@ async function waitForRadar(page) {
 /**
  * One bootstrap for every image this repo captures.
  *
- * The visual-regression baselines and the committed docs/screenshots used to
- * bootstrap the page separately. Only the baseline path grew the waits that
- * make a capture reproducible, so the docs screenshots silently drifted: with
- * identical application code, trust-contract-mobile.png came out 390x1290 in
- * one CI run and 390x1936 in another, because `fullPage: true` fired while the
- * lazily-mounted panels were still arriving and the page was still growing.
+ * Capture paths used to bootstrap the page separately, and only one of them
+ * grew the waits that make a capture reproducible, so the docs screenshots
+ * silently drifted: with identical application code, trust-contract-mobile.png
+ * came out 390x1290 in one CI run and 390x1936 in another, because
+ * `fullPage: true` fired while the lazily-mounted panels were still arriving
+ * and the page was still growing.
  *
  * Everything that captures an image now shares these helpers, so no screenshot
  * can be taken of a half-mounted page.

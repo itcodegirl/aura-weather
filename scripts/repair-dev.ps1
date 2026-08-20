@@ -3,8 +3,13 @@ param(
 )
 
 # Resolve the repo root from the script's own location so this works
-# from any clone, on any machine — not a single author's path.
-$projectRoot = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+# from any clone, on any machine — not a single author's path. The script
+# lives in scripts/, so the root is its parent directory.
+$projectRoot = if ($PSScriptRoot) {
+  Split-Path $PSScriptRoot -Parent
+} else {
+  (Get-Location).Path
+}
 Set-Location $projectRoot
 
 Write-Host "=== Aura Weather dev environment repair ===" -ForegroundColor Cyan

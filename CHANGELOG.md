@@ -5,6 +5,36 @@ work that hardened the dashboard from a polished demo into a
 portfolio-grade product. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **A plain-language value line in the header.** "Today's conditions,
+  honest about what it doesn't know." — the brand block previously
+  carried only the "Atmospheric Intelligence" tagline, which is mood
+  rather than meaning. Raised by all three audits and approved by the
+  owner. (Added during 1.1.0, reverted to unblock CI, restored here now
+  that the visual gate no longer stands in the way.)
+
+### Removed
+
+- **Visual regression testing.** The `visual-regression` spec, its five
+  committed baselines, the README screenshot-drift gate
+  (`check:screenshots`), and the manual `refresh-visual-baselines` job
+  are gone, along with the README claims and the `AGENTS.md` rule that
+  referenced them. Every intentional UI change required a
+  download-review-commit cycle against CI-rendered screenshots, which
+  cost more than the regressions it caught. The tradeoff is explicit:
+  nothing now catches an unintended layout shift, and the remaining
+  Playwright suite covers behaviour and accessibility only.
+  `npm run screenshots` and the CI artifact of regenerated README
+  images both remain for updating the docs images by hand.
+
+### Changed
+
+- **`repair-dev.ps1` moved into `scripts/`**, tidying the repo root, with
+  its project-root resolution fixed for the extra directory level.
+
 ## [1.1.0] — 2026-08-17
 
 Work landed since the 1.0.0 tag. Three audit passes drive most of it:

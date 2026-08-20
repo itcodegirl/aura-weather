@@ -37,12 +37,9 @@
     "test:components": "npm run test:render",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:visual": "playwright test e2e/visual-regression.spec.js",
-    "test:visual:update": "playwright test e2e/visual-regression.spec.js --update-snapshots",
     "test:lighthouse": "npm run build && node scripts/run-lighthouse-budgets.mjs",
     "screenshots": "node scripts/run-screenshots.mjs",
-    "record:trust-contract-demo": "node scripts/record-trust-contract-demo.mjs",
-    "check:screenshots": "node scripts/check-readme-screenshots.mjs"
+    "record:trust-contract-demo": "node scripts/record-trust-contract-demo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

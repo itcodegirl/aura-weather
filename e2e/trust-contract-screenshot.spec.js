@@ -7,11 +7,12 @@ import { bootstrapMissingMockState } from "./support/visualCapture.js";
  * renders with several null fields without depending on Open-Meteo
  * returning real partial data.
  *
- * The output PNGs are written to docs/screenshots/, uploaded as a CI artifact,
- * and compared against the committed copies by
- * scripts/check-readme-screenshots.mjs so they cannot drift unnoticed.
+ * The output PNGs are written to docs/screenshots/ and uploaded as a CI
+ * artifact, which is how a refreshed set is picked up when the README images
+ * are worth updating. Nothing compares them against the committed copies any
+ * more, so they can drift until someone refreshes them deliberately.
  *
- * Bootstrapping is shared with the visual-regression baselines. It used to be
+ * Bootstrapping is shared via support/visualCapture.js. It used to be
  * duplicated here without the waits for the lazily-mounted panels, which is
  * why these captures varied in height from run to run.
  */

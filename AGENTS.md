@@ -83,7 +83,6 @@ Disallowed UI-related work:
 - Subjective spacing or typography changes.
 - Color/theme changes.
 - Component restyling based only on agent judgment.
-- Updating visual baselines without human screenshot review.
 
 Required behavior:
 

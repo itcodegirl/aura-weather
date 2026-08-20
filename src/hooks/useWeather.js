@@ -169,7 +169,11 @@ export function useWeather(options = {}) {
     isGeolocationSupported,
     loadCurrentLocation,
     cancelCurrentLocationLookup,
-  } = useLocation(handleLocationResolved);
+  } = useLocation(handleLocationResolved, {
+    // A shared ?lat&lon link already won in getInitialLocationState; letting
+    // useLocation bootstrap would overwrite it with the startup city.
+    skipBootstrap: initialLocationState.source === "url",
+  });
 
   const {
     weather,

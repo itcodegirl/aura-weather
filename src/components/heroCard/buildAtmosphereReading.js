@@ -1,6 +1,7 @@
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase } from "../../utils/sunlight.js";
 import { getZonedNow } from "../../utils/dates.js";
+import { findWindowStartIndex } from "../../utils/timeSeries.js";
 
 /*
  * Picks one short sentence to surface above the hero temperature.
@@ -24,7 +25,18 @@ const HOT_F = 90;
 const COLD_F = 28;
 const CHILLY_F = 45;
 
-function findFirstRainHourIndex(hourly) {
+/*
+ * Scans the hours immediately AFTER now for imminent rain.
+ *
+ * The forecast request carries past_hours=48, so hourly index 0 is two days
+ * in the past. Scanning from index 1 read hours 47 and 46 hours *ago* and
+ * presented them as "the next two hours" — rain that fell the day before
+ * yesterday surfaced as "Rain likely around 3:00 pm — bring an umbrella"
+ * (formatHourClock prints time-of-day only, so the stale date never showed),
+ * while genuinely imminent rain went undetected. This branch also outranks
+ * the UV/gust/temperature readings, so a false positive silenced them too.
+ */
+function findFirstRainHourIndex(hourly, timeZone, nowMs) {
   if (
     !hourly ||
     !Array.isArray(hourly.time) ||
@@ -33,8 +45,18 @@ function findFirstRainHourIndex(hourly) {
     return -1;
   }
 
-  const limit = Math.min(hourly.time.length, RAIN_IMMINENT_HOURS + 1);
-  for (let i = 1; i < limit; i += 1) {
+  const nowIdx = findWindowStartIndex(hourly.time, {
+    now: Number.isFinite(nowMs)
+      ? getZonedNow(timeZone, nowMs).getTime()
+      : getZonedNow(timeZone).getTime(),
+    currentSlotToleranceMs: 60 * 60 * 1000,
+  });
+  if (nowIdx < 0) {
+    return -1;
+  }
+
+  const limit = Math.min(hourly.time.length, nowIdx + RAIN_IMMINENT_HOURS + 1);
+  for (let i = nowIdx + 1; i < limit; i += 1) {
     const probability = toFiniteNumber(hourly.rainChance[i]);
     if (probability !== null && probability >= RAIN_IMMINENT_PROBABILITY) {
       return i;
@@ -83,7 +105,11 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   }
 
   // 2. Imminent rain in the next two hours.
-  const rainHourIndex = findFirstRainHourIndex(weather.hourly);
+  const rainHourIndex = findFirstRainHourIndex(
+    weather.hourly,
+    weather?.meta?.timezone,
+    nowMs
+  );
   if (rainHourIndex > 0) {
     const rainTime = weather.hourly?.time?.[rainHourIndex];
     const clock = rainTime ? formatHourClock(rainTime) : "";

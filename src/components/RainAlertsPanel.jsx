@@ -96,7 +96,14 @@ function RainAlertsPanel({ location }) {
                     className={`rain-alerts-toggle${on ? " is-on" : ""}`}
                     role="switch"
                     aria-checked={on}
-                    aria-label={`${on ? "Turn off" : "Turn on"} ${meta.label.toLowerCase()} for ${locationName}`}
+                    /*
+                     * A switch's name must be stable; aria-checked carries
+                     * the state. Naming it "Turn on …" alongside
+                     * aria-checked={false} read as two conflicting state
+                     * cues ("Turn on rain starting soon, switch, off"), and
+                     * the name flipped on activation, breaking find-by-name.
+                     */
+                    aria-label={`${meta.label} for ${locationName}`}
                     disabled={busy}
                     onClick={() => toggleType(meta.type)}
                   >

@@ -394,7 +394,7 @@ function getPreferredReverseGeocodeLanguage() {
   return typeof navigator.language === "string" ? navigator.language.trim() : "";
 }
 
-export function useLocation(onResolved) {
+export function useLocation(onResolved, { skipBootstrap = false } = {}) {
   const [isLocatingCurrent, setIsLocatingCurrent] = useState(false);
   const [isGeolocationSupported] = useState(() => hasGeolocationSupport());
   const isMountedRef = useRef(false);
@@ -647,6 +647,19 @@ export function useLocation(onResolved) {
   }, [clearFallbackTimer, clearReverseGeocodeRequest]);
 
   useEffect(() => {
+    /*
+     * A ?lat&lon deep link is resolved by the caller before this hook mounts
+     * (resolveInitialLocationState gives the URL precedence). Bootstrapping
+     * anyway re-resolved to the persisted startup city — or Palos Hills for a
+     * first-time visitor — and overwrote it. Because useUrlLocationSync
+     * mirrors state back with history.replaceState, the shared link was then
+     * rewritten to the clobbering city and could not be recovered by
+     * refreshing. Skip the bootstrap when the URL already won.
+     */
+    if (skipBootstrap) {
+      return undefined;
+    }
+
     const persistedLocation = getPersistedLocation();
     if (persistedLocation) {
       notifyResolvedLocation(
@@ -670,7 +683,7 @@ export function useLocation(onResolved) {
     );
 
     return undefined;
-  }, []);
+  }, [skipBootstrap]);
 
   return {
     isLocatingCurrent,

@@ -435,12 +435,17 @@ function HeroCard({
               <p className="hero-uv-line">{uvPanel.line}</p>
             </div>
           )}
+          {/*
+            * The trust pill is deliberately NOT a live region. Its text
+            * embeds a freshness age driven by useTimeNow's 5-minute bucket,
+            * so role="status" re-announced "High confidence · 15 min ago"
+            * every five minutes, forever, interrupting whatever the user was
+            * reading with no new information and no action behind it.
+            * GlobalUpdateIndicator is the correct pattern: render the age
+            * plainly, and announce only on a genuine refresh event.
+            */}
           {ageLabel && (
-            <div
-              className={`hero-trust-pill hero-trust-pill--${trustState}`}
-              role="status"
-              aria-live="polite"
-            >
+            <div className={`hero-trust-pill hero-trust-pill--${trustState}`}>
               <span className="hero-trust-dot" aria-hidden="true" />
               {trustLabel} · {ageLabel}
             </div>

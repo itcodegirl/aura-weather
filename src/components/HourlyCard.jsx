@@ -359,7 +359,18 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
     const lo = Math.round(Math.min(...vals));
     const hi = Math.round(Math.max(...vals));
     if (tab === "tr") {
-      const peak = Math.round(Math.max(...cells.map((c) => c.hour.rain ?? 0)));
+      // `vals` above gates on the selected metric (temperature on this tab),
+      // so rain can be entirely absent while this branch still runs. `?? 0`
+      // turned that into "rain chance peaking at 0%" — a confident forecast
+      // of no rain built from no data. Report the peak only when a real
+      // probability exists.
+      const rains = cells
+        .map((c) => c.hour.rain)
+        .filter((r) => r !== null && r !== undefined);
+      if (!rains.length) {
+        return `Temperature ${lo}°–${hi}°. Rain chance isn't available for these hours.`;
+      }
+      const peak = Math.round(Math.max(...rains));
       return `Temperature ${lo}°–${hi}° with rain chance peaking at ${peak}% — green bars flag the hours rain is likely.`;
     }
     if (tab === "precip")
@@ -462,7 +473,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
           <div className="hourly-track" style={{ width: `${n * COL}px` }}>
             <div className="hourly-plot">
               <div className="hourly-bars" onKeyDown={onColsKeyDown}>
-                {cells.map(({ hour }) => {
+                {cells.map(({ hour, m }) => {
                   const isSel = hour.key === selected?.key;
                   const colCls = `hourly-col${isSel ? " is-sel" : ""}${hour.isPast ? " is-past" : ""}`;
                   if (tab === "wind") {
@@ -481,7 +492,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                         key={hour.key}
                         data-col-key={hour.key}
                         tabIndex={hour.key === tabStopKey ? 0 : -1}
-                        aria-label={`Select ${hour.label}`}
+                        aria-label={`Select ${hour.label}, ${m.aria}`}
                         onClick={() => setSelectedKey(hour.key)}
                       >
                         {hour.windSpeed !== null && (
@@ -518,7 +529,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                       key={hour.key}
                       data-col-key={hour.key}
                       tabIndex={hour.key === tabStopKey ? 0 : -1}
-                      aria-label={`Select ${hour.label}`}
+                      aria-label={`Select ${hour.label}, ${m.aria}`}
                       onClick={() => setSelectedKey(hour.key)}
                     >
                       {hour.rain !== null && (

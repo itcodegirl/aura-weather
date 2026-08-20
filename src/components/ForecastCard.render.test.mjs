@@ -82,7 +82,13 @@ describe("ForecastCard missing daily readings", () => {
       rainChanceMax: [null],
     });
 
-    assert.ok(screen.getByLabelText("Rain chance unavailable"));
+    // The row's accessible name carries every reading now (an aria-label on
+    // the button replaces its subtree, so the readings have to live there).
+    // A missing rain chance must still be announced as unavailable.
+    assert.match(
+      screen.getByRole("button", { name: /forecast details/i }).getAttribute("aria-label"),
+      /rain chance unavailable/i
+    );
     assert.equal(container.querySelector(".forecast-precip").textContent.trim(), "\u2014");
     assert.equal(container.textContent.includes("0%"), false);
   });
@@ -98,7 +104,7 @@ describe("ForecastCard missing daily readings", () => {
     });
 
     const trigger = screen.getByRole("button", {
-      name: /show forecast details for/i,
+      name: /show forecast details/i,
     });
     fireEvent.click(trigger);
     assert.ok(
@@ -112,7 +118,7 @@ describe("ForecastCard missing daily readings", () => {
 
     // The trigger now says "Hide" (pill label flips on expand).
     const collapseTrigger = screen.getByRole("button", {
-      name: /hide forecast details for/i,
+      name: /hide forecast details/i,
     });
     fireEvent.click(collapseTrigger);
     assert.equal(
@@ -173,6 +179,27 @@ describe("ForecastCard derived-signal honesty", () => {
       summary.textContent.includes("— to —"),
       false,
       "an unavailable range should be omitted, not rendered as placeholder noise"
+    );
+  });
+});
+
+describe("ForecastCard weather-code honesty", () => {  test("a missing daily weather code renders 'Not reported', never a fake 'Clear'", () => {
+    // Regression guard. A `0` fallback on the local toFiniteNumber turned an
+    // absent weather_code into WMO 0 — Clear — so a row showed an amber sun
+    // and the word "Clear" beside real temperatures. With the field absent
+    // entirely, all seven rows did.
+    const { container } = renderForecastWithDaily({
+      conditionCode: [null],
+    });
+
+    assert.equal(
+      container.textContent.includes("Clear"),
+      false,
+      "a missing weather code must not fabricate a Clear sky"
+    );
+    assert.ok(
+      container.textContent.includes("Not reported"),
+      "a missing weather code should read as Not reported"
     );
   });
 });

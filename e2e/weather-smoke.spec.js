@@ -469,8 +469,10 @@ test("expands a forecast day for richer detail", async ({ page }) => {
   // before we check for the detail-trigger button.
   await expect(page.getByRole("heading", { name: "Week Ahead" })).toBeVisible();
 
+  // The row's accessible name now leads with its readings and ends with the
+  // disclosure verb, so anchor on "Today" to pick this row out of the seven.
   const detailTrigger = page.getByRole("button", {
-    name: /show forecast details for today/i,
+    name: /^today,.*show forecast details$/i,
   });
   if ((await detailTrigger.count()) === 0) {
     await expect(page.getByText("7-day outlook unavailable")).toBeVisible();

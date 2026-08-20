@@ -47,7 +47,15 @@ function RecenterMap({ lat, lon }) {
       return;
     }
     lastKeyRef.current = key;
-    map.setView([lat, lon], DEFAULT_ZOOM, { animate: true });
+    // The app's global reduce-motion block neutralises CSS animation, but a
+    // Leaflet pan is scripted, so it escaped that net — the one motion in
+    // the app not honouring the preference. Jump straight to the new centre
+    // when the user has asked for reduced motion.
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    map.setView([lat, lon], DEFAULT_ZOOM, { animate: !reduceMotion });
   }, [lat, lon, map]);
 
   return null;

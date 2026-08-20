@@ -1,6 +1,6 @@
 # Spec — Rain Push Alerts (Supabase)
 
-**Status:** Draft for review
+**Status:** Shipped. The schema, edge function and cron schedule live in `supabase/`, and `.github/workflows/deploy-edge-functions.yml` deploys the function on push to `main`. Kept as the design record.
 **Audience:** Primary user is a rain-focused daily user (the owner's husband), on an installed iPhone PWA.
 **One-liner:** Let Aura watch the forecast for the user's saved locations and push a notification when rain (or a storm, or a chosen condition) is coming — even when the app is closed.
 
@@ -8,7 +8,7 @@
 
 ## 1. Why this needs a backend
 
-The current app is frontend-only; it can only check the weather *while open*. Push notifications that fire when the app is closed require a server to (1) store push subscriptions, (2) run a schedule that evaluates the forecast, and (3) send the push. Supabase covers all three: Postgres + Auth + Edge Functions (Deno) + `pg_cron` + secrets.
+The dashboard is client-only and can check the weather *only while open*. Push notifications that fire when the app is closed require a server to (1) store push subscriptions, (2) run a schedule that evaluates the forecast, and (3) send the push. Supabase covers all three: Postgres + Auth + Edge Functions (Deno) + `pg_cron` + secrets.
 
 ## 2. Goals / non-goals
 

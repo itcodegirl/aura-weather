@@ -19,6 +19,8 @@ The portfolio story is simple: **Aura never turns missing provider data into fak
 - Expand any forecast day for high/low, rain chance, UV, wind, and sunrise/sunset details.
 - Compare today's temperature against historical Open-Meteo archive context when available.
 - See NOAA/NWS severe-alert coverage with explicit unsupported-region messaging.
+- Track observed precipitation on an interactive radar map (Leaflet + RainViewer) with a scrubable timeline, loaded lazily so it never blocks first paint.
+- Opt into rain push alerts for a saved place — a Supabase-backed feature (Postgres + RLS, a Deno edge function on a `pg_cron` schedule) that stays inert unless the Supabase environment variables are configured.
 - Restore a last-known forecast on offline starts without pretending stale data is fresh.
 - Save cities, switch between them quickly, reorder them, set any saved city as startup, and optionally back them up to the cloud from this device.
 - Toggle Fahrenheit/Celsius locally without refetching forecast data.
@@ -40,7 +42,7 @@ Regenerate with `npm run screenshots`.
 ## Tech Stack
 
 - React 19
-- Vite 6
+- Vite 8
 - Lucide React
 - Plain CSS
 - Playwright + axe-core
@@ -72,7 +74,8 @@ src/
     weatherCodes.js          #   WMO code → label/icon/gradient
     weatherScene.js          #   forecast + loading + error → UI scene
     meteorology.js           #   storm risk, pressure trend, comfort
-    aqi.js  wind.js  temperature.js
+    exposure.js  radar.js  savedCities.js
+    weatherCodes.js  wind.js  temperature.js
   hooks/                     # React orchestration + persistence
     useWeatherDashboardViewModel.js  # composes the dashboard hook bag
     useWeather.js            #   location + saved-cities + sync
@@ -98,8 +101,8 @@ src/
     serviceWorkerRegistration.js # production-only PWA registration
   utils/                     # Pure helpers
     numbers.js               #   strict toFiniteNumber (rejects null)
-    weatherUnits.js  meteorology.js  dates.js  dataTrust.js
-    sunlight.js  timeSeries.js  weatherCodes.js  temperature.js
+    weatherUnits.js  dates.js  dataTrust.js  locationDisplay.js
+    sunlight.js  timeSeries.js  temperature.js
 ```
 
 The app keeps UI, orchestration, provider access, and pure weather logic separated. Each layer has a strict dependency direction:
@@ -161,7 +164,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`437` tests across 92 suites, including React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`573` tests across 120 suites, including React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -236,9 +239,9 @@ Short notes on the non-obvious choices a reviewer might question.
 - **Auto-refresh is one policy with three triggers.** Tab-return and reconnect events plus a minute-level visible-tab check all funnel through the same pure decision function (`weatherRefreshPolicy.js`): refresh when visible, online, and stale (30+ min), erroring, or showing a restored cache. Event triggers keep a 60-second floor between automatic attempts; the standing check uses a calmer 5-minute floor so a failing provider is retried steadily instead of every tick. `prefers-reduced-data` keeps the event-driven correctness but skips the standing check.
 - **Cached forecasts have a daily freshness window.** Aura can restore a last-known snapshot when the browser starts offline, but snapshots older than 12 hours are ignored so the app does not present stale weather as daily guidance.
 - **NWS alerts are U.S.-only by design.** A 400/404 from `api.weather.gov/alerts/active` is mapped to an explicit `unsupported` status (not `unavailable`) so the UI can say "Alerts unavailable for this region" instead of an ambiguous "no alerts".
-- **Strict numeric coercion at every layer.** `Number(null) === 0` would surface as a fake 0°F humidity / 0% rain chance / 0°F historical sample whenever Open-Meteo returns a missing data point. A single shared `toFiniteNumber` helper rejects nullish, empty-string, boolean, array, and object inputs explicitly, and is now applied at the API boundary, every formatter, every domain classifier, and every chart slot parser. Eight unit tests lock the core helper; additional assertions pin the null contract for each formatter and domain function.
-- **Lazy supplemental panels.** The hero, exposure cards, and rain card render synchronously. Hourly chart, storm watch, alerts, forecast, and nowcast are mounted via `Suspense` after a `requestIdleCallback` (or 180ms fallback) so the first paint is just the data the user sees first.
-- **CSS lives next to its component.** App.css holds only global tokens, resets, animations, and one shared focus-visible rule used across header buttons and retry buttons. Every feature's CSS is imported by its owning component.
+- **Strict numeric coercion at every layer.** `Number(null) === 0` would surface as a fake 0°F humidity / 0% rain chance / 0°F historical sample whenever Open-Meteo returns a missing data point. A single shared `toFiniteNumber` helper rejects nullish, empty-string, boolean, array, and object inputs explicitly, and is now applied at the API boundary, every formatter, every domain classifier, and every chart slot parser. Ten unit tests lock the core helper; additional assertions pin the null contract for each formatter and domain function.
+- **Lazy supplemental panels.** The hero, the severe-alert banner and the data-trust footer render synchronously. Everything else — hourly chart, radar, and the supplemental group (nowcast, rain outlook, storm watch, week ahead, atmosphere) — mounts via `Suspense` behind `useDeferredMount`, which waits for `requestIdleCallback` with a per-panel timeout fallback (900ms hourly, 1800ms supplemental, 2000ms radar, 3000ms rain alerts). The source-health panel defers until its `<details>` is opened, and rain alerts defers furthest because it is the only mount that can pull in the Supabase client.
+- **CSS lives next to its component.** App.css holds the global tokens, resets, animations, the shared focus-visible rule, and a handful of cross-component primitives (`.glass`, `.severity-badge*`, `.card-empty*`, `.sr-only`, `.skip-link`). Every feature's CSS is imported by its owning component.
 
 ## Data Trust Contract
 
@@ -364,7 +367,7 @@ bug, the contract, and the test pyramid.
 - **Supplemental source retries** - Open-Meteo AQI, NOAA / NWS alerts, and Open-Meteo Archive requests now retry transient failures once. Unsupported NWS regions are not retried because they are coverage facts, not temporary failures.
 - **Installable offline shell** - Aura now ships a web manifest and production-only service worker. Same-origin app-shell/build assets are cached after a first online visit; weather providers remain network truth sources, with saved forecast restore handling offline data.
 - **PWA runtime prompts** - the status stack now acknowledges first-install offline readiness and captures the browser install prompt with explicit Install/Later actions.
-- **CI quality gates** - Pull requests now run lint, Node tests, render tests, production build, serial Playwright, visual checks, and Lighthouse budgets in GitHub Actions, with build and failure artifacts retained for review.
+- **CI quality gates** - Pull requests now run lint, Node tests, render tests, production build, serial Playwright, and Lighthouse budgets in GitHub Actions, with build and failure artifacts retained for review.
 - **Deterministic portfolio demo** - the labelled `?mock=missing` route no longer starts live weather provider requests, which keeps trust-contract demos and Lighthouse budget checks stable.
 - **Friendly GPS label** - successful browser geolocation now upgrades from a generic "Current location" label into a nearby place name when reverse geocoding succeeds, while still falling back safely if that lookup fails.
 - **Recent vs saved search groups** - the empty city search now separates recent switches from longer-lived saved cities, so repeat daily use is easier to scan.
@@ -376,7 +379,7 @@ bug, the contract, and the test pyramid.
 - **Unicode-escape rendering bug** — JSX text leaking literal `°` on the hourly chart Y axis and `—` in the AQI/UV empty state was fixed and now gated by an automated regression test.
 - **Hourly chart "Now" alignment** — the active-hour indicator now snaps to the current hour band instead of skipping ahead to the next future timestamp, with a new `currentSlotToleranceMs` option in `findWindowStartIndex` and unit coverage to lock the behavior in.
 - **Architecture trim** — extracted shared `CardFallback`, `useDeferredMount`, and `useClimateComparison` primitives to replace duplicated and oversized hook code. Pure helpers for climate comparison and saved-locations sync moved to dedicated modules with direct unit coverage. Activated the previously-unused `usePanelPreload` hook so heavy lazy panels warm up during browser idle.
-- **CSS co-location** — `App.css` shrank from 2,067 to roughly 500 lines as `DataTrustMeta`, `InfoDrawer`, `AppShell`, `StatusStack`, the bento dashboard layout, and the entire header surface moved next to their owning components.
+- **CSS co-location** — `App.css` shrank from 2,067 lines (it sits at 890 today) as `DataTrustMeta`, `InfoDrawer`, `AppShell`, `StatusStack`, the bento dashboard layout, and the entire header surface moved next to their owning components.
 - **Scoped live regions** — `SyncAccountPanel` no longer wraps its full body in `aria-live="polite"`; only the error (`role="alert"`) and last-synced timestamp (`role="status"`) announce, and the truncated sync key advertises its full value via aria-label.
 - **Strict API number coercion** — `Number(null)` is `0`, which silently surfaced as fake `0%` humidity, `0 hPa` pressure, `0°F` dew point, and `0°F` historical samples whenever Open-Meteo returned partial data. A shared `toFiniteNumber` helper rejects nullish/empty/boolean/object inputs at the API boundary, then routes the same contract through every per-element parser in HourlyCard, ForecastCard, NowcastCard, and `useRainAnalysis`.
 - **Last-successful forecast cache** — successful forecast snapshots are cached per coordinate with schema/version guards. When live Open-Meteo forecast data fails or the browser starts offline, Aura restores the saved forecast and shows a source-specific banner with the saved timestamp.
@@ -411,7 +414,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — 412 Node tests covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; 31 Playwright smoke/flow checks for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, axe-core, and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — 573 Node tests covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; 34 Playwright smoke/flow checks for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 
@@ -423,7 +426,7 @@ Other strong stories:
 
 ## Recruiter Notes
 
-This is a frontend-only project (HTML5, CSS, JavaScript, React 19) with no backend, no component library, and no UI framework beyond Lucide icons. It is strongest as a sample of:
+This is a client-first project (HTML5, CSS, JavaScript, React 19). The dashboard itself needs no backend — every forecast surface runs against public weather APIs straight from the browser. The optional rain push-alert feature does have one: a Supabase Postgres schema with RLS, a Deno edge function, and a pg_cron schedule (`supabase/`), all inert unless the Supabase environment variables are set. Beyond Lucide icons and Leaflet for the radar map, there is no component library or UI framework. It is strongest as a sample of:
 
 - defensive client-side data handling with end-to-end nullish-rejection contracts
 - multi-API composition with independent fetch lifecycles

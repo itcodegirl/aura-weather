@@ -127,7 +127,7 @@ After changes:
 3. Run `npm run build`.
 4. For UI or data-trust changes, run relevant Playwright or Lighthouse checks when appropriate.
 
-Use `npm run test:e2e -- --workers=1` for broad browser-flow validation. Use visual or Lighthouse checks only when the task affects layout, screenshots, PWA/offline behavior, accessibility budgets, or performance budgets.
+Use `npm run test:e2e -- --workers=1` for broad browser-flow validation. Use the layout-regression and Lighthouse checks only when the task affects layout, screenshots, PWA/offline behavior, accessibility budgets, or performance budgets.
 
 ## PR Checklist
 
@@ -174,7 +174,7 @@ Every PR Claude Code opens uses this shape:
 <Files / areas touched; confirm nothing else was.>
 
 **Verification**#
-<Checks run + results: build, lint, typecheck, relevant tests/audits.>
+<Checks run + results: build, lint, relevant tests/audits. This project is JavaScript, so there is no typecheck step.>
 
 **Out of scope**
 <What was deliberately not done; any follow-ups noted.>

@@ -24,9 +24,12 @@ import {
  * The clock is frozen, motion is disabled and fonts are pinned (see
  * support/visualCapture.js), which removes the large sources of run-to-run
  * variation but NOT all of it — sub-pixel rasterisation still moves a small
- * number of pixels between runs. scripts/check-readme-screenshots.mjs compares
- * these against the committed copies with a tolerance measured from real runs,
- * rather than assuming byte equality.
+ * number of pixels between runs.
+ *
+ * Nothing compares these against the committed copies any more — the
+ * screenshot-drift gate was removed with visual regression testing. These
+ * specs exist to regenerate the README/docs imagery on demand via
+ * `npm run screenshots`, and CI uploads the result as an artifact.
  */
 
 function buildAlertFeature(index) {

@@ -7,16 +7,55 @@ portfolio-grade product. Format roughly follows
 
 ## [Unreleased]
 
-### Added
+### Fixed
 
-- **A plain-language value line in the header.** "Today's conditions,
-  honest about what it doesn't know." — the brand block previously
-  carried only the "Atmospheric Intelligence" tagline, which is mood
-  rather than meaning. Raised by all three audits and approved by the
-  owner. (Added during 1.1.0, reverted to unblock CI, restored here now
-  that the visual gate no longer stands in the way.)
+- **Three readings no longer fabricate data.** A missing daily weather
+  code rendered a confident "Clear" sun; the wind tile printed the
+  sustained speed as a measured gust; the hourly lede announced "rain
+  chance peaking at 0%" with no rain data at all.
+- **Storm Watch and the hero read the current hour.** Both indexed the
+  hourly series from position 0, which is 48 hours in the past because
+  the request carries `past_hours=48` — so Storm Watch could headline
+  "Severe" from two-day-old convective energy, and the hero could
+  promise rain that had already fallen.
+- **Shared `?lat&lon` links survive.** The location bootstrap overwrote
+  a URL-resolved place with the startup city, and the URL was then
+  rewritten to match, destroying the link.
+- **Five accessibility defects.** Forecast rows hid every reading from
+  screen readers behind an overriding `aria-label`; the hero trust pill
+  re-announced itself every five minutes; Escape in search dropped focus
+  to `<body>`; hourly columns announced times with no values; and the
+  alert switches inverted their own name as they toggled. The radar's
+  scripted map pan now honours `prefers-reduced-motion`.
+- **The service worker can actually update.** `CACHE_VERSION` was
+  hand-edited and almost never changed, so browsers saw a byte-identical
+  worker, install never re-ran, and the "New version available" banner
+  could never fire. It is now stamped from the build's own output hash.
+
+### Changed
+
+- **Supabase left the critical path.** The rain-alerts panel was the one
+  eagerly-mounted panel, and it pulled a 201 KB client during hydration
+  on every production visit — including for the majority who have never
+  enabled an alert. Deferring the mount keeps behaviour identical.
+- **Docs match the code again.** Test counts (573 Node / 208 render / 34
+  Playwright), Vite 8, App.css at 890 lines, measured bundle figures, the
+  architecture tree, and the lazy-loading description were all stale. The
+  "no backend" claim is corrected — the optional rain-alert feature ships
+  a Supabase schema, edge function and cron schedule — and the radar and
+  push-alert features, previously absent from the README entirely, are
+  now documented.
+- **`repair-dev.ps1` moved into `scripts/`**, tidying the repo root, with
+  its project-root resolution fixed for the extra directory level.
 
 ### Removed
+
+- **Unreachable code and an unusable font.** `ExposureSection` and
+  `MetricCard` were orphaned by the bento redesign but kept 459 lines of
+  `MetricPanels.css` on the critical path via the `ui` barrel. Manrope
+  was preloaded at highest priority and precached, yet sat behind Inter
+  in every stack — and Inter covers all glyphs at all weights, so it
+  could never be selected. Also drops three unused devDependencies.
 
 - **Visual regression testing.** The `visual-regression` spec, its five
   committed baselines, the README screenshot-drift gate
@@ -30,10 +69,23 @@ portfolio-grade product. Format roughly follows
   `npm run screenshots` and the CI artifact of regenerated README
   images both remain for updating the docs images by hand.
 
-### Changed
+### Added
 
-- **`repair-dev.ps1` moved into `scripts/`**, tidying the repo root, with
-  its project-root resolution fixed for the extra directory level.
+- **Layout regression tests.** Text-clipping checks at three viewports,
+  a hero-fits-the-phone guard, and an assertion that all eight
+  atmosphere tiles arrive — replacing part of what the deleted
+  screenshot baselines protected, without binaries to re-record. Each
+  was mutation-tested to confirm it fails on the defect it describes.
+  axe now also runs the WCAG 2.2 AA ruleset.
+
+- **A plain-language value line in the header.** "Today's conditions,
+  honest about what it doesn't know." — the brand block previously
+  carried only the "Atmospheric Intelligence" tagline, which is mood
+  rather than meaning. Raised by all three audits and approved by the
+  owner. (Added during 1.1.0, reverted to unblock CI, restored here now
+  that the visual gate no longer stands in the way.)
+
+
 
 ## [1.1.0] — 2026-08-17
 

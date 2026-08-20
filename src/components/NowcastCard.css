@@ -194,12 +194,6 @@
     font-size: 16px;
   }
 
-  .nowcast-risk-badge {
-    min-height: 20px;
-    padding: 3px 8px;
-    font-size: 10px;
-    letter-spacing: 0.09em;
-  }
 
   .nowcast-primary {
     padding: 9px 10px;
@@ -236,9 +230,6 @@
  * desktop density and the visual baselines are unaffected.
  */
 @media (pointer: coarse) and (max-width: 420px) {
-  .nowcast-risk-badge {
-    font-size: 10px;
-  }
 }
 
 /* ── Area chart (fills leftover card height) ─────────────────────────────── */

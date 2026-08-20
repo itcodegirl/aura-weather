@@ -74,3 +74,57 @@ describe("ensureSession", () => {
     assert.equal(await ensureSession(), null);
   });
 });
+
+// A read must not download a database client to report an empty list.
+//
+// listRules() runs on every dashboard mount. Even after it stopped creating
+// identities, it still dynamically imported @supabase/supabase-js (201 KB)
+// just to learn there was no session and return []. hasStoredSession() answers
+// that from localStorage instead. It must be conservative: any uncertainty has
+// to report "maybe", so the caller falls through to the real check rather than
+// wrongly claiming the browser owns no rows.
+
+describe("hasStoredSession", () => {
+  const originalWindow = globalThis.window;
+
+  function withLocalStorage(keys) {
+    globalThis.window = {
+      localStorage: {
+        length: keys.length,
+        key: (i) => keys[i] ?? null,
+      },
+    };
+  }
+
+  function restore() {
+    if (originalWindow === undefined) delete globalThis.window;
+    else globalThis.window = originalWindow;
+  }
+
+  test("reports no session when localStorage holds no supabase auth key", async () => {
+    const { hasStoredSession } = await import("./supabaseClient.js");
+    withLocalStorage(["aura-weather-saved-cities", "theme"]);
+    try {
+      // Unconfigured builds report false regardless; configured builds with no
+      // auth key must also report false so the import can be skipped.
+      assert.equal(hasStoredSession(), false);
+    } finally {
+      restore();
+    }
+  });
+
+  test("errs toward 'maybe' when there is no window to inspect", async () => {
+    const { hasStoredSession, isSupabaseConfigured } = await import(
+      "./supabaseClient.js"
+    );
+    delete globalThis.window;
+    try {
+      // Unconfigured: false is correct and cheap. Configured: must not claim
+      // "no rows" from an environment it cannot inspect.
+      const expected = isSupabaseConfigured() ? true : false;
+      assert.equal(hasStoredSession(), expected);
+    } finally {
+      restore();
+    }
+  });
+});

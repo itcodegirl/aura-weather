@@ -21,6 +21,43 @@ export function isAlertsConfigured() {
   return isSupabaseConfigured();
 }
 
+/**
+ * True when this browser already holds a persisted Supabase session, decided
+ * WITHOUT importing the client.
+ *
+ * Reads that need a user resolve to "nothing" when there is no session —
+ * getSessionUser returns null and the caller returns an empty list. Answering
+ * that required a dynamic import of @supabase/supabase-js (201 KB) purely to
+ * be told there is nobody to ask about. Anonymous sessions are per-browser by
+ * design (see ensureSession), so "no stored session" means "this browser owns
+ * no rows", never "the rows live on another device".
+ *
+ * supabase-js persists under the default `sb-<project-ref>-auth-token` key, so
+ * the presence check is a localStorage scan. Deliberately conservative: any
+ * uncertainty (no window, no localStorage, an access throw) returns true so
+ * the caller falls through to the real, authoritative session check rather
+ * than wrongly reporting "no rows".
+ */
+export function hasStoredSession() {
+  if (!isSupabaseConfigured()) {
+    return false;
+  }
+  try {
+    if (typeof window === "undefined" || !window.localStorage) {
+      return true;
+    }
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export function getSupabaseClient() {
   if (!isSupabaseConfigured()) {
     return Promise.resolve(null);

@@ -479,7 +479,7 @@ a:focus-visible,
 
 /*
  * Header rules (.app-header*, .brand*, .tagline, .saved-cit*,
- * .sync-account-*, .header-control-*, .settings-toggle, .unit-*,
+ * .sync-account-*, .header-control-*, .unit-*,
  * .toggle-pill*, .current-location-btn, .header-secondary-action)
  * live in src/components/layout/AppHeader.css. The shared
  * focus-visible group below stays here because it is also used by
@@ -488,7 +488,6 @@ a:focus-visible,
 .current-location-btn:focus-visible,
 .unit-btn:focus-visible,
 .toggle-pill-btn:focus-visible,
-.settings-toggle:focus-visible,
 .mobile-settings-toggle:focus-visible,
 .header-secondary-action:focus-visible,
 .error-retry:focus-visible,
@@ -507,10 +506,8 @@ a:focus-visible,
  */
 
 .forecast-subtitle,
-.chart-subtitle,
 .storm-subtitle,
-.rain-history-heading,
-.storm-module-header {
+.rain-history-heading {
   color: var(--text-dim);
   font-size: var(--fs-label-lg);
   letter-spacing: var(--track-loose);
@@ -793,16 +790,6 @@ a:focus-visible,
 
   /* Comfort scale: the gradient carries the dry–humid meaning.
      In WHCM give the track a ButtonBorder outline and use the Highlight
-     token for the marker so position is still readable. */
-  .comfort-gradient {
-    background: ButtonFace;
-    border: 1px solid ButtonBorder;
-  }
-
-  .comfort-marker {
-    background: Highlight;
-    outline: 2px solid ButtonBorder;
-  }
 
   /* Skip link: ensure it contrasts against whatever Canvas colour the
      user has chosen. */

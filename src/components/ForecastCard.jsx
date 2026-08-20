@@ -22,13 +22,23 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-// Wraps the strict shared helper so callers can pass an explicit
-// fallback (e.g. condition code defaults to 0/Clear, while a missing
-// daily high temperature should remain NaN so the row uses the shared
-// missing-value placeholder).
-function toFiniteNumber(value, fallback = NaN) {
+/*
+ * Converts a missing reading to NaN so this file's Number.isFinite guards
+ * read naturally, and nothing else.
+ *
+ * This used to accept a `fallback` argument and shadow the strict shared
+ * helper under the same name. One call site passed 0 for the daily weather
+ * code — WMO 0 is "Clear" — so an absent reading rendered a confident sun
+ * beside real temperatures, the exact bug class the data trust contract
+ * exists to prevent. The name made that call look like it was using the
+ * strict helper.
+ *
+ * No parameter to pass, and a name that cannot be confused with
+ * toFiniteNumber: a missing reading can only become NaN here.
+ */
+function toNumberOrNaN(value) {
   const parsed = toStrictFiniteNumber(value);
-  return parsed === null ? fallback : parsed;
+  return parsed === null ? NaN : parsed;
 }
 
 function clampPercent(value) {
@@ -133,25 +143,21 @@ function buildForecastDays(weatherDaily, timeZone, todayIsoOverride) {
   const validDays = times
     .map((date, index) => ({
       date,
-      // No `0` fallback. This file's local toFiniteNumber (above) takes a
-      // fallback, and passing 0 turned an absent daily weather_code into
-      // WMO 0 — "Clear" — painting a confident amber sun over a reading the
-      // provider never sent, next to real temperatures. If the field was
-      // absent entirely, all seven rows claimed Clear. weatherCodes.js:50
-      // exists to prevent exactly this; letting the value stay NaN routes it
-      // to UNKNOWN_WEATHER ("Not reported") and the CloudOff glyph.
-      conditionCode: toFiniteNumber(weatherCodes[index]),
-      temperatureMax: toFiniteNumber(maxTemps[index]),
-      temperatureMin: toFiniteNumber(minTemps[index]),
+      // Stays NaN when absent, so getWeather routes it to UNKNOWN_WEATHER
+      // ("Not reported") and the CloudOff glyph rather than WMO 0's sun.
+      // See toNumberOrNaN above for why this used to render "Clear".
+      conditionCode: toNumberOrNaN(weatherCodes[index]),
+      temperatureMax: toNumberOrNaN(maxTemps[index]),
+      temperatureMin: toNumberOrNaN(minTemps[index]),
       rainChanceMax: clampPercent(
-        toFiniteNumber(precipProbabilities[index])
+        toNumberOrNaN(precipProbabilities[index])
       ),
       sunrise: typeof sunrises[index] === "string" ? sunrises[index] : "",
       sunset: typeof sunsets[index] === "string" ? sunsets[index] : "",
-      uvIndexMax: toFiniteNumber(uvIndexMaxValues[index]),
-      windSpeedMax: toFiniteNumber(windSpeedMaxValues[index]),
-      windGustMax: toFiniteNumber(windGustMaxValues[index]),
-      windDirectionDominant: toFiniteNumber(windDirectionDominantValues[index]),
+      uvIndexMax: toNumberOrNaN(uvIndexMaxValues[index]),
+      windSpeedMax: toNumberOrNaN(windSpeedMaxValues[index]),
+      windGustMax: toNumberOrNaN(windGustMaxValues[index]),
+      windDirectionDominant: toNumberOrNaN(windDirectionDominantValues[index]),
     }))
     .filter((day) => Number.isFinite(day.temperatureMax) || Number.isFinite(day.temperatureMin))
     .filter((day) => {
@@ -200,7 +206,7 @@ function buildDayWhy(daySignal, day) {
 
 
 function formatWindSummary(day, unit) {
-  const speed = toFiniteNumber(day.windSpeedMax);
+  const speed = toNumberOrNaN(day.windSpeedMax);
   if (!Number.isFinite(speed)) {
     return {
       value: MISSING_VALUE_PLACEHOLDER,
@@ -210,7 +216,7 @@ function formatWindSummary(day, unit) {
   }
 
   const direction = windDirectionName(day.windDirectionDominant);
-  const gust = toFiniteNumber(day.windGustMax);
+  const gust = toNumberOrNaN(day.windGustMax);
 
   return {
     value: `${direction} ${formatWindSpeed(speed, unit)}`,

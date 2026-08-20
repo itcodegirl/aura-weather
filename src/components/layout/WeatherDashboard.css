@@ -204,9 +204,6 @@
   animation-delay: calc(var(--i, 0) * var(--card-enter-stagger));
 }
 
-.bento-exposure {
-  grid-column: span 6;
-}
 
 /* Radar spans the full row at every breakpoint — a map needs the width,
    and 1 / -1 keeps it full-bleed through each grid reflow below. */
@@ -235,9 +232,6 @@
     min-height: clamp(170px, 44vw, 236px);
   }
 
-  .bento-exposure {
-    grid-column: span 3;
-  }
 
   .bento-rain,
   .bento-nowcast {
@@ -261,7 +255,6 @@
   }
 
   .bento-hero,
-  .bento-exposure,
   .bento-rain,
   .bento-nowcast,
   .bento-chart,

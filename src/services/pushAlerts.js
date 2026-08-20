@@ -8,6 +8,7 @@ import {
   isAlertsConfigured,
   ensureSession,
   getSessionUser,
+  hasStoredSession,
 } from "./supabaseClient.js";
 
 const VAPID_PUBLIC_KEY = (import.meta.env ?? {}).VITE_VAPID_PUBLIC_KEY ?? "";
@@ -126,6 +127,12 @@ export async function disablePush() {
 // session: a visitor who never enabled alerts owns no rules, and signing them
 // in anonymously to discover that wrote an auth.users row per visitor.
 export async function listRules({ signal } = {}) {
+  // A read must never create an identity — and it should not download a
+  // database client to report an empty list either. Without a stored session
+  // this browser owns no rules, so answer before the dynamic import.
+  if (!hasStoredSession()) {
+    return [];
+  }
   const supabase = await getSupabaseClient();
   if (!supabase) return [];
   const user = await getSessionUser(supabase);

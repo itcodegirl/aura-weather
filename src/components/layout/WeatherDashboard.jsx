@@ -1,7 +1,6 @@
 import { lazy, memo, Suspense, useCallback, useState } from "react";
 import HeroCard from "../HeroCard";
 import AlertsCard from "../AlertsCard";
-import RainAlertsPanel from "../RainAlertsPanel";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
@@ -15,6 +14,21 @@ const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels
 // the JS + CSS into its own chunk so the bento's first paint does
 // not pay for a panel collapsed behind <details> by default.
 const SourceHealthPanel = lazy(() => import("../SourceHealthPanel"));
+/*
+ * Rain alerts was the one panel mounted eagerly, and it is the most
+ * expensive to mount: useRainAlerts runs on mount and reaches Supabase, so
+ * @supabase/supabase-js (201 KB raw / ~51 KB gzip) was dynamically imported
+ * during hydration on every visit — landing ahead of HourlyCard and every
+ * deferred panel — even for the overwhelming majority of visitors who have
+ * never enabled an alert. This is invisible locally and in CI because
+ * neither has Supabase env vars, so isAlertsAvailable() is false and the
+ * import never happens; production has them.
+ *
+ * Deferring the mount keeps behaviour identical (the panel still loads its
+ * rules, including any set on another device) while moving the cost off the
+ * critical path.
+ */
+const RainAlertsPanel = lazy(() => import("../RainAlertsPanel"));
 
 const CARD_STYLE_VARIABLES = [
   { "--i": 0 },
@@ -62,6 +76,12 @@ function WeatherDashboard({
   const showSupplementalPanels = useDeferredMount(Boolean(weather), {
     idleTimeout: 2800,
     fallbackDelay: 1800,
+  });
+  // Deferred further than the weather panels: nothing about the forecast
+  // depends on it, and it is the only mount that can pull in Supabase.
+  const showRainAlertsPanel = useDeferredMount(Boolean(location), {
+    idleTimeout: 4000,
+    fallbackDelay: 3000,
   });
   const [hasOpenedSourceHealth, setHasOpenedSourceHealth] = useState(false);
   const handleSourceHealthToggle = useCallback((event) => {
@@ -257,7 +277,11 @@ function WeatherDashboard({
         />
       )}
       <PanelErrorBoundary label="Rain alerts" className="bento-alerts-card">
-        <RainAlertsPanel location={location} />
+        {showRainAlertsPanel ? (
+          <Suspense fallback={null}>
+            <RainAlertsPanel location={location} />
+          </Suspense>
+        ) : null}
       </PanelErrorBoundary>
 
       <details

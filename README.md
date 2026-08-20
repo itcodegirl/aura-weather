@@ -51,7 +51,7 @@ Regenerate with `npm run screenshots`.
 - **Data trust contract:** strict numeric parsing prevents `Number(null) === 0` bugs from becoming fake weather readings.
 - **Independent fetch lifecycles:** forecast, AQI/alerts, and climate archive requests can succeed or fail separately.
 - **Accessible dashboard states:** loading, cached, unavailable, unsupported, and missing-data states are visible and announced.
-- **Portfolio-grade QA:** unit, render, E2E, visual regression, axe, and Lighthouse checks cover the core experience.
+- **Portfolio-grade QA:** unit, render, E2E, axe, and Lighthouse checks cover the core experience.
 
 ## Architecture at a Glance
 
@@ -155,7 +155,6 @@ npm run lint
 npm test
 npm run build
 npm run test:e2e
-npm run test:visual
 npm run test:lighthouse
 ```
 
@@ -164,7 +163,7 @@ npm run test:lighthouse
 - `npm run lint` passes
 - `npm test` passes (`437` tests across 92 suites, including React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
-- `npm run test:e2e -- --workers=1` passes (`34` Playwright checks, including smoke, screenshots, visual baselines, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
+- `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
 - GitHub Actions runs lint, tests, render tests, build, serial Playwright, and Lighthouse budgets on pull requests
 
@@ -196,9 +195,6 @@ npm run test:lighthouse
   - regression guard ensuring no literal `\uXXXX` escape sequences leak into rendered text
   - axe-core accessibility scan on the live dashboard (`/`) and the trust-contract state (`?mock=missing`)
   - assistive-tech cue check for the missing-data trust contract (`role="status"` helper note + `aria-label="No data available"` on the missing stat)
-- Playwright visual baselines for:
-  - desktop / tablet / mobile dashboard
-  - desktop / mobile `?mock=missing` (trust-contract) state
 
 ## Demo Expectations
 
@@ -432,6 +428,6 @@ This is a frontend-only project (HTML5, CSS, JavaScript, React 19) with no backe
 - defensive client-side data handling with end-to-end nullish-rejection contracts
 - multi-API composition with independent fetch lifecycles
 - responsive, accessible dashboard layout written in plain CSS
-- QA breadth: unit, integration, E2E (Playwright + axe), visual regression, Lighthouse budgets
+- QA breadth: unit, integration, E2E (Playwright + axe), Lighthouse budgets
 
 It is not a full production weather platform. The strongest recruiter signal is the combination of stability fixes (caught and fixed during an internal audit), accessible/mobile hardening, and the QA suite that locks the trust contract so the same bug class cannot regress.

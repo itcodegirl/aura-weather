@@ -181,7 +181,7 @@ endpoint and forwards unknown URLs to the original fetch.
 | | Before audit | After audit |
 |---|---|---|
 | Tests | 45 | **249** Node test-runner checks across 55 suites |
-| Playwright checks | 12 | 28 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing`, cached offline restore, app-shell offline reload, and visual baselines) |
+| Playwright checks | 12 | 28 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing`, cached offline restore, and app-shell offline reload) |
 | `App.css` lines | 2,067 | ~500 |
 | Bundle (gzip) | ≈ 84 kB | ≈ 92 kB |
 | `useWeatherData` lines | 459 | 354 |

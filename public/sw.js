@@ -17,8 +17,6 @@ const OPTIONAL_APP_SHELL_URLS = [
   "/apple-touch-icon.png",
   "/og-image.png",
   "/fonts/Inter-Variable.woff2",
-  "/fonts/manrope-v20-latin.woff2",
-  "/fonts/manrope-v20-latin-ext.woff2",
 ];
 const RUNTIME_CACHE_MAX_ENTRIES = 80;
 const CACHEABLE_DESTINATIONS = new Set([

@@ -1,6 +1,6 @@
 ﻿:root {
-  --font-sans: "Inter", "Manrope", "Segoe UI", sans-serif;
-  --font-display: "Inter", "Manrope", sans-serif;
+  --font-sans: "Inter", "Segoe UI", sans-serif;
+  --font-display: "Inter", sans-serif;
 
   --text: #eef1f8;
   /*

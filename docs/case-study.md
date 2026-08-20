@@ -221,3 +221,39 @@ That is a useful interview signal on its own: the project is not just
 "more features." It shows the ability to identify which changes make an
 already-solid app easier to trust, easier to navigate, and easier to
 evaluate as a piece of product engineering.
+
+## Why six surfaces talk about rain
+
+Three consecutive audits have raised the same question about Aura's
+information architecture: six modules touch precipitation — the hourly
+chart's precipitation tab, the radar, the nowcast, the rain outlook,
+storm watch, and the weekly rain percentages — and a reviewer
+optimising for "sharp" would merge some of them. The decision, made
+deliberately and recorded here rather than left ambiguous: **keep all
+six, because they answer six different questions on six different time
+horizons.**
+
+| Surface | Question it answers | Horizon |
+|---|---|---|
+| Nowcast | "Do I need an umbrella walking out the door?" | 0–2 hours |
+| Hourly precipitation | "When does it start and stop today?" | 0–24 hours |
+| Radar | "Is that band actually heading here?" | observed, now |
+| Rain outlook | "How much water, and when does it peak?" | rest of today |
+| Storm watch | "Could today turn severe?" | today, risk-weighted |
+| Weekly rain chance | "Which day should I move the plan to?" | 7 days |
+
+Collapsing the nowcast into the rain outlook — the merge most often
+suggested — would force a 45-minute decision and a 24-hour accumulation
+total to share one visual altitude, which is exactly the flattening the
+hierarchy work went to some trouble to undo. The modules are ranked, not
+merely stacked: severe alerts sit above everything, the hero carries the
+day's decisions, near-term outlook precedes the ambient panels, and
+diagnostics live behind a disclosure most users never open.
+
+The honest counter-argument, kept here because it is a real trade-off:
+breadth costs scroll length, and a reviewer who values editing over
+coverage will read six rain surfaces as indecision no matter how well
+ranked they are. The trigger to revisit is behavioural, not aesthetic —
+if the nowcast and rain outlook were ever found to be read as
+interchangeable rather than sequential, the merge becomes correct and
+this section should be rewritten to say so.

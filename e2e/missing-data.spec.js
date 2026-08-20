@@ -59,7 +59,7 @@ test("?mock=missing passes baseline axe-core accessibility checks", async ({ pag
   ).toBeVisible();
 
   const report = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
     .analyze();
   const blockingViolations = report.violations.filter(
     (violation) => violation.impact === "critical" || violation.impact === "serious"

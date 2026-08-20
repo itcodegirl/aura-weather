@@ -62,11 +62,11 @@ None of these are layout, contrast, or state gaps — those are closed. What rem
    current advisory DB flags: `npm audit` showed **7 high** before this pass. Runtime deps
    were always clean, but the GitHub security tab is part of a portfolio repo's first
    impression.
-2. **The brand block still explains mood, not meaning.** "Aura / Atmospheric Intelligence"
-   (`AppHeader.jsx:44`) has no plain value line. The 2026-06-26 audit recommended e.g.
-   *"Today's conditions, honest about what it doesn't know."* Still open; this is a
-   copywriting/brand call, so it is reported here rather than implemented (AGENTS.md: agents
-   do not make subjective design decisions).
+2. ~~**The brand block still explains mood, not meaning.**~~ "Aura / Atmospheric
+   Intelligence" carried no plain value line. Raised by all three audits; reported rather
+   than implemented because copy is an owner call. **Closed** — the owner approved
+   *"Today's conditions, honest about what it doesn't know."* and it now renders beneath
+   the tagline.
 3. **Dashboard breadth remains the one debatable IA call.** Six surfaces still touch
    precipitation (hourly precip tab, radar, nowcast, rain outlook, storm watch, weekly rain
    %). The 2026-07-27 audit records this as an intentional-breadth decision (E2), and the
@@ -76,8 +76,8 @@ None of these are layout, contrast, or state gaps — those are closed. What rem
 4. **Release discipline lags the work.** `package.json` is `1.0.0` while `CHANGELOG.md`
    carries a large `[Unreleased]` section (the July audit's N3, half-addressed). The EPA AQI
    correction alone justified `1.1.0`. Cutting a release is the owner's call.
-5. *(Cosmetic)* `repair-dev.ps1` sits at the repo root; `scripts/` would keep the root
-   surface tidy for reviewers.
+5. ~~*(Cosmetic)* `repair-dev.ps1` sits at the repo root~~ — **closed**; moved into
+   `scripts/`, with its project-root resolution corrected for the new depth.
 
 ## D. Prior-audit verification table
 
@@ -106,15 +106,44 @@ None of these are layout, contrast, or state gaps — those are closed. What rem
 - 🔴 **Critical:** none found. Layout, hierarchy, mobile, contrast, states, and a11y all
   verified green by gates that would fail if they regressed.
 - 🟡 **Important:**
-  1. ~~Dev-dependency advisories (7 high)~~ — fixed in this PR.
-  2. Brand value one-liner — needs an owner-approved copy decision.
-  3. Cut `1.1.0` so the CHANGELOG and version agree.
+  1. ~~Dev-dependency advisories (7 high)~~ — fixed; `npm audit` reports 0.
+  2. ~~Brand value one-liner~~ — approved by the owner and shipped.
+  3. ~~Cut `1.1.0` so the CHANGELOG and version agree~~ — released 2026-08-17.
 - ⚪ **Optional:**
-  4. Revisit the breadth-vs-sharpness call (merge Nowcast + Rain Outlook) if the portfolio
-     story should read "editing" over "coverage".
-  5. Move `repair-dev.ps1` into `scripts/`.
+  4. ~~Revisit the breadth-vs-sharpness call~~ — decided: keep all six precipitation
+     surfaces, recorded in `docs/case-study.md` with the trigger that would reverse it.
+  5. ~~Move `repair-dev.ps1` into `scripts/`~~ — moved.
   6. Light theme / saved-location comparison / charts — genuinely optional; the dark-only
      decision is documented in `index.html` and defensible.
+
+**Every item this audit raised is now closed.** The remaining entry is a standing
+"could build more" note, not a finding.
+
+## E1. Follow-up: visual regression testing removed (2026-08-20)
+
+The owner decided to drop screenshot-comparison testing entirely. It is worth recording
+honestly, because §B of this audit counted it as a strength and the README advertised it.
+
+**What happened.** The value line moved rendered pixels, which is exactly what the
+visual gate is designed to catch. Clearing it required re-recording five committed
+baselines, and the recording could only be done in CI — the agent environment cannot
+reach the map-tile hosts the captures include, and the repo's own rule required a human
+to review any baseline update. That put a one-line copy change behind a multi-step manual
+chore, and the chore was repeated three times across this branch.
+
+**The decision.** Remove the visual-regression spec, its five baselines, the README
+screenshot-drift gate, and the manual baseline-refresh job; drop the corresponding README
+claims and the `AGENTS.md` rule that referenced baselines.
+
+**What is lost.** Nothing else catches an unintended layout move — a CSS change that
+shifts the hero or breaks a grid now reaches `main` unflagged. The remaining Playwright
+suite covers behaviour and accessibility, not appearance. That is a real reduction in
+coverage, accepted deliberately in exchange for removing the friction.
+
+**If it is ever reinstated,** the workable shape is a `refresh-visual-baselines` job that
+commits its own output on a branch, so a UI change costs one workflow run rather than a
+download-review-commit cycle. The screenshot generation script (`npm run screenshots`) and
+the CI artifact that carries regenerated README images both remain.
 
 ## F. Changed in this pass
 

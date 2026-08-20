@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.1.0",
   "type": "module",
-  "description": "A resilient, accessible React weather dashboard — live forecast, hourly outlook, air quality, severe-weather alerts, and source-aware data-trust cues, with offline restore and a PWA shell.",
+  "description": "A resilient, accessible React weather dashboard — live forecast, hourly outlook, precipitation radar, air quality, severe-weather alerts, optional rain push alerts, and source-aware data-trust cues, with offline restore and a PWA shell.",
   "keywords": [
     "weather",
     "weather-dashboard",
@@ -12,7 +12,10 @@
     "pwa",
     "open-meteo",
     "accessibility",
-    "portfolio"
+    "portfolio",
+    "radar",
+    "push-notifications",
+    "supabase"
   ],
   "homepage": "https://aura-weather-platform.netlify.app/",
   "repository": {
@@ -53,7 +56,6 @@
     "@axe-core/playwright": "^4.11.2",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.59.1",
-    "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -67,8 +69,6 @@
     "globals": "^17.4.0",
     "jsdom": "^30.0.0",
     "lighthouse": "^13.4.1",
-    "pixelmatch": "^7.2.0",
-    "pngjs": "^7.0.0",
     "prettier": "^3.8.3",
     "vite": "^8.1.5"
   }

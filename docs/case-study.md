@@ -35,7 +35,8 @@ strongest portfolio narrative.
 ## The product
 
 [Aura Weather](https://github.com/itcodegirl/aura-weather) is a
-React 19 + Vite 6 weather intelligence dashboard. No backend, no
+React 19 + Vite 8 weather intelligence dashboard. No backend for the
+forecast itself; an optional Supabase-backed rain-alert feature adds one. No
 component library, no UI framework beyond Lucide icons. Free
 Open-Meteo + NOAA/NWS APIs power live conditions, hourly + 7-day
 forecasts, air-quality, severe-alerts, and a 30-year historical
@@ -180,10 +181,10 @@ endpoint and forwards unknown URLs to the original fetch.
 
 | | Before audit | After audit |
 |---|---|---|
-| Tests | 45 | **249** Node test-runner checks across 55 suites |
-| Playwright checks | 12 | 28 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing`, cached offline restore, and app-shell offline reload) |
-| `App.css` lines | 2,067 | ~500 |
-| Bundle (gzip) | ≈ 84 kB | ≈ 92 kB |
+| Tests | 45 | **573** Node test-runner checks across 120 suites |
+| Playwright checks | 12 | 34 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing`, cached offline restore, and app-shell offline reload) |
+| `App.css` lines | 2,067 | 890 |
+| Bundle (gzip) | ≈ 84 kB | ≈ 111 kB initial route (CSS + app + react-vendor); radar and Supabase load lazily |
 | `useWeatherData` lines | 459 | 354 |
 | `useSavedLocationsSync` lines | 360 | 273 |
 

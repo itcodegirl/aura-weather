@@ -13,7 +13,7 @@ CI runs the same gate serially for Playwright with
 
 ## First-load happy path
 
-- [ ] Cold load (`http://127.0.0.1:5173/`) shows the Chicago hero card
+- [ ] Cold load (`http://127.0.0.1:5173/`) shows the Palos Hills hero card
       within ~1 second
 - [ ] Header brand `Aura` and tagline `Atmospheric Intelligence` are
       visible on first paint
@@ -21,11 +21,12 @@ CI runs the same gate serially for Playwright with
       provider status copy and no fake weather values
 - [ ] Granting browser location shows "Current location" rather than a
       guessed city/country label
-- [ ] Permission-onboarding card reads "Pick a location to make Aura
-      yours" with a "Welcome" kicker, value-preview copy, and three
-      CTAs (Use my location · Search a city · Keep showing Chicago)
+- [ ] Permission-onboarding card reads "Start with Palos Hills, switch
+      anytime" with value-preview copy and two CTAs
+      (Allow location access · Keep Palos Hills for now)
 - [ ] Bento groups render in order: Current Conditions → Near-Term
-      Outlook → Atmospheric Conditions → Week Ahead
+      Outlook → Precipitation Radar → Nowcast → Precipitation Outlook →
+      Storm Watch → Week Ahead → Atmospheric Conditions
 
 ## Search
 
@@ -224,7 +225,8 @@ Then confirm the two things the script cannot see, in a browser:
 
 ## Build artifact sanity
 
-- [ ] `dist/` is < 1 MB total
+- [ ] `dist/` stays near its current ~2.3 MB (the radar/Leaflet and
+      Supabase chunks load lazily and are not on the initial route)
 - [ ] `/?mock=missing` in a production build shows the labelled demo
       notice and does not attempt live provider fetches
 - [ ] No `console.error` / `console.warn` in production smoke run

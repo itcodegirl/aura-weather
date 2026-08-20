@@ -36,7 +36,9 @@ That single command runs both specs and produces all five PNGs.
 ## Notes
 
 - Time is frozen to `2026-04-21T12:00:00-05:00` (matches the visual
-  regression baseline) so the images stay byte-stable across runs.
+  regression baseline, now removed) so run-to-run variation is minimised.
+  They are not byte-stable: sub-pixel rasterisation still moves a small
+  number of pixels between runs.
 - Animations and transitions are disabled and the font is pinned to
   Arial so images stay stable across machines.
 - The PNGs are committed so the project README renders a visual-first

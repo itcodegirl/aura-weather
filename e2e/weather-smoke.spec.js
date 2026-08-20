@@ -599,7 +599,7 @@ test("passes baseline accessibility assertions for the main weather view", async
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeVisible();
 
   const report = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa"])
+    .withTags(["wcag2a", "wcag2aa", "wcag22aa"])
     .analyze();
   const blockingViolations = report.violations.filter(
     (violation) => violation.impact === "critical" || violation.impact === "serious"

@@ -17,10 +17,6 @@ correctness and accessibility work makes it overdue.
 
 ### Added
 
-- **A plain-language value line in the header.** "Today's conditions,
-  honest about what it doesn't know." — the brand block previously
-  carried only the "Atmospheric Intelligence" tagline, which is mood
-  rather than meaning. Raised by all three audits.
 - **A third dated audit record.** `docs/audit/2026-08-16-ui-design-audit.md`
   verifies every prior finding against current source with file:line
   evidence and narrows the open list to owner decisions.

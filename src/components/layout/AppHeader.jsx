@@ -42,9 +42,6 @@ function AppHeader({
         />
         <h1 className="brand">Aura</h1>
         <p className="tagline">Atmospheric Intelligence</p>
-        <p className="value-line">
-          Today&apos;s conditions, honest about what it doesn&apos;t know.
-        </p>
       </div>
       <HeaderControls
         citySearchRef={citySearchRef}

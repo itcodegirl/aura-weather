@@ -29,8 +29,15 @@ lies — the dashboard saying "I know" when it does not.
 The fix runs deeper than swapping a few `Number()` calls. It became a
 **Data Trust Contract**: a single rule (*a missing reading is shown
 as missing, never as zero*) enforced at four layers of the stack and
-locked in by tests at every layer. The contract is the project's
-strongest portfolio narrative.
+locked in by tests at every layer.
+
+Then — three audits later — a fourth pass found three live violations
+still inside it, including a forecast row that rendered a confident
+"Clear" sky for a reading the provider never sent. That second half is
+the more useful story, and it is written up below: how a contract leaks
+when a module wraps the shared helper in a local one with different
+semantics, why two panels reported two-day-old weather as live, and what
+automated accessibility testing cannot see even when it passes clean.
 
 ## The product
 
@@ -148,13 +155,14 @@ fix would slowly drift back as new code shipped:
 
 | Layer | Test |
 |---|---|
-| Strict helper | `numbers.test.mjs` (8 tests) |
-| API normalization | `transforms.test.mjs` (6 tests) |
+| Strict helper | `numbers.test.mjs` (10 tests) |
+| API normalization | `transforms.test.mjs` (7 tests) |
 | Archive averaging | `openMeteo.test.mjs#fetchHistoricalTemperatureAverage` (2 tests) |
 | Component fallback | `temperature.test.mjs` (8 tests) |
 | Stat primitive | `Stat.render.test.mjs` (4 React render tests) |
-| Hero card DOM | `HeroCard.render.test.mjs` (6 React render tests) |
-| Metric card DOM | `MetricCard.render.test.mjs` (4 React render tests) |
+| Hero card DOM | `HeroCard.render.test.mjs` (19 React render tests) |
+| Forecast row DOM | `ForecastCard.render.test.mjs` — including a guard that a missing weather code never renders "Clear" |
+| Storm synthesis | `StormWatch.render.test.mjs` — including a guard that stale leading CAPE never reaches the DOM |
 | End-to-end | `weather-smoke.spec.js#renders the missing-data placeholder ...` (Playwright) |
 
 ## Reproducing the contract on demand
@@ -173,7 +181,7 @@ like a working forecast — the point is that every other field
 degrades gracefully. CI uses the same labelled demo route to capture
 the trust-contract screenshot as an artifact on every Playwright run.
 
-A 6-test unit suite (`missingDataMock.test.mjs`) verifies that the
+A 7-test unit suite (`missingDataMock.test.mjs`) verifies that the
 dev-only endpoint mock returns the expected null shapes for each
 endpoint and forwards unknown URLs to the original fetch.
 
@@ -182,7 +190,8 @@ endpoint and forwards unknown URLs to the original fetch.
 | | Before audit | After audit |
 |---|---|---|
 | Tests | 45 | **573** Node test-runner checks across 120 suites |
-| Playwright checks | 12 | 34 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing`, cached offline restore, and app-shell offline reload) |
+| Playwright checks | 12 | 34 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing` at WCAG 2.1 AA + 2.2 AA, cached offline restore, app-shell offline reload, and mutation-tested layout guards) |
+| Visual baselines | 0 | 0 — added, then deliberately removed; see *What I removed* |
 | `App.css` lines | 2,067 | 890 |
 | Bundle (gzip) | ≈ 84 kB | ≈ 111 kB initial route (CSS + app + react-vendor); radar and Supabase load lazily |
 | `useWeatherData` lines | 459 | 354 |
@@ -197,31 +206,187 @@ only matters when the data is partial, the network is slow, or a
 sample is missing. Choosing to make those moments first-class is the
 difference between a polished demo and a product worth shipping.
 
-The deeper signal: **the contract is enforced where it cannot drift**.
-A future contributor who adds a new card or a new metric automatically
-inherits the strict-coercion contract because every helper they will
-reach for already enforces it. The tests will fail before the
-regression ships.
+The deeper signal is not that the contract was written — it is what
+happened afterwards. A contract enforced by a shared helper still leaked,
+three separate times, because individual modules wrapped that helper in
+local variants with looser semantics. Finding that required assuming the
+system was already broken and hunting for the proof, rather than assuming
+three prior green audits meant it was fine.
 
-## Latest product pass
+The habit that generalises: **reproduce the wrong output before changing
+the code, and re-check the claim you are most confident about.** Twice in
+this pass the confident claim was mine, and it was wrong. Both corrections
+are recorded here rather than quietly fixed, because a case study that
+only lists successes is a worse engineering signal than one that shows
+how errors get caught.
 
-The next Aura pass made that trust story more visible in the day-to-day
-product experience instead of leaving it buried in implementation notes:
+## The contract was not enough
 
-- successful geolocation now upgrades from a generic "Current location"
-  label into a friendly nearby place name via reverse geocoding
-- the city picker now separates `Recent` switches from long-term `Saved`
-  places, which makes the app feel more like a daily tool than a demo
-- each daily forecast row now opens richer inline details for rain
-  chance, UV, wind, and sunrise/sunset without adding charting weight
-- the README now includes committed desktop/mobile screenshots plus a
-  simple architecture diagram so hiring managers can parse the product
-  and code story quickly
+Three audits passed over Aura after the contract shipped. A fourth —
+run as five parallel reviews, each hunting a different class of defect —
+found three live fabrications still inside the very system built to
+prevent them. That is the most useful thing this project has taught me,
+so it belongs in the case study rather than a commit log.
 
-That is a useful interview signal on its own: the project is not just
-"more features." It shows the ability to identify which changes make an
-already-solid app easier to trust, easier to navigate, and easier to
-evaluate as a piece of product engineering.
+**A forecast row claimed "Clear" for a reading that did not exist.**
+`ForecastCard` defines a *local* `toFiniteNumber` wrapper that, unlike
+the shared helper, accepts a fallback:
+
+```js
+function toFiniteNumber(value, fallback = NaN) {
+  const parsed = toStrictFiniteNumber(value);
+  return parsed === null ? fallback : parsed;
+}
+```
+
+It was called as `toFiniteNumber(weatherCodes[index], 0)`. WMO code 0 is
+"Clear". So an absent `daily.weather_code` rendered a confident amber sun
+and the word *Clear* beside real temperatures — and if the API omitted
+the field entirely, all seven rows did. `weatherCodes.js` carries a
+comment warning against precisely this, written when the contract was
+built. The comment was right and the call site ignored it.
+
+**The wind tile invented gusts.** When `wind_gusts_10m` was missing it
+fell back to the sustained speed, printing *"Gusts to 12 mph"* from
+`wind_speed_10m`. The fallback concealed itself whenever both readings
+were absent, which is likely why three audits walked past it.
+
+**The hourly summary forecast no rain from no data.** `?? 0` behind a
+guard keyed on temperature produced *"rain chance peaking at 0%"* when
+the provider had sent no rain data at all.
+
+The lesson is not "add more tests." It is that **a contract enforced by a
+shared helper leaks the moment a module wraps that helper in a local one
+with different semantics.** The shared function takes a single argument
+on purpose; the wrapper took two, and the extra argument silently
+reintroduced the exact bug class the project is named for. I only caught
+my own misreading of this by running the wrapper's semantics in a
+throwaway script instead of trusting a code read — which is how I learned
+I had been wrong about it thirty minutes earlier.
+
+## When "now" is not index zero
+
+The forecast request carries `past_hours=48`, so hourly index 0 is two
+days in the past. Four modules consume that series. Two anchored to the
+current hour with a shared `findWindowStartIndex` helper. Two did not.
+
+Storm Watch read `cape[0]`. On a calm day following a stormy one it could
+headline **"Severe"**, fill a four-segment risk meter, and state *"Severe
+storm risk from live storm energy"* using convective energy from 48 hours
+earlier. The inverse also held: it could report "All clear" during a real
+build-up. The hero had the same flaw in its imminent-rain scan, reading
+indices 1 and 2 as "the next two hours" when they were 47 and 46 hours
+*past* — and because the label prints time-of-day only, rain that fell the
+day before yesterday surfaced as *"Rain likely around 3:00 pm — bring an
+umbrella."* That branch also outranks the UV, gust and temperature
+readings, so a false positive silenced them too.
+
+Both are now anchored the way the other two modules always were. The
+regression test for Storm Watch parks a deliberately alarming CAPE value
+in the past slots and asserts it never reaches the DOM, so the stale read
+cannot return quietly.
+
+## What automated accessibility testing cannot see
+
+axe-core runs in CI against both the live dashboard and the missing-data
+state, and it passes clean. It also passed clean while every row of the
+seven-day forecast hid its own data from screen readers.
+
+The row trigger is a `<button>` carrying an `aria-label`. Per accessible-
+name computation, `aria-label` on a button **replaces** its entire
+subtree. So the label — *"Show forecast details for Wednesday"* —
+discarded the day, condition, signal chip, high, low and rain chance.
+A sighted user reads the week at a glance; a screen-reader user heard
+seven identically-shaped prompts and had to expand every row, one at a
+time, to learn a single temperature. No rule was violated. The markup was
+valid. The information was simply gone.
+
+Four more defects sat in the same blind spot: the hero's freshness pill
+was a live region whose text embeds a five-minute clock bucket, so it
+re-announced *"High confidence · 15 min ago"* every five minutes forever,
+interrupting whatever the user was reading with no new information;
+Escape in the city search blurred the input, dropping focus to `<body>`
+so the next Tab restarted from the top of the document; the hourly
+chart's 24 focusable columns announced times with no values while the
+chart itself was `aria-hidden`; and the alert switches inverted their own
+name as they toggled, giving two conflicting state cues at once.
+
+**Automated accessibility testing proves the absence of known rule
+violations. It cannot tell you whether the page makes sense read aloud.**
+
+## The update that could never ship
+
+`public/sw.js` is copied verbatim into the build, and `CACHE_VERSION` was
+a hand-edited constant — moved three times in roughly two hundred commits.
+Browsers decide whether to install a new service worker by byte-comparing
+the file. Across almost every deploy it was identical, so `install` never
+re-ran and `activate` never evicted the previous shell.
+
+The user-visible consequence is the part worth noting. The app ships a
+"New version available — refresh" banner, wired through
+`watchInstallingWorker` and `notifyIfWaiting`. Both depend on a new worker
+appearing. No new worker ever appeared, so **the banner could not fire —
+the feature existed, was tested, and was unreachable.** A long-lived tab
+or an installed PWA could sit on old JavaScript indefinitely, which is
+exactly the case the banner was built for.
+
+A build plugin now stamps the version from a hash of the emitted asset
+filenames. It is verified in both directions: an unchanged rebuild
+produces a byte-identical worker, so users are never nagged for a deploy
+that changed nothing, and a change to shipped output produces a new one.
+
+## What I removed, and what it cost
+
+Not every improvement is an addition.
+
+The project had Playwright visual-regression testing with five committed
+baselines — a genuine differentiator, and advertised as such in the
+README. Every intentional UI change required a download-review-commit
+cycle against CI-rendered screenshots. When a one-line header change
+triggered that cycle, the owner's call was to remove the system. I did,
+including the README claims, so the repo would not advertise coverage it
+no longer had.
+
+That is a real reduction and the case study should say so plainly:
+**nothing now catches an unintended layout shift.** What replaced part of
+it is assertion-based — text-clipping checks at three viewports, a
+hero-fits-the-phone guard, and an assertion that all eight atmosphere
+tiles actually mount, since a late chunk once rendered the dashboard 749px
+shorter with the bento simply absent and no test failed. Each new guard
+was mutation-tested by injecting the defect it describes, because a green
+test that cannot fail is worse than no test at all.
+
+Separately, `ExposureSection` and `MetricCard` had been orphaned by the
+bento redesign, but a barrel re-export kept 459 lines of their CSS on the
+critical path for markup nothing rendered. Manrope was preloaded at the
+highest priority and precached by the service worker, while sitting second
+in every font stack behind an Inter face declared `font-weight: 100 900`
+with no `unicode-range` — meaning it satisfies every glyph at every weight
+and Manrope could never be selected. Both are gone.
+
+## How I verify
+
+Five parallel reviews produced more findings than any of them could
+individually justify, and they were not uniformly right. Three examples,
+because the failure modes matter as much as the successes:
+
+- One reported the mobile-overflow assertion as tautological — unable to
+  fail because `body` sets `overflow-x: hidden`. I injected a 900px
+  element at a 390px viewport: the assertion failed exactly as intended.
+  The claim was wrong and the test was left alone.
+- One reported the fabricated "Clear" bug. I tested the *shared* helper,
+  saw it ignore a second argument, and told the user the finding was
+  wrong. It was not — the local wrapper honours the fallback. I
+  re-verified by executing the wrapper's actual semantics, corrected the
+  record, and shipped the fix with a regression test.
+- One insisted two findings were unfixed after I had already merged them,
+  because its view of the tree predated the commits.
+
+The working rule that came out of it: **reproduce the wrong output before
+changing code, and re-check the claim you are most confident about.** Every
+fix in this pass was preceded by observing the defect. Findings that could
+not be reproduced were discarded rather than implemented, and the ones
+discarded are named in the pull requests so the reasoning survives.
 
 ## Why six surfaces talk about rain
 

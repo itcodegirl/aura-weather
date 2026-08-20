@@ -231,7 +231,11 @@ export function useCitySearch({ onSelect, idleResults = [] } = {}) {
       if (event.key === "Escape") {
         setOpen(false);
         setActiveIndex(-1);
-        inputRef.current?.blur();
+        // Escape closes the popup but must keep focus in the textbox (ARIA
+        // APG combobox). Blurring dropped focus onto <body>, so the next Tab
+        // restarted from the top of the document — back through the skip
+        // link and the whole header. The sibling clear() handler already
+        // refocuses the input; this now matches it.
         return;
       }
 

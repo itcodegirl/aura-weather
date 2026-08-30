@@ -146,3 +146,68 @@ describe("WeatherDashboard missing-data demo isolation", () => {
     );
   });
 });
+
+describe("WeatherDashboard loading placeholders stay quiet", () => {
+  beforeEach(() => {
+    installFakeTimers();
+  });
+
+  afterEach(() => {
+    cleanup();
+    restoreTimers();
+  });
+
+  test("mounts several placeholders without exposing a single live region", async () => {
+    const view = render(
+      React.createElement(WeatherDashboard, buildDashboardProps())
+    );
+
+    // Past every deferred-mount window, so the staggered placeholders
+    // (hourly / radar / supplemental) are all on the page at once — the
+    // exact moment role="status" used to queue a serial announcement.
+    await act(async () => {
+      flushTimersUpTo(10_000);
+    });
+
+    const placeholders = [...view.container.querySelectorAll(".loading-card")];
+    assert.ok(
+      placeholders.length > 0,
+      "expected at least one loading placeholder to be mounted"
+    );
+
+    for (const placeholder of placeholders) {
+      assert.equal(
+        placeholder.getAttribute("role"),
+        null,
+        `loading placeholder "${placeholder.textContent}" must not be a live region`
+      );
+      assert.equal(placeholder.getAttribute("aria-live"), null);
+      // The visible title already carries the wording; a matching
+      // aria-label would double-announce it as name + content.
+      assert.equal(placeholder.getAttribute("aria-label"), null);
+    }
+  });
+
+  test("keeps the placeholder title visible and the bento's aria-busy signal intact", async () => {
+    const view = render(
+      React.createElement(
+        WeatherDashboard,
+        buildDashboardProps({ isBackgroundLoading: true })
+      )
+    );
+
+    await act(async () => {
+      flushTimersUpTo(10_000);
+    });
+
+    // Quiet, not hidden: the copy stays in the reading order, and
+    // work-in-progress rides on aria-busy rather than an announcement.
+    assert.match(view.container.textContent, /Loading precipitation radar/);
+    assert.equal(
+      view.container.querySelector("main.bento").getAttribute("aria-busy"),
+      "true"
+    );
+    const placeholder = view.container.querySelector(".loading-card");
+    assert.equal(placeholder.getAttribute("aria-busy"), "true");
+  });
+});

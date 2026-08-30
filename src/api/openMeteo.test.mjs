@@ -23,6 +23,49 @@ function createJsonResponse(payload, init = {}) {
   });
 }
 
+// A fetch that never settles on its own: it rejects only if the request's
+// signal aborts. Anything the request layer forgets to bound therefore hangs,
+// which is what the timeout tests need to be able to observe.
+function createStallingFetch(onRequest) {
+  return (url, init = {}) =>
+    new Promise((_resolve, reject) => {
+      onRequest?.(init);
+      const signal = init.signal;
+      if (!signal) {
+        return;
+      }
+      const rejectWithReason = () => {
+        reject(signal.reason ?? new Error("aborted"));
+      };
+      if (signal.aborted) {
+        rejectWithReason();
+        return;
+      }
+      signal.addEventListener("abort", rejectWithReason, { once: true });
+    });
+}
+
+// Fails loudly instead of hanging forever when the code under test loses its
+// timeout — a hung promise would otherwise stall the whole run.
+async function captureRejection(promise, watchdogMs = 4_000) {
+  let watchdogId = null;
+  const watchdog = new Promise((_resolve, reject) => {
+    watchdogId = setTimeout(() => {
+      reject(new Error(`request did not settle within ${watchdogMs}ms`));
+    }, watchdogMs);
+  });
+
+  try {
+    await Promise.race([promise, watchdog]);
+  } catch (error) {
+    return error;
+  } finally {
+    clearTimeout(watchdogId);
+  }
+
+  throw new Error("expected the request to reject");
+}
+
 afterEach(() => {
   globalThis.fetch = realFetch;
 });
@@ -377,5 +420,131 @@ describe("fetchHistoricalTemperatureAverage", () => {
 
     assert.equal(result.averageTemperature, 62);
     assert.equal(requestCount, 2);
+  });
+});
+
+describe("request timeout budget", () => {
+  test("bounds a stalled forecast by the whole-request budget, not by the summed attempt timeouts", async () => {
+    // The timeout used to be created per attempt, so a stall ran
+    // (attempts x timeout) + backoff — ~31s in production — before the UI said
+    // the request had "timed out". The budget now covers the retry sequence.
+    let attempts = 0;
+    globalThis.fetch = createStallingFetch(() => {
+      attempts += 1;
+    });
+
+    const startedAt = Date.now();
+    const error = await captureRejection(
+      fetchWeather(41.8781, -87.6298, {
+        retryDelaysMs: [20, 20],
+        timeoutMs: 150,
+        totalTimeoutMs: 250,
+      })
+    );
+    const elapsedMs = Date.now() - startedAt;
+
+    assert.equal(error.name, "TimeoutError");
+    assert.ok(attempts >= 2, `expected the stall to be retried, saw ${attempts}`);
+    // Summed per-attempt budgets would be 3 x 150 + 40 = 490ms.
+    assert.ok(
+      elapsedMs < 400,
+      `expected the whole request within the 250ms budget, took ${elapsedMs}ms`
+    );
+  });
+
+  test("keeps the timeout on engines without AbortSignal.any", async () => {
+    // Safari <17 / Firefox <115. The old composition returned the caller's
+    // signal alone there, dropping the timeout — and useWeatherData always
+    // passes a caller signal, so every forecast ran unbounded.
+    const realAny = AbortSignal.any;
+    delete AbortSignal.any;
+    const controller = new AbortController();
+    globalThis.fetch = createStallingFetch();
+
+    try {
+      const error = await captureRejection(
+        fetchWeather(41.8781, -87.6298, {
+          signal: controller.signal,
+          retryDelaysMs: [],
+          timeoutMs: 80,
+          totalTimeoutMs: 200,
+        })
+      );
+
+      assert.equal(error.name, "TimeoutError");
+    } finally {
+      AbortSignal.any = realAny;
+    }
+  });
+
+  test("still honors a caller abort on engines without AbortSignal.any", async () => {
+    const realAny = AbortSignal.any;
+    delete AbortSignal.any;
+    const controller = new AbortController();
+    let attempts = 0;
+    globalThis.fetch = createStallingFetch(() => {
+      attempts += 1;
+      setTimeout(() => controller.abort(), 20);
+    });
+
+    try {
+      const error = await captureRejection(
+        fetchWeather(41.8781, -87.6298, {
+          signal: controller.signal,
+          retryDelaysMs: [20],
+          timeoutMs: 2_000,
+          totalTimeoutMs: 4_000,
+        })
+      );
+
+      assert.equal(error.name, "AbortError");
+      assert.equal(attempts, 1);
+    } finally {
+      AbortSignal.any = realAny;
+    }
+  });
+
+  test("does not retry a caller abort and keeps it distinct from a timeout", async () => {
+    // AbortSignal.timeout rejects with TimeoutError, not AbortError. The retry
+    // policy and the failure copy both read that distinction: a timeout is
+    // retried and reported as a timeout, a user abort is neither.
+    const controller = new AbortController();
+    let attempts = 0;
+    globalThis.fetch = createStallingFetch(() => {
+      attempts += 1;
+      setTimeout(() => controller.abort(), 20);
+    });
+
+    const error = await captureRejection(
+      fetchWeather(41.8781, -87.6298, {
+        signal: controller.signal,
+        retryDelaysMs: [20, 20],
+        timeoutMs: 2_000,
+        totalTimeoutMs: 4_000,
+      })
+    );
+
+    assert.equal(error.name, "AbortError");
+    assert.notEqual(error.name, "TimeoutError");
+    assert.equal(attempts, 1);
+  });
+
+  test("folds a stalled supplemental request into a null reading, not a hang", async () => {
+    // fetchAirQuality swallows failures into null and rethrows only a caller
+    // abort, so a timeout has to actually fire for the panel to degrade.
+    globalThis.fetch = createStallingFetch();
+
+    const reading = await Promise.race([
+      fetchAirQuality(41.8781, -87.6298, {
+        retryDelaysMs: [],
+        timeoutMs: 60,
+        totalTimeoutMs: 120,
+      }),
+      new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error("AQI request never settled")), 4_000);
+      }),
+    ]);
+
+    assert.equal(reading, null);
   });
 });

@@ -135,4 +135,38 @@ describe("StatusStack", () => {
       "install prompt should wait behind the higher-priority update notice"
     );
   });
+
+  test("keeps the service-worker update notice a polite live region", () => {
+    const view = render(
+      React.createElement(StatusStack, {
+        serviceWorkerUpdateAvailable: true,
+        onRefreshServiceWorkerUpdate() {},
+        onDismissServiceWorkerUpdate() {},
+      })
+    );
+
+    // Counterpart to the quiet loading placeholders: an actionable notice
+    // that appears after first paint has to announce itself, or the user
+    // never learns a new build is waiting.
+    const notice = view.container.querySelector(".app-status--update");
+    assert.notEqual(notice, null);
+    assert.equal(notice.getAttribute("role"), "status");
+    assert.equal(notice.getAttribute("aria-live"), "polite");
+  });
+
+  test("keeps the refresh-failure notice an assertive alert", () => {
+    const view = render(
+      React.createElement(StatusStack, {
+        showRefreshError: true,
+        cacheStatus: "restored",
+        onRetry() {},
+      })
+    );
+
+    // The cached-forecast fallback is a trust-contract message, not a
+    // transient placeholder — it must still reach assistive tech.
+    const notice = view.container.querySelector(".app-status--error");
+    assert.notEqual(notice, null);
+    assert.equal(notice.getAttribute("role"), "alert");
+  });
 });

@@ -1,4 +1,4 @@
-import { afterEach, describe, test } from "node:test";
+import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import "../../../scripts/test-render-setup.mjs";
@@ -290,5 +290,283 @@ describe("SavedCitiesStrip reordering", () => {
       moveEarlier.click();
     });
     assert.deepEqual(moves, [], "out-of-range moves must not fire the callback");
+  });
+});
+
+// Identity of two DOM nodes is asserted through a boolean rather than
+// assert.equal: node's failure reporting deep-inspects both operands,
+// and a jsdom element drags in the whole document, so a regression
+// would hang the run instead of failing it.
+function describeElement(element) {
+  if (!element) {
+    return "nothing";
+  }
+  const tag = element.tagName.toLowerCase();
+  const className = element.getAttribute("class");
+  const label = (element.textContent || "").trim().slice(0, 40);
+  return `<${tag}${className ? `.${className.replace(/\s+/g, ".")}` : ""}>${label}`;
+}
+
+describe("SavedCitiesStrip focus restoration when the undo disappears", () => {
+  // A stateful host: the real parent removes the chip optimistically and
+  // puts it back on restore, so focus targets appear and disappear the
+  // way they do in the app rather than staying pinned by a fixed prop.
+  function StatefulStrip({ initialCities }) {
+    const [cities, setCities] = React.useState(initialCities);
+    return React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(SavedCitiesStrip, {
+        savedCities: cities,
+        location: { lat: 0, lon: 0 },
+        loadSavedCity: () => {},
+        forgetSavedCity: (city) =>
+          setCities((prev) => prev.filter((entry) => entry.name !== city.name)),
+        restoreSavedCity: (city) => setCities((prev) => [...prev, city]),
+      }),
+      React.createElement("button", { type: "button" }, "Elsewhere")
+    );
+  }
+
+  function renderStateful(initialCities) {
+    return render(React.createElement(StatefulStrip, { initialCities }));
+  }
+
+  async function removeTokyo(view) {
+    await act(async () => {
+      view
+        .getByRole("button", { name: "Remove Tokyo from saved cities" })
+        .click();
+    });
+  }
+
+  test("activating Undo leaves focus on a real element inside the strip", async () => {
+    const view = renderStateful([TOKYO, LONDON]);
+    const doc = view.container.ownerDocument;
+
+    await removeTokyo(view);
+    assert.ok(
+      doc.activeElement === view.getByRole("button", { name: "Undo" }),
+      "precondition: the remove hand-off puts focus on Undo"
+    );
+
+    await act(async () => {
+      view.getByRole("button", { name: "Undo" }).click();
+    });
+
+    assert.ok(
+      doc.activeElement !== doc.body,
+      "the Undo button unmounts on activation; focus must not fall to <body>"
+    );
+    const strip = view.container.querySelector(".saved-cities-strip");
+    assert.equal(
+      strip.contains(doc.activeElement),
+      true,
+      `focus should land inside the strip the undo restored into, got ${describeElement(doc.activeElement)}`
+    );
+    assert.ok(
+      doc.activeElement === view.getByRole("button", { name: "Tokyo" }),
+      `the restored city's own chip is the sensible target, got ${describeElement(doc.activeElement)}`
+    );
+  });
+
+  test("focus is not stolen when the user moved on before activating Undo", async () => {
+    const view = renderStateful([TOKYO, LONDON]);
+    const doc = view.container.ownerDocument;
+
+    await removeTokyo(view);
+
+    const elsewhere = view.getByRole("button", { name: "Elsewhere" });
+    elsewhere.focus();
+
+    await act(async () => {
+      view.getByRole("button", { name: "Undo" }).click();
+    });
+
+    assert.ok(
+      doc.activeElement === elsewhere,
+      `focus that has already moved out of the undo region must stay put, got ${describeElement(doc.activeElement)}`
+    );
+  });
+});
+
+describe("SavedCitiesStrip focus restoration when the undo times out", () => {
+  // The undo window closes on a timer; the fakes let the test cross the
+  // 6-second boundary without waiting for it.
+  let originalSetTimeout;
+  let originalClearTimeout;
+  let originalWindowSetTimeout;
+  let originalWindowClearTimeout;
+  let pendingTimers;
+  let nextTimerId;
+
+  function installFakeTimers() {
+    pendingTimers = new Map();
+    nextTimerId = 1;
+    originalSetTimeout = globalThis.setTimeout;
+    originalClearTimeout = globalThis.clearTimeout;
+    originalWindowSetTimeout = globalThis.window.setTimeout;
+    originalWindowClearTimeout = globalThis.window.clearTimeout;
+    const fakeSetTimeout = (handler, delay) => {
+      const id = nextTimerId++;
+      pendingTimers.set(id, { handler, delay });
+      return id;
+    };
+    const fakeClearTimeout = (id) => {
+      pendingTimers.delete(id);
+    };
+    globalThis.setTimeout = fakeSetTimeout;
+    globalThis.clearTimeout = fakeClearTimeout;
+    globalThis.window.setTimeout = fakeSetTimeout;
+    globalThis.window.clearTimeout = fakeClearTimeout;
+  }
+
+  function flushTimersUpTo(targetMs) {
+    for (const [id, { handler, delay }] of [...pendingTimers.entries()]) {
+      if (delay <= targetMs) {
+        pendingTimers.delete(id);
+        handler();
+      }
+    }
+  }
+
+  function restoreTimers() {
+    globalThis.setTimeout = originalSetTimeout;
+    globalThis.clearTimeout = originalClearTimeout;
+    globalThis.window.setTimeout = originalWindowSetTimeout;
+    globalThis.window.clearTimeout = originalWindowClearTimeout;
+  }
+
+  beforeEach(() => {
+    installFakeTimers();
+  });
+
+  afterEach(() => {
+    restoreTimers();
+  });
+
+  function renderStrip(savedCities) {
+    return render(
+      React.createElement(SavedCitiesStrip, {
+        savedCities,
+        location: { lat: 0, lon: 0 },
+        loadSavedCity: () => {},
+        forgetSavedCity: () => {},
+        restoreSavedCity: () => {},
+      })
+    );
+  }
+
+  test("expiry while the Undo button holds focus moves focus to a real element", async () => {
+    const view = renderStrip([TOKYO, LONDON]);
+    const doc = view.container.ownerDocument;
+
+    await act(async () => {
+      view
+        .getByRole("button", { name: "Remove Tokyo from saved cities" })
+        .click();
+    });
+    assert.ok(
+      doc.activeElement === view.getByRole("button", { name: "Undo" }),
+      "precondition: the remove hand-off puts focus on Undo"
+    );
+
+    await act(async () => {
+      flushTimersUpTo(6000);
+    });
+
+    assert.ok(
+      view.container.querySelector(".saved-city-undo") === null,
+      "precondition: the undo window closed on expiry"
+    );
+    assert.ok(
+      doc.activeElement !== doc.body,
+      "an expiring undo must not drop focus to <body> either"
+    );
+    assert.equal(
+      view.container
+        .querySelector(".saved-cities-strip")
+        .contains(doc.activeElement),
+      true,
+      `focus should land on the strip's nearest stable control, got ${describeElement(doc.activeElement)}`
+    );
+  });
+
+  test("expiry does not steal focus the user has moved elsewhere", async () => {
+    const view = renderStrip([TOKYO, LONDON]);
+    const doc = view.container.ownerDocument;
+
+    await act(async () => {
+      view
+        .getByRole("button", { name: "Remove Tokyo from saved cities" })
+        .click();
+    });
+
+    const elsewhere = view.getByRole("button", { name: "London" });
+    elsewhere.focus();
+
+    await act(async () => {
+      flushTimersUpTo(6000);
+    });
+
+    assert.ok(
+      doc.activeElement === elsewhere,
+      `the timer must not yank focus away from wherever the user went, got ${describeElement(doc.activeElement)}`
+    );
+  });
+});
+
+describe("SavedCitiesStrip reorder announcement lifecycle", () => {
+  test("the reorder notice clears so an identical repeat re-announces", async () => {
+    const originalSetTimeout = globalThis.setTimeout;
+    const originalClearTimeout = globalThis.clearTimeout;
+    const timers = new Map();
+    let nextId = 1;
+    globalThis.setTimeout = (handler, delay) => {
+      const id = nextId++;
+      timers.set(id, { handler, delay });
+      return id;
+    };
+    globalThis.clearTimeout = (id) => timers.delete(id);
+
+    try {
+      const view = render(
+        React.createElement(SavedCitiesStrip, {
+          savedCities: [TOKYO, LONDON],
+          location: { lat: 0, lon: 0 },
+          loadSavedCity: () => {},
+          forgetSavedCity: () => {},
+          restoreSavedCity: () => {},
+          moveSavedCity: () => {},
+        })
+      );
+      const notice = view.container.querySelector(".sr-only[role='status']");
+
+      await act(async () => {
+        view
+          .getByRole("button", {
+            name: "Move Tokyo later in your saved cities",
+          })
+          .click();
+      });
+      assert.match(notice.textContent, /Tokyo moved to position 2 of 2/);
+
+      await act(async () => {
+        for (const [id, { handler, delay }] of [...timers.entries()]) {
+          if (delay <= 1500) {
+            timers.delete(id);
+            handler();
+          }
+        }
+      });
+      assert.equal(
+        notice.textContent,
+        "",
+        "a live region that keeps its text cannot announce the same message twice"
+      );
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
+    }
   });
 });

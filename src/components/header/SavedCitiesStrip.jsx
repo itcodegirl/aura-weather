@@ -2,6 +2,16 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { toFiniteNumber } from "../../utils/numbers";
 
 const UNDO_TIMEOUT_MS = 6000;
+// A live region only announces on text change, so an identical repeat
+// message is a no-op. Clearing shortly after the announce keeps the
+// next identical reorder audible.
+const ORDER_NOTICE_CLEAR_MS = 1500;
+
+// Chip identity, shared by the render key and by focus targeting so the
+// two cannot drift apart.
+function savedCityKey(city) {
+  return `${city.lat}:${city.lon}:${city.name}`;
+}
 
 function SavedCitiesStrip({
   savedCities,
@@ -19,6 +29,7 @@ function SavedCitiesStrip({
   // changes place; assistive tech needs the new position spoken.
   const [orderNotice, setOrderNotice] = useState("");
   const undoTimeoutRef = useRef(null);
+  const orderNoticeTimeoutRef = useRef(null);
   // Focus-management: after a chip is removed, the focused remove button
   // unmounts and the browser drops focus to document.body. Move focus to
   // the Undo button instead so keyboard / SR users can act on the
@@ -32,6 +43,47 @@ function SavedCitiesStrip({
     }
   }, [pendingUndo]);
 
+  // The same hand-off in the other direction. The undo region unmounts
+  // on activation, on timeout expiry, and on dismissal; without this,
+  // focus lands back on document.body — the exact drop the hand-off
+  // above exists to prevent. The request is { key } to aim at a chip,
+  // { key: null } for the nearest stable control, and stays null when
+  // focus was not inside the region, so focus the user has since moved
+  // is never stolen back.
+  const stripRef = useRef(null);
+  const undoRegionRef = useRef(null);
+  const refocusRequestRef = useRef(null);
+
+  const undoHoldsFocus = useCallback(() => {
+    const region = undoRegionRef.current;
+    if (!region) {
+      return false;
+    }
+    return region.contains(region.ownerDocument?.activeElement ?? null);
+  }, []);
+
+  useEffect(() => {
+    const request = refocusRequestRef.current;
+    if (pendingUndo || !request) {
+      return;
+    }
+    refocusRequestRef.current = null;
+    const strip = stripRef.current;
+    if (!strip) {
+      return;
+    }
+    const chips = Array.from(strip.querySelectorAll(".saved-city-chip"));
+    const restored = request.key
+      ? chips.find((chip) => chip.dataset.cityKey === request.key)
+      : null;
+    // The restored chip when it can be targeted; otherwise the strip's
+    // nearest stable control, which is its first chip.
+    const next = restored ?? chips[0] ?? null;
+    if (next) {
+      next.focus();
+    }
+  }, [pendingUndo, savedCities]);
+
   const clearUndoTimer = useCallback(() => {
     if (undoTimeoutRef.current) {
       clearTimeout(undoTimeoutRef.current);
@@ -39,7 +91,15 @@ function SavedCitiesStrip({
     }
   }, []);
 
+  const clearOrderNoticeTimer = useCallback(() => {
+    if (orderNoticeTimeoutRef.current) {
+      clearTimeout(orderNoticeTimeoutRef.current);
+      orderNoticeTimeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => clearUndoTimer, [clearUndoTimer]);
+  useEffect(() => clearOrderNoticeTimer, [clearOrderNoticeTimer]);
 
   const handleLoadSavedCity = useCallback(
     (city) => {
@@ -68,11 +128,15 @@ function SavedCitiesStrip({
       shouldFocusUndoRef.current = true;
       setPendingUndo({ city, wasStartup });
       undoTimeoutRef.current = setTimeout(() => {
+        // Expiry unmounts the region as surely as a click does, so the
+        // same guarded hand-off applies: reclaim focus only when it is
+        // still standing inside what is about to disappear.
+        refocusRequestRef.current = undoHoldsFocus() ? { key: null } : null;
         setPendingUndo(null);
         undoTimeoutRef.current = null;
       }, UNDO_TIMEOUT_MS);
     },
-    [forgetSavedCity, clearUndoTimer]
+    [forgetSavedCity, clearUndoTimer, undoHoldsFocus]
   );
 
   const handleSetStartupCity = useCallback(
@@ -101,30 +165,44 @@ function SavedCitiesStrip({
       }
 
       moveSavedCity(city, offset);
+      clearOrderNoticeTimer();
       setOrderNotice(
         `${city.name} moved to position ${targetIndex + 1} of ${total}.`
       );
+      orderNoticeTimeoutRef.current = setTimeout(() => {
+        setOrderNotice("");
+        orderNoticeTimeoutRef.current = null;
+      }, ORDER_NOTICE_CLEAR_MS);
     },
-    [moveSavedCity]
+    [moveSavedCity, clearOrderNoticeTimer]
   );
 
   const handleUndo = useCallback(() => {
+    // Read the focus position before the region unmounts; afterwards
+    // activeElement is already document.body and the question "did the
+    // user still have focus in here?" can no longer be answered.
+    const heldFocus = undoHoldsFocus();
     if (!pendingUndo || typeof restoreSavedCity !== "function") {
+      refocusRequestRef.current = heldFocus ? { key: null } : null;
       setPendingUndo(null);
       clearUndoTimer();
       return;
     }
+    refocusRequestRef.current = heldFocus
+      ? { key: savedCityKey(pendingUndo.city) }
+      : null;
     restoreSavedCity(pendingUndo.city, {
       makeStartup: pendingUndo.wasStartup,
     });
     setPendingUndo(null);
     clearUndoTimer();
-  }, [pendingUndo, restoreSavedCity, clearUndoTimer]);
+  }, [pendingUndo, restoreSavedCity, clearUndoTimer, undoHoldsFocus]);
 
   const handleDismissUndo = useCallback(() => {
+    refocusRequestRef.current = undoHoldsFocus() ? { key: null } : null;
     setPendingUndo(null);
     clearUndoTimer();
-  }, [clearUndoTimer]);
+  }, [clearUndoTimer, undoHoldsFocus]);
 
   if (safeSavedCities.length === 0 && !pendingUndo) {
     return null;
@@ -137,9 +215,10 @@ function SavedCitiesStrip({
           className="saved-cities-strip"
           role="list"
           aria-label="Saved cities"
+          ref={stripRef}
         >
           {safeSavedCities.map((city, index) => {
-            const key = `${city.lat}:${city.lon}:${city.name}`;
+            const key = savedCityKey(city);
             const total = safeSavedCities.length;
             const isFirst = index === 0;
             const isLast = index === total - 1;
@@ -173,6 +252,9 @@ function SavedCitiesStrip({
                   type="button"
                   className={`saved-city-chip ${isActive ? "is-active" : ""} ${isStartup ? "is-startup" : ""}`.trim()}
                   onClick={() => handleLoadSavedCity(city)}
+                  /* Focus-restoration target after an undo puts this
+                     chip back; escaping-free lookup via dataset. */
+                  data-city-key={key}
                   /*
                    * aria-current rather than aria-pressed: the active
                    * chip indicates "this is the currently-displayed
@@ -259,6 +341,7 @@ function SavedCitiesStrip({
           className="saved-city-undo"
           role="status"
           aria-live="polite"
+          ref={undoRegionRef}
         >
           <span className="saved-city-undo-text">
             Removed <strong>{pendingUndo.city.name}</strong>

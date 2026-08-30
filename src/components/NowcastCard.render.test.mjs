@@ -174,3 +174,111 @@ describe("NowcastCard", () => {
     );
   });
 });
+
+describe("NowcastCard chart text equivalent", () => {
+  function getChartDescription(container) {
+    const section = container.querySelector(".nowcast-card");
+    const id = section.getAttribute("aria-describedby");
+    assert.ok(id, "the labelled region must point at a description");
+    const description = container.querySelector(`[id="${id}"]`);
+    assert.ok(description, "aria-describedby must resolve to a rendered element");
+    assert.ok(
+      description.classList.contains("sr-only"),
+      "the chart's text equivalent is screen-reader-only"
+    );
+    return description.textContent.trim();
+  }
+
+  test("describes the threshold crossing with the same numbers as the chips", () => {
+    const { container } = render(
+      React.createElement(NowcastCard, {
+        weather: {
+          nowcast: buildNowcast({
+            rainChance: [10, 20, 40, 60, 80, 70, 55, 30],
+            conditionCode: [1, 1, 51, 61, 61, 61, 51, 2],
+          }),
+        },
+      })
+    );
+
+    const text = getChartDescription(container);
+    assert.equal(
+      text,
+      "Rain chance crosses the 50% rain-likely line about 45 minutes from now, peaking at 80%, rising into the second hour."
+    );
+    // The spoken peak is the Peak chance chip's own number, so the drawn and
+    // spoken versions cannot disagree.
+    assert.equal(
+      screen.getByText("Peak chance").nextElementSibling.textContent.trim(),
+      "80%"
+    );
+    // The SVG itself stays hidden — the paragraph is its equivalent.
+    assert.equal(
+      container.querySelector(".nowcast-svg").getAttribute("aria-hidden"),
+      "true"
+    );
+  });
+
+  test("describes a dry window as staying below the line without inventing timing", () => {
+    const { container } = render(
+      React.createElement(NowcastCard, {
+        weather: {
+          nowcast: buildNowcast({ rainChance: [5, 5, 10, 8, 6, 4, 5, 3] }),
+        },
+      })
+    );
+
+    const text = getChartDescription(container);
+    assert.equal(
+      text,
+      "Rain chance stays below the 50% rain-likely line for the next 2 hours, peaking at 10%, holding flat across the window."
+    );
+    assert.doesNotMatch(text, /crosses the/i);
+    assert.doesNotMatch(text, /minute/i, "a dry window has no crossing time to announce");
+  });
+
+  test("reports the missing reading instead of describing a curve", () => {
+    // The qualified "Likely dry" path: weather codes are dry but no
+    // probability slot has a value, so there is no curve to draw or describe.
+    const { container } = render(
+      React.createElement(NowcastCard, {
+        weather: {
+          nowcast: buildNowcast({
+            rainChance: Array.from({ length: 8 }, () => null),
+            rainAmount: Array.from({ length: 8 }, () => null),
+            conditionCode: Array.from({ length: 8 }, () => 0),
+          }),
+        },
+      })
+    );
+
+    const text = getChartDescription(container);
+    assert.equal(
+      text,
+      "Rain chance readings for the next 2 hours are unavailable, so the chart has no curve to describe."
+    );
+    assert.doesNotMatch(text, /rain-likely line/);
+    assert.doesNotMatch(text, /peaking|rising|falling|holding flat/);
+    assert.doesNotMatch(text, /\d+%/, "no percentage may be spoken for a missing reading");
+    assert.ok(screen.getByText("Likely dry"));
+  });
+
+  test("reports the missing reading when the whole nowcast window is unavailable", () => {
+    const { container } = render(
+      React.createElement(NowcastCard, {
+        weather: {
+          nowcast: buildNowcast({
+            rainChance: Array.from({ length: 8 }, () => null),
+            rainAmount: Array.from({ length: 8 }, () => null),
+            conditionCode: Array.from({ length: 8 }, () => null),
+          }),
+        },
+      })
+    );
+
+    assert.equal(
+      getChartDescription(container),
+      "Rain chance readings for the next 2 hours are unavailable, so the chart has no curve to describe."
+    );
+  });
+});

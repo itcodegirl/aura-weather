@@ -2,15 +2,31 @@ import { memo } from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { RADAR_FRAME_KIND } from "../../domain/radar.js";
 
-function formatClock(unixSeconds) {
+const CLOCK_OPTIONS = { hour: "numeric", minute: "2-digit" };
+
+// Radar frame times are real UTC epochs, so the absolute clock must be
+// projected into the *location's* zone (`weather.meta.timezone`) to agree
+// with every other timestamp on the page — a viewer in Berlin reading a
+// Chicago radar otherwise sees a Berlin wall clock beside Chicago times.
+// (`getZonedNow` is for Open-Meteo's naive local strings; an epoch needs
+// Intl's `timeZone` instead.) An absent or unknown zone falls back to the
+// viewer's clock rather than inventing one.
+function formatClock(unixSeconds, timeZone) {
   const date = new Date(unixSeconds * 1000);
   if (Number.isNaN(date.getTime())) {
     return "";
   }
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  if (typeof timeZone === "string" && timeZone.trim()) {
+    try {
+      return date.toLocaleTimeString("en-US", {
+        ...CLOCK_OPTIONS,
+        timeZone: timeZone.trim(),
+      });
+    } catch {
+      // Unknown IANA name — fall through to the viewer's clock.
+    }
+  }
+  return date.toLocaleTimeString("en-US", CLOCK_OPTIONS);
 }
 
 // Relative age/lead of a frame, in the user's own words. Observed frames
@@ -33,6 +49,7 @@ function RadarTimeline({
   hasForecast,
   boundaryIndex,
   nowMs,
+  timeZone,
   onToggle,
   onPrev,
   onNext,
@@ -43,7 +60,7 @@ function RadarTimeline({
   const isForecast = activeFrame?.kind === RADAR_FRAME_KIND.NOWCAST;
   const phaseLabel = isForecast ? "Forecast" : "Observed";
   const relative = activeFrame ? formatRelative(activeFrame, nowMs) : "—";
-  const clock = activeFrame ? formatClock(activeFrame.time) : "";
+  const clock = activeFrame ? formatClock(activeFrame.time, timeZone) : "";
   const valueText = `${phaseLabel} ${relative}${clock ? `, ${clock}` : ""}`;
 
   // Position of the observed→forecast boundary along the track, as a

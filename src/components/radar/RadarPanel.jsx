@@ -1,4 +1,4 @@
-import { memo, useId, useMemo } from "react";
+import { memo, useId, useMemo, useSyncExternalStore } from "react";
 import { Radar, RefreshCw, CloudOff, MapPinOff } from "lucide-react";
 import { InfoDrawer } from "../ui";
 import { useRadarFrames } from "../../hooks/useRadarFrames.js";
@@ -11,15 +11,56 @@ import RadarTimeline from "./RadarTimeline.jsx";
 import RadarLegend from "./RadarLegend.jsx";
 import "./RadarPanel.css";
 
-function prefersReducedMotion() {
+// Whether to request RainViewer's 512px (retina) tiles. Expressed as a
+// media query rather than a bare `window.devicePixelRatio` read so it is
+// *subscribable*: the ratio changes with browser zoom and when a window
+// moves between displays, and a render-body read of it is both impure and
+// frozen at first paint. `(min-resolution: 2dppx)` is the query form of
+// `devicePixelRatio >= 2`; the -webkit- alias covers Safari before 16.
+const RETINA_QUERY =
+  "(min-resolution: 2dppx), (-webkit-min-device-pixel-ratio: 2)";
+
+function subscribeToRetina(callback) {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return () => {};
+  }
+  const mediaQuery = window.matchMedia(RETINA_QUERY);
+  const listener = () => callback();
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", listener);
+    return () => mediaQuery.removeEventListener("change", listener);
+  }
+  // Older Safari fallback.
+  mediaQuery.addListener(listener);
+  return () => mediaQuery.removeListener(listener);
+}
+
+function getRetinaSnapshot() {
+  if (typeof window === "undefined") {
     return false;
   }
+  if (typeof window.matchMedia !== "function") {
+    // No media-query support: the ratio is the only signal available.
+    return (window.devicePixelRatio || 1) >= 2;
+  }
   try {
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return window.matchMedia(RETINA_QUERY).matches;
   } catch {
     return false;
   }
+}
+
+// SSR has no display to measure — assume the cheaper tiles.
+function getRetinaServerSnapshot() {
+  return false;
+}
+
+function useRetinaTiles() {
+  return useSyncExternalStore(
+    subscribeToRetina,
+    getRetinaSnapshot,
+    getRetinaServerSnapshot
+  );
 }
 
 function RadarStateBlock({ icon, title, copy, action }) {
@@ -35,7 +76,7 @@ function RadarStateBlock({ icon, title, copy, action }) {
   );
 }
 
-function RadarPanel({ location, style, isRefreshing = false }) {
+function RadarPanel({ location, timeZone, style, isRefreshing = false }) {
   const titleId = useId();
   const { frames, host, status, override, refetch } = useRadarFrames();
   const nowMs = useTimeNow();
@@ -67,11 +108,10 @@ function RadarPanel({ location, style, isRefreshing = false }) {
 
   const { activeIndex, isPlaying, toggle, next, prev, seek } = useRadarAnimation(
     frames.length,
-    { preferredIndex, allowAutoPlay: !prefersReducedMotion() }
+    { preferredIndex }
   );
 
-  const retina =
-    typeof window !== "undefined" && (window.devicePixelRatio || 1) >= 2;
+  const retina = useRetinaTiles();
 
   const locationName =
     typeof location?.name === "string" && location.name.trim()
@@ -164,6 +204,7 @@ function RadarPanel({ location, style, isRefreshing = false }) {
           hasForecast={hasForecast}
           boundaryIndex={boundaryIndex < 0 ? 0 : boundaryIndex}
           nowMs={nowMs}
+          timeZone={timeZone}
           onToggle={toggle}
           onPrev={prev}
           onNext={next}

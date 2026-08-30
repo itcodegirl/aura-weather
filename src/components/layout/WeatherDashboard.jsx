@@ -262,6 +262,7 @@ function WeatherDashboard({
           >
             <RadarPanel
               location={location}
+              timeZone={weather?.meta?.timezone}
               style={CARD_STYLE_VARIABLES[4]}
               isRefreshing={isBackgroundLoading}
             />

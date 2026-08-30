@@ -1,0 +1,63 @@
+name: Refresh Screenshots
+
+# Manual only: trigger from the Actions tab ("Run workflow") on the branch
+# that should receive refreshed captures. Runs on a CI runner because local
+# regeneration cannot reach the live basemap tile hosts — the dashboard
+# captures would ship a blank radar rectangle (see docs/screenshots/README.md).
+on:
+  workflow_dispatch:
+
+# contents: write so the job can push the refreshed PNGs back to the
+# dispatched branch. Nothing else is granted.
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  refresh-screenshots:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser and system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Install fonts for consistent text rendering
+        # Same font pin as the quality-gates browser job: the capture specs
+        # pin Arial, which fonts-liberation supplies on Linux runners.
+        run: sudo apt-get install -y fonts-liberation
+
+      - name: Regenerate screenshots
+        # Builds, serves the production preview, and runs the three capture
+        # specs: docs/screenshots/*.png plus the public/ og-image and
+        # manifest install shots (scripts/run-screenshots.mjs).
+        run: npm run screenshots
+
+      - name: Commit and push refreshed captures
+        # Only PNGs are committed — the capture run must not sneak any other
+        # working-tree change into the branch. When no pixel moved past
+        # sub-pixel noise git sees no diff and the commit is skipped cleanly.
+        run: |
+          git add docs/screenshots/*.png public/og-image.png public/screenshots/*.png
+          if git diff --cached --quiet; then
+            echo "No screenshot changes to commit."
+            exit 0
+          fi
+          git -c user.name="itcodegirl" \
+              -c user.email="itcodegirl@users.noreply.github.com" \
+              commit -m "docs(screenshots): refresh captures from CI"
+          git push origin HEAD:${{ github.ref_name }}

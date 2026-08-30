@@ -80,9 +80,12 @@ function buildPeakWindow(hourly, timeZone) {
 
 // Plain-English synthesis: name the drivers in prose; never draw their gauges.
 function buildWhyLine(weather, risk, hasCape) {
+  // The location's zone keeps the "now" anchor on the location's wall
+  // clock; without it a saved city hours away reads the wrong sample.
   const pressure = calculatePressureTrend(
     weather?.hourly?.pressure,
-    weather?.hourly?.time
+    weather?.hourly?.time,
+    { timeZone: weather?.meta?.timezone }
   );
   const dew = toFiniteNumber(weather?.current?.dewPoint);
   const comfort = dew !== null ? classifyComfort(dew, "F") : null;

@@ -38,6 +38,38 @@ describe("SourceHealthPanel", () => {
     assert.ok(screen.getByText("Updated 1h ago"));
   });
 
+  test("never labels restored supplemental data as Live", () => {
+    // A snapshot written after a successful supplemental merge carries
+    // aqiStatus/alertsStatus "ready" plus stale fetched-at stamps. On
+    // the degraded restore path those must render as Saved with their
+    // honest captured-at age — a restored blob is never a live read.
+    render(
+      React.createElement(SourceHealthPanel, {
+        nowMs: 1_778_086_800_000,
+        trustMeta: {
+          weatherFetchedAt: 1_777_939_200_000,
+          forecastStatus: "cached",
+          cacheStatus: "restored",
+          cacheCapturedAt: 1_777_939_200_000,
+          aqiFetchedAt: 1_777_939_200_000,
+          aqiStatus: "ready",
+          alertsFetchedAt: 1_777_939_200_000,
+          alertsStatus: "ready",
+          climateFetchedAt: null,
+          climateStatus: "unavailable",
+        },
+      })
+    );
+
+    assert.equal(screen.queryAllByText("Live").length, 0);
+    assert.equal(
+      screen.getAllByText("Saved").length,
+      3,
+      "forecast, AQI, and alerts rows all read Saved"
+    );
+    assert.equal(screen.getAllByText("Updated 41h ago").length, 3);
+  });
+
   test("renders ready providers as live with individual update times", () => {
     render(
       React.createElement(SourceHealthPanel, {

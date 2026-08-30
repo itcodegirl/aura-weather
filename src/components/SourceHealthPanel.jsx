@@ -52,9 +52,17 @@ function getForecastSource(trustMeta, nowMs) {
   };
 }
 
+// A restored snapshot replays the supplemental statuses it was captured
+// with, so a "ready"/fetched-at pair there dates the saved blob, not a
+// live provider read — those rows must render as Saved, never Live.
+function isRestoredSnapshot(trustMeta) {
+  return (trustMeta?.cacheStatus ?? "idle") === "restored";
+}
+
 function getAqiSource(trustMeta, nowMs) {
   const aqiFetchedAt = trustMeta?.aqiFetchedAt ?? null;
   const aqiStatus = trustMeta?.aqiStatus ?? "idle";
+  const isRestored = isRestoredSnapshot(trustMeta);
 
   if (aqiFetchedAt) {
     return {
@@ -62,8 +70,8 @@ function getAqiSource(trustMeta, nowMs) {
       icon: Wind,
       name: "Air Quality",
       provider: "Open-Meteo AQI",
-      status: "ready",
-      label: "Live",
+      status: isRestored ? "cached" : "ready",
+      label: isRestored ? "Saved" : "Live",
       detail: formatLastUpdatedLabel(aqiFetchedAt, nowMs),
     };
   }
@@ -94,6 +102,7 @@ function getAqiSource(trustMeta, nowMs) {
 function getAlertsSource(trustMeta, nowMs) {
   const alertsFetchedAt = trustMeta?.alertsFetchedAt ?? null;
   const alertsStatus = trustMeta?.alertsStatus ?? "idle";
+  const isRestored = isRestoredSnapshot(trustMeta);
 
   if (alertsStatus === "ready") {
     return {
@@ -101,8 +110,8 @@ function getAlertsSource(trustMeta, nowMs) {
       icon: ShieldAlert,
       name: "Alerts",
       provider: "NOAA / NWS",
-      status: "ready",
-      label: "Live",
+      status: isRestored ? "cached" : "ready",
+      label: isRestored ? "Saved" : "Live",
       detail: alertsFetchedAt
         ? formatLastUpdatedLabel(alertsFetchedAt, nowMs)
         : "No active alerts returned",

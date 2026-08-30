@@ -564,7 +564,14 @@ test("does not query live providers in the missing-data portfolio demo", async (
       url.startsWith("https://api.open-meteo.com/") ||
       url.startsWith("https://archive-api.open-meteo.com/") ||
       url.startsWith("https://air-quality-api.open-meteo.com/") ||
-      url.startsWith("https://api.weather.gov/")
+      url.startsWith("https://api.weather.gov/") ||
+      url.startsWith("https://api.bigdatacloud.net/") ||
+      // Substring checks: RainViewer serves tiles from hosts announced at
+      // runtime, CARTO shards basemap tiles across subdomains, and each
+      // Supabase project gets its own *.supabase.co subdomain.
+      url.includes("rainviewer.com") ||
+      url.includes("cartocdn.com") ||
+      url.includes(".supabase.co")
     ) {
       providerRequests.push(url);
     }
@@ -575,7 +582,11 @@ test("does not query live providers in the missing-data portfolio demo", async (
   await expect(
     page.getByText("Portfolio demo: showing the missing-data trust contract. Live providers are not queried.")
   ).toBeVisible();
-  await page.waitForTimeout(500);
+  // The radar slot must hold the honest demo card, not a mounted radar.
+  await expect(page.getByText("Radar not queried in this demo")).toBeVisible();
+  // Longer than every deferred-mount window (radar 3.2s, rain alerts 4s),
+  // so a panel that slipped past the gate would fetch inside this wait.
+  await page.waitForTimeout(5000);
 
   expect(providerRequests).toEqual([]);
 });

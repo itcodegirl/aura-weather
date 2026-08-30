@@ -78,6 +78,7 @@ function App() {
     weatherInfo,
     trustMeta,
     background,
+    isMissingMock,
     citySearchRef,
     prefersReducedData,
     unit,
@@ -217,6 +218,7 @@ function App() {
         weatherInfo={weatherInfo}
         trustMeta={trustMeta}
         prefersReducedData={prefersReducedData}
+        isMissingMock={isMissingMock}
       />
     </AppShell>
   );

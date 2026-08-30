@@ -1,4 +1,5 @@
 import { Component } from "react";
+import { discardFailedPanelImports } from "./lazyPanels";
 
 /**
  * Per-panel error boundary used to keep a single lazy-loaded card
@@ -30,6 +31,11 @@ class PanelErrorBoundary extends Component {
   }
 
   handleRetry = () => {
+    // Remounting alone cannot recover a failed chunk fetch: React caches the
+    // rejected payload on the lazy object, so the fresh subtree would re-throw
+    // it synchronously. Drop those lazies first and the remount below issues a
+    // real new import().
+    discardFailedPanelImports();
     this.setState((current) => ({
       hasError: false,
       resetKey: current.resetKey + 1,

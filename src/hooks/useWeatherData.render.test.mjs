@@ -74,11 +74,30 @@ function forecastPayload(latitude, longitude) {
   };
 }
 
+// Archive rows must land on today's month-day (in UTC, matching the
+// forecast payload's timezone) or the historical sampler skips them all
+// and the comparison never reaches "ready".
+function archivePayload() {
+  const now = new Date();
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(now.getUTCDate()).padStart(2, "0");
+  return {
+    daily: {
+      time: [`2000-${month}-${day}`, `2001-${month}-${day}`],
+      temperature_2m_mean: [50, 52],
+      temperature_2m_min: [40, 42],
+      temperature_2m_max: [60, 62],
+    },
+  };
+}
+
 function installImmediateFetch() {
+  const counters = { forecastCalls: 0 };
   globalThis.fetch = (input) => {
     const url = String(input?.url ?? input ?? "");
     const parsed = new URL(url, "http://localhost/");
     if (parsed.hostname === "api.open-meteo.com") {
+      counters.forecastCalls += 1;
       const lat = Number(parsed.searchParams.get("latitude"));
       const lon = Number(parsed.searchParams.get("longitude"));
       return Promise.resolve(
@@ -93,6 +112,9 @@ function installImmediateFetch() {
     if (parsed.hostname === "air-quality-api.open-meteo.com") {
       return Promise.resolve(jsonResponse({ current: { us_aqi: 42 } }));
     }
+    if (parsed.hostname === "archive-api.open-meteo.com") {
+      return Promise.resolve(jsonResponse(archivePayload()));
+    }
     if (parsed.hostname === "api.weather.gov") {
       return Promise.resolve(
         jsonResponse({ type: "FeatureCollection", features: [] })
@@ -100,10 +122,11 @@ function installImmediateFetch() {
     }
     return Promise.resolve(jsonResponse({}));
   };
+  return counters;
 }
 
-function WeatherDataProbe({ location, onState }) {
-  const api = useWeatherData(location, { climateEnabled: false });
+function WeatherDataProbe({ location, climateEnabled = false, onState }) {
+  const api = useWeatherData(location, { climateEnabled });
   React.useEffect(() => {
     onState(api);
   });
@@ -297,5 +320,65 @@ describe("useWeatherData auto-refresh listener stability", () => {
       window.addEventListener = origWinAdd;
       document.addEventListener = origDocAdd;
     }
+  });
+});
+
+describe("useWeatherData climate toggle", () => {
+  test("clears the climate comparison when climateEnabled toggles off mid-session", async () => {
+    window.localStorage.clear();
+    const counters = installImmediateFetch();
+
+    let latest = null;
+    const onState = (api) => {
+      latest = api;
+    };
+
+    let rerender = null;
+    await act(async () => {
+      const result = render(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          climateEnabled: true,
+          onState,
+        })
+      );
+      rerender = result.rerender;
+    });
+
+    await waitFor(() => {
+      assert.ok(latest?.weather, "forecast loads");
+      assert.ok(
+        latest.climateComparison,
+        "climate comparison ready while enabled"
+      );
+      assert.equal(latest.trustMeta.climateStatus, "ready");
+    });
+
+    const forecastCallsBeforeToggle = counters.forecastCalls;
+
+    await act(async () => {
+      rerender(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          climateEnabled: false,
+          onState,
+        })
+      );
+    });
+
+    // Disabling must clear immediately — a lingering comparison would keep
+    // rendering the hero climate line labeled "Live" after opt-out.
+    assert.equal(
+      latest.climateComparison,
+      null,
+      "comparison cleared on disable"
+    );
+    assert.equal(latest.trustMeta.climateStatus, "disabled");
+    assert.equal(latest.trustMeta.climateFetchedAt, null);
+    assert.equal(
+      counters.forecastCalls,
+      forecastCallsBeforeToggle,
+      "toggling climate off must not refetch the forecast"
+    );
   });
 });

@@ -139,6 +139,25 @@ export function useClimateComparison(options = {}) {
     setClimateStatus(enabledRef.current ? "loading" : "disabled");
   }, [abortClimateRequest]);
 
+  useEffect(() => {
+    if (enabled) {
+      return;
+    }
+    // Disabling mid-session must clear the comparison before the next
+    // paint — stale data would otherwise stay on screen labeled "Live".
+    // The id bump invalidates any in-flight request whose fetch already
+    // settled past the abort; the state reset is deferred a microtask
+    // to satisfy react-hooks/set-state-in-effect, with the enabledRef
+    // recheck guarding against an off→on flip before it runs.
+    requestIdRef.current += 1;
+    abortClimateRequest();
+    Promise.resolve().then(() => {
+      if (!enabledRef.current) {
+        resetClimateComparison();
+      }
+    });
+  }, [abortClimateRequest, enabled, resetClimateComparison]);
+
   return {
     climateComparison,
     climateStatus,

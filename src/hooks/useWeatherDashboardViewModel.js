@@ -84,6 +84,9 @@ export function useWeatherDashboardViewModel() {
   return {
     ...effectiveState,
     ...scene,
+    // Exposed so the dashboard can keep the demo's provider-isolation
+    // promise: panels that fetch on mount must not mount at all.
+    isMissingMock,
     citySearchRef,
     prefersReducedData,
     unit,

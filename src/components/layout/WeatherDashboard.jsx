@@ -1,4 +1,5 @@
 import { lazy, memo, Suspense, useCallback, useState } from "react";
+import { Radar } from "lucide-react";
 import HeroCard from "../HeroCard";
 import AlertsCard from "../AlertsCard";
 import PanelErrorBoundary from "../PanelErrorBoundary";
@@ -62,6 +63,7 @@ function WeatherDashboard({
   isBackgroundLoading,
   trustMeta,
   prefersReducedData = false,
+  isMissingMock = false,
 }) {
   const showHourlyPanel = useDeferredMount(Boolean(weather), {
     idleTimeout: 1800,
@@ -69,7 +71,10 @@ function WeatherDashboard({
   });
   // Radar pulls in Leaflet, so defer it further than the other panels —
   // it gates on a resolved location (its only input) rather than weather.
-  const showRadarPanel = useDeferredMount(Boolean(location), {
+  // The missing-data demo promises "live providers are not queried", so
+  // it must never mount: useRadarFrames fetches RainViewer on mount and
+  // the map fetches basemap/radar tiles.
+  const showRadarPanel = useDeferredMount(Boolean(location) && !isMissingMock, {
     idleTimeout: 3200,
     fallbackDelay: 2000,
   });
@@ -78,11 +83,15 @@ function WeatherDashboard({
     fallbackDelay: 1800,
   });
   // Deferred further than the weather panels: nothing about the forecast
-  // depends on it, and it is the only mount that can pull in Supabase.
-  const showRainAlertsPanel = useDeferredMount(Boolean(location), {
-    idleTimeout: 4000,
-    fallbackDelay: 3000,
-  });
+  // depends on it, and it is the only mount that can pull in Supabase —
+  // which is also why the missing-data demo must never mount it.
+  const showRainAlertsPanel = useDeferredMount(
+    Boolean(location) && !isMissingMock,
+    {
+      idleTimeout: 4000,
+      fallbackDelay: 3000,
+    }
+  );
   const [hasOpenedSourceHealth, setHasOpenedSourceHealth] = useState(false);
   const handleSourceHealthToggle = useCallback((event) => {
     if (event.currentTarget?.open) {
@@ -220,7 +229,27 @@ function WeatherDashboard({
         className="bento-radar"
         style={CARD_STYLE_VARIABLES[4]}
       >
-        {showRadarPanel ? (
+        {isMissingMock ? (
+          /* The demo's slot stays honest AND filled: the shared card-empty
+             recipe instead of a mounted RadarPanel, so no RainViewer or
+             basemap-tile request can leave this page. */
+          <section
+            className="bento-radar glass"
+            style={CARD_STYLE_VARIABLES[4]}
+            aria-label="Precipitation radar not queried in this demo"
+          >
+            <div className="card-empty" role="status">
+              <div className="card-empty__icon">
+                <Radar size={36} aria-hidden="true" />
+              </div>
+              <p className="card-empty__title">Radar not queried in this demo</p>
+              <p className="card-empty__copy">
+                This portfolio demo renders entirely from local mock data, so
+                the live radar provider and map tiles are never contacted.
+              </p>
+            </div>
+          </section>
+        ) : showRadarPanel ? (
           <Suspense
             fallback={(
               <CardFallback
@@ -277,7 +306,10 @@ function WeatherDashboard({
         />
       )}
       <PanelErrorBoundary label="Rain alerts" className="bento-alerts-card">
-        {showRainAlertsPanel ? (
+        {/* !isMissingMock repeated here on purpose: useDeferredMount
+            starts true off-browser, and the demo's isolation promise
+            must not depend on that environment detail. */}
+        {showRainAlertsPanel && !isMissingMock ? (
           <Suspense fallback={null}>
             <RainAlertsPanel location={location} />
           </Suspense>
@@ -331,7 +363,8 @@ function areWeatherDashboardPropsEqual(prevProps, nextProps) {
     prevProps.climateComparison === nextProps.climateComparison &&
     prevProps.isBackgroundLoading === nextProps.isBackgroundLoading &&
     prevProps.trustMeta === nextProps.trustMeta &&
-    prevProps.prefersReducedData === nextProps.prefersReducedData
+    prevProps.prefersReducedData === nextProps.prefersReducedData &&
+    prevProps.isMissingMock === nextProps.isMissingMock
   );
 }
 

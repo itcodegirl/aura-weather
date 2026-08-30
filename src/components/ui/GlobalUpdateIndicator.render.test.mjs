@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import "../../../scripts/test-render-setup.mjs";
 
 const React = (await import("react")).default;
-const { render, cleanup } = await import("@testing-library/react");
+const { render, cleanup, screen } = await import("@testing-library/react");
 const GlobalUpdateIndicator = (await import("./GlobalUpdateIndicator.jsx"))
   .default;
 
@@ -142,5 +142,88 @@ describe("GlobalUpdateIndicator refresh-completion announcement", () => {
     assert.equal(region.getAttribute("aria-live"), "polite");
     assert.equal(region.getAttribute("aria-atomic"), "true");
     assert.equal(region.getAttribute("role"), "status");
+  });
+});
+
+const MINUTE_MS = 60_000;
+
+// The pill measures age against the shared minute ticker (useTimeNow),
+// which reads the real clock — not a prop — so every timestamp below is
+// derived from Date.now(). Offsets are exact minute multiples and the
+// ticker samples a few milliseconds later, so getAgeMinutes' floor()
+// lands on the intended minute rather than one below it.
+function renderPill(trustMeta) {
+  return render(
+    React.createElement(GlobalUpdateIndicator, {
+      trustMeta,
+      onRefresh() {},
+      isRefreshing: false,
+    })
+  );
+}
+
+function getVisibleState(container) {
+  return container.querySelector(".global-update-state").textContent.trim();
+}
+
+describe("GlobalUpdateIndicator refresh-button accessible name", () => {
+  test("a live forecast names its state, its age, and the action", () => {
+    const now = Date.now();
+    const { container } = renderPill({ weatherFetchedAt: now });
+
+    assert.ok(
+      screen.getByRole("button", {
+        name: "Live forecast. Updated just now. Tap to refresh weather.",
+      })
+    );
+    assert.equal(getVisibleState(container), "live");
+  });
+
+  test("a restored snapshot announces 'Saved', the word the visible pill carries", () => {
+    const now = Date.now();
+    const { container } = renderPill({
+      weatherFetchedAt: now - 90 * MINUTE_MS,
+      cacheStatus: "restored",
+      cacheCapturedAt: now - 40 * MINUTE_MS,
+    });
+
+    // The trust-relevant word: without it a screen-reader user hears an
+    // age and an action and cannot tell a saved forecast from a live one.
+    assert.ok(
+      screen.getByRole("button", {
+        name: "Saved forecast. Updated 40m ago. Tap to refresh weather.",
+      })
+    );
+    assert.equal(getVisibleState(container), "saved");
+  });
+
+  test("a restored snapshot still announces 'Saved' when it is younger than the stale threshold", () => {
+    const now = Date.now();
+    const { container } = renderPill({
+      weatherFetchedAt: now - 90 * MINUTE_MS,
+      cacheStatus: "restored",
+      cacheCapturedAt: now,
+    });
+
+    assert.ok(
+      screen.getByRole("button", {
+        name: "Saved forecast. Updated just now. Tap to refresh weather.",
+      })
+    );
+    assert.equal(getVisibleState(container), "saved");
+  });
+
+  test("a stale forecast announces 'Stale' alongside its age", () => {
+    const now = Date.now();
+    const { container } = renderPill({
+      weatherFetchedAt: now - 40 * MINUTE_MS,
+    });
+
+    assert.ok(
+      screen.getByRole("button", {
+        name: "Stale forecast. Updated 40m ago. Tap to refresh weather.",
+      })
+    );
+    assert.equal(getVisibleState(container), "stale");
   });
 });

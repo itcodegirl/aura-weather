@@ -16,13 +16,17 @@
   X-DNS-Prefetch-Control: on
 
 # Vite emits content-hashed asset filenames, so they can be cached
-# aggressively and immutably. Self-hosted font files use stable names
-# (no content hash), but they are versioned in the filename and never
-# mutated in place, so immutable caching is safe here too.
+# aggressively and immutably.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Font filenames carry no version or content hash, so `immutable` would
+# pin a replaced font out of reach for a year with no way to bust it.
+# A week of freshness plus ETag revalidation keeps repeat visits free
+# (the service worker precaches the file anyway) while leaving a font
+# swap reachable.
 /fonts/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=604800
 
 # The service worker and the app manifest must stay revalidated so a
 # new deploy is picked up promptly instead of being pinned by a stale

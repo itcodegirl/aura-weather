@@ -1,11 +1,15 @@
-import { lazy, memo, Suspense, useCallback, useId, useState } from "react";
+import { memo, Suspense, useCallback, useId, useState } from "react";
 import { Settings2 } from "lucide-react";
 import CitySearch from "./CitySearch";
 import DisplaySettingsControls from "./header/DisplaySettingsControls";
 import SavedCitiesStrip from "./header/SavedCitiesStrip";
+import PanelErrorBoundary from "./PanelErrorBoundary";
+import { createRetryablePanel } from "./lazyPanels";
 import { toFiniteNumber } from "../utils/numbers";
 
-const SyncAccountPanel = lazy(() => import("./header/SyncAccountPanel"));
+const SyncAccountPanel = createRetryablePanel(
+  () => import("./header/SyncAccountPanel")
+);
 
 function HeaderControls({
   citySearchRef,
@@ -207,17 +211,19 @@ function HeaderControls({
           forgetSavedCity={forgetSavedCity}
           moveSavedCity={moveSavedCity}
         />
-        {shouldShowSyncPanel ? (
-          <Suspense fallback={null}>
-            <SyncAccountPanel
-              syncConnected={syncConnected}
-              syncState={syncState}
-              onCreateSyncAccount={handleCreateSyncAccount}
-              onDisconnectSyncAccount={handleDisconnectSyncAccount}
-              onSyncNow={handleSyncNow}
-            />
-          </Suspense>
-        ) : null}
+        <PanelErrorBoundary label="Cloud backup">
+          {shouldShowSyncPanel ? (
+            <Suspense fallback={null}>
+              <SyncAccountPanel
+                syncConnected={syncConnected}
+                syncState={syncState}
+                onCreateSyncAccount={handleCreateSyncAccount}
+                onDisconnectSyncAccount={handleDisconnectSyncAccount}
+                onSyncNow={handleSyncNow}
+              />
+            </Suspense>
+          ) : null}
+        </PanelErrorBoundary>
       </div>
 
       <DisplaySettingsControls

@@ -221,7 +221,13 @@ export function useCitySearch({ onSelect, idleResults = [] } = {}) {
       setOpen(false);
       setActiveIndex(-1);
       setResolvedQuery("");
-      inputRef.current?.blur();
+      /*
+       * Committing a result closes the popup but must keep focus in the
+       * textbox (ARIA APG combobox), the same rule the Escape handler
+       * follows. Blurring here dropped focus onto <body>, so the next Tab
+       * restarted from the top of the document instead of continuing past
+       * the search field.
+       */
     },
     [onSelect]
   );
@@ -265,10 +271,20 @@ export function useCitySearch({ onSelect, idleResults = [] } = {}) {
         return;
       }
 
-      if (event.key === "Enter" && visibleResults.length > 0) {
+      if (event.key === "Enter") {
+        /*
+         * Enter may only commit an option the user actually highlighted.
+         * Nothing here auto-highlights the first result, so the old
+         * `activeIndexSafe >= 0 ? activeIndexSafe : 0` fallback committed
+         * results[0] blind — and with an empty query the listbox holds
+         * recent/saved suggestions, so Enter in an empty search box
+         * navigated to a city the user never chose.
+         */
+        if (activeIndexSafe < 0) {
+          return;
+        }
         event.preventDefault();
-        const targetIndex = activeIndexSafe >= 0 ? activeIndexSafe : 0;
-        const city = visibleResults[targetIndex];
+        const city = visibleResults[activeIndexSafe];
         if (city) {
           handleSelect(city);
         }

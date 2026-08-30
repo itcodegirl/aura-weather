@@ -176,6 +176,95 @@ describe("CitySearch keyboard navigation", () => {
   });
 });
 
+describe("CitySearch focus retention on selection", () => {
+  test("keyboard selection keeps focus in the search input", () => {
+    // ARIA APG combobox: committing an option closes the popup but must
+    // not move focus. Blurring dropped focus onto <body>, so the next Tab
+    // restarted from the top of the document.
+    const view = render(
+      React.createElement(CitySearch, {
+        onSelect: noop,
+        savedCities: [TOKYO_SAVED],
+      })
+    );
+
+    const input = view.getByRole("combobox", { name: "Search for a city" });
+    act(() => input.focus());
+    act(() => fireEvent.keyDown(input, { key: "ArrowDown" }));
+    act(() => fireEvent.keyDown(input, { key: "Enter" }));
+
+    assert.equal(
+      input.getAttribute("aria-expanded"),
+      "false",
+      "selection still closes the dropdown"
+    );
+    // Compare by identity and report only the tag name: assert.equal on two
+    // DOM nodes makes node:test deep-diff the whole jsdom tree on failure.
+    assert.ok(
+      document.activeElement === input,
+      `focus stays on the search input, not <${document.activeElement?.tagName?.toLowerCase()}>`
+    );
+  });
+
+  test("pointer selection keeps focus in the search input", () => {
+    const view = render(
+      React.createElement(CitySearch, {
+        onSelect: noop,
+        savedCities: [TOKYO_SAVED],
+      })
+    );
+
+    const input = view.getByRole("combobox", { name: "Search for a city" });
+    act(() => input.focus());
+
+    const option = view.getByRole("option", { name: /Tokyo, Saved city · Japan/ });
+    act(() => {
+      fireEvent.mouseDown(option);
+      fireEvent.click(option);
+    });
+
+    assert.equal(input.getAttribute("aria-expanded"), "false");
+    assert.ok(
+      document.activeElement === input,
+      `focus stays on the search input after a mouse pick, not <${document.activeElement?.tagName?.toLowerCase()}>`
+    );
+  });
+});
+
+describe("CitySearch Enter commit discipline", () => {
+  test("Enter with no highlighted option does not commit a location", () => {
+    // Nothing auto-highlights the first option, so an unhighlighted Enter
+    // used to navigate to results[0] — with an empty query that is a
+    // recent/saved suggestion the user never chose.
+    const selections = [];
+    const view = render(
+      React.createElement(CitySearch, {
+        onSelect: (city) => selections.push(city),
+        savedCities: [TOKYO_SAVED],
+      })
+    );
+
+    const input = view.getByRole("combobox", { name: "Search for a city" });
+    act(() => input.focus());
+
+    const option = view.getByRole("option", { name: /Tokyo, Saved city · Japan/ });
+    assert.equal(
+      option.getAttribute("aria-selected"),
+      "false",
+      "no option is highlighted on a fresh focus"
+    );
+
+    act(() => fireEvent.keyDown(input, { key: "Enter" }));
+
+    assert.equal(selections.length, 0, "Enter commits nothing without a highlight");
+    assert.equal(
+      input.getAttribute("aria-expanded"),
+      "true",
+      "the dropdown stays open so the user can still pick an option"
+    );
+  });
+});
+
 describe("CitySearch result-count announcement", () => {
   test("announces how many options are available when the listbox opens", () => {
     const view = render(

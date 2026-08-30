@@ -97,10 +97,17 @@ function NowcastCard({
   } = useMemo(() => {
     const parsedPeak = toStrictFiniteNumber(nowcast.peakProbability);
     const peakProbability = parsedPeak === null ? null : Math.round(parsedPeak);
+    // A dry verdict inferred only from codes/accumulation (no probability
+    // reading in the window) must stay qualified at the scannable layer —
+    // the badge and chip cannot claim more certainty than the details do.
+    const dryUnverified =
+      nowcast.hasData && !nowcast.hasRain && !nowcast.probabilityAvailable;
     const riskTone = !nowcast.hasData
       ? "missing"
       : !nowcast.hasRain
-      ? "minimal"
+      ? dryUnverified
+        ? "partial"
+        : "minimal"
       : peakProbability === null
         ? "partial"
         : peakProbability >= 70
@@ -118,7 +125,9 @@ function NowcastCard({
     const riskLabel = !nowcast.hasData
       ? "Reading unavailable"
       : !nowcast.hasRain
-      ? "Dry window"
+      ? dryUnverified
+        ? "Likely dry"
+        : "Dry window"
       : peakProbability === null
         ? "Rain signal"
       : riskTone === "high"
@@ -134,7 +143,9 @@ function NowcastCard({
     const duration = nowcast.hasRain
       ? `${Math.max(0, Math.round(nowcast.durationMinutes))} min`
       : nowcast.hasData
-        ? "Dry 2h"
+        ? dryUnverified
+          ? "Likely dry 2h"
+          : "Dry 2h"
         : "\u2014";
     const peak =
       nowcast.hasData && peakProbability !== null

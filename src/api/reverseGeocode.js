@@ -13,37 +13,12 @@
 // this provider being reachable.
 
 import { parseCoordinates } from "../utils/weatherUnits.js";
+import { createRequestSignal, isAbortError } from "./requestSignal.js";
 
 const ENDPOINT = "https://api.bigdatacloud.net/data/reverse-geocode-client";
 // Shorter than the Open-Meteo budget on purpose: a place name is a
 // nice-to-have, not worth holding a request open for ten seconds.
 const TIMEOUT_MS = 6_000;
-
-function isAbortError(error) {
-  return error?.name === "AbortError";
-}
-
-function getSignal(externalSignal) {
-  const hasAbortSignal = typeof AbortSignal !== "undefined";
-  const timeoutSignal =
-    hasAbortSignal && typeof AbortSignal.timeout === "function"
-      ? AbortSignal.timeout(TIMEOUT_MS)
-      : undefined;
-
-  if (!externalSignal) {
-    return timeoutSignal;
-  }
-
-  if (
-    timeoutSignal &&
-    hasAbortSignal &&
-    typeof AbortSignal.any === "function"
-  ) {
-    return AbortSignal.any([externalSignal, timeoutSignal]);
-  }
-
-  return externalSignal;
-}
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -74,40 +49,52 @@ export async function reverseGeocode(latitude, longitude, options = {}) {
   url.searchParams.set("longitude", String(coordinates.longitude));
   url.searchParams.set("localityLanguage", "en");
 
-  let response;
+  // Cancellation and timeout are composed manually (see requestSignal.js):
+  // AbortSignal.any is missing on Safari <17 / Firefox <115, and the previous
+  // fallback dropped the timeout outright whenever a caller signal was passed.
+  // release() covers the body read too, so the timeout still bounds a
+  // response whose stream stalls after the headers arrive.
+  const request = createRequestSignal(options.signal, TIMEOUT_MS);
+
   try {
-    response = await fetch(url, {
-      signal: getSignal(options.signal),
-      headers: { Accept: "application/json" },
-    });
-  } catch (error) {
-    if (isAbortError(error)) {
-      // Match the openMeteo adapters: an explicit abort propagates so
-      // callers can stop a stale enrichment chain. Every other failure
-      // is swallowed below.
-      throw error;
+    let response;
+    try {
+      response = await fetch(url, {
+        signal: request.signal,
+        headers: { Accept: "application/json" },
+      });
+    } catch (error) {
+      const failure = request.normalizeError(error);
+      if (isAbortError(failure)) {
+        // Match the openMeteo adapters: an explicit abort propagates so
+        // callers can stop a stale enrichment chain. Every other failure
+        // — a timeout included — is swallowed below.
+        throw failure;
+      }
+      return null;
     }
-    return null;
-  }
 
-  if (!response.ok) {
-    return null;
-  }
+    if (!response.ok) {
+      return null;
+    }
 
-  let data;
-  try {
-    data = await response.json();
-  } catch {
-    return null;
-  }
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      return null;
+    }
 
-  const name = pickPlaceName(data);
-  if (!name) {
-    return null;
-  }
+    const name = pickPlaceName(data);
+    if (!name) {
+      return null;
+    }
 
-  return {
-    name,
-    country: cleanString(data?.countryName),
-  };
+    return {
+      name,
+      country: cleanString(data?.countryName),
+    };
+  } finally {
+    request.release();
+  }
 }

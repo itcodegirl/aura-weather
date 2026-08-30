@@ -11,13 +11,22 @@ afterEach(() => {
   cleanup();
 });
 
+// AlertsCard refuses to render an alert whose `endsAt` has passed, so
+// fixtures must express their expiry relative to now. A hard-coded date
+// silently ages into "expired" and takes the whole suite with it.
+const HOURS = 60 * 60 * 1000;
+
+function inHours(hours) {
+  return new Date(Date.now() + hours * HOURS).toISOString();
+}
+
 function makeAlert(overrides = {}) {
   return {
     id: "test-alert-1",
     event: "Severe Thunderstorm Warning",
     headline: "Storm cells moving east at 30 mph",
     priority: "high",
-    endsAt: "2026-04-21T20:30:00-05:00",
+    endsAt: inHours(3),
     ...overrides,
   };
 }
@@ -170,5 +179,113 @@ describe("AlertsCard overflow indicator", () => {
       })
     );
     assert.ok(screen.getByText(/\+ 1 more alert not shown/));
+  });
+});
+
+describe("AlertsCard expiry guard", () => {
+  test("does not render an alert whose expiry has already passed", () => {
+    // A restored offline snapshot can be up to 48h old and carries the
+    // alerts that were active when it was captured. Rendering one of those
+    // in the live branch — critical badge, "Until <a past time>" — is the
+    // one place stale data in this app has physical-safety consequences.
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: inHours(-2) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(
+      container.querySelector(".alerts-card"),
+      null,
+      "an expired alert must not reach the live-alert branch"
+    );
+  });
+
+  test("keeps an alert that is still inside its own expiry window", () => {
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: inHours(1) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.ok(screen.getByText("Severe Thunderstorm Warning"));
+  });
+
+  test("drops only the expired entries from a mixed list", () => {
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [
+          makeAlert({ id: "expired", event: "Flood Watch", endsAt: inHours(-1) }),
+          makeAlert({ id: "active", event: "Tornado Warning", endsAt: inHours(2) }),
+        ],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.ok(screen.getByText("Tornado Warning"));
+    assert.equal(screen.queryByText("Flood Watch"), null);
+  });
+
+  test("ignores an alert with an unparseable expiry rather than assuming it is active", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: null })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-card"), null);
+  });
+});
+
+describe("AlertsCard expiry timezone", () => {
+  test("renders the expiry in the alerted location's zone, not the device's", () => {
+    // NWS `expires` is offset-bearing and describes the alert area. Printing
+    // it in the viewer's zone showed the wrong wall-clock hour for any saved
+    // city in another zone — the device-clock bug already fixed for the
+    // pressure trend and the sun arc.
+    const endsAt = new Date(Date.now() + 3 * HOURS).toISOString();
+
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt })],
+        alertsStatus: "ready",
+        timeZone: "Pacific/Honolulu",
+      })
+    );
+
+    const expected = new Date(endsAt).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "Pacific/Honolulu",
+      timeZoneName: "short",
+    });
+
+    assert.ok(screen.getByText(`Until ${expected}`));
+  });
+
+  test("falls back to the device format when the zone is unusable", () => {
+    const endsAt = new Date(Date.now() + 3 * HOURS).toISOString();
+
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt })],
+        alertsStatus: "ready",
+        timeZone: "Not/AZone",
+      })
+    );
+
+    const expected = new Date(endsAt).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    assert.ok(screen.getByText(`Until ${expected}`));
   });
 });

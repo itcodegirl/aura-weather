@@ -48,7 +48,28 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
   const syncRequestRef = useRef(0);
   const skipNextSyncPushRef = useRef(false);
   const skipNextAutoPullRef = useRef(false);
-  const lastSyncedSignatureRef = useRef("");
+  /*
+   * Seeded from the mount-time list, not "". getSavedCitiesSignature never
+   * returns "" — an empty list is "[]" — so an empty-string seed made the
+   * auto-push effect's "nothing changed" short-circuit impossible to hit on
+   * the first commit, and every cold start armed a push of state that had
+   * not changed.
+   */
+  const lastSyncedSignatureRef = useRef(getSavedCitiesSignature(savedCities));
+  /*
+   * The initial restore and the auto-push share one request ticket. The
+   * restore starts in a microtask; the push fires 900 ms later and bumps
+   * that ticket synchronously, so a restore still on the wire past 900 ms
+   * (a cold mobile start pays a dynamic supabase-js import, possibly an
+   * anonymous sign-in, then a select) failed its own guard on return and
+   * dropped the merge entirely — while the push had already upserted the
+   * whole local list over the cloud row. The backup was silently not
+   * restored and then overwritten, with the panel still reporting
+   * "Backed up". If localStorage had been cleared or failed to parse
+   * (getSavedCities drops the key and returns []), that push destroyed the
+   * only remaining copy. No auto-push is armed until the restore settles.
+   */
+  const initialPullSettledRef = useRef(false);
   /*
    * Stopping the backup has to beat the auto-push debounce to the database.
    * `syncRequestRef` only gates whether a completed request is allowed to
@@ -126,6 +147,10 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
       }));
 
       return null;
+    } finally {
+      if (options.initial) {
+        initialPullSettledRef.current = true;
+      }
     }
   }, [setSavedCities]);
 
@@ -282,6 +307,10 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
 
     if (skipNextAutoPullRef.current) {
       skipNextAutoPullRef.current = false;
+      // Account was just created from the local list, so there is no
+      // restore to wait on — release the auto-push gate immediately or it
+      // would stay shut for the rest of the session.
+      initialPullSettledRef.current = true;
       return;
     }
 
@@ -301,6 +330,14 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     }
 
     if (savedCitiesSignature === lastSyncedSignatureRef.current) {
+      return;
+    }
+
+    // Never race the initial restore: a push that lands first invalidates
+    // the pull's request ticket and overwrites the cloud row with whatever
+    // local state we started from. The restore's own setSavedCities
+    // re-runs this effect, so a genuine post-restore change still pushes.
+    if (!initialPullSettledRef.current) {
       return;
     }
 

@@ -53,11 +53,69 @@ describe("forecastPreload", () => {
     assert.ok(started, "expected a preload promise");
 
     const claimed = claimForecastPreload(coordinates);
-    assert.equal(claimed, started, "claim should return the same promise");
+    assert.ok(claimed, "expected a claim");
+    assert.equal(
+      claimed.promise,
+      started,
+      "claim should carry the same in-flight promise"
+    );
 
-    const model = await claimed;
+    const model = await claimed.promise;
     assert.equal(model.meta.latitude, 41.8781);
     assert.equal(spy.calls, 1, "exactly one network request should fire");
+  });
+
+  test("a claim adopted immediately reports the response time as now", async () => {
+    installForecastFetchSpy();
+    const coordinates = { latitude: 41.8781, longitude: -87.6298 };
+
+    const before = Date.now();
+    startForecastPreload(coordinates);
+    const claimed = claimForecastPreload(coordinates);
+    assert.equal(
+      claimed.getRespondedAt(),
+      null,
+      "no response time before the request settles"
+    );
+
+    await claimed.promise;
+    const respondedAt = claimed.getRespondedAt();
+    assert.ok(
+      Number.isFinite(respondedAt),
+      "the response time is stamped once the request settles"
+    );
+    assert.ok(
+      respondedAt >= before && respondedAt <= Date.now(),
+      "an immediately adopted preload is genuinely as fresh as now"
+    );
+  });
+
+  test("a claim adopted long after the response reports the real response time", async () => {
+    installForecastFetchSpy();
+    const coordinates = { latitude: 41.8781, longitude: -87.6298 };
+    const staleByMs = 5 * 60 * 1000;
+
+    // Resolve the preload against a clock five minutes in the past, so
+    // the claim below is the "boot preload settled while a geolocation
+    // prompt sat unanswered" case: settled data, much later adoption.
+    const realDateNow = Date.now;
+    Date.now = () => realDateNow.call(Date) - staleByMs;
+    try {
+      await startForecastPreload(coordinates);
+    } finally {
+      Date.now = realDateNow;
+    }
+
+    const claimed = claimForecastPreload(coordinates);
+    assert.ok(claimed, "the preload is still claimable");
+    await claimed.promise;
+
+    const respondedAt = claimed.getRespondedAt();
+    const age = Date.now() - respondedAt;
+    assert.ok(
+      age >= staleByMs - 1000,
+      `adopted preload must report its true age, reported ${age}ms`
+    );
   });
 
   test("uses the canonical imperial forecast units", async () => {
@@ -84,7 +142,9 @@ describe("forecastPreload", () => {
       "different coordinates must not claim the preload"
     );
     // The original coordinates can still claim it afterwards.
-    assert.ok(claimForecastPreload({ latitude: 41.8781, longitude: -87.6298 }));
+    assert.ok(
+      claimForecastPreload({ latitude: 41.8781, longitude: -87.6298 })?.promise
+    );
   });
 
   test("a preload is claimable only once", async () => {
@@ -92,7 +152,7 @@ describe("forecastPreload", () => {
     const coordinates = { latitude: 41.8781, longitude: -87.6298 };
     startForecastPreload(coordinates);
 
-    assert.ok(claimForecastPreload(coordinates), "first claim succeeds");
+    assert.ok(claimForecastPreload(coordinates)?.promise, "first claim succeeds");
     assert.equal(
       claimForecastPreload(coordinates),
       null,

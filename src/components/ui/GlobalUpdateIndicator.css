@@ -133,8 +133,25 @@
     font-size: 10px;
   }
 
+  /*
+   * Narrow phones hide the state word for density, but `display: none`
+   * also strips it from the accessibility tree — leaving the colour dot
+   * (aria-hidden) as the only carrier of "saved" / "stale". That is
+   * meaning by colour alone, and it breaks the data-trust rule that
+   * cached and stale states stay labeled. Hide it visually, keep it
+   * announced. The refresh-button variant supplies the same word via
+   * aria-label, so it is never announced twice.
+   */
   .global-update-state {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
 

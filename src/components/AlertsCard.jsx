@@ -1,18 +1,41 @@
 import { memo, useId, useMemo } from "react";
 import { Siren } from "lucide-react";
+import { useTimeNow } from "../hooks/useTimeNow";
 import "./AlertsCard.css";
 
-function formatAlertTime(value) {
+/*
+ * NWS `expires` is an offset-bearing ISO timestamp for the alert *area*, so
+ * the instant is right but the frame it is displayed in was the reader's.
+ * A Chicago tornado warning read to a viewer in London printed six hours
+ * off — the same device-clock bug already fixed for the pressure trend and
+ * the sun arc. Render it in the alerted location's zone, falling back to
+ * the device format if the provider gave us an unusable zone.
+ */
+function formatAlertTime(value, timeZone) {
   if (typeof value !== "string") return "Unknown";
   const parsed = new Date(value);
   if (!Number.isFinite(parsed.getTime())) return "Unknown";
 
-  return parsed.toLocaleString("en-US", {
+  const baseOptions = {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  });
+  };
+
+  if (typeof timeZone === "string" && timeZone.trim()) {
+    try {
+      return parsed.toLocaleString("en-US", {
+        ...baseOptions,
+        timeZone: timeZone.trim(),
+        timeZoneName: "short",
+      });
+    } catch {
+      // Fall through to the device-local format below.
+    }
+  }
+
+  return parsed.toLocaleString("en-US", baseOptions);
 }
 
 const VISIBLE_ALERT_LIMIT = 4;
@@ -22,12 +45,33 @@ function AlertsCard({
   alertsStatus = "idle",
   style,
   isRefreshing = false,
+  timeZone,
 }) {
   const titleId = useId();
-  const totalAlertCount = Array.isArray(alerts) ? alerts.length : 0;
-  const visibleAlerts = useMemo(() => {
-    return Array.isArray(alerts) ? alerts.slice(0, VISIBLE_ALERT_LIMIT) : [];
-  }, [alerts]);
+  // Shared minute ticker (the app-wide clock seam) rather than Date.now()
+  // in render: it keeps this component pure and also retires an alert
+  // within a minute of it expiring while the page is open.
+  const nowMs = useTimeNow();
+  /*
+   * Defence in depth against showing an expired hazard as active. The
+   * restore path in useWeatherData already drops alerts past their
+   * `endsAt`, but this card is the surface where being wrong is most
+   * costly, so it refuses to render one regardless of how it arrived.
+   * Live NWS responses only contain active alerts, so this filters
+   * nothing on the happy path.
+   */
+  const activeAlerts = useMemo(() => {
+    if (!Array.isArray(alerts)) return [];
+    return alerts.filter((alert) => {
+      const expiresAt = Date.parse(alert?.endsAt);
+      return Number.isFinite(expiresAt) && expiresAt > nowMs;
+    });
+  }, [alerts, nowMs]);
+  const totalAlertCount = activeAlerts.length;
+  const visibleAlerts = useMemo(
+    () => activeAlerts.slice(0, VISIBLE_ALERT_LIMIT),
+    [activeAlerts]
+  );
   const hiddenAlertCount = Math.max(0, totalAlertCount - visibleAlerts.length);
   const emptyState = useMemo(() => {
     if (visibleAlerts.length > 0 || alertsStatus === "ready") {
@@ -142,7 +186,7 @@ function AlertsCard({
                     {alert.priority || "low"}
                   </span>
                   <span className="alerts-window">
-                    Until {formatAlertTime(alert.endsAt)}
+                    Until {formatAlertTime(alert.endsAt, timeZone)}
                   </span>
                 </div>
               </li>

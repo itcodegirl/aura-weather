@@ -49,8 +49,20 @@
 
 
 
-.storm-help-drawer .info-drawer-panel {
-  width: min(220px, 72vw);
+/*
+ * Scoped above the compact-phone tier on purpose. This descendant selector
+ * is specificity (0,2,0); InfoDrawer.css's narrow-phone ceiling
+ * (@media (max-width: 420px) .info-drawer-panel) is (0,1,0) and a media
+ * query adds none, so an unscoped override here silently defeated that
+ * ceiling and the panel kept its desktop width on a 320px phone. Measured
+ * in Chromium at 320px before this change: 256px wide starting at x=155.8,
+ * 91.8px past the viewport, visible only as clipped content because
+ * `body { overflow-x: hidden }` swallows the scrollbar.
+ */
+@media (min-width: 421px) {
+  .storm-help-drawer .info-drawer-panel {
+    width: min(220px, 72vw);
+  }
 }
 
 .storm-level {

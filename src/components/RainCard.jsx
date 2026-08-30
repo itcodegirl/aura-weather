@@ -12,6 +12,46 @@ import "./RainCard.css";
 
 const MISSING_PLACEHOLDER = "\u2014";
 
+/*
+ * One ladder for every rain-chance word this card says. 50% is the
+ * app-wide "likely" cutoff — NowcastCard's NC_LIKELY_THRESHOLD and
+ * HourlyCard's rainWord both draw it there, and this card draws its own
+ * dashed reference line at 50%. The headline, though, used to hard-code
+ * "Rain likely" for whatever hour `nextRain` resolved to, and that hour is
+ * selected at probability >= 40% OR any modelled amount at all. So a 22%
+ * hour was announced as "Rain likely (22% chance)" directly above this
+ * card's own 50% line, while the same hour's chip read "slight chance".
+ */
+const RAIN_LIKELY_PROBABILITY = 50;
+
+function describeRainChance(probability) {
+  if (probability === null) return "data unavailable";
+  if (probability >= RAIN_LIKELY_PROBABILITY) return "showers likely";
+  if (probability >= 30) return "scattered chance";
+  if (probability >= 15) return "slight chance";
+  return "mostly dry";
+}
+
+function buildNextRainLabel(nextRain) {
+  const probability = nextRain?.probability ?? null;
+  if (probability === null) {
+    return "Rain signal detected; chance unavailable";
+  }
+  if (probability >= RAIN_LIKELY_PROBABILITY) {
+    return `Rain likely (${probability}% chance)`;
+  }
+  if (probability >= 30) {
+    return `Scattered chance of rain (${probability}%)`;
+  }
+  if (probability >= 15) {
+    return `Slight chance of rain (${probability}%)`;
+  }
+  // Reached only via the modelled-amount branch of nextRain: there is
+  // precipitation in the model but the probability does not support any
+  // "chance" word, so name the source instead of overstating the odds.
+  return `Light rain in the forecast model (${probability}% chance)`;
+}
+
 function getRainTimelineSummary(hours, nextRain, peak, total, unit, dataUnit) {
   if (!Array.isArray(hours) || hours.length === 0) {
     return "Hourly precipitation isn't available right now. Other forecast panels are still live.";
@@ -209,14 +249,7 @@ function RainCard({
       // all the post-rain hours show one identical plateaued value. The
       // chart bars above stay per-hour intensity (tooltip/valueLabel too).
       const trackValueLabel = valueLabel;
-      const chanceMeta =
-        prob >= 50
-          ? "showers likely"
-          : prob >= 30
-            ? "scattered chance"
-            : prob >= 15
-              ? "slight chance"
-              : "mostly dry";
+      const chanceMeta = describeRainChance(prob);
       const trackMeta = isMissing
         ? "data unavailable"
         : mode === "chance"
@@ -383,9 +416,7 @@ function RainCard({
             </div>
             <div className="rain-primary-label">
               {nextRain
-                ? nextRain.probability === null
-                  ? "Rain signal detected; chance unavailable"
-                  : `Rain likely (${nextRain.probability}% chance)`
+                ? buildNextRainLabel(nextRain)
                 : `Highest chance ${peakProbabilityLabel} around ${peakTimeLabel}`}
             </div>
           </div>

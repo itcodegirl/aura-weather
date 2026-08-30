@@ -217,7 +217,11 @@ export async function bootstrapMissingMockState(page, context, viewport) {
     page.locator("span[aria-label='No data available']").first()
   ).toBeVisible();
   await waitForSupplementalPanels(page);
-  await waitForRadar(page);
+  // The demo never mounts the radar map (its isolation promise), so the
+  // capture waits for the honest placeholder card instead of Leaflet.
+  await expect(
+    page.getByText("Radar not queried in this demo")
+  ).toBeVisible();
 
   await applyVisualOverrides(page);
 }

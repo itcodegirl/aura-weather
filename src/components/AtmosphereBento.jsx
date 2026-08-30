@@ -7,6 +7,7 @@ import { formatWindSpeed, windDirectionName, classifyWind } from "../domain/wind
 import { classifyComfort } from "../domain";
 import { convertTemp } from "../utils/temperature";
 import { toFiniteNumber, MISSING_VALUE_PLACEHOLDER } from "../utils/numbers";
+import { getDaylightProgress } from "../utils/sunlight";
 import { useTimeNow } from "../hooks/useTimeNow";
 import "./AtmosphereBento.css";
 
@@ -295,7 +296,7 @@ function formatSunTime(d) {
   return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
-function SunTile({ sunrise, sunset }) {
+function SunTile({ sunrise, sunset, timeZone }) {
   const nowMs = useTimeNow(60_000);
   const riseDate = sunrise ? new Date(sunrise) : null;
   const setDate = sunset ? new Date(sunset) : null;
@@ -303,9 +304,14 @@ function SunTile({ sunrise, sunset }) {
     riseDate !== null && Number.isFinite(riseDate.getTime()) &&
     setDate !== null && Number.isFinite(setDate.getTime());
 
+  // Sunrise/sunset are naive location-local strings, so "now" must be
+  // reframed into the location's wall clock before comparing — the raw
+  // device epoch pins the bead to an arc end for remote cities.
+  const progress = getDaylightProgress(sunrise, sunset, nowMs, timeZone);
+  const showSun = progress !== null;
   let sunCx = 140, sunCy = 28;
-  if (hasDat) {
-    const t = Math.max(0, Math.min(1, (nowMs - riseDate.getTime()) / (setDate.getTime() - riseDate.getTime())));
+  if (showSun) {
+    const t = progress;
     sunCx = (1 - t) * (1 - t) * 14 + 2 * (1 - t) * t * 140 + t * t * 266;
     sunCy = (1 - t) * (1 - t) * 58 + 2 * (1 - t) * t * (-8) + t * t * 58;
   }
@@ -330,7 +336,7 @@ function SunTile({ sunrise, sunset }) {
       >
         <line x1="8" y1="58" x2="272" y2="58" stroke="rgba(255,255,255,.16)" strokeWidth="1" strokeDasharray="3 3" />
         <path d="M14 58 Q140 -8 266 58" fill="none" stroke="rgba(243,183,101,.5)" strokeWidth="1.6" strokeDasharray="3 3" />
-        {hasDat && (
+        {showSun && (
           <>
             <circle cx={sunCx.toFixed(1)} cy={sunCy.toFixed(1)} r="8" fill="#f3b765" />
             <circle cx={sunCx.toFixed(1)} cy={sunCy.toFixed(1)} r="13" fill="none" stroke="rgba(243,183,101,.35)" strokeWidth="1.6" />
@@ -474,6 +480,7 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
         <SunTile
           sunrise={weather?.daily?.sunrise?.[0]}
           sunset={weather?.daily?.sunset?.[0]}
+          timeZone={weather?.meta?.timezone}
         />
         <DewPointTile dewPoint={weather?.current?.dewPoint} unit={unit} />
         <VisibilityTile visibility={weather?.current?.visibility} unit={unit} />

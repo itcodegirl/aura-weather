@@ -14,8 +14,8 @@ import {
   formatSunClock,
   formatDaylightLengthLabel,
   getSunlightPhase,
+  getZonedNowMs,
 } from "../../utils/sunlight.js";
-import { getZonedNow } from "../../utils/dates.js";
 import { formatDisplayCountry } from "../../utils/locationDisplay.js";
 import { buildAtmosphereReading } from "./buildAtmosphereReading.js";
 
@@ -522,8 +522,7 @@ export function buildHeroData({
   // (not the device's) to avoid mistiming the warm wash for remote
   // cities. The date label below intentionally keeps the real nowMs —
   // todayLocaleString formats that instant *into* the location's zone.
-  const zonedNowMs =
-    nowMs == null ? null : getZonedNow(weather?.meta?.timezone, nowMs).getTime();
+  const zonedNowMs = getZonedNowMs(weather?.meta?.timezone, nowMs);
   const sunlightPhase = getSunlightPhase(sunriseValue, sunsetValue, zonedNowMs);
   const atmosphereReading = buildAtmosphereReading({ weather, nowMs, unit });
 

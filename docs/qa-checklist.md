@@ -9,7 +9,9 @@ For automated checks, run `npm run lint && npm test && npm run build
 below assumes those pass.
 
 CI runs the same gate serially for Playwright with
-`npm run test:e2e -- --workers=1` to reduce visual-screenshot noise.
+`npm run test:e2e -- --workers=1` for run stability (visual
+regression testing was removed; serial execution keeps the
+capture-heavy suite deterministic on shared runners).
 
 ## First-load happy path
 
@@ -17,10 +19,15 @@ CI runs the same gate serially for Playwright with
       within ~1 second
 - [ ] Header brand `Aura` and tagline `Atmospheric Intelligence` are
       visible on first paint
+- [ ] The value line "Today's conditions, honest about what it
+      doesn't know." renders under the brand
 - [ ] Slow initial network shows the dashboard-shaped loading shell with
       provider status copy and no fake weather values
-- [ ] Granting browser location shows "Current location" rather than a
-      guessed city/country label
+- [ ] Granting browser location upgrades to a friendly nearby place
+      name via reverse geocoding (e.g. "Crystal Lake, United States"
+      plus a "Showing your device location near ..." note); the
+      generic "Current location" label appears only if the naming
+      lookup fails
 - [ ] Permission-onboarding card reads "Start with Palos Hills, switch
       anytime" with value-preview copy and two CTAs
       (Allow location access · Keep Palos Hills for now)
@@ -62,8 +69,12 @@ CI runs the same gate serially for Playwright with
       cannot be mistaken for live provider data
 - [ ] The hero daily guidance shows unavailable states for missing rain,
       UV, or wind inputs instead of inventing advice
-- [ ] The hero stats helper note appears: "Some readings are
-      unavailable from the provider..."
+- [ ] Missing readings carry the assistive-tech cue: each "—" is a
+      span with `aria-label="No data available"`, and the atmosphere
+      panel appends the footnote "— means the provider didn't report
+      that reading. It isn't a zero."
+- [ ] The radar slot shows the "Radar not queried in this demo" card
+      (no Leaflet map mounts, and no radar/tile hosts are contacted)
 - [ ] AQI / UV cards read "Unavailable" with a "No live data" pill (not
       a 0 gauge); supportText explains the missing reading without
       claiming a fake zero value

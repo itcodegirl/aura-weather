@@ -9,6 +9,9 @@ const { useWeatherData } = await import("./useWeatherData.js");
 const { readCachedWeatherSnapshot, writeCachedWeatherSnapshot } = await import(
   "../services/weatherSnapshotCache.js"
 );
+const { resetForecastPreloadForTests, startForecastPreload } = await import(
+  "../api/forecastPreload.js"
+);
 
 const realFetch = globalThis.fetch;
 
@@ -137,6 +140,7 @@ afterEach(() => {
   cleanup();
   globalThis.fetch = realFetch;
   window.localStorage.clear();
+  resetForecastPreloadForTests();
 });
 
 describe("useWeatherData supplemental merge", () => {
@@ -379,6 +383,104 @@ describe("useWeatherData climate toggle", () => {
       counters.forecastCalls,
       forecastCallsBeforeToggle,
       "toggling climate off must not refetch the forecast"
+    );
+  });
+});
+
+describe("useWeatherData boot preload adoption", () => {
+  test("an immediately adopted preload is stamped as fetched now", async () => {
+    window.localStorage.clear();
+    const counters = installImmediateFetch();
+
+    startForecastPreload({
+      latitude: PROBE_LOCATION.lat,
+      longitude: PROBE_LOCATION.lon,
+    });
+
+    let latest = null;
+    const renderedAt = Date.now();
+    await act(async () => {
+      render(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+
+    await waitFor(() => {
+      assert.ok(latest?.weather, "forecast loads");
+      assert.equal(latest.loading, false);
+    });
+
+    assert.equal(
+      counters.forecastCalls,
+      1,
+      "the preload was adopted rather than refetched"
+    );
+    const fetchedAt = latest.trustMeta.weatherFetchedAt;
+    assert.ok(
+      fetchedAt >= renderedAt - 1000 && fetchedAt <= Date.now(),
+      "a preload claimed while fresh really is as fresh as now"
+    );
+  });
+
+  test("a preload adopted long after its response is not stamped as fetched now", async () => {
+    window.localStorage.clear();
+    installImmediateFetch();
+    const staleByMs = 5 * 60 * 1000;
+
+    // Settle the boot preload against a clock five minutes in the past,
+    // then mount: this is the delayed-first-fetch path (a geolocation
+    // prompt left sitting, `enabled` toggling), where the hook adopts a
+    // response that already arrived minutes ago. The clock is restored
+    // before rendering so only the preload is backdated.
+    const realDateNow = Date.now;
+    Date.now = () => realDateNow.call(Date) - staleByMs;
+    try {
+      await startForecastPreload({
+        latitude: PROBE_LOCATION.lat,
+        longitude: PROBE_LOCATION.lon,
+      });
+    } finally {
+      Date.now = realDateNow;
+    }
+
+    let latest = null;
+    await act(async () => {
+      render(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+
+    await waitFor(() => {
+      assert.ok(latest?.weather, "forecast loads");
+      assert.equal(latest.loading, false);
+    });
+
+    const displayedAge = Date.now() - latest.trustMeta.weatherFetchedAt;
+    assert.ok(
+      displayedAge >= staleByMs - 1000,
+      `five-minute-old data must not read as fetched now (age ${displayedAge}ms)`
+    );
+
+    // The fabricated age would otherwise outlive the session: this stamp
+    // is what the snapshot cache persists.
+    const snapshot = readCachedWeatherSnapshot({
+      latitude: PROBE_LOCATION.lat,
+      longitude: PROBE_LOCATION.lon,
+    });
+    assert.ok(snapshot, "snapshot persisted");
+    assert.ok(
+      Date.now() - snapshot.trustMeta.weatherFetchedAt >= staleByMs - 1000,
+      "the persisted snapshot carries the true response time"
     );
   });
 });

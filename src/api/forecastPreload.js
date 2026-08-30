@@ -72,20 +72,39 @@ export function startForecastPreload(coordinates, options) {
     resolved.parsed.longitude,
     options ?? getForecastRequestOptions()
   );
+  const record = { key: resolved.key, promise, respondedAt: null };
+  // The response time is recorded here, at the response, because the
+  // claim can land arbitrarily later: the hook's first fetch is gated on
+  // `enabled`, so a geolocation prompt left sitting or a `weatherEnabled`
+  // toggle can delay adoption by minutes. A claimer that read its own
+  // clock on adoption would report the data as younger than it is.
+  // Registered before the claimer awaits the same promise, so this stamp
+  // is set by the time the claimer's continuation runs.
+  const stampResponse = () => {
+    record.respondedAt = Date.now();
+  };
+  promise.then(stampResponse, stampResponse);
   // A preload that is never claimed (e.g. the user relocates before the
   // first effect runs) must not surface as an unhandled rejection. A
   // claimer attaches its own handler and still receives the rejection.
   promise.catch(() => {});
-  pendingPreload = { key: resolved.key, promise };
+  pendingPreload = record;
   return promise;
 }
 
 /**
  * Hands the boot preload to useWeatherData's first matching request.
- * Returns the in-flight promise once (then clears it) when coordinates
- * match, otherwise null so the caller fetches normally. The promise
- * carries no abort signal; useWeatherData's requestId guard still
- * discards its result if a newer request superseded it.
+ * Returns `{ promise, getRespondedAt }` once (then clears it) when
+ * coordinates match, otherwise null so the caller fetches normally.
+ *
+ * `getRespondedAt()` is the wall-clock time the response actually
+ * arrived; it reads null until then, so it must be read *after* awaiting
+ * `promise`. The claimer must use it as its freshness stamp instead of
+ * its own clock — a claim can adopt an already-settled preload, and the
+ * displayed age of the data must never be younger than the data is.
+ *
+ * The promise carries no abort signal; useWeatherData's requestId guard
+ * still discards its result if a newer request superseded it.
  */
 export function claimForecastPreload(coordinates) {
   if (!pendingPreload) {
@@ -95,9 +114,12 @@ export function claimForecastPreload(coordinates) {
   if (!resolved || resolved.key !== pendingPreload.key) {
     return null;
   }
-  const { promise } = pendingPreload;
+  const record = pendingPreload;
   pendingPreload = null;
-  return promise;
+  return {
+    promise: record.promise,
+    getRespondedAt: () => record.respondedAt,
+  };
 }
 
 /** Test-only: clears any pending preload so suites stay isolated. */

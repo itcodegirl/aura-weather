@@ -271,7 +271,20 @@ export async function installOpenMeteoMocks(page) {
     const query = (requestUrl.searchParams.get("name") || "").toLowerCase();
 
     let results = [];
-    if (query.includes("tok")) {
+    if (query.includes("kyo")) {
+      // A second city so selection tests can assert the hero actually
+      // moves, rather than re-asserting the city it already showed.
+      results = [
+        {
+          id: 1857910,
+          name: "Kyoto",
+          latitude: 35.0116,
+          longitude: 135.7681,
+          country: "Japan",
+          admin1: "Kyoto",
+        },
+      ];
+    } else if (query.includes("tok")) {
       results = [
         {
           id: 1850147,

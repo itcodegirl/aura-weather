@@ -29,7 +29,12 @@ import {
 const SYNC_ACCOUNT_KEY = "aura-weather-sync-account-v2";
 const AUTO_PUSH_DEBOUNCE_MS = 900;
 
-export function useSavedLocationsSync(savedCities, setSavedCities) {
+export function useSavedLocationsSync(savedCities, setSavedCities, options = {}) {
+  // Passed straight through to the backup service's own `options.client`
+  // dependency-injection seam, so render tests can drive this hook against a
+  // fake Supabase client. Undefined in production, where every call resolves
+  // the real lazy client.
+  const syncClient = options.client;
   const [syncAccount, setSyncAccount] = useLocalStorageState(
     SYNC_ACCOUNT_KEY,
     null,
@@ -107,7 +112,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     }));
 
     try {
-      const remoteCities = await pullSavedLocationsFromSync();
+      const remoteCities = await pullSavedLocationsFromSync({ client: syncClient });
       if (requestId !== syncRequestRef.current) {
         return [];
       }
@@ -152,7 +157,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
         initialPullSettledRef.current = true;
       }
     }
-  }, [setSavedCities]);
+  }, [setSavedCities, syncClient]);
 
   const pushToSyncAccount = useCallback(async (accountToUse, citiesToSync, options = {}) => {
     if (!accountToUse?.syncKey) {
@@ -170,7 +175,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     }));
 
     try {
-      await pushSavedLocationsToSync(citiesToSync);
+      await pushSavedLocationsToSync(citiesToSync, { client: syncClient });
       if (requestId !== syncRequestRef.current) {
         return;
       }
@@ -199,7 +204,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
         ),
       }));
     }
-  }, []);
+  }, [syncClient]);
 
   // Every push goes through here so `disconnectSyncAccount` can await one
   // that is already on the wire before it issues the delete.
@@ -226,7 +231,9 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     }));
 
     try {
-      const created = await createSavedLocationsSyncAccount(savedCities);
+      const created = await createSavedLocationsSyncAccount(savedCities, {
+        client: syncClient,
+      });
       const nextAccount = { syncKey: created.syncKey };
       skipNextAutoPullRef.current = true;
       setSyncAccount(nextAccount);
@@ -245,7 +252,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
         error: getSyncErrorMessage(syncError, "Try again in a moment."),
       }));
     }
-  }, [savedCities, savedCitiesSignature, setSyncAccount]);
+  }, [savedCities, savedCitiesSignature, setSyncAccount, syncClient]);
 
   /*
    * Stopping the backup deletes the cloud row, not just the local record —
@@ -275,7 +282,7 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
           skipNextSyncPushRef.current = true;
         },
         waitForInFlightPush: () => inFlightPushRef.current,
-        deleteBackup: () => deleteSavedLocationsBackup(),
+        deleteBackup: () => deleteSavedLocationsBackup({ client: syncClient }),
       });
     } catch (syncError) {
       deleteError = getSyncErrorMessage(
@@ -288,9 +295,15 @@ export function useSavedLocationsSync(savedCities, setSavedCities) {
     // they asked to leave is worse than a row only they can read. Starting the
     // backup again lands on the same anonymous user, so a failed delete can be
     // retried by stopping it once more.
+    //
+    // cancelPendingPush raised the skip flag for an account that no longer
+    // exists. Nothing can consume it once the syncKey is gone — the push
+    // effect returns on the missing key first — so it has to be lowered here
+    // or it survives to swallow the first genuine push after a reconnect.
+    skipNextSyncPushRef.current = false;
     setSyncAccount(null);
     setSyncState(buildStopBackupState(deleteError));
-  }, [setSyncAccount]);
+  }, [setSyncAccount, syncClient]);
 
   const syncSavedCitiesNow = useCallback(async () => {
     if (!syncAccount?.syncKey) {

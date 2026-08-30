@@ -92,7 +92,14 @@ async function renderPastDeferredMounts() {
   await act(async () => {
     flushTimersUpTo(10_000);
   });
-  for (let i = 0; i < 4; i += 1) {
+  // Drain until the boundary has actually committed, rather than a fixed
+  // number of turns. How many turns the rejected import needs to travel
+  // through Suspense to the boundary depends on machine load, and a fixed
+  // count observed zero fallbacks whenever the box was busy — reddening
+  // unrelated pull requests. The bound only stops a genuine regression
+  // from hanging; the exit is the condition, not the count.
+  for (let i = 0; i < 200; i += 1) {
+    if (view.container.querySelector(".panel-boundary-fallback")) break;
     await act(async () => {
       await new Promise((resolve) => setImmediate(resolve));
     });

@@ -186,12 +186,36 @@ test("updates hero location when a city is selected from search", async ({ page 
   await expect(page.locator(".location-notice")).toHaveCount(0);
   await expect(page.getByText("Cloud Backup")).toBeVisible();
 
-  await searchInput.focus();
-  await expect(
-    page.getByRole("option", { name: /Tokyo, Recent.*Japan/ })
-  ).toBeVisible();
+  // Enter acts only on an option the user actually highlighted. With
+  // nothing highlighted it must not commit the first result: the hero
+  // stays on the city that is already loaded.
+  // Park the pointer away from the listbox first. The click above leaves
+  // it over where Tokyo's option was, so the next result mounts under the
+  // cursor and hover-highlights it — which would make the Enter below a
+  // legitimate commit rather than the blind one under test.
+  await page.mouse.move(0, 0);
+  await searchInput.fill("kyo");
+  await expect(page.getByRole("option", { name: /kyoto/i })).toBeVisible();
   await searchInput.press("Enter");
   await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
+
+  // Highlighting first does commit, and selection never drops focus to
+  // <body> — the regression this guards. Where focus lands depends on
+  // whether the switch shows the global loader: without it focus stays in
+  // the search box, and with it App moves focus to #main-content on
+  // recovery so a screen-reader user lands in the dashboard rather than on
+  // body. Either is correct; body is not.
+  await searchInput.press("ArrowDown");
+  await searchInput.press("Enter");
+  await expect(page.locator(".hero-location")).toContainText("Kyoto, Japan");
+  const landedOn = await page.evaluate(() => {
+    const active = document.activeElement;
+    if (!active || active === document.body) return "body";
+    if (active.id === "main-content") return "main";
+    if (active.getAttribute("role") === "combobox") return "search";
+    return active.tagName;
+  });
+  expect(["search", "main"]).toContain(landedOn);
 });
 
 test("groups idle suggestions into recent and saved sections", async ({ page }) => {

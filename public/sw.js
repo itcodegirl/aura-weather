@@ -80,8 +80,68 @@ function findBuildAssetUrls(javascript) {
   ).filter(Boolean);
 }
 
+// Netlify's SPA catch-all (public/_redirects) answers any unmatched
+// path — a hashed chunk purged by a newer deploy included — with
+// index.html at HTTP 200. Status alone therefore cannot tell a real
+// build asset from the app shell, and HTML stored under an
+// /assets/*.js key wedges the module graph for good: nosniff
+// (public/_headers) then refuses to execute it, and the poisoned entry
+// outlives reloads. An /assets/ response is only trusted when its
+// content-type matches what the URL claims to be.
+const ASSET_CONTENT_TYPE_RULES = [
+  [".js", /(?:java|ecma)script/],
+  [".css", /text\/css/],
+];
+
+function toCacheKeyUrl(requestOrUrl) {
+  const rawUrl =
+    typeof requestOrUrl === "string" ? requestOrUrl : requestOrUrl?.url;
+  if (!rawUrl) {
+    return null;
+  }
+
+  try {
+    return new URL(rawUrl, self.location.origin);
+  } catch {
+    return null;
+  }
+}
+
+function hasExpectedAssetContentType(requestOrUrl, response) {
+  const requestUrl = toCacheKeyUrl(requestOrUrl);
+  if (!requestUrl || !isBuildAssetRequest(requestUrl)) {
+    return true;
+  }
+
+  const contentType = (
+    response.headers?.get("content-type") || ""
+  ).toLowerCase();
+  const rule = ASSET_CONTENT_TYPE_RULES.find(([extension]) =>
+    requestUrl.pathname.endsWith(extension)
+  );
+  if (rule) {
+    return rule[1].test(contentType);
+  }
+
+  // No rule for this extension (an image or font emitted into
+  // /assets/): an HTML body is still never a valid build asset.
+  return !contentType.startsWith("text/html");
+}
+
+// The single gate every cache write goes through. `response.ok` matches
+// the check the stale-while-revalidate path already applied, so a 3xx
+// or error body can no longer be stored by the precache or navigation
+// paths either.
+function isSafeToCache(requestOrUrl, response) {
+  return Boolean(
+    response &&
+      response.ok &&
+      hasExpectedAssetContentType(requestOrUrl, response)
+  );
+}
+
 async function cacheResponse(cacheName, request, response) {
-  if (!response || response.status >= 400) {
+  if (!isSafeToCache(request, response)) {
     return;
   }
 
@@ -109,7 +169,14 @@ async function trimCache(cacheName, maxEntries) {
 
 async function bestEffortCacheAdd(cache, url) {
   try {
-    await cache.add(url);
+    // cache.add() fetches and stores in one step, leaving nowhere to
+    // inspect the response — hence the explicit fetch/put pair.
+    const response = await fetch(url);
+    if (!isSafeToCache(url, response)) {
+      return false;
+    }
+
+    await cache.put(url, response);
     return true;
   } catch {
     // A single missing asset must not abort the install. Offline
@@ -138,7 +205,7 @@ async function matchCachedRequest(cache, request) {
 
 async function readAssetText(cache, assetUrl) {
   const response = (await cache.match(assetUrl)) || (await fetch(assetUrl));
-  if (!response || !response.ok) {
+  if (!isSafeToCache(assetUrl, response)) {
     return "";
   }
 
@@ -195,13 +262,32 @@ async function getCachedNavigationFallback(request) {
   );
 }
 
+// A shell cache generation is written once, at install, together with
+// the asset graph that shell references (cacheAppShell). Overwriting it
+// from a navigation would pair a newer deploy's HTML with this
+// generation's older assets: go offline before the new chunks are
+// fetched and the shell boots a module graph that is in neither the
+// cache nor the network — a blank screen. So this path only fills a gap
+// (a generation whose precache never landed an index document); it
+// never replaces a shell install already matched to its assets.
+async function persistNavigationShell(request, response) {
+  const cache = await caches.open(APP_SHELL_CACHE);
+  const installedShell =
+    (await cache.match("/")) || (await cache.match("/index.html"));
+  if (installedShell) {
+    return;
+  }
+
+  await Promise.all([
+    cacheResponse(APP_SHELL_CACHE, request, response),
+    cacheResponse(APP_SHELL_CACHE, "/", response),
+  ]);
+}
+
 async function networkFirstNavigation(request) {
   const networkPromise = (async () => {
     const response = await fetch(request);
-    await Promise.all([
-      cacheResponse(APP_SHELL_CACHE, request, response),
-      cacheResponse(APP_SHELL_CACHE, "/", response),
-    ]);
+    await persistNavigationShell(request, response);
     return response;
   })();
 
@@ -248,7 +334,7 @@ async function staleWhileRevalidate(request) {
     (await matchCachedRequest(appShellCache, request));
   const fetchPromise = fetch(request)
     .then((response) => {
-      if (response.ok) {
+      if (isSafeToCache(request, response)) {
         void runtimeCache.put(request, response.clone());
         // Trim asynchronously so we never block the response. The
         // ceiling keeps the runtime cache bounded over time.

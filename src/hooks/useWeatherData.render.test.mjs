@@ -224,10 +224,11 @@ describe("useWeatherData degraded snapshot restore", () => {
       );
     });
 
-    // Explicit timeout: this restore path settles just under waitFor's
-    // 1000ms default, so it fails intermittently when the whole render
-    // suite competes for CPU. The wait is for a state transition, not a
-    // performance budget — give it headroom rather than let load decide.
+    // The restore only happens once the forecast fetch has exhausted its
+    // retries, and FORECAST_RETRY_DELAYS_MS deliberately spends 950ms of
+    // backoff getting there — against waitFor's 1000ms default. That left
+    // no margin: green on an idle machine, red whenever CI ran the suites
+    // in parallel. The budget has to clear the backoff, not race it.
     await waitFor(
       () => {
         assert.ok(latest?.weather, "snapshot restored as weather state");

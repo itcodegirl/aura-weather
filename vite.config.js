@@ -30,7 +30,15 @@ function serviceWorkerVersion() {
       const outDir = options.dir;
       if (!outDir) return;
       const swPath = join(outDir, "sw.js");
-      if (!existsSync(swPath)) return;
+      if (!existsSync(swPath)) {
+        // Silence here would let a change in Vite's public/ copy order
+        // drop the stamp — and the update lifecycle with it — without a
+        // single line of build output.
+        this.warn(
+          "sw.js: missing from the build output; the worker will not be version-stamped"
+        );
+        return;
+      }
 
       const fingerprint = Object.keys(bundle).sort().join("|");
       const hash = createHash("sha256")

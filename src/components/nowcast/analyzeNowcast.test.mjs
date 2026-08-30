@@ -72,6 +72,40 @@ describe("analyzeNowcast", () => {
     assert.equal(typeof result.summary, "string");
   });
 
+  test("marks the dry verdict as unverified when every probability is missing but codes are dry", () => {
+    const result = analyzeNowcast(
+      {
+        time: TIME,
+        rainChance: [null, null, null, null, null, null, null, null],
+        rainAmount: [null, null, null, null, null, null, null, null],
+        conditionCode: [3, 3, 3, 3, 3, 3, 3, 3],
+      },
+      { now: atSlot("2026-04-21T18:00") }
+    );
+    assert.equal(result.hasData, true);
+    assert.equal(result.hasRain, false);
+    assert.equal(result.probabilityAvailable, false);
+    assert.equal(result.peakProbability, null);
+  });
+
+  test("keeps probabilityAvailable true and honest peak copy for a dry window with real low chances", () => {
+    const result = analyzeNowcast(
+      {
+        time: TIME,
+        rainChance: [5, 10, 15, 10, 5, 0, 0, 0],
+        rainAmount: [0, 0, 0, 0, 0, 0, 0, 0],
+        conditionCode: [3, 3, 3, 3, 3, 3, 3, 3],
+      },
+      { now: atSlot("2026-04-21T18:00") }
+    );
+    assert.equal(result.hasRain, false);
+    assert.equal(result.probabilityAvailable, true);
+    assert.equal(result.peakProbability, 15);
+    // The old copy claimed the chance "stays below" its own computed peak.
+    assert.doesNotMatch(result.details, /stays below/);
+    assert.match(result.details, /reaches 15%/);
+  });
+
   test("keeps missing probability slots as null in the chart series (no fake 0%)", () => {
     // A slot with no probability reading must not be drawn as a confident 0%;
     // it must reach the chart as null so the curve can gap there.

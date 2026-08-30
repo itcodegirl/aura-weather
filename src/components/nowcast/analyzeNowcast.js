@@ -28,6 +28,7 @@ export function analyzeNowcast(nowcast, options = {}) {
     return {
       hasData: false,
       hasRain: false,
+      probabilityAvailable: false,
       startInMinutes: null,
       durationMinutes: null,
       peakProbability: null,
@@ -61,6 +62,7 @@ export function analyzeNowcast(nowcast, options = {}) {
     return {
       hasData: false,
       hasRain: false,
+      probabilityAvailable: false,
       startInMinutes: null,
       durationMinutes: null,
       peakProbability: null,
@@ -97,6 +99,7 @@ export function analyzeNowcast(nowcast, options = {}) {
     return {
       hasData: false,
       hasRain: false,
+      probabilityAvailable: false,
       startInMinutes: null,
       durationMinutes: null,
       peakProbability: null,
@@ -116,6 +119,7 @@ export function analyzeNowcast(nowcast, options = {}) {
     return {
       hasData: false,
       hasRain: false,
+      probabilityAvailable: false,
       startInMinutes: null,
       durationMinutes: null,
       peakProbability: null,
@@ -131,6 +135,11 @@ export function analyzeNowcast(nowcast, options = {}) {
   // curve at those points instead of drawing a confident 0% over unknown data.
   const probabilitySeries = rows.map((row) => row.probability);
 
+  // A dry verdict reached without any probability reading is weaker evidence
+  // than one backed by real percentages; the card must be able to qualify its
+  // scannable language ("Likely dry") to match the details sentence.
+  const probabilityAvailable = rows.some((row) => row.probability !== null);
+
   const firstWetIndex = rows.findIndex((row) => row.isWet);
   if (firstWetIndex === -1) {
     const probabilityRows = rows.filter((row) => row.probability !== null);
@@ -140,6 +149,7 @@ export function analyzeNowcast(nowcast, options = {}) {
     return {
       hasData: true,
       hasRain: false,
+      probabilityAvailable,
       startInMinutes: 0,
       durationMinutes: 0,
       peakProbability,
@@ -148,7 +158,7 @@ export function analyzeNowcast(nowcast, options = {}) {
       details:
         peakProbability === null
           ? "Rain chance is unavailable, but no wet weather code or accumulation was returned."
-          : `Peak rain chance stays below ${peakProbability}% in the near term.`,
+          : `Peak rain chance reaches ${peakProbability}% in the near term.`,
     };
   }
 
@@ -192,6 +202,7 @@ export function analyzeNowcast(nowcast, options = {}) {
   return {
     hasData: true,
     hasRain: true,
+    probabilityAvailable,
     startInMinutes,
     durationMinutes,
     peakProbability,

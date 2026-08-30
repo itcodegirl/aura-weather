@@ -34,6 +34,7 @@ describe("analyzeNowcast", () => {
 
     assert.equal(analysis.hasData, true);
     assert.equal(analysis.hasRain, false);
+    assert.equal(analysis.probabilityAvailable, true);
     assert.equal(analysis.peakProbability, 0);
     assert.match(analysis.details, /0%/);
   });
@@ -64,6 +65,7 @@ describe("analyzeNowcast", () => {
 
     assert.equal(analysis.hasData, true);
     assert.equal(analysis.hasRain, false);
+    assert.equal(analysis.probabilityAvailable, false);
     assert.equal(analysis.peakProbability, null);
     assert.match(analysis.details, /Rain chance is unavailable/);
   });
@@ -119,7 +121,9 @@ describe("NowcastCard", () => {
     );
   });
 
-  test("renders dry weather-code nowcast with unknown peak chance instead of 0%", () => {
+  test("qualifies the dry badge and chip when no probability backed the verdict", () => {
+    // The badge/chip must not claim certainty ("Dry window") that the
+    // details sentence withdraws when every probability slot was null.
     render(
       React.createElement(NowcastCard, {
         weather: {
@@ -132,9 +136,41 @@ describe("NowcastCard", () => {
       })
     );
 
-    assert.ok(screen.getByText("Dry window"));
+    const badge = screen.getByText("Likely dry");
+    assert.ok(
+      badge.classList.contains("severity-badge--partial"),
+      "unverified dry badge must use the partial severity tone"
+    );
+    assert.equal(screen.queryByText("Dry window"), null);
+    assert.equal(
+      screen.getByText("Duration").nextElementSibling.textContent.trim(),
+      "Likely dry 2h"
+    );
     assert.ok(screen.getByText("Rain chance is unavailable, but no wet weather code or accumulation was returned."));
     assert.equal(screen.getByText("Peak chance").nextElementSibling.textContent.trim(), "\u2014");
     assert.equal(screen.queryByText("0%"), null);
+  });
+
+  test("keeps the unqualified dry language when real probabilities back the verdict", () => {
+    render(
+      React.createElement(NowcastCard, {
+        weather: {
+          nowcast: buildNowcast({
+            rainChance: Array.from({ length: 8 }, () => 5),
+          }),
+        },
+      })
+    );
+
+    const badge = screen.getByText("Dry window");
+    assert.ok(
+      badge.classList.contains("severity-badge--minimal"),
+      "probability-backed dry badge keeps the minimal tone"
+    );
+    assert.equal(screen.queryByText("Likely dry"), null);
+    assert.equal(
+      screen.getByText("Duration").nextElementSibling.textContent.trim(),
+      "Dry 2h"
+    );
   });
 });

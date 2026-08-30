@@ -95,6 +95,9 @@ function GlobalUpdateIndicator({ trustMeta, onRefresh, isRefreshing }) {
   const updatedLabel = formatLastUpdatedLabel(lastUpdatedAt, effectiveNowMs);
   const title = formatTimestampTitle(lastUpdatedAt);
   const stateLabel = isCached ? "saved" : isStale ? "stale" : "live";
+  // Sentence-cased form of the one classification above, so the spoken
+  // state can never drift from the visible chip.
+  const stateName = `${stateLabel[0].toUpperCase()}${stateLabel.slice(1)}`;
 
   const isClickable = typeof onRefresh === "function";
 
@@ -132,7 +135,14 @@ function GlobalUpdateIndicator({ trustMeta, onRefresh, isRefreshing }) {
         type="button"
         className={`global-update-indicator global-update-indicator--${stateLabel} global-update-indicator--button`}
         title={`${title}. Tap to refresh.`}
-        aria-label={`${updatedLabel}. Tap to refresh weather.`}
+        /*
+         * `aria-label` on a button replaces its subtree for name
+         * computation, so a label of only the age and the action
+         * dropped the visible state word — the one token that tells a
+         * screen-reader user the forecast is a saved (or stale) one.
+         * State leads the name so it is heard before the age.
+         */
+        aria-label={`${stateName} forecast. ${updatedLabel}. Tap to refresh weather.`}
         aria-busy={isRefreshing || undefined}
         onClick={onRefresh}
         disabled={isRefreshing}

@@ -224,11 +224,18 @@ describe("useWeatherData degraded snapshot restore", () => {
       );
     });
 
-    await waitFor(() => {
-      assert.ok(latest?.weather, "snapshot restored as weather state");
-      assert.equal(latest.loading, false);
-      assert.equal(latest.trustMeta.cacheStatus, "restored");
-    });
+    // Explicit timeout: this restore path settles just under waitFor's
+    // 1000ms default, so it fails intermittently when the whole render
+    // suite competes for CPU. The wait is for a state transition, not a
+    // performance budget — give it headroom rather than let load decide.
+    await waitFor(
+      () => {
+        assert.ok(latest?.weather, "snapshot restored as weather state");
+        assert.equal(latest.loading, false);
+        assert.equal(latest.trustMeta.cacheStatus, "restored");
+      },
+      { timeout: 5000 }
+    );
 
     // The restored meta must carry enough for consumers to stay honest:
     // forecastStatus downgraded to "cached" and cacheCapturedAt stamped,

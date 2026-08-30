@@ -1,7 +1,12 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { getAqiStatus, getAqiGuidance, getUvStatus } from "./exposure.js";
+import {
+  getAqiStatus,
+  getAqiGuidance,
+  getUvStatus,
+  classifyUv,
+} from "./exposure.js";
 
 describe("getAqiStatus", () => {
   test("returns no-data status for null/undefined", () => {
@@ -90,6 +95,33 @@ describe("getUvStatus", () => {
       getUvStatus(11).color,
     ]);
     assert.equal(colors.size, 5);
+  });
+});
+
+describe("classifyUv", () => {
+  test("returns null for a missing reading — absent UV is not Low UV", () => {
+    assert.equal(classifyUv(null), null);
+    assert.equal(classifyUv(undefined), null);
+  });
+
+  test("bands are half-open on the minimums, so fractional readings never straddle", () => {
+    // These edges are exactly where five hand-copied thresholds used to
+    // disagree (a 6.5 rendered Moderate, "UV high", and "UV High" at
+    // once). Fractions just below a minimum stay in the lower band;
+    // the minimum itself promotes.
+    assert.equal(classifyUv(2.9).band, "low");
+    assert.equal(classifyUv(3).band, "moderate");
+    assert.equal(classifyUv(5.9).band, "moderate");
+    assert.equal(classifyUv(6).band, "high");
+    assert.equal(classifyUv(7.9).band, "high");
+    assert.equal(classifyUv(8).band, "very-high");
+    assert.equal(classifyUv(10.9).band, "very-high");
+    assert.equal(classifyUv(11).band, "extreme");
+  });
+
+  test("carries a display label alongside the band key", () => {
+    assert.equal(classifyUv(6.5).label, "High");
+    assert.equal(classifyUv(8.5).label, "Very High");
   });
 });
 

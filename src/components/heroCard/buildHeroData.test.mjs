@@ -494,6 +494,43 @@ describe("buildHeroData", () => {
     assert.equal(level(11.5), "Extreme");
   });
 
+  test("hero reading line and UV panel always agree on the band word", () => {
+    // The five UV surfaces used to carry independent thresholds; at 6.5
+    // the reading line said "Moderate UV" under a panel labeled "High".
+    // Daylight window: baseWeather sunrise/sunset span 11:18–00:41 UTC,
+    // so 18:00 UTC sits inside it and the UV reading is eligible.
+    const daylightNow = Date.UTC(2026, 3, 21, 18, 0, 0);
+    const dataFor = (uv) =>
+      buildHeroData({
+        weather: {
+          ...baseWeather,
+          daily: { ...baseWeather.daily, uvIndexMax: [uv] },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs: daylightNow,
+      });
+
+    for (const uv of [6.5, 8.5]) {
+      const data = dataFor(uv);
+      const level = data.uvPanel.level.toLowerCase();
+      assert.ok(
+        data.atmosphereReading,
+        `UV ${uv} merits a hero reading line`
+      );
+      assert.ok(
+        data.atmosphereReading.text.toLowerCase().includes(`${level} uv`),
+        `reading "${data.atmosphereReading.text}" must carry the panel band word "${data.uvPanel.level}"`
+      );
+    }
+
+    // Moderate UV is a panel-level fact, not a hero callout — the
+    // reading line stays silent rather than naming a different band.
+    const moderate = dataFor(3.5);
+    assert.equal(moderate.uvPanel.level, "Moderate");
+    assert.equal(moderate.atmosphereReading, null);
+  });
+
   test("clamps the UV marker to 100% past the top of the scale", () => {
     const data = buildHeroData({
       weather: {

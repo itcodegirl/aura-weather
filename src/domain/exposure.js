@@ -74,21 +74,36 @@ export function getAqiGuidance(aqi) {
   return "Stay indoors and keep activity light. Everyone is at risk at this level.";
 }
 
-export function getUvStatus(uv) {
+/*
+ * Canonical WHO UV bands — the single source of truth for UV severity.
+ * Half-open on the minimums (Low <3, Moderate 3–<6, High 6–<8,
+ * Very high 8–<11, Extreme ≥11) so fractional readings classify the
+ * same everywhere: the hero reading line, characteristic chip, UV
+ * panel, guidance pill, and exposure tile once each carried their own
+ * thresholds, and a 6.5 rendered as "Moderate", "UV high", and
+ * "UV High" on the same card.
+ */
+const UV_BANDS = [
+  { band: "extreme", label: "Extreme", min: 11, color: "#7f1d1d" },
+  { band: "very-high", label: "Very High", min: 8, color: "#f43f5e" },
+  { band: "high", label: "High", min: 6, color: "#f97316" },
+  { band: "moderate", label: "Moderate", min: 3, color: "#eab308" },
+  { band: "low", label: "Low", min: 0, color: "#22c55e" },
+];
+
+export function classifyUv(uv) {
   if (uv === null || uv === undefined) {
+    return null;
+  }
+  // Sub-zero or non-numeric junk falls through to Low rather than
+  // fabricating a higher band.
+  return UV_BANDS.find((entry) => uv >= entry.min) ?? UV_BANDS[UV_BANDS.length - 1];
+}
+
+export function getUvStatus(uv) {
+  const uvBand = classifyUv(uv);
+  if (uvBand === null) {
     return NO_DATA_STATUS;
   }
-  if (uv <= 2) {
-    return { label: "Low", color: "#22c55e" };
-  }
-  if (uv <= 5) {
-    return { label: "Moderate", color: "#eab308" };
-  }
-  if (uv <= 7) {
-    return { label: "High", color: "#f97316" };
-  }
-  if (uv <= 10) {
-    return { label: "Very High", color: "#f43f5e" };
-  }
-  return { label: "Extreme", color: "#7f1d1d" };
+  return { label: uvBand.label, color: uvBand.color };
 }

@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useCallback, useState } from "react";
+import { memo, Suspense, useCallback, useState } from "react";
 import { Radar } from "lucide-react";
 import HeroCard from "../HeroCard";
 import AlertsCard from "../AlertsCard";
@@ -6,15 +6,24 @@ import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
 import { useDeferredMount } from "../../hooks/useDeferredMount";
 import { usePanelPreload } from "../../hooks/useAppShellEffects";
-import { PRELOAD_HEAVY_PANELS, HourlyPanel, RadarPanel } from "../lazyPanels";
+import {
+  createRetryablePanel,
+  PRELOAD_HEAVY_PANELS,
+  HourlyPanel,
+  RadarPanel,
+} from "../lazyPanels";
 import { formatDisplayCountry } from "../../utils/locationDisplay";
 import DataTrustFooter from "../DataTrustFooter";
 import "./WeatherDashboard.css";
-const SupplementalWeatherPanels = lazy(() => import("./SupplementalWeatherPanels"));
+const SupplementalWeatherPanels = createRetryablePanel(
+  () => import("./SupplementalWeatherPanels")
+);
 // Data-status is a diagnostic surface most users never open. Defer
 // the JS + CSS into its own chunk so the bento's first paint does
 // not pay for a panel collapsed behind <details> by default.
-const SourceHealthPanel = lazy(() => import("../SourceHealthPanel"));
+const SourceHealthPanel = createRetryablePanel(
+  () => import("../SourceHealthPanel")
+);
 /*
  * Rain alerts was the one panel mounted eagerly, and it is the most
  * expensive to mount: useRainAlerts runs on mount and reaches Supabase, so
@@ -29,7 +38,7 @@ const SourceHealthPanel = lazy(() => import("../SourceHealthPanel"));
  * rules, including any set on another device) while moving the cost off the
  * critical path.
  */
-const RainAlertsPanel = lazy(() => import("../RainAlertsPanel"));
+const RainAlertsPanel = createRetryablePanel(() => import("../RainAlertsPanel"));
 
 const CARD_STYLE_VARIABLES = [
   { "--i": 0 },
@@ -262,6 +271,7 @@ function WeatherDashboard({
           >
             <RadarPanel
               location={location}
+              timeZone={weather?.meta?.timezone}
               style={CARD_STYLE_VARIABLES[4]}
               isRefreshing={isBackgroundLoading}
             />
@@ -276,35 +286,45 @@ function WeatherDashboard({
         )}
       </PanelErrorBoundary>
 
-      {showSupplementalPanels ? (
-        <Suspense
-          fallback={(
-            <CardFallback
-              className="bento-supplemental-loading"
-              style={CARD_STYLE_VARIABLES[3]}
-              title="Loading extended weather details..."
-              isRefreshing={isBackgroundLoading}
+      {/* The five per-panel boundaries for these cards ship inside this chunk,
+          so they cannot catch the chunk's own load failure. Without a boundary
+          out here that failure reaches the app-level boundary and replaces the
+          whole dashboard, forecast included. */}
+      <PanelErrorBoundary
+        label="Extended weather details"
+        className="bento-supplemental-loading"
+        style={CARD_STYLE_VARIABLES[3]}
+      >
+        {showSupplementalPanels ? (
+          <Suspense
+            fallback={(
+              <CardFallback
+                className="bento-supplemental-loading"
+                style={CARD_STYLE_VARIABLES[3]}
+                title="Loading extended weather details..."
+                isRefreshing={isBackgroundLoading}
+              />
+            )}
+          >
+            <SupplementalWeatherPanels
+              weather={weather}
+              unit={unit}
+              weatherDataUnit={weatherDataUnit}
+              trustMeta={trustMeta}
+              cardStyleVariables={CARD_STYLE_VARIABLES}
+              groupLabelStyleVariables={GROUP_LABEL_STYLE_VARIABLES}
+              isBackgroundLoading={isBackgroundLoading}
             />
-          )}
-        >
-          <SupplementalWeatherPanels
-            weather={weather}
-            unit={unit}
-            weatherDataUnit={weatherDataUnit}
-            trustMeta={trustMeta}
-            cardStyleVariables={CARD_STYLE_VARIABLES}
-            groupLabelStyleVariables={GROUP_LABEL_STYLE_VARIABLES}
-            isBackgroundLoading={isBackgroundLoading}
+          </Suspense>
+        ) : (
+          <CardFallback
+            className="bento-supplemental-loading"
+            style={CARD_STYLE_VARIABLES[3]}
+            title="Loading extended weather details..."
+            isRefreshing={isBackgroundLoading}
           />
-        </Suspense>
-      ) : (
-        <CardFallback
-          className="bento-supplemental-loading"
-          style={CARD_STYLE_VARIABLES[3]}
-          title="Loading extended weather details..."
-          isRefreshing={isBackgroundLoading}
-        />
-      )}
+        )}
+      </PanelErrorBoundary>
       <PanelErrorBoundary label="Rain alerts" className="bento-alerts-card">
         {/* !isMissingMock repeated here on purpose: useDeferredMount
             starts true off-browser, and the demo's isolation promise
@@ -326,24 +346,30 @@ function WeatherDashboard({
             Forecast, air quality, alerts, historical comparison
           </span>
         </summary>
-        {hasOpenedSourceHealth ? (
-          <Suspense
-            fallback={(
-              <CardFallback
-                className="bento-source-health"
+        <PanelErrorBoundary
+          label="Data status"
+          className="bento-source-health"
+          style={CARD_STYLE_VARIABLES[8]}
+        >
+          {hasOpenedSourceHealth ? (
+            <Suspense
+              fallback={(
+                <CardFallback
+                  className="bento-source-health"
+                  style={CARD_STYLE_VARIABLES[8]}
+                  title="Loading data status..."
+                  isRefreshing={isBackgroundLoading}
+                />
+              )}
+            >
+              <SourceHealthPanel
+                trustMeta={trustMeta}
                 style={CARD_STYLE_VARIABLES[8]}
-                title="Loading data status..."
                 isRefreshing={isBackgroundLoading}
               />
-            )}
-          >
-            <SourceHealthPanel
-              trustMeta={trustMeta}
-              style={CARD_STYLE_VARIABLES[8]}
-              isRefreshing={isBackgroundLoading}
-            />
-          </Suspense>
-        ) : null}
+            </Suspense>
+          ) : null}
+        </PanelErrorBoundary>
       </details>
       <DataTrustFooter
         weather={weather}

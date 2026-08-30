@@ -1,5 +1,6 @@
 import { Component } from "react";
 import { CloudOff } from "lucide-react";
+import { discardFailedPanelImports } from "./lazyPanels";
 
 class AppErrorBoundary extends Component {
   constructor(props) {
@@ -22,6 +23,10 @@ class AppErrorBoundary extends Component {
   }
 
   handleSoftRetry = () => {
+    // Same constraint as PanelErrorBoundary: React caches a lazy component's
+    // rejected payload, so the remount below only re-attempts a failed chunk
+    // fetch once the poisoned lazy objects are discarded.
+    discardFailedPanelImports();
     this.setState((current) => ({
       hasError: false,
       resetKey: current.resetKey + 1,

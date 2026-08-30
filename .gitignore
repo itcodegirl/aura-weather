@@ -30,6 +30,11 @@ lhci-reports
 # artifacts; only the committed demo recording is checked in.
 docs/screenshots/*.tmp.webm
 
+# Agent tool scratch space. Claude Code's worktree-isolated agents check
+# the repo out under .claude/worktrees/, so an uncommitted run leaves what
+# looks like an untracked copy of the project inside the project.
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

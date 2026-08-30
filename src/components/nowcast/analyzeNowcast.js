@@ -3,7 +3,7 @@ import { toFiniteNumber } from "../../utils/numbers.js";
 import { getZonedNow } from "../../utils/dates.js";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
-const NOWCAST_STEP_MINUTES = 15;
+export const NOWCAST_STEP_MINUTES = 15;
 const NOWCAST_WINDOW_SIZE = 8; // next 2 hours with 15-min resolution
 
 function clampProbability(value) {

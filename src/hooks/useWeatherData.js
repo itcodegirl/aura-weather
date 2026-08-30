@@ -379,7 +379,7 @@ export function useWeatherData(location, options = {}) {
       // no abort signal, but the requestId guard below still discards its
       // result if a newer request has since superseded it.
       const preloadedForecast = claimForecastPreload(coordinates);
-      const weatherData = await (preloadedForecast ??
+      const weatherData = await (preloadedForecast?.promise ??
         fetchWeather(coordinates.latitude, coordinates.longitude, {
           signal: controller.signal,
           temperatureUnit: API_TEMPERATURE_UNIT,
@@ -391,7 +391,12 @@ export function useWeatherData(location, options = {}) {
         return;
       }
 
-      const fetchedAt = Date.now();
+      // An adopted preload may have resolved well before this claim, so
+      // the freshness stamp is the preload's real response time. Reading
+      // the clock here instead would date old data as fetched now, and
+      // this timestamp is both the displayed age and what is persisted
+      // into the snapshot cache.
+      const fetchedAt = preloadedForecast?.getRespondedAt() ?? Date.now();
 
       const baseWeather = buildBaseWeatherState(weatherData);
       const baseTrustMeta = buildFreshTrustMeta(fetchedAt);

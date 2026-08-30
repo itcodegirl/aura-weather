@@ -20,6 +20,7 @@ import {
   RADAR_FRAME_KIND,
   RADAR_STATUS,
 } from "../domain/radar.js";
+import { createRequestSignal, isAbortError } from "./requestSignal.js";
 
 export const RAINVIEWER_WEATHER_MAPS_URL =
   "https://api.rainviewer.com/public/weather-maps.json";
@@ -128,35 +129,28 @@ export function deriveRadarState(payload) {
   };
 }
 
-function getSignal(externalSignal) {
-  const hasAbortSignal = typeof AbortSignal !== "undefined";
-  const timeoutSignal =
-    hasAbortSignal && typeof AbortSignal.timeout === "function"
-      ? AbortSignal.timeout(FETCH_TIMEOUT_MS)
-      : undefined;
-
-  if (!externalSignal) {
-    return timeoutSignal;
-  }
-
-  if (timeoutSignal && hasAbortSignal && typeof AbortSignal.any === "function") {
-    return AbortSignal.any([externalSignal, timeoutSignal]);
-  }
-
-  return externalSignal;
-}
-
 async function fetchWeatherMaps({ signal } = {}) {
-  const response = await fetch(RAINVIEWER_WEATHER_MAPS_URL, {
-    signal: getSignal(signal),
-    headers: { Accept: "application/json" },
-  });
+  // Cancellation and timeout are composed manually (see requestSignal.js):
+  // AbortSignal.any is missing on Safari <17 / Firefox <115, and the previous
+  // fallback dropped the timeout outright whenever a caller signal was passed.
+  const request = createRequestSignal(signal, FETCH_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new Error(`RainViewer responded ${response.status}`);
+  try {
+    const response = await fetch(RAINVIEWER_WEATHER_MAPS_URL, {
+      signal: request.signal,
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`RainViewer responded ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw request.normalizeError(error);
+  } finally {
+    request.release();
   }
-
-  return response.json();
 }
 
 /**
@@ -170,7 +164,7 @@ export async function loadRadarState({ signal } = {}) {
     const payload = await fetchWeatherMaps({ signal });
     return deriveRadarState(payload);
   } catch (error) {
-    if (error?.name === "AbortError") {
+    if (isAbortError(error)) {
       throw error;
     }
     return { host: "", frames: [], status: RADAR_STATUS.ERROR };

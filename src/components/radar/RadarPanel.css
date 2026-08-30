@@ -266,9 +266,10 @@
   box-shadow: var(--shadow-raise-sm);
 }
 
-.radar-slider:focus-visible {
-  outline: none;
-}
+/* .radar-slider keeps the global input:focus-visible outline (white,
+   offset 2px, 8.4:1 on the card). The --focus-ring glow below only
+   supplements it: a 4px glacier-at-.4 halo around an already-white thumb
+   is not a 3:1 indicator on its own. */
 
 .radar-slider:focus-visible::-webkit-slider-thumb {
   box-shadow: var(--focus-ring);

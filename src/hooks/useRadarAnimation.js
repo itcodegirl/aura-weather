@@ -11,13 +11,14 @@ export const RADAR_FRAME_DELAY_MS = 500;
  * When frames first arrive it jumps to `preferredIndex` (the latest
  * observed frame, so the resting view shows "now"); later refreshes only
  * clamp the index into range rather than yanking the user off their
- * scrubbed position. Honors `prefers-reduced-motion` by never
- * auto-playing.
+ * scrubbed position.
+ *
+ * Playback is user-initiated only — `isPlaying` starts false and nothing
+ * here ever starts the loop on its own — so `prefers-reduced-motion` is
+ * already honored without gating the Play control. Gating it instead
+ * left an enabled, focusable button that did nothing when activated.
  */
-export function useRadarAnimation(
-  frameCount,
-  { preferredIndex = null, allowAutoPlay = true } = {}
-) {
+export function useRadarAnimation(frameCount, { preferredIndex = null } = {}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   // The frame-list size we last reconciled the index against. Comparing
@@ -96,8 +97,8 @@ export function useRadarAnimation(
 
   const pause = useCallback(() => setIsPlaying(false), []);
   const toggle = useCallback(() => {
-    setIsPlaying((playing) => (playing ? false : allowAutoPlay));
-  }, [allowAutoPlay]);
+    setIsPlaying((playing) => !playing);
+  }, []);
 
   const step = useCallback(
     (delta) => {

@@ -1,7 +1,7 @@
 import { memo, useId, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { toFiniteNumber as toStrictFiniteNumber } from "../utils/numbers";
-import { analyzeNowcast } from "./nowcast/analyzeNowcast.js";
+import { analyzeNowcast, NOWCAST_STEP_MINUTES } from "./nowcast/analyzeNowcast.js";
 import { InfoDrawer } from "./ui";
 import "./NowcastCard.css";
 
@@ -77,6 +77,60 @@ function buildNowcastChartGeometry(points) {
   return { strokeD, fillD, thresholdY, xs, ys, peakIdx };
 }
 
+// Spoken equivalent of the aria-hidden chart: the threshold crossing and the
+// shape of the curve, neither of which the chips (Start / Duration / Peak)
+// carry. It reads the SAME clamped points the curve is drawn from, the SAME
+// NC_LIKELY_THRESHOLD the dashed line uses, the SAME 15-minute cadence the
+// analyzer indexes by, and the Peak chance chip's own number — so the drawn
+// and spoken versions cannot disagree. With no probability points it must
+// report the missing reading, not narrate a curve built from nothing.
+function buildNowcastChartDescription(points, peakProbability) {
+  const present = points
+    .map((value, index) => ({ value, index }))
+    .filter((point) => point.value !== null && point.value !== undefined);
+  if (present.length < 2) {
+    return "Rain chance readings for the next 2 hours are unavailable, so the chart has no curve to describe.";
+  }
+
+  const crossIndex = points.findIndex(
+    (value) => value !== null && value !== undefined && value >= NC_LIKELY_THRESHOLD
+  );
+  const crossPhrase =
+    crossIndex === -1
+      ? `Rain chance stays below the ${NC_LIKELY_THRESHOLD}% rain-likely line for the next 2 hours`
+      : crossIndex === 0
+        ? `Rain chance is already at or above the ${NC_LIKELY_THRESHOLD}% rain-likely line now`
+        : `Rain chance crosses the ${NC_LIKELY_THRESHOLD}% rain-likely line about ${crossIndex * NOWCAST_STEP_MINUTES} minutes from now`;
+
+  const half = Math.ceil(points.length / 2);
+  const firstHalf = present.filter((point) => point.index < half);
+  const secondHalf = present.filter((point) => point.index >= half);
+  const average = (rows) => rows.reduce((sum, row) => sum + row.value, 0) / rows.length;
+  // 10 points is the smallest half-to-half swing worth calling a trend out
+  // loud; below it the curve reads as level and the peak figure carries the
+  // height, so no shape claim is invented from noise.
+  const trend =
+    firstHalf.length && secondHalf.length ? average(secondHalf) - average(firstHalf) : 0;
+  const values = present.map((point) => point.value);
+  const shape =
+    trend >= 10
+      ? "rising into the second hour"
+      : trend <= -10
+        ? "easing back through the second hour"
+        : Math.max(...values) - Math.min(...values) <= 10
+          ? "holding flat across the window"
+          : "rising and falling without a clear trend";
+
+  const peakPhrase = peakProbability === null ? "" : `, peaking at ${peakProbability}%`;
+  // Gapped slots are unknown, not dry, so the spoken version says so too.
+  const gapPhrase =
+    present.length < points.length
+      ? " Some 15-minute slots are unavailable, so the line is broken there."
+      : "";
+
+  return `${crossPhrase}${peakPhrase}, ${shape}.${gapPhrase}`;
+}
+
 function NowcastCard({
   weather,
   style,
@@ -84,6 +138,7 @@ function NowcastCard({
 }) {
   const titleId = useId();
   const chartGradientId = `${titleId}-ncg`;
+  const chartDescriptionId = `${titleId}-ncdesc`;
   const nowcast = useMemo(
     () => analyzeNowcast(weather?.nowcast, { timeZone: weather?.meta?.timezone }),
     [weather?.nowcast, weather?.meta?.timezone]
@@ -94,6 +149,7 @@ function NowcastCard({
     startValue,
     durationValue,
     peakValue,
+    peakProbability,
   } = useMemo(() => {
     const parsedPeak = toStrictFiniteNumber(nowcast.peakProbability);
     const peakProbability = parsedPeak === null ? null : Math.round(parsedPeak);
@@ -158,6 +214,7 @@ function NowcastCard({
       startValue: start,
       durationValue: duration,
       peakValue: peak,
+      peakProbability,
     };
   }, [nowcast]);
 
@@ -174,12 +231,17 @@ function NowcastCard({
   }, [nowcast.hasData, nowcast.series]);
 
   const chartGeo = useMemo(() => buildNowcastChartGeometry(chartPoints), [chartPoints]);
+  const chartDescription = useMemo(
+    () => buildNowcastChartDescription(chartPoints, peakProbability),
+    [chartPoints, peakProbability]
+  );
 
   return (
     <section
       className="bento-nowcast nowcast-card glass"
       style={style}
       aria-labelledby={titleId}
+      aria-describedby={chartDescriptionId}
       data-refreshing={isRefreshing ? "true" : undefined}
       aria-busy={isRefreshing || undefined}
     >
@@ -289,6 +351,14 @@ function NowcastCard({
           </div>
         </div>
       )}
+
+      {/*
+       * Text equivalent for the aria-hidden chart (its threshold label and
+       * time ticks are aria-hidden too). Rendered on every path, not only
+       * with the chart, so the region's description still reports a missing
+       * probability reading when there is no curve to draw.
+       */}
+      <p id={chartDescriptionId} className="sr-only">{chartDescription}</p>
 
       <ul className="nowcast-chips" aria-label="Immediate precipitation details">
         <li className="nowcast-chip">

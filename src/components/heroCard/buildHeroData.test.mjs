@@ -202,6 +202,44 @@ describe("buildHeroData", () => {
     assert.equal(data.dailyGuidance[0].kind, "rain");
   });
 
+  test("renders the rain-guidance amount in the display unit (mm for °C)", () => {
+    // Chance missing forces the amount-based detail line. The wire
+    // amount is inches (0.18 in = 4.57 mm); a °C user must see mm.
+    const data = buildHeroData({
+      weather: {
+        ...baseWeather,
+        daily: {
+          ...baseWeather.daily,
+          rainChanceMax: [null],
+          rainAmountTotal: [0.18],
+        },
+      },
+      location: baseLocation,
+      unit: "C",
+    });
+
+    const rain = data.dailyGuidance.find((item) => item.kind === "rain");
+    assert.equal(rain.detail, "4.57 mm expected today");
+  });
+
+  test("keeps the rain-guidance amount in inches for °F users", () => {
+    const data = buildHeroData({
+      weather: {
+        ...baseWeather,
+        daily: {
+          ...baseWeather.daily,
+          rainChanceMax: [null],
+          rainAmountTotal: [0.18],
+        },
+      },
+      location: baseLocation,
+      unit: "F",
+    });
+
+    const rain = data.dailyGuidance.find((item) => item.kind === "rain");
+    assert.equal(rain.detail, "0.18 in expected today");
+  });
+
   test("marks daily guidance unavailable instead of inventing readings", () => {
     const data = buildHeroData({
       weather: {

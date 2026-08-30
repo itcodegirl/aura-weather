@@ -125,11 +125,13 @@ function formatPercent(value) {
   return numeric === null ? "" : `${Math.round(numeric)}%`;
 }
 
-function buildRainGuidance(weather) {
+function buildRainGuidance(weather, unit) {
   const chance = toFiniteNumber(weather?.daily?.rainChanceMax?.[0]);
   const amount = toFiniteNumber(weather?.daily?.rainAmountTotal?.[0]);
   const chanceLabel = formatPercent(chance);
-  const amountLabel = formatPrecipitation(amount, "F", "F");
+  // Wire amounts are pinned to inches (source "F") regardless of the
+  // display unit; only the rendered label converts to the user's unit.
+  const amountLabel = formatPrecipitation(amount, unit, "F");
 
   if (chance === null && amount === null) {
     return {
@@ -371,7 +373,7 @@ function buildWindGuidance(weather, unit) {
  */
 function buildDailyGuidance(weather, unit) {
   return [
-    buildRainGuidance(weather),
+    buildRainGuidance(weather, unit),
     buildUvGuidance(weather),
     buildWindGuidance(weather, unit),
   ].filter((item) => item.tone !== "calm");

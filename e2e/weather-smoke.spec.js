@@ -194,13 +194,23 @@ test("updates hero location when a city is selected from search", async ({ page 
   await searchInput.press("Enter");
   await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
 
-  // Highlighting first does commit, and selecting leaves focus on the
-  // input so the next Tab continues from the search box instead of
-  // restarting at the top of the document.
+  // Highlighting first does commit, and selection never drops focus to
+  // <body> — the regression this guards. Where focus lands depends on
+  // whether the switch shows the global loader: without it focus stays in
+  // the search box, and with it App moves focus to #main-content on
+  // recovery so a screen-reader user lands in the dashboard rather than on
+  // body. Either is correct; body is not.
   await searchInput.press("ArrowDown");
   await searchInput.press("Enter");
   await expect(page.locator(".hero-location")).toContainText("Kyoto, Japan");
-  await expect(searchInput).toBeFocused();
+  const landedOn = await page.evaluate(() => {
+    const active = document.activeElement;
+    if (!active || active === document.body) return "body";
+    if (active.id === "main-content") return "main";
+    if (active.getAttribute("role") === "combobox") return "search";
+    return active.tagName;
+  });
+  expect(["search", "main"]).toContain(landedOn);
 });
 
 test("groups idle suggestions into recent and saved sections", async ({ page }) => {

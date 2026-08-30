@@ -189,6 +189,11 @@ test("updates hero location when a city is selected from search", async ({ page 
   // Enter acts only on an option the user actually highlighted. With
   // nothing highlighted it must not commit the first result: the hero
   // stays on the city that is already loaded.
+  // Park the pointer away from the listbox first. The click above leaves
+  // it over where Tokyo's option was, so the next result mounts under the
+  // cursor and hover-highlights it — which would make the Enter below a
+  // legitimate commit rather than the blind one under test.
+  await page.mouse.move(0, 0);
   await searchInput.fill("kyo");
   await expect(page.getByRole("option", { name: /kyoto/i })).toBeVisible();
   await searchInput.press("Enter");

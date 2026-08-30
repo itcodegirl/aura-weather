@@ -186,12 +186,21 @@ test("updates hero location when a city is selected from search", async ({ page 
   await expect(page.locator(".location-notice")).toHaveCount(0);
   await expect(page.getByText("Cloud Backup")).toBeVisible();
 
-  await searchInput.focus();
-  await expect(
-    page.getByRole("option", { name: /Tokyo, Recent.*Japan/ })
-  ).toBeVisible();
+  // Enter acts only on an option the user actually highlighted. With
+  // nothing highlighted it must not commit the first result: the hero
+  // stays on the city that is already loaded.
+  await searchInput.fill("kyo");
+  await expect(page.getByRole("option", { name: /kyoto/i })).toBeVisible();
   await searchInput.press("Enter");
   await expect(page.locator(".hero-location")).toContainText("Tokyo, Japan");
+
+  // Highlighting first does commit, and selecting leaves focus on the
+  // input so the next Tab continues from the search box instead of
+  // restarting at the top of the document.
+  await searchInput.press("ArrowDown");
+  await searchInput.press("Enter");
+  await expect(page.locator(".hero-location")).toContainText("Kyoto, Japan");
+  await expect(searchInput).toBeFocused();
 });
 
 test("groups idle suggestions into recent and saved sections", async ({ page }) => {

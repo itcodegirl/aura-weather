@@ -88,14 +88,91 @@ describe("meteorology utils", () => {
   test("calculatePressureTrend skips null pressure samples instead of treating them as 0", () => {
     // A null hourly pressure must NOT coerce to 0 (a fake near-vacuum
     // reading) and crash the rolling 6-hour delta downward into a
-    // false "Storm possible" signal.
+    // false "Storm possible" signal. The null sits mid-window so the
+    // ~6h-ago baseline sample itself stays present.
     const times = buildHourlyIsoTimes(8, 0);
     const withNulls = calculatePressureTrend(
-      [1010, null, 1010, 1010, 1010, 1010, 1010, 1010],
+      [1010, 1010, 1010, null, 1010, 1010, 1010, 1010],
       times
     );
     assert.equal(withNulls.direction, "steady");
     assert.equal(withNulls.interpretation, "Stable");
+  });
+
+  test("calculatePressureTrend gives a viewer 8+ zones away the same trend as a local viewer", () => {
+    // Open-Meteo (timezone=auto) returns naive location-local strings
+    // like "2026-03-15T19:00" that new Date() parses in the DEVICE
+    // zone. The "now" anchor must be reframed into the location's wall
+    // clock, or a viewer in another zone anchors on the wrong sample.
+    const originalTz = process.env.TZ;
+    try {
+      const timeZone = "Pacific/Honolulu"; // UTC-10, no DST
+      // 16 naive hourly slots, 19:00 Mar 15 → 10:00 Mar 16 local.
+      const startUtc = Date.UTC(2026, 2, 15, 19);
+      const times = Array.from({ length: 16 }, (_, i) =>
+        new Date(startUtc + i * 60 * 60 * 1000).toISOString().slice(0, 16)
+      );
+      // Falls ~3 hPa into "now" (02:05 local), then rises afterward —
+      // so an anchor dragged off the location's wall clock flips the
+      // verdict instead of accidentally agreeing.
+      const pressures = [
+        1009, 1008.5, 1008, 1007.5, 1007, 1006.5, 1006, 1005.5, 1005, 1006,
+        1007, 1008, 1009, 1010, 1011, 1012,
+      ];
+      // Both viewers look at the same real instant: 02:05 in Honolulu.
+      const instant = Date.UTC(2026, 2, 16, 12, 5);
+
+      process.env.TZ = "Pacific/Honolulu";
+      const localViewer = calculatePressureTrend(pressures, times, {
+        timeZone,
+        now: instant,
+      });
+      process.env.TZ = "Asia/Tokyo"; // 19 hours ahead of the location
+      const remoteViewer = calculatePressureTrend(pressures, times, {
+        timeZone,
+        now: instant,
+      });
+
+      assert.equal(localViewer.direction, "falling");
+      assert.equal(localViewer.interpretation, "Storm possible");
+      assert.deepEqual(remoteViewer, localViewer);
+    } finally {
+      if (originalTz === undefined) {
+        delete process.env.TZ;
+      } else {
+        process.env.TZ = originalTz;
+      }
+    }
+  });
+
+  test("calculatePressureTrend anchors the 6h baseline by timestamp, not by counting samples", () => {
+    // Nulls are filtered before the lookback, so "6 samples ago" used
+    // to silently mean "6 VALID samples ago" — a gapped series
+    // stretched the labeled 6-hour window to 7+ real hours.
+    const times = buildHourlyIsoTimes(13, 0);
+
+    // Gaps elsewhere in the window; the true ~6h-ago sample (1008)
+    // exists. Counting 6 valid samples back would land on 1010 and
+    // report -6 instead of the honest -4.
+    const gappedButAnchored = calculatePressureTrend(
+      [1010, 1010, 1010, 1010, 1010, 1009, 1008, 1007, null, 1006, null, 1005, 1004],
+      times
+    );
+    assert.equal(gappedButAnchored.delta, 1004 - 1008);
+    assert.equal(gappedButAnchored.direction, "falling");
+    assert.equal(gappedButAnchored.interpretation, "Storm possible");
+
+    // The ~6h-ago slot itself is the gap: no honest baseline exists, so
+    // the trend is uncomputable — not a verdict from a stretched window
+    // (index-based lookback would reach 7h back and say "Storm possible").
+    const missingBaseline = calculatePressureTrend(
+      [1010, 1010, 1010, 1010, 1010, 1010, null, 1004, 1004, 1004, 1004, 1004, 1004],
+      times
+    );
+    assert.equal(missingBaseline.current, 1004);
+    assert.equal(missingBaseline.delta, 0);
+    assert.equal(missingBaseline.direction, "steady");
+    assert.equal(missingBaseline.interpretation, "Not enough data");
   });
 
   test("classifyStormRisk treats null cape as Minimal (not silently 0)", () => {

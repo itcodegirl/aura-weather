@@ -1,5 +1,13 @@
 import { toFahrenheit } from "./temperature.js";
 import { toFiniteNumber } from "../utils/numbers.js";
+import { getZonedNow } from "../utils/dates.js";
+
+const HOUR_MS = 60 * 60 * 1000;
+const TREND_LOOKBACK_MS = 6 * HOUR_MS;
+// The 6-hours-ago baseline must actually be ~6 hours old. A sample more
+// than 30 minutes off the mark would silently relabel a different window
+// as "the last 6 hours", so it is rejected rather than accepted.
+const TREND_LOOKBACK_TOLERANCE_MS = 30 * 60 * 1000;
 
 /**
  * Classify storm risk using CAPE (Convective Available Potential Energy).
@@ -28,8 +36,15 @@ export function classifyStormRisk(cape, weatherCode) {
 
 /**
  * Calculate barometric pressure trend over the last 6 hours.
+ *
+ * `timeZone` is the location's IANA zone (`weather.meta.timezone`):
+ * Open-Meteo hourly timestamps are naive location-local strings that
+ * `new Date()` parses in the *device* zone, so "now" must be reframed
+ * into the location's wall clock (getZonedNow) before any comparison —
+ * otherwise a viewer hours away anchors on the wrong sample. `now` is
+ * an injectable clock for tests, per analyzeNowcast/useRainAnalysis.
  */
-export function calculatePressureTrend(hourlyPressure, hourlyTime) {
+export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {}) {
   if (
     !Array.isArray(hourlyPressure) ||
     !Array.isArray(hourlyTime) ||
@@ -45,7 +60,7 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime) {
     };
   }
 
-  const now = new Date();
+  const referenceNow = getZonedNow(options.timeZone, options.now).getTime();
   const paired = [];
   const maxIndex = Math.min(hourlyPressure.length, hourlyTime.length);
 
@@ -67,7 +82,7 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime) {
     };
   }
 
-  const nowIdx = paired.findIndex((entry) => entry.time >= now.getTime());
+  const nowIdx = paired.findIndex((entry) => entry.time >= referenceNow);
   const currentIdx = nowIdx === -1 ? paired.length - 1 : nowIdx;
 
   // A single usable sample compares against itself (delta 0), which
@@ -84,9 +99,41 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime) {
     };
   }
 
-  const sixHoursAgo =
-    paired[Math.max(0, currentIdx - 6)]?.value ?? paired[0]?.value;
-  const current = paired[currentIdx]?.value ?? paired[paired.length - 1]?.value;
+  // The baseline is selected by TIMESTAMP, not by counting samples back:
+  // nulls are filtered above, so "6 entries ago" can silently be 9+ real
+  // hours ago when the series has gaps, mislabeling a stretched window
+  // as "the last 6 hours".
+  const currentTime = paired[currentIdx].time;
+  const targetTime = currentTime - TREND_LOOKBACK_MS;
+  let baselineIdx = -1;
+  for (let i = 0; i < currentIdx; i += 1) {
+    const distance = Math.abs(paired[i].time - targetTime);
+    if (
+      distance <= TREND_LOOKBACK_TOLERANCE_MS &&
+      (baselineIdx === -1 ||
+        distance < Math.abs(paired[baselineIdx].time - targetTime))
+    ) {
+      baselineIdx = i;
+    }
+  }
+
+  if (baselineIdx === -1) {
+    // No usable ~6h-old sample: the trend is uncomputable, not "Stable".
+    return {
+      current: paired[currentIdx].value,
+      delta: 0,
+      direction: "steady",
+      interpretation: "Not enough data",
+      sparkline: paired
+        .filter(
+          (entry) => entry.time >= targetTime && entry.time <= currentTime
+        )
+        .map((entry) => entry.value),
+    };
+  }
+
+  const sixHoursAgo = paired[baselineIdx].value;
+  const current = paired[currentIdx].value;
   const delta = current - sixHoursAgo;
 
   let direction;
@@ -103,7 +150,7 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime) {
   }
 
   const sparkline = [];
-  for (let i = Math.max(0, currentIdx - 6); i <= currentIdx; i += 1) {
+  for (let i = baselineIdx; i <= currentIdx; i += 1) {
     const value = paired[i]?.value;
     if (Number.isFinite(value)) {
       sparkline.push(value);

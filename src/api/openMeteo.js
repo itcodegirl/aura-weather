@@ -2,6 +2,13 @@
 
 import { validateCoordinates } from "../utils/weatherUnits.js";
 import { toFiniteNumber } from "../utils/numbers.js";
+import {
+  createAbortError,
+  createRequestSignal,
+  createTimeoutError,
+  isAbortError,
+  isTimeoutError,
+} from "./requestSignal.js";
 import { normalizeTimeZone, normalizeWeatherResponse } from "./transforms.js";
 
 const ENDPOINTS = {
@@ -14,6 +21,13 @@ const ENDPOINTS = {
 const GEOCODE_RESULTS_LIMIT = 5;
 
 const TIMEOUT_MS = 10_000;
+// Wall-clock ceiling for a whole retry sequence, not per attempt. The
+// per-attempt timeout used to be the only bound, so a forecast that stalled
+// through both retries ran ~31s (3 x 10s + backoff) before the UI said it had
+// "timed out" — copy that was true of an attempt and false of the wait. One
+// full attempt plus a real retry window fits in 15s; past that the honest
+// answer is that the request timed out, so that is when it is given.
+const TOTAL_TIMEOUT_MS = 15_000;
 const DEFAULT_TEMPERATURE_UNIT = "fahrenheit";
 const DEFAULT_WIND_SPEED_UNIT = "mph";
 const DEFAULT_PRECIPITATION_UNIT = "inch";
@@ -26,16 +40,6 @@ export const ALERTS_STATUS = {
   unsupported: "unsupported",
   unavailable: "unavailable",
 };
-
-function isAbortError(error) {
-  return error?.name === "AbortError";
-}
-
-function createAbortError() {
-  const error = new Error("Request aborted");
-  error.name = "AbortError";
-  return error;
-}
 
 function throwIfAborted(signal) {
   if (signal?.aborted) {
@@ -83,26 +87,15 @@ function waitForRetry(delayMs, signal) {
   });
 }
 
-function getSignal(signal) {
-  const hasAbortSignal = typeof AbortSignal !== "undefined";
-  const timeoutSignal =
-    hasAbortSignal && typeof AbortSignal.timeout === "function"
-      ? AbortSignal.timeout(TIMEOUT_MS)
-      : undefined;
-
-  if (!signal) {
-    return timeoutSignal;
-  }
-
-  if (
-    timeoutSignal &&
-    hasAbortSignal &&
-    typeof AbortSignal.any === "function"
-  ) {
-    return AbortSignal.any([signal, timeoutSignal]);
-  }
-
-  return signal;
+// The request-timing knobs travel together so every adapter in this module
+// honors the same budget and tests can shrink it without waiting out the
+// production one.
+function requestTiming(options, defaultRetryDelaysMs) {
+  return {
+    retryDelaysMs: options.retryDelaysMs ?? defaultRetryDelaysMs,
+    timeoutMs: options.timeoutMs,
+    totalTimeoutMs: options.totalTimeoutMs,
+  };
 }
 
 function getUtcDateParts(now) {
@@ -146,40 +139,88 @@ function getDatePartsInTimeZone(now, timeZone) {
 }
 
 async function fetchJson(url, options = {}) {
-  const { retryDelaysMs: _retryDelaysMs, ...fetchOptions } = options;
-  const response = await fetch(url, {
-    ...fetchOptions,
-    signal: getSignal(options.signal),
-  });
-
-  if (!response.ok) {
-    const error = new Error(`Request failed (${response.status})`);
-    error.name = "RequestError";
-    error.status = response.status;
-    error.url = url;
-    throw error;
-  }
+  const {
+    retryDelaysMs: _retryDelaysMs,
+    totalTimeoutMs: _totalTimeoutMs,
+    timeoutMs,
+    signal,
+    ...fetchOptions
+  } = options;
+  // Cancellation and timeout are composed manually rather than through
+  // AbortSignal.any, which Safari <17 and Firefox <115 lack. release() runs
+  // in the finally so neither the timer nor the caller-signal listener
+  // outlives the attempt.
+  const attempt = createRequestSignal(signal, timeoutMs);
 
   try {
-    return await response.json();
-  } catch {
-    throw new Error("Invalid JSON response from weather service");
+    const response = await fetch(url, {
+      ...fetchOptions,
+      signal: attempt.signal,
+    });
+
+    if (!response.ok) {
+      const error = new Error(`Request failed (${response.status})`);
+      error.name = "RequestError";
+      error.status = response.status;
+      error.url = url;
+      throw error;
+    }
+
+    try {
+      return await response.json();
+    } catch {
+      throw new Error("Invalid JSON response from weather service");
+    }
+  } catch (error) {
+    throw attempt.normalizeError(error);
+  } finally {
+    attempt.release();
   }
 }
 
 async function fetchJsonWithRetry(url, options = {}) {
   const retryDelays = normalizeRetryDelays(options.retryDelaysMs);
+  const attemptTimeoutMs = toFiniteNumber(options.timeoutMs) ?? TIMEOUT_MS;
+  const totalTimeoutMs =
+    toFiniteNumber(options.totalTimeoutMs) ?? TOTAL_TIMEOUT_MS;
+  // One deadline for the whole sequence. Each attempt still gets its own
+  // timeout, clamped to whatever is left, so retries can never push the total
+  // wait past the budget the "timed out" copy promises.
+  const deadlineAt = Date.now() + totalTimeoutMs;
   let lastError = null;
 
   for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+    const remainingMs = deadlineAt - Date.now();
+    if (remainingMs <= 0) {
+      throw isTimeoutError(lastError)
+        ? lastError
+        : createTimeoutError(
+            `Request timed out after ${Math.round(totalTimeoutMs)}ms`,
+            lastError ?? undefined
+          );
+    }
+
     try {
-      return await fetchJson(url, options);
+      return await fetchJson(url, {
+        ...options,
+        timeoutMs: Math.min(attemptTimeoutMs, remainingMs),
+      });
     } catch (error) {
       lastError = error;
       if (attempt >= retryDelays.length || !isRetryableError(error)) {
         throw error;
       }
-      await waitForRetry(retryDelays[attempt], options.signal);
+
+      const delayMs = retryDelays[attempt];
+      if (deadlineAt - Date.now() <= delayMs) {
+        throw isTimeoutError(error)
+          ? error
+          : createTimeoutError(
+              `Request timed out after ${Math.round(totalTimeoutMs)}ms`,
+              error
+            );
+      }
+      await waitForRetry(delayMs, options.signal);
     }
   }
 
@@ -326,7 +367,7 @@ export async function fetchWeather(lat, lon, options = {}) {
 
   const rawResponse = await fetchJsonWithRetry(`${ENDPOINTS.weather}?${params}`, {
     signal,
-    retryDelaysMs: options.retryDelaysMs ?? FORECAST_RETRY_DELAYS_MS,
+    ...requestTiming(options, FORECAST_RETRY_DELAYS_MS),
   });
   return normalizeWeatherResponse(rawResponse);
 }
@@ -366,7 +407,7 @@ export async function fetchHistoricalTemperatureAverage(
 
   const data = await fetchJsonWithRetry(`${ENDPOINTS.archive}?${params}`, {
     signal,
-    retryDelaysMs: options.retryDelaysMs,
+    ...requestTiming(options),
   });
   const daily = data?.daily;
   const times = daily?.time;
@@ -438,7 +479,7 @@ export async function fetchAirQuality(lat, lon, options = {}) {
     // should have filled two-thirds of.
     const data = await fetchJsonWithRetry(
       `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=us_aqi`,
-      { signal: options.signal, retryDelaysMs: options.retryDelaysMs }
+      { signal: options.signal, ...requestTiming(options) }
     );
     // toFiniteNumber returns null for nullish/empty inputs; the legacy
     // Number()-based check would have surfaced a null AQI as 0.
@@ -464,7 +505,7 @@ export async function geocodeCity(name, options = {}) {
     `${ENDPOINTS.geocode}?name=${encodeURIComponent(query)}&count=${GEOCODE_RESULTS_LIMIT}`,
     {
       signal: options.signal,
-      retryDelaysMs: options.retryDelaysMs ?? GEOCODE_RETRY_DELAYS_MS,
+      ...requestTiming(options, GEOCODE_RETRY_DELAYS_MS),
     }
   );
   return Array.isArray(data?.results) ? data.results : [];
@@ -482,7 +523,7 @@ export async function fetchSevereWeatherAlerts(lat, lon, options = {}) {
   try {
     const payload = await fetchJsonWithRetry(`${ENDPOINTS.alerts}?${params}`, {
       signal: options.signal,
-      retryDelaysMs: options.retryDelaysMs,
+      ...requestTiming(options),
       headers: {
         Accept: "application/geo+json",
       },

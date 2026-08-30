@@ -6,7 +6,7 @@ import "../../scripts/test-render-setup.mjs";
 const React = (await import("react")).default;
 const { render, cleanup, act, waitFor } = await import("@testing-library/react");
 const { useWeatherData } = await import("./useWeatherData.js");
-const { readCachedWeatherSnapshot } = await import(
+const { readCachedWeatherSnapshot, writeCachedWeatherSnapshot } = await import(
   "../services/weatherSnapshotCache.js"
 );
 
@@ -154,6 +154,67 @@ describe("useWeatherData supplemental merge", () => {
     assert.equal(snapshot.trustMeta.aqiStatus, "ready");
     assert.equal(snapshot.trustMeta.alertsStatus, "ready");
     assert.equal(snapshot.trustMeta.forecastStatus, "ready");
+  });
+});
+
+describe("useWeatherData degraded snapshot restore", () => {
+  test("keeps the snapshot's supplemental vocabulary but marks the meta restored", async () => {
+    window.localStorage.clear();
+
+    // Snapshot from a successful supplemental merge, 20h old — outside
+    // the 12h fresh window, inside the 48h degraded ceiling.
+    const capturedAt = Date.now() - 20 * 60 * 60 * 1000;
+    const snapshotTrustMeta = {
+      weatherFetchedAt: capturedAt,
+      forecastStatus: "ready",
+      cacheStatus: "idle",
+      aqiFetchedAt: capturedAt,
+      aqiStatus: "ready",
+      alertsFetchedAt: capturedAt,
+      alertsStatus: "ready",
+    };
+    writeCachedWeatherSnapshot({
+      coordinates: {
+        latitude: PROBE_LOCATION.lat,
+        longitude: PROBE_LOCATION.lon,
+      },
+      weather: { meta: { latitude: PROBE_LOCATION.lat }, alerts: [], aqi: 42 },
+      trustMeta: snapshotTrustMeta,
+      cachedAt: capturedAt,
+    });
+
+    globalThis.fetch = () => Promise.reject(new TypeError("network down"));
+
+    let latest = null;
+    await act(async () => {
+      render(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+
+    await waitFor(() => {
+      assert.ok(latest?.weather, "snapshot restored as weather state");
+      assert.equal(latest.loading, false);
+      assert.equal(latest.trustMeta.cacheStatus, "restored");
+    });
+
+    // The restored meta must carry enough for consumers to stay honest:
+    // forecastStatus downgraded to "cached" and cacheCapturedAt stamped,
+    // while the supplemental statuses keep the snapshot's exact ALERTS_STATUS
+    // vocabulary — AlertsCard needs the literal "ready" to render the
+    // restored alerts, so the Saved-vs-Live downgrade is the panel's job,
+    // keyed off cacheStatus === "restored".
+    assert.equal(latest.trustMeta.forecastStatus, "cached");
+    assert.equal(latest.trustMeta.cacheCapturedAt, capturedAt);
+    assert.equal(latest.trustMeta.aqiStatus, "ready");
+    assert.equal(latest.trustMeta.aqiFetchedAt, capturedAt);
+    assert.equal(latest.trustMeta.alertsStatus, "ready");
+    assert.equal(latest.trustMeta.alertsFetchedAt, capturedAt);
   });
 });
 

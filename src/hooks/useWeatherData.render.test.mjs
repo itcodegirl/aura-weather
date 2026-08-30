@@ -224,11 +224,19 @@ describe("useWeatherData degraded snapshot restore", () => {
       );
     });
 
-    await waitFor(() => {
-      assert.ok(latest?.weather, "snapshot restored as weather state");
-      assert.equal(latest.loading, false);
-      assert.equal(latest.trustMeta.cacheStatus, "restored");
-    });
+    // The restore only happens once the forecast fetch has exhausted its
+    // retries, and FORECAST_RETRY_DELAYS_MS deliberately spends 950ms of
+    // backoff getting there — against waitFor's 1000ms default. That left
+    // no margin: green on an idle machine, red whenever CI ran the suites
+    // in parallel. The budget has to clear the backoff, not race it.
+    await waitFor(
+      () => {
+        assert.ok(latest?.weather, "snapshot restored as weather state");
+        assert.equal(latest.loading, false);
+        assert.equal(latest.trustMeta.cacheStatus, "restored");
+      },
+      { timeout: 5000 }
+    );
 
     // The restored meta must carry enough for consumers to stay honest:
     // forecastStatus downgraded to "cached" and cacheCapturedAt stamped,

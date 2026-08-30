@@ -15,6 +15,7 @@ function getEmptyRainAnalysis() {
     past12h: null,
     past24h: null,
     past48h: null,
+    pastWindowCoverage: { h12: 0, h24: 0, h48: 0 },
     missingSlots: 0,
   };
 }
@@ -145,6 +146,17 @@ export function analyzeRain(hourly, timeZone, now = Date.now()) {
   const past24h = sumPastHours(24);
   const past48h = sumPastHours(48);
 
+  // Past slots the series can actually serve per look-back window. The
+  // sums above clamp at index 0, so a series with less history than a
+  // window requests (e.g. 48h backed by 36 slots) would otherwise let two
+  // window totals silently match; consumers need the real span to label it.
+  const coveredPastHours = (hoursBack) => Math.min(hoursBack, idx);
+  const pastWindowCoverage = {
+    h12: coveredPastHours(12),
+    h24: coveredPastHours(24),
+    h48: coveredPastHours(48),
+  };
+
   return {
     hasData,
     hours,
@@ -156,6 +168,7 @@ export function analyzeRain(hourly, timeZone, now = Date.now()) {
     past12h,
     past24h,
     past48h,
+    pastWindowCoverage,
     missingSlots,
   };
 }

@@ -234,6 +234,133 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
   });
 });
 
+describe("RainCard rain-total provenance qualifiers", () => {
+  function renderInInchesMode(hourly) {
+    const view = render(
+      React.createElement(RainCard, {
+        weather: { hourly },
+        unit: "F",
+        dataUnit: "F",
+      })
+    );
+    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
+      (b) => b.textContent.trim() === "in"
+    );
+    fireEvent.click(inBtn);
+    return view;
+  }
+
+  test("a gapped series qualifies the running total as a floor, visibly and in aria", () => {
+    // Slot 2 is a provider gap: it folds into the running sum as 0, so
+    // every total from that hour on is a floor, not an exact value.
+    const { container } = renderInInchesMode(
+      buildHourly({
+        rainChance: Array.from({ length: 24 }, (_, i) => (i === 2 ? null : 60)),
+        rainAmount: Array.from({ length: 24 }, (_, i) => (i === 2 ? null : 0.05)),
+      })
+    );
+    const samples = [...container.querySelectorAll(".rain-touch-sample")];
+    assert.ok(samples.length >= 6, "expected the full 24-sample strip");
+
+    const context = () =>
+      container.querySelector(".rain-selected-sample span:last-child")
+        ?.textContent || "";
+
+    // Hours 0,1,3,4,5 contribute 0.05 each = 0.25, with the gap folded as 0.
+    fireEvent.click(samples[5]);
+    assert.equal(context(), "≥ 0.25 in total so far");
+    assert.match(
+      samples[5].getAttribute("aria-label") || "",
+      /at least 0\.25 in total so far/,
+      "aria mirror of a gapped running total must say 'at least'"
+    );
+
+    // Before the gap the sum is complete, so no qualifier applies.
+    fireEvent.click(samples[1]);
+    assert.equal(context(), "0.10 in total so far");
+    assert.doesNotMatch(
+      samples[1].getAttribute("aria-label") || "",
+      /at least/,
+      "totals from complete prefixes stay unqualified"
+    );
+  });
+
+  test("a complete series renders no floor qualifier anywhere", () => {
+    const { container } = renderInInchesMode(
+      buildHourly({
+        rainChance: Array.from({ length: 24 }, () => 60),
+        rainAmount: Array.from({ length: 24 }, () => 0.05),
+      })
+    );
+
+    assert.equal((container.textContent || "").includes("≥"), false);
+    const qualifiedLabels = [
+      ...container.querySelectorAll(".rain-touch-sample"),
+    ].filter((sample) =>
+      (sample.getAttribute("aria-label") || "").includes("at least")
+    );
+    assert.equal(qualifiedLabels.length, 0);
+  });
+
+  function buildHourlyWithHistory(pastHours) {
+    const start = new Date(Date.now() + 60_000);
+    start.setSeconds(0, 0);
+    const length = pastHours + 24;
+    const time = Array.from({ length }, (_, index) =>
+      new Date(start.getTime() + (index - pastHours) * 60 * 60 * 1000).toISOString()
+    );
+    return {
+      time,
+      rainChance: Array.from({ length }, () => 60),
+      rainAmount: Array.from({ length }, () => 0.05),
+    };
+  }
+
+  function getHistoryPill(container, label) {
+    return [...container.querySelectorAll(".rain-history-pill")].find(
+      (pill) =>
+        pill.querySelector(".rain-history-pill-label")?.textContent === label
+    );
+  }
+
+  test("a short-history 48h pill discloses how many hours actually back it", () => {
+    const { container } = render(
+      React.createElement(RainCard, {
+        weather: { hourly: buildHourlyWithHistory(36) },
+        unit: "F",
+        dataUnit: "F",
+      })
+    );
+
+    const pill48 = getHistoryPill(container, "48h");
+    assert.equal(
+      pill48?.querySelector(".rain-history-pill-note")?.textContent.trim(),
+      "36h of data"
+    );
+    // Fully-served windows carry no note.
+    const pill24 = getHistoryPill(container, "24h");
+    assert.equal(pill24?.querySelector(".rain-history-pill-note"), null);
+  });
+
+  test("full 48h of history renders no coverage note", () => {
+    const { container } = render(
+      React.createElement(RainCard, {
+        weather: { hourly: buildHourlyWithHistory(48) },
+        unit: "F",
+        dataUnit: "F",
+      })
+    );
+
+    assert.equal(container.querySelector(".rain-history-pill-note"), null);
+  });
+
+  test("the past totals are labeled as modeled, not observed", () => {
+    renderWithRainyHours();
+    assert.equal(screen.queryByText("Observed today"), null);
+    assert.ok(getRainStatValue("Modeled so far today"));
+  });
+});
+
 describe("RainCard roving tabindex + valid strip role", () => {
   test("exactly one chart bar is a tab stop, and ArrowRight moves it forward", () => {
     const { container } = renderWithRainyHours();

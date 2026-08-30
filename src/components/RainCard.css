@@ -159,7 +159,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.rain-stat-value--observed {
+.rain-stat-value--modeled {
   color: var(--accent-warm);
 }
 
@@ -200,6 +200,9 @@
 
 .rain-history-pill {
   display: flex;
+  /* Wrap only matters when a short-history note is present: the note
+     takes the full second row while label/value keep their single line. */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -223,6 +226,14 @@
   font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.rain-history-pill-note {
+  flex-basis: 100%;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 /*

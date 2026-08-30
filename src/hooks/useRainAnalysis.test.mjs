@@ -89,4 +89,44 @@ describe("analyzeRain", () => {
     // Only the five early-morning 06-16 slots (2.5), not the 06-15 daytime rain.
     assert.equal(analysis.soFarToday, 2.5);
   });
+
+  // Hourly slots starting `pastHours` whole hours before `now`, plus a
+  // 24-hour forward window, so the analysis window starts at index
+  // `pastHours` exactly.
+  function buildHourlyWithHistory(pastHours, now) {
+    const length = pastHours + 24;
+    const time = Array.from({ length }, (_, index) =>
+      new Date(now + (index - pastHours) * 60 * 60 * 1000).toISOString()
+    );
+    return {
+      time,
+      rainChance: Array.from({ length }, () => 20),
+      rainAmount: Array.from({ length }, () => 1),
+    };
+  }
+
+  test("reports the real span behind each recent-total window when history runs short", () => {
+    const now = Date.UTC(2026, 7, 30, 12, 0, 0);
+    const analysis = analyzeRain(buildHourlyWithHistory(36, now), undefined, now);
+
+    assert.deepEqual(analysis.pastWindowCoverage, { h12: 12, h24: 24, h48: 36 });
+    // 1 unit/hour makes each sum equal its real span: the 48h window can
+    // only be backed by the 36 slots that exist.
+    assert.equal(analysis.past24h, 24);
+    assert.equal(analysis.past48h, 36);
+  });
+
+  test("reports full coverage when 48 past hours are present", () => {
+    const now = Date.UTC(2026, 7, 30, 12, 0, 0);
+    const analysis = analyzeRain(buildHourlyWithHistory(48, now), undefined, now);
+
+    assert.deepEqual(analysis.pastWindowCoverage, { h12: 12, h24: 24, h48: 48 });
+    assert.equal(analysis.past48h, 48);
+  });
+
+  test("reports zero coverage for a forecast-only series", () => {
+    const analysis = analyzeRain(buildHourly());
+
+    assert.deepEqual(analysis.pastWindowCoverage, { h12: 0, h24: 0, h48: 0 });
+  });
 });

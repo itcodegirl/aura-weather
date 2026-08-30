@@ -66,6 +66,7 @@ function RainCard({
     past12h,
     past24h,
     past48h,
+    pastWindowCoverage,
     missingSlots,
   } = rainAnalysis;
   const timelineSummary = useMemo(
@@ -79,7 +80,7 @@ function RainCard({
     nextRainTimeLabel,
     rainRiskTone,
     rainRiskLabel,
-    observedTodayLabel,
+    modeledTodayLabel,
     projectedTotalLabel,
     past12hLabel,
     past24hLabel,
@@ -129,21 +130,31 @@ function RainCard({
     // Summed in the source precip unit (same basis as `total`) and formatted
     // per hour. Prefix sums via slice keep this a pure render (no mutable
     // accumulator); the window is capped at 24 hours so the O(n^2) cost is
-    // trivial.
-    const cumulativeLabels = hours.map((_, index) =>
-      formatPrecipitation(
-        hours.slice(0, index + 1).reduce((sum, entry) => {
+    // trivial. Null slots contribute 0 to the sum, so a prefix containing
+    // one can only undercount — those totals carry an "at least" floor
+    // qualifier instead of being presented as exact.
+    const cumulativeTotals = hours.map((_, index) => {
+      const prefix = hours.slice(0, index + 1);
+      const label = formatPrecipitation(
+        prefix.reduce((sum, entry) => {
           const entryAmount = toFiniteNumber(entry.amount);
           return sum + (entryAmount === null ? 0 : Math.max(entryAmount, 0));
         }, 0),
         unit,
         dataUnit
-      )
-    );
+      );
+      const hasGap = prefix.some(
+        (entry) => toFiniteNumber(entry.amount) === null
+      );
+      return {
+        display: hasGap ? `≥ ${label}` : label,
+        announce: hasGap ? `at least ${label}` : label,
+      };
+    });
     const bars = hours.map((hour, index) => {
       const value = mode === "chance" ? hour.probability : hour.amount;
       const isMissing = value === null;
-      const cumulativeLabel = cumulativeLabels[index];
+      const cumulative = cumulativeTotals[index];
       const heightPct =
         isMissing
           ? 14
@@ -210,12 +221,12 @@ function RainCard({
         ? "data unavailable"
         : mode === "chance"
           ? chanceMeta
-          : `${cumulativeLabel} total so far`;
+          : `${cumulative.display} total so far`;
       const sampleAnnounce = isMissing
         ? `${timeLabel} — data unavailable`
         : mode === "chance"
           ? `${timeLabel} — ${hour.probability}%`
-          : `${timeLabel} — ${valueLabel} this hour, ${cumulativeLabel} total so far`;
+          : `${timeLabel} — ${valueLabel} this hour, ${cumulative.announce} total so far`;
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
@@ -249,7 +260,7 @@ function RainCard({
       nextRainTimeLabel: safeNextRainTimeLabel,
       rainRiskTone: safeRiskTone,
       rainRiskLabel: safeRiskLabel,
-      observedTodayLabel: formatPrecipitation(soFarToday, unit, dataUnit),
+      modeledTodayLabel: formatPrecipitation(soFarToday, unit, dataUnit),
       projectedTotalLabel: formatPrecipitation(total, unit, dataUnit),
       past12hLabel: formatPrecipitation(past12h, unit, dataUnit),
       past24hLabel: formatPrecipitation(past24h, unit, dataUnit),
@@ -383,10 +394,13 @@ function RainCard({
             <div className="rain-stat">
               <Droplets size={14} />
               <div>
-                <div className="rain-stat-value rain-stat-value--observed">
-                  {observedTodayLabel}
+                {/* "Modeled", not "Observed": past slots come from the
+                    forecast provider's model/analysis series, not a rain
+                    gauge, and the label must not overclaim provenance. */}
+                <div className="rain-stat-value rain-stat-value--modeled">
+                  {modeledTodayLabel}
                 </div>
-                <div className="rain-stat-label">Observed today</div>
+                <div className="rain-stat-label">Modeled so far today</div>
               </div>
             </div>
             <div className="rain-stat">
@@ -411,24 +425,26 @@ function RainCard({
 
           <div className="rain-history-heading">Recent totals</div>
           <ul className="rain-history-pills" aria-label="Recent precipitation totals">
-            <li className="rain-history-pill">
-              <span className="rain-history-pill-label">12h</span>
-              <span className="rain-history-pill-value">
-                {past12hLabel}
-              </span>
-            </li>
-            <li className="rain-history-pill">
-              <span className="rain-history-pill-label">24h</span>
-              <span className="rain-history-pill-value">
-                {past24hLabel}
-              </span>
-            </li>
-            <li className="rain-history-pill">
-              <span className="rain-history-pill-label">48h</span>
-              <span className="rain-history-pill-value">
-                {past48hLabel}
-              </span>
-            </li>
+            {/* A window served by fewer past slots than it names (the
+                series can arrive short) would silently repeat a smaller
+                window's sum, so short pills disclose their real span. */}
+            {[
+              { label: "12h", window: 12, value: past12hLabel, coverage: pastWindowCoverage.h12 },
+              { label: "24h", window: 24, value: past24hLabel, coverage: pastWindowCoverage.h24 },
+              { label: "48h", window: 48, value: past48hLabel, coverage: pastWindowCoverage.h48 },
+            ].map((pill) => (
+              <li key={pill.label} className="rain-history-pill">
+                <span className="rain-history-pill-label">{pill.label}</span>
+                <span className="rain-history-pill-value">
+                  {pill.value}
+                </span>
+                {pill.coverage < pill.window ? (
+                  <span className="rain-history-pill-note">
+                    {pill.coverage}h of data
+                  </span>
+                ) : null}
+              </li>
+            ))}
           </ul>
         </div>
       )}

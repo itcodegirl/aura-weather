@@ -82,10 +82,13 @@
   transform: translateY(0.5px);
 }
 
-.hourly-tab:focus-visible {
-  outline: 2px solid rgba(111, 183, 242, 0.72);
-  outline-offset: 2px;
-}
+/* Focus rings on .hourly-tab / .hourly-col / .hourly-touch-sample are
+   deliberately NOT overridden here. The global button:focus-visible ring
+   in App.css (white #f8fafc, offset 2px) composites 8.4:1 on the card at
+   the lightest sky; a Glacier rgba(111,183,242,.72) ring measured 2.88:1
+   there — under the 3:1 WCAG 1.4.11 non-text minimum — and at
+   outline-offset:-2px it was drawn inside the bar, where it fell to
+   1.04-1.33:1 over the --chart-good-* green fill. */
 
 /* ── Legend ────────────────────────────────────────────────────────────────── */
 
@@ -203,12 +206,6 @@
   cursor: pointer;
   touch-action: manipulation;
   scroll-snap-align: center;
-}
-
-.hourly-col:focus-visible {
-  outline: 2px solid rgba(111, 183, 242, 0.72);
-  outline-offset: -2px;
-  border-radius: 4px;
 }
 
 .hourly-col.is-past .hourly-bar,
@@ -563,11 +560,6 @@
   background: rgba(243, 183, 101, 0.14);
   border-color: rgba(243, 183, 101, 0.42);
   opacity: 1;
-}
-
-.hourly-touch-sample:focus-visible {
-  outline: 2px solid rgba(111, 183, 242, 0.72);
-  outline-offset: 2px;
 }
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */

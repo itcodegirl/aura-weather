@@ -394,11 +394,10 @@
   touch-action: manipulation;
 }
 
-.rain-bar:focus-visible {
-  outline: 2px solid rgba(111, 183, 242, 0.72);
-  outline-offset: -2px;
-  border-radius: 4px;
-}
+/* Focus ring on .rain-bar is deliberately NOT overridden here: see the
+   same note in HourlyCard.css. The global white ring (App.css) stays at
+   a positive outline-offset so it never lands on the bar's own fill,
+   where a Glacier ring measured 1.04:1 against --chart-good-bottom. */
 
 .rain-bar-fill {
   width: 100%;

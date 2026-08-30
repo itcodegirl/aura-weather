@@ -1,4 +1,5 @@
 import { classifyUv } from "../../domain/exposure.js";
+import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase } from "../../utils/sunlight.js";
 import { getZonedNow } from "../../utils/dates.js";
@@ -171,7 +172,12 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   if (gust !== null && gust >= GUSTY_MPH) {
     return {
       tone: "notice",
-      text: `Gusts to ${Math.round(gust)} mph — secure loose items outside.`,
+      // GUSTY_MPH is a threshold on the raw reading, which is fetched in
+      // mph app-wide — but the *rendered* figure has to follow the display
+      // unit, as every other wind readout on the page does. This line
+      // hardcoded "mph", so a metric user read a gust in mph directly
+      // beside a wind speed in km/h.
+      text: `Gusts to ${formatWindSpeed(gust, unit)} — secure loose items outside.`,
     };
   }
 
@@ -220,6 +226,5 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   // 7. Baseline — only return a reading when something else above
   // matched. A blank baseline avoids cluttering the hero with
   // generic "Enjoy the day!" filler that earns the user's eye-roll.
-  void unit;
   return null;
 }

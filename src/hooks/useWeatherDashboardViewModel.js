@@ -54,7 +54,8 @@ export function useWeatherDashboardViewModel() {
   // enabled. The toggle stays user-settable; this only narrows the
   // network request. Also suppress when the missing-data mock is active
   // since that state doesn't need a live archive fetch.
-  const climateEnabled = showClimateContext && !prefersReducedData && !isMissingMock;
+  const climateEnabled =
+    showClimateContext && !prefersReducedData && !isMissingMock;
 
   const weatherState = useWeather({
     climateEnabled,

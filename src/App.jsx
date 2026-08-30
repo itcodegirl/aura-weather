@@ -123,11 +123,24 @@ function App() {
   // instead of being silently dropped on document.body. We only fire on
   // the transition out of those states, not on every dashboard render.
   const wasInterruptedRef = useRef(showGlobalLoading || showGlobalError);
+  // ...but a cold start is *also* that transition: showGlobalLoading is
+  // `loading && !weather`, which is true at mount for every first-time
+  // visitor, so this used to move focus into <main> on an ordinary first
+  // paint. The header — city search, My location, the unit toggle, the
+  // saved-city chips — precedes <main> in the DOM, so forward Tab could
+  // never reach any of it, and no focus ring had been shown to explain
+  // where focus went. Restore focus only when the dashboard is coming
+  // *back*; on the first paint leave it at the top of the document where
+  // the browser put it, with the skip link first in tab order.
+  const hasShownDashboardRef = useRef(false);
   useEffect(() => {
     const isInterrupted = showGlobalLoading || showGlobalError;
-    if (wasInterruptedRef.current && !isInterrupted) {
-      const main = document.getElementById("main-content");
-      main?.focus?.({ preventScroll: true });
+    if (!isInterrupted) {
+      if (wasInterruptedRef.current && hasShownDashboardRef.current) {
+        const main = document.getElementById("main-content");
+        main?.focus?.({ preventScroll: true });
+      }
+      hasShownDashboardRef.current = true;
     }
     wasInterruptedRef.current = isInterrupted;
   }, [showGlobalLoading, showGlobalError]);

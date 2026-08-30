@@ -199,7 +199,7 @@ export function useCitySearch({ onSelect, idleResults = [] } = {}) {
   );
 
   const handleSelect = useCallback(
-    (city) => {
+    (city, { keepFocus = false } = {}) => {
       if (typeof onSelect !== "function") {
         return;
       }
@@ -221,7 +221,21 @@ export function useCitySearch({ onSelect, idleResults = [] } = {}) {
       setOpen(false);
       setActiveIndex(-1);
       setResolvedQuery("");
-      inputRef.current?.blur();
+      /*
+       * Keyboard selection must leave focus in the textbox (ARIA APG
+       * combobox) — the same rule the Escape branch below and clear()
+       * already follow. Blurring dropped focus onto <body>, so the next
+       * Tab restarted from the top of the document.
+       *
+       * Pointer selection still blurs: handleRowMouseDown preventDefaults
+       * to hold focus on the input during the tap, so without this the
+       * mobile soft keyboard would stay open over the fresh forecast.
+       */
+      if (keepFocus) {
+        inputRef.current?.focus();
+      } else {
+        inputRef.current?.blur();
+      }
     },
     [onSelect]
   );
@@ -270,7 +284,7 @@ export function useCitySearch({ onSelect, idleResults = [] } = {}) {
         const targetIndex = activeIndexSafe >= 0 ? activeIndexSafe : 0;
         const city = visibleResults[targetIndex];
         if (city) {
-          handleSelect(city);
+          handleSelect(city, { keepFocus: true });
         }
       }
     },

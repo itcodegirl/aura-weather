@@ -790,6 +790,17 @@ a:focus-visible,
 
   /* Comfort scale: the gradient carries the dry–humid meaning.
      In WHCM give the track a ButtonBorder outline and use the Highlight
+     system colour for the position marker, whose white fill and
+     box-shadow ring are both flattened away. Outline (not border) so the
+     8px track keeps its box size. */
+  .atm-dewpoint-bar {
+    outline: 1px solid ButtonBorder;
+  }
+  .atm-dewpoint-marker {
+    forced-color-adjust: none;
+    background: Highlight;
+    box-shadow: 0 0 0 1px Canvas;
+  }
 
   /* Skip link: ensure it contrasts against whatever Canvas colour the
      user has chosen. */

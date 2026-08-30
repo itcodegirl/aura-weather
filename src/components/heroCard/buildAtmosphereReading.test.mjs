@@ -130,18 +130,22 @@ describe("buildAtmosphereReading", () => {
     assert.match(result.text, /Gusts to 35 mph/);
   });
 
-  test("moderate UV during daylight surfaces a softer notice", () => {
+  test("UV in the shared High band (6–8) reads as High, never Moderate", () => {
+    // Regression guard for the five-way threshold drift: a 6.5 peak
+    // once rendered "Moderate UV today" here while the chip said
+    // "UV high" and the panel said "UV High" on the same card.
     const weather = buildBaseWeather({
       current: { temperature: 65, windGust: 5 },
       daily: {
         sunrise: [SUNRISE_ISO],
         sunset: [SUNSET_ISO],
-        uvIndexMax: [6.4],
+        uvIndexMax: [6.5],
       },
     });
     const result = buildAtmosphereReading({ weather, nowMs: FIXED_NOW });
     assert.equal(result.tone, "notice");
-    assert.match(result.text, /Moderate UV/);
+    assert.match(result.text, /High UV/);
+    assert.doesNotMatch(result.text, /Moderate/i);
   });
 
   test("hot temperature triggers heat copy", () => {

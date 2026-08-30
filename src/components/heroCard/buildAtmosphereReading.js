@@ -1,3 +1,4 @@
+import { classifyUv } from "../../domain/exposure.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase } from "../../utils/sunlight.js";
 import { getZonedNow } from "../../utils/dates.js";
@@ -18,8 +19,6 @@ import { findWindowStartIndex } from "../../utils/timeSeries.js";
 
 const RAIN_IMMINENT_HOURS = 2;
 const RAIN_IMMINENT_PROBABILITY = 50;
-const HIGH_UV = 8;
-const MODERATE_UV = 6;
 const GUSTY_MPH = 28;
 const HOT_F = 90;
 const COLD_F = 28;
@@ -148,17 +147,21 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
     nowDate.getTime() <= sunsetDate.getTime();
 
   if (isDaylight) {
+    // Band words come from the shared WHO classifier so the reading
+    // line can never disagree with the UV chip or panel. Only High and
+    // above merits a hero callout; Moderate stays a panel-level fact.
     const uvIndex = toFiniteNumber(weather.daily?.uvIndexMax?.[0]);
-    if (uvIndex !== null && uvIndex >= HIGH_UV) {
+    const uvBand = classifyUv(uvIndex)?.band;
+    if (uvBand === "very-high" || uvBand === "extreme") {
       return {
         tone: "watch",
         text: `Very high UV (${uvIndex.toFixed(1)}) — sunscreen if you're heading out.`,
       };
     }
-    if (uvIndex !== null && uvIndex >= MODERATE_UV) {
+    if (uvBand === "high") {
       return {
         tone: "notice",
-        text: `Moderate UV today — easy on the sun exposure.`,
+        text: `High UV (${uvIndex.toFixed(1)}) — sun protection is worth it if you're heading out.`,
       };
     }
   }

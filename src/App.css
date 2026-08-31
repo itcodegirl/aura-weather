@@ -796,7 +796,15 @@ a:focus-visible,
   .atm-dewpoint-bar {
     outline: 1px solid ButtonBorder;
   }
-  .atm-dewpoint-marker {
+  /* The descendant selector is load-bearing, not decoration. The marker's
+     base rule lives in AtmosphereBento.css, whose sheet loads after this
+     one (the panel is lazy), so at equal specificity the component's own
+     `background: #fff` and dark ring win the cascade and only the
+     forced-color-adjust above survives -- opting the marker OUT of the
+     UA's mapping while leaving its hardcoded white in place, i.e. an
+     invisible marker on a light forced-colors theme. Marker is always a
+     child of the bar, so (0,2,0) beats it without !important. */
+  .atm-dewpoint-bar .atm-dewpoint-marker {
     forced-color-adjust: none;
     background: Highlight;
     box-shadow: 0 0 0 1px Canvas;

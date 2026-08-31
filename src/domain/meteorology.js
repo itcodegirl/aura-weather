@@ -19,19 +19,28 @@ export function classifyStormRisk(cape, weatherCode) {
   const normalizedCode = codeValue !== null ? Math.trunc(codeValue) : Number.NaN;
   const isStormCode = [95, 96, 99].includes(normalizedCode);
 
+  /*
+   * No colour here. This is domain code, and the hex it used to return was a
+   * second, drifting copy of the --risk-* ramp in App.css: "Severe" had
+   * settled on #dc2626 against the ramp's #ef4444, and "Minimal"'s #38bdf8
+   * was not a ramp stop at all (nor reachable — the meter only renders above
+   * score 0). The ramp is the shared ladder the hero UV track already draws
+   * from, so it is the one source of truth; StormWatch.css maps score to it
+   * by tone, the same way the headline does.
+   */
   if (isStormCode || normalizedCape >= 2500) {
-    return { level: "Severe", color: "#dc2626", score: 4 };
+    return { level: "Severe", score: 4 };
   }
   if (normalizedCape >= 1500) {
-    return { level: "High", color: "#f97316", score: 3 };
+    return { level: "High", score: 3 };
   }
   if (normalizedCape >= 500) {
-    return { level: "Moderate", color: "#eab308", score: 2 };
+    return { level: "Moderate", score: 2 };
   }
   if (normalizedCape >= 100) {
-    return { level: "Low", color: "#22c55e", score: 1 };
+    return { level: "Low", score: 1 };
   }
-  return { level: "Minimal", color: "#38bdf8", score: 0 };
+  return { level: "Minimal", score: 0 };
 }
 
 /**

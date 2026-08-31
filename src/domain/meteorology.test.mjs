@@ -20,17 +20,14 @@ describe("meteorology utils", () => {
   test("classifyStormRisk uses CAPE thresholds and storm code override", () => {
     assert.deepEqual(classifyStormRisk(50, 0), {
       level: "Minimal",
-      color: "#38bdf8",
       score: 0,
     });
     assert.deepEqual(classifyStormRisk(700, 0), {
       level: "Moderate",
-      color: "#eab308",
       score: 2,
     });
     assert.deepEqual(classifyStormRisk(300, 95), {
       level: "Severe",
-      color: "#dc2626",
       score: 4,
     });
   });
@@ -180,7 +177,6 @@ describe("meteorology utils", () => {
     // strict coercion — not from Number(null) silently returning 0.
     assert.deepEqual(classifyStormRisk(null, 0), {
       level: "Minimal",
-      color: "#38bdf8",
       score: 0,
     });
   });
@@ -220,5 +216,34 @@ describe("meteorology utils", () => {
     assert.equal(classifyWind(null, "F"), "Unknown");
     assert.equal(classifyWind(undefined, "C"), "Unknown");
     assert.equal(classifyWind("", "F"), "Unknown");
+  });
+});
+
+describe("classifyStormRisk returns no presentation colour", () => {
+  test("the domain layer carries no hex for any risk level", () => {
+    // It used to return one, and that hex was a second copy of the --risk-*
+    // ramp in App.css which had drifted from it: "Severe" settled on #dc2626
+    // against the ramp's #ef4444, and "Minimal"'s #38bdf8 was not a ramp stop
+    // at all. Colour is presentation; StormWatch.css maps score to the ramp
+    // by tone. Guarding the absence keeps a hex from creeping back and
+    // re-forking the source of truth.
+    const inputs = [
+      [null, 0],
+      [50, 0],
+      [300, 0],
+      [700, 0],
+      [1800, 0],
+      [3000, 0],
+      [300, 95],
+    ];
+
+    for (const [cape, code] of inputs) {
+      const risk = classifyStormRisk(cape, code);
+      assert.deepEqual(
+        Object.keys(risk).sort(),
+        ["level", "score"],
+        `classifyStormRisk(${cape}, ${code}) should expose level and score only`
+      );
+    }
   });
 });

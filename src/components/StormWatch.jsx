@@ -171,7 +171,8 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
   /*
    * The headline tone is the same vocabulary the badge beside it already
    * speaks, so the two can never disagree about the same reading. It used
-   * to take `risk.color` — a stop on the saturated --risk-* ramp — inline.
+   * to take a hex from classifyStormRisk — a second, drifting copy of the
+   * saturated --risk-* ramp — through an inline style.
    * That ramp is built for the meter bars below, not for 26px text on the
    * card surface: measured against the real composited backdrop, "Severe"
    * (#dc2626) came out at 2.48:1, under even the 3:1 large-text floor, and
@@ -221,15 +222,16 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
           </div>
           <p className="storm-module-summary">{summary}</p>
           {active && (
-            <div className="storm-risk-meter" aria-hidden="true">
+            <div
+              className="storm-risk-meter"
+              data-tone={stormTone}
+              aria-hidden="true"
+            >
               {[0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
                   className="storm-risk-pip"
-                  style={{
-                    background:
-                      i <= risk.score ? risk.color : "rgba(255,255,255,0.1)",
-                  }}
+                  data-filled={i <= risk.score ? "true" : undefined}
                 />
               ))}
             </div>

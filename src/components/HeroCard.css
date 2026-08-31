@@ -502,7 +502,11 @@
   gap: 12px;
   padding: 12px;
   border-radius: var(--radius-sm);
-  background: var(--subcard-bg);
+  /* --subcard-bg was deleted with the dark-navy surface tokens; the
+     surface-tier note in App.css names the subtractive well as the
+     surface nested stats sit on, and --subcard-border/--subcard-shadow
+     survived alongside it. */
+  background: var(--bg-well);
   border: var(--subcard-border);
   box-shadow: var(--subcard-shadow);
 }

@@ -232,7 +232,7 @@
   .radar-control:not(:disabled):hover {
     transform: translateY(var(--lift-1));
     border-color: var(--hover-border-color);
-    background: var(--bg-card-hover);
+    background: var(--surface-2);
   }
 
   .radar-control--play:not(:disabled):hover {
@@ -455,7 +455,7 @@
   .radar-retry:hover {
     transform: translateY(var(--lift-1));
     border-color: var(--hover-border-color);
-    background: var(--bg-card-hover);
+    background: var(--surface-3);
   }
 }
 

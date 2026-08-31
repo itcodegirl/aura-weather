@@ -788,8 +788,22 @@ a:focus-visible,
     background: ButtonFace;
   }
 
-  /* Comfort scale: the gradient carries the dry–humid meaning.
-     In WHCM give the track a ButtonBorder outline and use the Highlight
+  /* Comfort scale: the dew-point gradient carries the dry–humid meaning
+     and the marker's position carries the reading; forced-colors flattens
+     both. Give the track a ButtonBorder outline and the marker the
+     Highlight token so position stays readable. The rules 50cf3cb deleted
+     named .comfort-gradient/.comfort-marker, which AtmosphereBento had
+     already renamed — dead selectors, but the treatment they carried was
+     not. Re-pointed at the live class names. */
+  .atm-dewpoint-bar {
+    background: ButtonFace;
+    border: 1px solid ButtonBorder;
+  }
+
+  .atm-dewpoint-marker {
+    background: Highlight;
+    outline: 2px solid ButtonBorder;
+  }
 
   /* Skip link: ensure it contrasts against whatever Canvas colour the
      user has chosen. */

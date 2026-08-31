@@ -110,3 +110,80 @@ test("every atmosphere tile arrives, so a missing lazy chunk cannot pass silentl
   const tiles = page.locator(".bento-atm .atm-tile");
   await expect(tiles).toHaveCount(8, { timeout: 20_000 });
 });
+
+/*
+ * Open every help drawer and prove the panel stays inside both the viewport
+ * and its own card.
+ *
+ * The guards above only ever saw the collapsed state, which is why this went
+ * unnoticed: the panel sat in normal flow inside an inline-flex title row, so
+ * its width pushed it off the right edge of the screen — measured at 320px,
+ * the radar panel ended 91.8px past the viewport — and `body { overflow-x:
+ * hidden }` clipped the evidence into what looked like truncated text.
+ */
+for (const viewport of VIEWPORTS) {
+  test(`open help drawers stay inside the viewport at ${viewport.name}`, async ({
+    page,
+  }) => {
+    await gotoDashboard(page, viewport);
+
+    // The drawers live in lazily-deferred panels, so wait for the bento to
+    // arrive before counting — otherwise this passes vacuously against an
+    // empty page.
+    await expect(page.locator(".bento-atm .atm-tile")).toHaveCount(8, {
+      timeout: 20_000,
+    });
+
+    const triggers = page.locator(".info-drawer-trigger");
+    const count = await triggers.count();
+    expect(count, "the dashboard should render help drawers to check").toBeGreaterThan(0);
+
+    const failures = [];
+
+    for (let i = 0; i < count; i += 1) {
+      const trigger = triggers.nth(i);
+      if (!(await trigger.isVisible())) continue;
+
+      await trigger.scrollIntoViewIfNeeded();
+      await trigger.click();
+
+      const geometry = await page.evaluate(() => {
+        const panel = document.querySelector(".info-drawer-panel");
+        if (!panel) return null;
+        const card = panel.closest(".glass");
+        const p = panel.getBoundingClientRect();
+        const c = card ? card.getBoundingClientRect() : null;
+        return {
+          label: panel.parentElement?.className ?? "info-drawer",
+          left: p.left,
+          right: p.right,
+          cardLeft: c ? c.left : null,
+          cardRight: c ? c.right : null,
+        };
+      });
+
+      if (geometry) {
+        const past = [];
+        if (geometry.right > viewport.width + 0.5) {
+          past.push(`${(geometry.right - viewport.width).toFixed(1)}px past the right edge`);
+        }
+        if (geometry.left < -0.5) {
+          past.push(`${(-geometry.left).toFixed(1)}px past the left edge`);
+        }
+        // Anchored to its card, so it must not escape the card either —
+        // this catches a regression that a wider viewport would hide.
+        if (geometry.cardRight !== null && geometry.right > geometry.cardRight + 1) {
+          past.push("outside its card's right edge");
+        }
+        if (geometry.cardLeft !== null && geometry.left < geometry.cardLeft - 1) {
+          past.push("outside its card's left edge");
+        }
+        if (past.length) failures.push(`${geometry.label}: ${past.join(", ")}`);
+      }
+
+      await page.keyboard.press("Escape");
+    }
+
+    expect(failures, failures.join(" | ")).toEqual([]);
+  });
+}

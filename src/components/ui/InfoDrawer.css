@@ -49,7 +49,28 @@
   transform: scale(var(--press-scale));
 }
 
+/*
+ * Anchored to the card, not to the trigger (see InfoDrawer.jsx). The card
+ * is the widest box this panel may occupy and is always inside the
+ * viewport, so pinning to it makes horizontal overflow impossible —
+ * `right` holds the near edge and `max-width` caps the far one. The
+ * vertical offset comes from --info-drawer-top, measured on open.
+ *
+ * data-anchored is set only once a .glass card ancestor was found, so a
+ * drawer rendered outside one keeps the previous in-flow layout instead
+ * of escaping to the viewport.
+ */
+.info-drawer-panel[data-anchored] {
+  position: absolute;
+  top: var(--info-drawer-top, 100%);
+  right: var(--info-drawer-inset);
+  left: auto;
+  max-width: calc(100% - 2 * var(--info-drawer-inset));
+  z-index: 30;
+}
+
 .info-drawer-panel {
+  --info-drawer-inset: 12px;
   width: min(260px, 72vw);
   padding: 9px 10px;
   border-radius: var(--radius-xs);
@@ -105,6 +126,20 @@
    * shrinks to 24px on compact phones. */
   .info-drawer-trigger::before {
     inset: -10px;
+  }
+
+  /*
+   * On a narrow phone the card is barely wider than the panel, so a
+   * fixed width leaves an awkward sliver beside it. Span the card's
+   * inner width instead: `left` and `right` both pinned, width auto.
+   * This is also the widest the copy can be, which is what a paragraph
+   * of explanation wants on a small screen.
+   */
+  .info-drawer-panel[data-anchored] {
+    left: var(--info-drawer-inset);
+    right: var(--info-drawer-inset);
+    width: auto;
+    max-width: none;
   }
 
   .info-drawer-panel {

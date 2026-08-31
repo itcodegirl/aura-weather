@@ -168,7 +168,19 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
     : active
       ? risk.level
       : "All clear";
-  const headlineColor = !hasCape ? "#94a3b8" : active ? risk.color : "#86efac";
+  /*
+   * The headline tone is the same vocabulary the badge beside it already
+   * speaks, so the two can never disagree about the same reading. It used
+   * to take `risk.color` — a stop on the saturated --risk-* ramp — inline.
+   * That ramp is built for the meter bars below, not for 26px text on the
+   * card surface: measured against the real composited backdrop, "Severe"
+   * (#dc2626) came out at 2.48:1, under even the 3:1 large-text floor, and
+   * "High" (#f97316) at 4.28:1. The word telling a user a thunderstorm is
+   * coming was the least legible text on the page, and got worse as the
+   * risk rose. The --severity-*-fg rungs are the palette's text
+   * foregrounds; every state now lands at 8.29:1 or better.
+   */
+  const headlineTone = !hasCape ? "unavailable" : stormTone;
   const summary = !hasCape
     ? "Live storm energy reading unavailable"
     : active
@@ -204,7 +216,7 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
 
       <div className="storm-synth">
         <div className="storm-risk-block">
-          <div className="storm-level" style={{ color: headlineColor }}>
+          <div className="storm-level" data-tone={headlineTone}>
             {headline}
           </div>
           <p className="storm-module-summary">{summary}</p>

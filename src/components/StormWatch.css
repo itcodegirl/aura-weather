@@ -70,6 +70,37 @@
   font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  /* Default = the unavailable/neutral case, so a missing data-tone still
+     renders as readable text rather than inheriting something arbitrary. */
+  color: var(--text-dim);
+}
+
+/*
+ * Headline tones. These deliberately mirror the .severity-badge--* mapping
+ * in App.css, because the badge sits directly beside this headline and
+ * describes the same reading — if the two mappings drift, one state renders
+ * in two different colours side by side. Keep them in step.
+ *
+ * The --severity-*-fg rungs are the palette's *text* foregrounds; the
+ * saturated --risk-* ramp stays where it belongs, on the meter bars below.
+ */
+.storm-level[data-tone="critical"],
+.storm-level[data-tone="high"] {
+  color: var(--severity-critical-fg);
+}
+
+.storm-level[data-tone="moderate"] {
+  color: var(--severity-high-fg);
+}
+
+.storm-level[data-tone="low"] {
+  color: var(--severity-warn-fg);
+}
+
+/* Also the "All clear" headline: hasCape with a zero score is tone
+   "minimal", which is the reassuring green rung. */
+.storm-level[data-tone="minimal"] {
+  color: var(--severity-ok-fg);
 }
 
 .storm-module-summary {

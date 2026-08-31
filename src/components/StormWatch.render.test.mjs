@@ -202,3 +202,102 @@ describe("StormWatch (slimmed risk synthesis)", () => {
     );
   });
 });
+
+describe("StormWatch headline tone", () => {
+  // The headline used to take risk.color — a stop on the saturated --risk-*
+  // ramp — through an inline style. That ramp is built for the meter bars,
+  // not for 26px text on the card surface: measured against the real
+  // composited backdrop, "Severe" (#dc2626) came out at 2.48:1, under even
+  // the 3:1 large-text floor, and got worse as the risk rose. These pin the
+  // headline to the --severity-*-fg text rungs instead.
+  const CASES = [
+    { cape: 3000, level: "Severe", tone: "critical" },
+    { cape: 2000, level: "High", tone: "high" },
+    { cape: 900, level: "Moderate", tone: "moderate" },
+    { cape: 250, level: "Low", tone: "low" },
+    { cape: 50, level: "All clear", tone: "minimal" },
+  ];
+
+  for (const { cape, level, tone } of CASES) {
+    test(`"${level}" carries data-tone="${tone}" and no inline colour`, () => {
+      const { container } = render(
+        React.createElement(StormWatch, {
+          weather: buildWeather({ cape }),
+          unit: "F",
+          isRefreshing: false,
+        })
+      );
+
+      const headline = container.querySelector(".storm-level");
+      assert.notEqual(headline, null);
+      assert.equal(headline.textContent.trim(), level);
+      assert.equal(headline.getAttribute("data-tone"), tone);
+      assert.equal(
+        headline.style.color,
+        "",
+        "colour must come from the severity tokens, not an inline style"
+      );
+    });
+  }
+
+  test("a missing CAPE reading is toned 'unavailable', not a risk colour", () => {
+    const { container } = render(
+      React.createElement(StormWatch, {
+        weather: buildWeather({ cape: null }),
+        unit: "F",
+        isRefreshing: false,
+      })
+    );
+
+    const headline = container.querySelector(".storm-level");
+    assert.equal(headline.textContent.trim(), "Reading unavailable");
+    assert.equal(headline.getAttribute("data-tone"), "unavailable");
+    assert.equal(headline.style.color, "");
+  });
+
+  test("the headline tone matches the badge beside it, for the same reading", () => {
+    // They describe the same state and sit adjacent; divergence would render
+    // one reading in two colours. Only the active states carry a badge — a
+    // zero score shows the eyebrow pill instead — so the pairing is asserted
+    // where a badge actually exists.
+    const withBadge = CASES.filter(({ tone }) => tone !== "minimal");
+
+    for (const { cape, tone } of withBadge) {
+      const { container } = render(
+        React.createElement(StormWatch, {
+          weather: buildWeather({ cape }),
+          unit: "F",
+          isRefreshing: false,
+        })
+      );
+
+      assert.equal(
+        container.querySelector(".storm-level").getAttribute("data-tone"),
+        tone
+      );
+      assert.notEqual(
+        container.querySelector(`.severity-badge--${tone}`),
+        null,
+        `badge should carry the same tone (cape=${cape})`
+      );
+      cleanup();
+    }
+  });
+
+  test("the all-clear state shows the eyebrow pill, not a risk badge", () => {
+    const { container } = render(
+      React.createElement(StormWatch, {
+        weather: buildWeather({ cape: 50 }),
+        unit: "F",
+        isRefreshing: false,
+      })
+    );
+
+    assert.equal(container.querySelector(".severity-badge"), null);
+    assert.notEqual(container.querySelector(".eyebrow-pill"), null);
+    assert.equal(
+      container.querySelector(".storm-level").getAttribute("data-tone"),
+      "minimal"
+    );
+  });
+});

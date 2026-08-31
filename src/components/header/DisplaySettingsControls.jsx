@@ -15,7 +15,7 @@ function DisplaySettingsControls({
   onClearSavedLocation,
   hasPersistedLocation,
 }) {
-  // Toggling unit or climate context updates every Stat, Hero reading,
+  // Toggling unit or climate context updates every reading, hero value,
   // and chart value across the dashboard, but the cascading content
   // change is silent to a screen reader. Each toggle button already
   // announces its own aria-pressed flip — we add a single SR-only

@@ -211,11 +211,6 @@
     letter-spacing: 0.1em;
   }
 
-  .storm-module {
-    padding: 12px;
-    gap: 10px;
-  }
-
   .storm-level {
     font-size: 23px;
   }

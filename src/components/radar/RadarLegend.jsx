@@ -10,6 +10,21 @@ function RadarLegend() {
         <span className="radar-legend-bar" aria-hidden="true" />
         <span className="radar-legend-cap">Heavy</span>
       </div>
+      {/*
+       * RainViewer's catalogue is global but its coverage is not. Outside a
+       * covered region the frames still arrive and still say "Observed", and
+       * the tiles are simply transparent — so an uncovered map is pixel-wise
+       * identical to a dry one. Nothing downstream can tell the two apart
+       * (deriveRadarState only knows error / empty / ready), so rather than
+       * let a clear map assert "no rain", the panel says plainly what a
+       * clear map does and does not mean. Persistent, not conditional:
+       * the ambiguity is always present, and a caption that appeared only
+       * sometimes would itself become a signal.
+       */}
+      <p className="radar-legend-note">
+        Radar shows precipitation echoes only — a clear map can also mean no
+        coverage in this region.
+      </p>
       <p className="radar-legend-attribution">
         Radar{" "}
         <a

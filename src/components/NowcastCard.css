@@ -251,8 +251,6 @@
  * reading size. Pointer-scoped and tied to the same width tier so
  * desktop density and the visual baselines are unaffected.
  */
-@media (pointer: coarse) and (max-width: 420px) {
-}
 
 /* ── Area chart (fills leftover card height) ─────────────────────────────── */
 

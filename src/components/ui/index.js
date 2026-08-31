@@ -1,4 +1,3 @@
-export { default as Stat } from "./Stat";
 export { default as CardHeader } from "./CardHeader";
 export { default as CardFallback } from "./CardFallback";
 export { default as DataTrustMeta } from "./DataTrustMeta";

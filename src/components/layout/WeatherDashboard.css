@@ -1,8 +1,14 @@
+/* Single column. The bento was a 12-column grid whose every card ended up
+   spanning 1 / -1 — see the .bento > section rule at the foot of this file,
+   which has forced full width at every breakpoint since the Glacier pass.
+   The column count was therefore invisible: 12, 3 and 2 all rendered the
+   same stack. Collapsed to one column, and the span rules that could never
+   win are gone with it. */
 .bento {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 22px;
 }
 
@@ -198,17 +204,9 @@
 }
 
 .bento-hero {
-  grid-column: span 6;
   min-height: clamp(280px, 28vw, 360px);
   animation: hero-landing var(--card-enter-duration) var(--ease-emphasis) forwards;
   animation-delay: calc(var(--i, 0) * var(--card-enter-stagger));
-}
-
-
-/* Radar spans the full row at every breakpoint — a map needs the width,
-   and 1 / -1 keeps it full-bleed through each grid reflow below. */
-.bento-radar {
-  grid-column: 1 / -1;
 }
 
 @media (max-width: 1200px) {
@@ -219,7 +217,6 @@
 
 @media (max-width: 980px) {
   .bento {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
   }
 
@@ -228,45 +225,18 @@
   }
 
   .bento-hero {
-    grid-column: span 3;
     min-height: clamp(170px, 44vw, 236px);
-  }
-
-
-  .bento-rain,
-  .bento-nowcast {
-    grid-column: span 3;
-  }
-
-  .bento-chart,
-  .bento-storm {
-    grid-column: span 3;
-  }
-
-  .bento-forecast {
-    grid-column: span 3;
   }
 }
 
 @media (max-width: 860px) {
   .bento {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
-  }
-
-  .bento-hero,
-  .bento-rain,
-  .bento-nowcast,
-  .bento-chart,
-  .bento-storm,
-  .bento-forecast {
-    grid-column: span 2;
   }
 }
 
 @media (max-width: 640px) {
   .bento {
-    grid-template-columns: 1fr;
     gap: 12px;
   }
 
@@ -275,7 +245,6 @@
   }
 
   .bento > [class*="bento-"] {
-    grid-column: auto;
     min-height: 0;
   }
 

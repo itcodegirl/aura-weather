@@ -1011,8 +1011,6 @@
  * Placed last and pointer-scoped so it wins over the width-based
  * sizing without affecting desktop. Mirrors the same fix on the city
  * search field. */
-@media (pointer: coarse) {
-}
 
 /*
  * 10px legibility floor on touch (mirrors the severity-badge floor):

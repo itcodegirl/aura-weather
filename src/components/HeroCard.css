@@ -33,22 +33,6 @@
   animation: hero-glow-pulse 6.5s ease-in-out infinite;
 }
 
-.hero-sky-orb {
-  position: absolute;
-  top: 34px;
-  right: 54px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #f4bd6f;
-  box-shadow: 0 0 18px rgba(244, 189, 111, 0.5);
-}
-
-.hero-sky-orb--moon {
-  background: radial-gradient(circle at 38% 38%, #d4dff0, #9aaecc);
-  box-shadow: 0 0 14px rgba(155, 185, 230, 0.3);
-}
-
 .hero-sky-cloud {
   position: absolute;
   filter: blur(3px);
@@ -495,67 +479,7 @@
   border-color: rgba(148, 163, 184, 0.24);
 }
 
-
-.stat {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  /* --subcard-bg was deleted with the dark-navy surface tokens; the
-     surface-tier note in App.css names the subtractive well as the
-     surface nested stats sit on, and --subcard-border/--subcard-shadow
-     survived alongside it. */
-  background: var(--bg-well);
-  border: var(--subcard-border);
-  box-shadow: var(--subcard-shadow);
-}
-
-.stat-icon {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  color: #dcf7ff;
-  background: linear-gradient(160deg, rgba(139, 211, 255, 0.18), rgba(246, 196, 83, 0.09));
-}
-
-.stat-label {
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-}
-
-.stat-value {
-  margin-top: 3px;
-  color: var(--paper-dim);
-  font-size: 16px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Keep a value and its unit on one line ("10 mph", not "10" / "mph") so
-   the metric grid reads evenly. Scoped to the hero grid; values here are
-   short enough that nowrap never overflows the cell. */
-
-
-.stat-value.is-missing {
-  /* Visual cue that distinguishes "no data" from a real reading.
-     The em-dash already carries the meaning; the muted color and
-     normal font weight tell the user it is intentionally blank. */
-  color: var(--text-dim);
-  font-weight: 600;
-}
-
-
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
-@media (max-width: 1200px) {
-
-}
 
 @media (max-width: 980px) {
   .hero-card {
@@ -640,11 +564,6 @@
     min-height: auto;
     padding: 10px;
   }
-}
-
-@media (max-width: 560px) {
-  /* 2×2 stat grid halves vertical height vs 4×1 stack */
-
 }
 
 @media (max-width: 420px) {
@@ -774,7 +693,6 @@
   background: var(--accent-green);
 }
 
-
 /* ── Hero refinements: sun placement, daylight strip, feels-like ─────────────
  * The decorative sky-orb sat directly under the High/Low pill ("covering the
  * sun"). The big condition icon is the real sun, so drop the redundant orb and
@@ -787,6 +705,10 @@
   height: 152px;
 }
 
+/* The orb element still renders but has been hidden since the Glacier pass,
+   so its sun/moon styling below could never paint and is gone. Whether the
+   night-sky feature comes back or the element goes is DS-04's call, not a
+   cleanup's -- until then this one declaration is the whole rule. */
 .hero-sky-orb {
   display: none;
 }

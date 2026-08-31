@@ -1,4 +1,14 @@
-﻿.bento-storm {
+﻿/*
+ * Containing block for the InfoDrawer help panel, which anchors to the
+ * card so it can never render past the viewport edge (see InfoDrawer.css).
+ * Every absolutely-positioned descendant in this file already has a nearer
+ * positioned parent, so this does not re-anchor anything else.
+ */
+.storm-watch {
+  position: relative;
+}
+
+.bento-storm {
   display: flex;
   flex-direction: column;
   grid-column: span 12;

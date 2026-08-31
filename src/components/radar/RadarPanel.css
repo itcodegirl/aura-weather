@@ -377,6 +377,17 @@
   );
 }
 
+/* Coverage caption. Deliberately not at --fs-micro like the attribution
+   below it: this one carries meaning a user has to read, so it sits at the
+   11px legibility floor rather than the 9px used for source credits. */
+.radar-legend-note {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-label);
+  line-height: 1.45;
+  letter-spacing: var(--track-tight);
+}
+
 .radar-legend-attribution {
   margin: 0;
   color: var(--text-dim);

@@ -247,3 +247,59 @@ describe("classifyStormRisk returns no presentation colour", () => {
     }
   });
 });
+
+describe("classifyComfort returns no presentation colour", () => {
+  test("the domain layer carries no hex for any comfort level", () => {
+    // Same defect as classifyStormRisk above: the returned hexes were a
+    // partial copy of the --risk-* ramp that had drifted from it. "Pleasant"
+    // (#84cc16) had forked from --risk-moderate (#a3e635) and "Oppressive"
+    // (#dc2626) from --risk-severe (#ef4444), while "Unknown", "Dry" and
+    // "Miserable" were never ramp stops. Nothing read the key, so it could
+    // only drift further. `position` stays — it is the marker's placement on
+    // the scale, which is data, not styling.
+    const dewpoints = [null, "bad", 45, 52, 57, 62, 67, 72, 90];
+
+    for (const dewpoint of dewpoints) {
+      const comfort = classifyComfort(dewpoint, "F");
+      assert.deepEqual(
+        Object.keys(comfort).sort(),
+        ["level", "position"],
+        `classifyComfort(${dewpoint}) should expose level and position only`
+      );
+    }
+  });
+
+  test("every comfort band is still reachable and ordered along the scale", () => {
+    // Dropping a key from seven return sites is exactly the edit that can
+    // silently take a band with it, and `position` must stay monotonic or the
+    // marker jumps backwards as the air gets muggier.
+    const bands = [45, 52, 57, 62, 67, 72, 90].map((dp) =>
+      classifyComfort(dp, "F")
+    );
+
+    assert.deepEqual(
+      bands.map((band) => band.level),
+      [
+        "Dry",
+        "Comfortable",
+        "Pleasant",
+        "Sticky",
+        "Humid",
+        "Oppressive",
+        "Miserable",
+      ]
+    );
+
+    const positions = bands.map((band) => band.position);
+    assert.deepEqual(positions, [10, 30, 45, 60, 75, 88, 98]);
+    assert.deepEqual([...positions].sort((a, b) => a - b), positions);
+
+    // Unclassifiable air parks the marker mid-scale rather than at "Dry".
+    // Trust contract: an unreadable dewpoint must not render as a confident
+    // reading at either end of the bar.
+    assert.deepEqual(classifyComfort(null, "F"), {
+      level: "Unknown",
+      position: 50,
+    });
+  });
+});

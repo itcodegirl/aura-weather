@@ -19,19 +19,28 @@ export function classifyStormRisk(cape, weatherCode) {
   const normalizedCode = codeValue !== null ? Math.trunc(codeValue) : Number.NaN;
   const isStormCode = [95, 96, 99].includes(normalizedCode);
 
+  /*
+   * No colour here. This is domain code, and the hex it used to return was a
+   * second, drifting copy of the --risk-* ramp in App.css: "Severe" had
+   * settled on #dc2626 against the ramp's #ef4444, and "Minimal"'s #38bdf8
+   * was not a ramp stop at all (nor reachable — the meter only renders above
+   * score 0). The ramp is the shared ladder the hero UV track already draws
+   * from, so it is the one source of truth; StormWatch.css maps score to it
+   * by tone, the same way the headline does.
+   */
   if (isStormCode || normalizedCape >= 2500) {
-    return { level: "Severe", color: "#dc2626", score: 4 };
+    return { level: "Severe", score: 4 };
   }
   if (normalizedCape >= 1500) {
-    return { level: "High", color: "#f97316", score: 3 };
+    return { level: "High", score: 3 };
   }
   if (normalizedCape >= 500) {
-    return { level: "Moderate", color: "#eab308", score: 2 };
+    return { level: "Moderate", score: 2 };
   }
   if (normalizedCape >= 100) {
-    return { level: "Low", color: "#22c55e", score: 1 };
+    return { level: "Low", score: 1 };
   }
-  return { level: "Minimal", color: "#38bdf8", score: 0 };
+  return { level: "Minimal", score: 0 };
 }
 
 /**
@@ -162,23 +171,32 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
 
 /**
  * Classify comfort using dewpoint.
+ *
+ * Returns the level and the marker's position along the dewpoint scale, and
+ * deliberately no colour. It used to return a hex per level, and those hexes
+ * were a partial, drifted copy of the --risk-* ramp in App.css: "Comfortable",
+ * "Sticky" and "Humid" matched --risk-low / --risk-elevated / --risk-high,
+ * "Pleasant" (#84cc16) and "Oppressive" (#dc2626) had forked from
+ * --risk-moderate (#a3e635) and --risk-severe (#ef4444), and "Unknown", "Dry"
+ * and "Miserable" were not ramp stops at all.
+ *
+ * Nothing read the key — the dewpoint bar draws its own designed four-stop
+ * gradient and a white marker — so the hexes were dead weight that could only
+ * ever drift further from the ramp they half-copied. Colour is presentation
+ * and belongs in AtmosphereBento.css.
  */
 export function classifyComfort(dewpoint, unit = "F") {
   const thresholdValue = toFahrenheit(dewpoint, unit);
   if (!Number.isFinite(thresholdValue)) {
-    return { level: "Unknown", color: "#94a3b8", position: 50 };
+    return { level: "Unknown", position: 50 };
   }
 
-  if (thresholdValue < 50) return { level: "Dry", color: "#38bdf8", position: 10 };
-  if (thresholdValue < 55) {
-    return { level: "Comfortable", color: "#22c55e", position: 30 };
-  }
-  if (thresholdValue < 60) return { level: "Pleasant", color: "#84cc16", position: 45 };
-  if (thresholdValue < 65) return { level: "Sticky", color: "#eab308", position: 60 };
-  if (thresholdValue < 70) return { level: "Humid", color: "#f97316", position: 75 };
-  if (thresholdValue < 75) {
-    return { level: "Oppressive", color: "#dc2626", position: 88 };
-  }
-  return { level: "Miserable", color: "#991b1b", position: 98 };
+  if (thresholdValue < 50) return { level: "Dry", position: 10 };
+  if (thresholdValue < 55) return { level: "Comfortable", position: 30 };
+  if (thresholdValue < 60) return { level: "Pleasant", position: 45 };
+  if (thresholdValue < 65) return { level: "Sticky", position: 60 };
+  if (thresholdValue < 70) return { level: "Humid", position: 75 };
+  if (thresholdValue < 75) return { level: "Oppressive", position: 88 };
+  return { level: "Miserable", position: 98 };
 }
 

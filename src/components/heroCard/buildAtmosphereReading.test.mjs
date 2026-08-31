@@ -130,6 +130,36 @@ describe("buildAtmosphereReading", () => {
     assert.match(result.text, /Gusts to 35 mph/);
   });
 
+  test("the gust callout follows the display unit, like every other wind readout", () => {
+    // The sentence hardcoded "mph" while `unit` was explicitly discarded
+    // (`void unit;`), so a metric reader saw a gust in mph beside a wind
+    // speed in km/h on the same card. GUSTY_MPH stays a threshold on the
+    // raw mph reading; only the rendered figure is converted.
+    const weather = buildBaseWeather({
+      current: { temperature: 95, windGust: 35 },
+      daily: {
+        sunrise: [SUNRISE_ISO],
+        sunset: [SUNSET_ISO],
+        uvIndexMax: [2],
+      },
+    });
+
+    const metric = buildAtmosphereReading({
+      weather,
+      nowMs: FIXED_NOW,
+      unit: "C",
+    });
+    assert.match(metric.text, /Gusts to 56 km\/h/);
+    assert.doesNotMatch(metric.text, /mph/);
+
+    const imperial = buildAtmosphereReading({
+      weather,
+      nowMs: FIXED_NOW,
+      unit: "F",
+    });
+    assert.match(imperial.text, /Gusts to 35 mph/);
+  });
+
   test("UV in the shared High band (6–8) reads as High, never Moderate", () => {
     // Regression guard for the five-way threshold drift: a 6.5 peak
     // once rendered "Moderate UV today" here while the chip said

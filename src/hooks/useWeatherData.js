@@ -122,6 +122,47 @@ function buildFreshTrustMeta(fetchedAt) {
   };
 }
 
+/*
+ * A degraded snapshot can be up to DEGRADED_SNAPSHOT_MAX_AGE_MS (48h) old
+ * and carries whatever NWS alerts were active when it was captured.
+ * Replaying those verbatim is the one place in this app where stale data
+ * has physical-safety consequences: AlertsCard renders a restored alert in
+ * its live branch — event name, critical priority badge, and an
+ * "Until <time>" that has already passed — with no freshness qualifier of
+ * its own. Live fetches cannot reach this state, because NWS
+ * /alerts/active only ever returns currently-active alerts, so the guard
+ * belongs here on the restore path.
+ *
+ * An alert carries its own expiry, so one still inside its window is
+ * genuinely still in force and is kept. Anything past `endsAt` is dropped.
+ * If that empties a list that had entries, the channel reports
+ * `unavailable` rather than falling through to AlertsCard's "No active
+ * severe alerts" — silence would be a fresh claim we cannot back offline.
+ * An alert with no parseable expiry is dropped for the same reason.
+ */
+function revalidateRestoredAlerts(weather, nowMs = Date.now()) {
+  const alerts = Array.isArray(weather?.alerts) ? weather.alerts : null;
+  if (!alerts || alerts.length === 0) {
+    return weather;
+  }
+
+  const stillActive = alerts.filter((alert) => {
+    const expiresAt = Date.parse(alert?.endsAt);
+    return Number.isFinite(expiresAt) && expiresAt > nowMs;
+  });
+
+  if (stillActive.length === alerts.length) {
+    return weather;
+  }
+
+  return {
+    ...weather,
+    alerts: stillActive,
+    alertsStatus:
+      stillActive.length > 0 ? weather.alertsStatus : ALERTS_STATUS.unavailable,
+  };
+}
+
 function buildCachedTrustMeta(snapshot, restoredAt = Date.now()) {
   const snapshotTrustMeta =
     snapshot?.trustMeta && typeof snapshot.trustMeta === "object"
@@ -332,7 +373,7 @@ export function useWeatherData(location, options = {}) {
     if (isBrowserOffline()) {
       const offlineSnapshot = readDegradedSnapshot();
       if (offlineSnapshot) {
-        setWeather(offlineSnapshot.weather);
+        setWeather(revalidateRestoredAlerts(offlineSnapshot.weather));
         setTrustMeta(buildCachedTrustMeta(offlineSnapshot));
         lastFetchedCoordsRef.current = {
           latitude: coordinates.latitude,
@@ -434,7 +475,7 @@ export function useWeatherData(location, options = {}) {
       ) {
         const fallbackSnapshot = readDegradedSnapshot();
         if (fallbackSnapshot) {
-          setWeather(fallbackSnapshot.weather);
+          setWeather(revalidateRestoredAlerts(fallbackSnapshot.weather));
           setTrustMeta(buildCachedTrustMeta(fallbackSnapshot));
           lastFetchedCoordsRef.current = {
             latitude: coordinates.latitude,

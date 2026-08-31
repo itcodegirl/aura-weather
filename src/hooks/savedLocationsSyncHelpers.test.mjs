@@ -309,3 +309,38 @@ describe("buildStopBackupState", () => {
     }
   });
 });
+
+describe("getSavedCitiesSignature sentinel safety", () => {
+  test("never returns the empty string, for any input", () => {
+    // useSavedLocationsSync seeds lastSyncedSignatureRef to decide whether
+    // anything has changed since the last successful sync. It used to seed
+    // "", which this function can never produce — an empty list serialises
+    // to "[]" — so the "nothing changed" short-circuit was unreachable on
+    // the first commit and every cold start armed an auto-push of state
+    // that had not changed. That push raced the initial restore, invalidated
+    // its shared request ticket, and overwrote the cloud row with local
+    // state. Any future sentinel must stay outside this function's range.
+    const inputs = [
+      undefined,
+      null,
+      [],
+      "not-an-array",
+      [{}],
+      [{ lat: 1, lon: 2, name: "A", country: "US" }],
+    ];
+
+    for (const input of inputs) {
+      const signature = getSavedCitiesSignature(input);
+      assert.equal(typeof signature, "string");
+      assert.notEqual(
+        signature,
+        "",
+        `"" must never be a producible signature (input: ${JSON.stringify(input)})`
+      );
+    }
+  });
+
+  test("an empty list is distinguishable from an unset sentinel", () => {
+    assert.equal(getSavedCitiesSignature([]), "[]");
+  });
+});

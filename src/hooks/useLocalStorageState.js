@@ -19,14 +19,24 @@ function writeStorageValue(key, value) {
   }
 }
 
+/*
+ * Hoisted so the defaults have a stable identity across renders. As inline
+ * default parameters they were rebuilt on every render, and `serialize` is a
+ * dependency of the write effect below — so any caller that omitted it (the
+ * unit preference, which App renders on every state change) re-ran that
+ * effect, and its synchronous localStorage write, on every single render.
+ */
+const IDENTITY = (value) => value;
+const TO_STRING = (value) => String(value);
+
 export function useLocalStorageState(
   key,
   defaultValue,
   options = {}
 ) {
   const {
-    deserialize = (value) => value,
-    serialize = (value) => String(value),
+    deserialize = IDENTITY,
+    serialize = TO_STRING,
   } = options;
 
   const [value, setValue] = useState(() => {

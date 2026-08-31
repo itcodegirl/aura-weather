@@ -189,13 +189,30 @@ endpoint and forwards unknown URLs to the original fetch.
 
 | | Before audit | After audit |
 |---|---|---|
-| Tests | 45 | **573** Node test-runner checks across 120 suites |
+| Tests | 45 | **654** Node test-runner checks across 142 suites (258 of them React render tests) |
 | Playwright checks | 12 | 34 (incl. missing-data + unicode-escape guards, axe-core on `/` *and* `?mock=missing` at WCAG 2.1 AA + 2.2 AA, cached offline restore, app-shell offline reload, and mutation-tested layout guards) |
 | Visual baselines | 0 | 0 — added, then deliberately removed; see *What I removed* |
-| `App.css` lines | 2,067 | 890 |
+| `App.css` lines | 2,067 | 888 |
 | Bundle (gzip) | ≈ 84 kB | ≈ 111 kB initial route (CSS + app + react-vendor); radar and Supabase load lazily |
-| `useWeatherData` lines | 459 | 354 |
-| `useSavedLocationsSync` lines | 360 | 273 |
+| `useWeatherData` lines | 459 | 676 — *grew*, see note |
+| `useSavedLocationsSync` lines | 360 | 366 — *grew*, see note |
+
+Both hook rows previously reported reductions that never happened:
+`useWeatherData` was listed at 354 lines against a measured 676, and
+`useSavedLocationsSync` at 273 against 366. Neither was drift — both were
+already wrong at the commit whose message was "correct every stale claim a
+reviewer would check". The test count was frozen at an older run too.
+
+They are corrected above, and the correction is the more useful number.
+`useWeatherData` is the largest file in the project and it *grew*, because
+the offline-restore path, the supplemental merge (AQI + alerts), the
+archive-comparison track and the refresh policy all landed inside one
+request lifecycle; `useSavedLocationsSync` grew as the backup gained a
+stop sequence, a debounce, and a restore-before-push gate. That is a real
+cost of the resilience work and the next thing worth splitting, not a win
+to round down. A metrics table that only moves in the flattering direction
+is exactly what this project claims not to ship — so these rows are now
+re-measured rather than remembered.
 
 ## What this proves about the engineer
 

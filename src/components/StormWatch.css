@@ -49,8 +49,20 @@
 
 
 
-.storm-help-drawer .info-drawer-panel {
-  width: min(220px, 72vw);
+/*
+ * Scoped above the compact-phone tier on purpose. This descendant selector
+ * is specificity (0,2,0); InfoDrawer.css's narrow-phone ceiling
+ * (@media (max-width: 420px) .info-drawer-panel) is (0,1,0) and a media
+ * query adds none, so an unscoped override here silently defeated that
+ * ceiling and the panel kept its desktop width on a 320px phone. Measured
+ * in Chromium at 320px before this change: 256px wide starting at x=155.8,
+ * 91.8px past the viewport, visible only as clipped content because
+ * `body { overflow-x: hidden }` swallows the scrollbar.
+ */
+@media (min-width: 421px) {
+  .storm-help-drawer .info-drawer-panel {
+    width: min(220px, 72vw);
+  }
 }
 
 .storm-level {
@@ -58,6 +70,37 @@
   font-weight: 650;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  /* Default = the unavailable/neutral case, so a missing data-tone still
+     renders as readable text rather than inheriting something arbitrary. */
+  color: var(--text-dim);
+}
+
+/*
+ * Headline tones. These deliberately mirror the .severity-badge--* mapping
+ * in App.css, because the badge sits directly beside this headline and
+ * describes the same reading — if the two mappings drift, one state renders
+ * in two different colours side by side. Keep them in step.
+ *
+ * The --severity-*-fg rungs are the palette's *text* foregrounds; the
+ * saturated --risk-* ramp stays where it belongs, on the meter bars below.
+ */
+.storm-level[data-tone="critical"],
+.storm-level[data-tone="high"] {
+  color: var(--severity-critical-fg);
+}
+
+.storm-level[data-tone="moderate"] {
+  color: var(--severity-high-fg);
+}
+
+.storm-level[data-tone="low"] {
+  color: var(--severity-warn-fg);
+}
+
+/* Also the "All clear" headline: hasCape with a zero score is tone
+   "minimal", which is the reassuring green rung. */
+.storm-level[data-tone="minimal"] {
+  color: var(--severity-ok-fg);
 }
 
 .storm-module-summary {

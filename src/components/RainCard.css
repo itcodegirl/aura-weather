@@ -599,8 +599,6 @@
   }
 }
 
-@media (pointer: coarse) and (max-width: 420px) {
-}
 
 @media (max-width: 640px) {
   .rain-detail {

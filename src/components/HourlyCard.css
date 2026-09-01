@@ -348,7 +348,7 @@
   position: absolute;
   right: 0;
   top: -8px;
-  font-size: 9.5px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
   background: rgba(9, 18, 33, 0.6);
   padding: 0 4px;
@@ -381,7 +381,7 @@
   top: -2px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 9.5px;
+  font-size: var(--fs-label);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -474,7 +474,7 @@
   margin: 0;
   padding: 13px 15px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-well);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-dim);
   font-size: 13px;
@@ -525,7 +525,7 @@
   padding: 10px 6px;
   border-radius: 13px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-well);
   color: rgba(238, 241, 248, 0.7);
   font-size: 12px;
   font-weight: 500;

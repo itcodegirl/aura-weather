@@ -90,8 +90,11 @@
 
 /* Ambient: the atmosphere panel is reference, not a decision — quiet its
    header so it doesn't compete with the act-now sections. */
+/* Quiet, but not below the floor: at .5 this measured 3.92:1 on the sky.
+   The tier reads as secondary from its dimmed rule marker below, which
+   carries no text. */
 .bento-group-label[data-tier="ambient"] {
-  color: rgba(230, 238, 250, 0.5);
+  color: var(--text-dim);
 }
 
 .bento-group-label[data-tier="ambient"]::before {
@@ -110,6 +113,15 @@
 .bento-rain {
   outline: 1.5px solid rgba(243, 183, 101, 0.3);
   outline-offset: -1.5px;
+}
+
+/* The atmosphere panel holds tiles, so it is an outer shell rather than a
+   card: --bg-large-card (+.11) under --bg-tile-weight tiles composited to
+   white .24, past the surface-tier ceiling, and dropped muted text on the
+   brighter condition gradients to 3.83:1. --bg-panel-outer is the token the
+   tier note reserves for exactly this nesting. */
+.bento > .bento-atm {
+  background: var(--bg-panel-outer);
 }
 
 .bento > section {

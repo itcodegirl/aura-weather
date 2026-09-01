@@ -450,7 +450,7 @@
   position: absolute;
   right: 0;
   top: -8px;
-  font-size: 9px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
   background: rgba(9, 18, 33, 0.6);
   padding: 0 4px;
@@ -464,7 +464,7 @@
   margin: 0;
   padding: 10px 13px;
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-well);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 

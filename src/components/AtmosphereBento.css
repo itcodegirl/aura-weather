@@ -88,6 +88,14 @@
 }
 
 /* Label row (icon + text) */
+/*
+ * --text-muted, not --text-dim. The token floor is calibrated for text
+ * sitting on --bg-tile directly over the sky; these labels sit on a tile
+ * nested inside a panel, and even with the panel dropped to
+ * --bg-panel-outer that composite leaves --text-dim at 4.48:1 -- under the
+ * floor by a hair, on the brightest condition gradients. One step up
+ * clears it at 5.19:1.
+ */
 .atm-label {
   display: inline-flex;
   align-items: center;
@@ -96,7 +104,7 @@
   font-weight: 500;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 /*
@@ -107,7 +115,7 @@
  * border and dimmed fill on .atm-tile--missing already carry the state.
  */
 .atm-label--dim {
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 /* Arc gauge SVG */
@@ -153,7 +161,7 @@
 /* Secondary / label text */
 .atm-sub {
   font-size: 12.5px;
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-weight: 400;
 }
 

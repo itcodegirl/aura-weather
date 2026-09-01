@@ -16,8 +16,8 @@ function loadingState() {
 
 function overrideState(override) {
   // Demo / QA overrides force an honest degraded state without a network
-  // call. 'nocoverage' still fetches real frames (the map renders; the
-  // panel draws a quiet note), so it is treated as a normal load here.
+  // call. Anything else ('ok', or no override) falls through to a normal
+  // load.
   if (override === RADAR_STATUS.ERROR) {
     return { host: "", frames: [], status: RADAR_STATUS.ERROR };
   }

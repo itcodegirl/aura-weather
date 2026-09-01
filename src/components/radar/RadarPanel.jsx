@@ -78,7 +78,7 @@ function RadarStateBlock({ icon, title, copy, action }) {
 
 function RadarPanel({ location, timeZone, style, isRefreshing = false }) {
   const titleId = useId();
-  const { frames, host, status, override, refetch } = useRadarFrames();
+  const { frames, host, status, refetch } = useRadarFrames();
   const nowMs = useTimeNow();
 
   const center = useMemo(() => {
@@ -126,15 +126,7 @@ function RadarPanel({ location, timeZone, style, isRefreshing = false }) {
       : `Live precipitation radar near ${locationName}.`;
 
   let body;
-  if (override === "nocoverage") {
-    body = (
-      <RadarStateBlock
-        icon={<MapPinOff size={22} aria-hidden="true" />}
-        title="No radar coverage here"
-        copy="RainViewer has no radar data for this location. Try a city in a covered region."
-      />
-    );
-  } else if (!center) {
+  if (!center) {
     body = (
       <RadarStateBlock
         icon={<MapPinOff size={22} aria-hidden="true" />}

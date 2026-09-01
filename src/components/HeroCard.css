@@ -244,6 +244,62 @@
   line-height: 1.5;
 }
 
+/* Editorial atmosphere reading — the one synthesised sentence that sits
+   between the condition line and the climate note. buildAtmosphereReading
+   ranks the signal it found and hands down a tone, so the line has to
+   *look* ranked: a severe-alert sentence and a golden-hour sentence are
+   the same markup and must not read the same. The ramp follows the shared
+   severity palette — calm (ok) < notice (warn) < watch (high) < alert
+   (critical) — which is the order the builder's own branches imply.
+
+   A left accent rather than .hero-insight's full box: the two stack, and
+   two bordered panels in a row flatten the hierarchy between the ranked
+   reading and the unranked climate note beneath it. Only `alert` earns a
+   filled surface, so the loudest treatment stays rare.
+
+   The base rule carries the neutral rung so the paragraph is fully styled
+   before any modifier lands — same contract as .severity-badge. Without
+   it this paragraph fell back to UA defaults: 16px (off the type scale,
+   and larger than the 14px insight below it) with a 1em bottom margin. */
+.hero-reading {
+  margin: 14px 0 0;
+  max-width: 620px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--severity-info-border);
+  color: rgba(227, 236, 255, 0.95);
+  font-size: var(--fs-body-lg);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+/* Doubled class (JSX always emits base + modifier together) buys these a
+   specificity step over the bare .hero-reading base. The brand pass at the
+   foot of this file re-colours hero text through single-class rules; without
+   the bump it would silently flatten every tone back to neutral ink — the
+   exact failure this block exists to prevent. */
+.hero-reading.hero-reading--calm {
+  border-left-color: var(--severity-ok-border);
+}
+
+.hero-reading.hero-reading--notice {
+  border-left-color: var(--severity-warn-border);
+  color: var(--severity-warn-fg);
+}
+
+.hero-reading.hero-reading--watch {
+  border-left-color: var(--severity-high-border);
+  color: var(--severity-high-fg);
+}
+
+.hero-reading.hero-reading--alert {
+  padding: 10px 14px;
+  border-left-color: var(--severity-critical-border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--severity-critical-bg);
+  color: var(--severity-critical-fg);
+  font-weight: 700;
+}
+
 /* Characteristic chips — horizontal pill row derived from live data.
    Each chip drops out individually when its reading is missing. */
 .hero-chips {
@@ -501,6 +557,10 @@
     max-width: 100%;
   }
 
+  .hero-reading {
+    max-width: 100%;
+  }
+
   .hero-guidance {
     grid-template-columns: 1fr;
   }
@@ -558,6 +618,15 @@
     margin-top: 12px;
     padding: 10px 12px;
     font-size: 13px;
+  }
+
+  .hero-reading {
+    margin-top: 12px;
+    font-size: var(--fs-body);
+  }
+
+  .hero-reading.hero-reading--alert {
+    padding: 8px 12px;
   }
 
   .hero-guidance-item {
@@ -670,6 +739,14 @@
 .hero-insight {
   background: rgba(255, 243, 225, 0.05);
   border: 1px solid rgba(255, 238, 214, 0.1);
+  color: rgba(245, 242, 235, 0.9);
+}
+
+/* Reading: only the neutral base takes the warm ink. The tone rungs keep
+   the severity palette — this is exactly the "blue/green stays where it
+   carries meaning" carve-out described at the top of this block. */
+.hero-reading {
+  border-left-color: rgba(255, 238, 214, 0.22);
   color: rgba(245, 242, 235, 0.9);
 }
 

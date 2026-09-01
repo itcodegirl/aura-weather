@@ -40,18 +40,22 @@ export {
   radarTileUrlTemplate,
 } from "../domain/radar.js";
 
-// Demo / QA overrides, read from the URL (`?radar=error|empty|loading|
-// nocoverage`). They force an honest degraded state so each path can be
-// shown without waiting for the live API to misbehave — mirroring the
-// app's existing `?mock=missing` trust-contract demo. They only ever
-// force *honest* states, never fabricate radar data.
-const RADAR_OVERRIDES = new Set([
-  "loading",
-  "error",
-  "empty",
-  "nocoverage",
-  "ok",
-]);
+// Demo / QA overrides, read from the URL (`?radar=error|empty|loading|ok`).
+// They force an honest degraded state so each path can be shown without
+// waiting for the live API to misbehave — mirroring the app's existing
+// `?mock=missing` trust-contract demo. They only ever force *honest*
+// states, never fabricate radar data.
+//
+// 'nocoverage' used to live here and has been removed, because it was the
+// one override that broke that rule. Nothing can derive it: RainViewer's
+// weather-maps payload carries no coverage metadata (just `host` and the
+// past/nowcast frame lists), and an uncovered region is pixel-wise
+// identical to a dry one — both render fully transparent tiles — so no
+// amount of sampling separates them. The state it forced therefore
+// asserted something the app can never actually know. The honest answer
+// to that ambiguity is the permanent caption in RadarLegend, which says a
+// clear map may mean no coverage without ever claiming that it does.
+const RADAR_OVERRIDES = new Set(["loading", "error", "empty", "ok"]);
 
 export function readRadarOverride(
   search = typeof window !== "undefined" ? window.location?.search ?? "" : ""

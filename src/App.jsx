@@ -145,12 +145,65 @@ function App() {
     wasInterruptedRef.current = isInterrupted;
   }, [showGlobalLoading, showGlobalError]);
 
+  /*
+   * Held in a variable so the data-error screen can render the very same
+   * header. AppHeader reads location, saved cities and settings but never
+   * `weather`, so it is safe with no forecast loaded — and the error screen
+   * is exactly where a reader needs the city search, since the failure may
+   * be specific to the city they are on.
+   */
+  const header = (
+    <AppHeader
+      citySearchRef={citySearchRef}
+      loadWeather={loadWeather}
+      loadCurrentLocation={loadCurrentLocation}
+      clearSavedLocation={clearSavedLocation}
+      savedCities={savedCities}
+      recentCities={recentCities}
+      location={location}
+      loadSavedCity={loadSavedCity}
+      setStartupCity={setStartupCity}
+      restoreSavedCity={restoreSavedCity}
+      forgetSavedCity={forgetSavedCity}
+      moveSavedCity={moveSavedCity}
+      syncConnected={syncConnected}
+      syncState={syncState}
+      createSyncAccount={createSyncAccount}
+      disconnectSyncAccount={disconnectSyncAccount}
+      syncSavedCitiesNow={syncSavedCitiesNow}
+      isLocatingCurrent={isLocatingCurrent}
+      isGeolocationSupported={isGeolocationSupported}
+      showClimateContext={showClimateContext}
+      setShowClimateContext={setShowClimateContext}
+      unit={unit}
+      setUnit={setUnit}
+      hasPersistedLocation={hasPersistedLocation}
+      startupLocation={startupLocation}
+    />
+  );
+
   if (showGlobalLoading) {
     return <AppLoadingState />;
   }
 
   if (showGlobalError) {
-    return <AppErrorState error={error} onRetry={retryWeather} />;
+    /*
+     * Audit finding 25. This used to return the bare error card, replacing the
+     * whole app — no header, no city search, no saved cities. showGlobalError
+     * is `error && !hasWeatherData`, and "Reload weather" retries the same
+     * city, so a reader whose city failed persistently had no way to reach a
+     * different one. Rendering it inside the shell keeps every route out.
+     */
+    return (
+      <AppShell
+        background={background}
+        conditionCode={weather?.current?.conditionCode}
+        prefersReducedData={prefersReducedData}
+      >
+        {header}
+        <AppErrorState error={error} onRetry={retryWeather} />
+      </AppShell>
+    );
   }
 
   return (
@@ -159,33 +212,7 @@ function App() {
       conditionCode={weather?.current?.conditionCode}
       prefersReducedData={prefersReducedData}
     >
-      <AppHeader
-        citySearchRef={citySearchRef}
-        loadWeather={loadWeather}
-        loadCurrentLocation={loadCurrentLocation}
-        clearSavedLocation={clearSavedLocation}
-        savedCities={savedCities}
-        recentCities={recentCities}
-        location={location}
-        loadSavedCity={loadSavedCity}
-        setStartupCity={setStartupCity}
-        restoreSavedCity={restoreSavedCity}
-        forgetSavedCity={forgetSavedCity}
-        moveSavedCity={moveSavedCity}
-        syncConnected={syncConnected}
-        syncState={syncState}
-        createSyncAccount={createSyncAccount}
-        disconnectSyncAccount={disconnectSyncAccount}
-        syncSavedCitiesNow={syncSavedCitiesNow}
-        isLocatingCurrent={isLocatingCurrent}
-        isGeolocationSupported={isGeolocationSupported}
-        showClimateContext={showClimateContext}
-        setShowClimateContext={setShowClimateContext}
-        unit={unit}
-        setUnit={setUnit}
-        hasPersistedLocation={hasPersistedLocation}
-        startupLocation={startupLocation}
-      />
+      {header}
 
       <StatusStack
         locationNotice={locationNotice}

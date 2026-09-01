@@ -1,9 +1,15 @@
 # Aura Weather — UI/UX, Accessibility, Trust & Portfolio Audit
 
-**Date:** 2026-08-30
+**Date:** 2026-08-30 · **Status updated:** 2026-09-01 (see §I)
 **Branch:** `claude/aura-weather-audit-fvswev`
 **Base:** `33a7ab7` (`origin/main`, PR #169)
 **Node:** v22.22.2 · **npm:** 10.9.7
+
+> **Where this stands.** The findings, evidence and measurements below are a
+> record of 2026-08-30 and are left as written. Only the **status markers** in
+> §D and the follow-up list in §G are kept current; §I logs what has closed
+> since. Both of §G's original headline risks — the drawer overflow and the
+> Storm Watch contrast — are now **fixed**.
 
 **Method.** Six blind dimension sweeps (accessibility, responsive, product UX,
 real-world states, React correctness, docs/portfolio) run as parallel
@@ -95,6 +101,7 @@ which never happened, in a repo whose entire brand is documentary honesty.
 
 Twenty-eight findings survived verification. **★ = fixed in this branch.**
 **◆ = fixed independently on `main` (PRs #152–#169) while this audit ran.**
+**✔ = fixed after the audit, in the PR named** (see §I).
 
 ### 🔴 Critical
 
@@ -103,9 +110,9 @@ Twenty-eight findings survived verification. **★ = fixed in this branch.**
 | 1 | Restored cache replays **expired NWS severe alerts** as active — critical badge, "Until \<a past time\>" | ★ |
 | 2 | **Cold-start auto-push races the restore-pull and overwrites the cloud backup**; if localStorage was cleared, it destroys the only copy | ★ |
 | 3 | Rain Outlook headline calls a **22% chance "Rain likely"**, contradicting the 50% line on the same card | ★ |
-| 4 | **InfoDrawer help panels render off-screen** on phones (up to 91.8px past the viewport at 320px) | ★ partial — see §G |
+| 4 | **InfoDrawer help panels render off-screen** on phones (up to 91.8px past the viewport at 320px) | ★ partial → ✔ #174 |
 | 5 | Radar **Play button permanently inert** under `prefers-reduced-motion` | ◆ |
-| 6 | Storm Watch severity headline **never reaches WCAG contrast**, worst at the highest risk | open |
+| 6 | Storm Watch severity headline **never reaches WCAG contrast**, worst at the highest risk | ✔ #173, #176 |
 | 7 | Case study's metrics table claims **file-size reductions that never happened** | ★ |
 | 8 | `?mock=missing` banner promised no provider calls while radar queried RainViewer/CARTO | ◆ |
 
@@ -136,9 +143,11 @@ Twenty-eight findings survived verification. **★ = fixed in this branch.**
 
 ### ⚪ Optional
 
-Rain timeline bars 9.3px wide at 320px despite an aria-label inviting taps;
-`DataTrustFooter` stamps a 48h-old snapshot with a clock-only time; the unused
-`Stat` component and its dead `.stat` CSS (including a dangling `--subcard-bg`).
+Rain timeline bars 9.3px wide at 320px despite an aria-label inviting taps
+(open); `DataTrustFooter` stamps a 48h-old snapshot with a clock-only time
+(open); the unused `Stat` component and its dead `.stat` CSS, including a
+dangling `--subcard-bg` (✔ — the token reference was repaired in #175 and the
+component and its CSS deleted in #177).
 
 ## E. What was changed, and why it matters
 
@@ -184,27 +193,25 @@ same path for Lighthouse.
 
 ## G. Remaining risks and follow-ups
 
-1. **Help drawers still overflow on phones (partially fixed).** Twelve
-   open-drawer cases still extend past the viewport — worst at 320px (radar
-   +55.8px) and at 430px, where two Atmosphere tiles in the right bento column
-   overflow by 103.5px and 119.9px. Width caps cannot close this: the panel is
-   an in-flow, right-aligned child that widens its title row rather than being
-   anchored to its card, and at 430px a 240px panel simply does not fit a
-   ~200px grid cell. The fix is a positioning change — anchor the panel to the
-   card, or let the title row wrap — which is a layout decision. Per
-   `AGENTS.md` ("if a visual issue requires design judgment, report it and
-   stop") it is left for design direction. Full measurements are in the PR.
-2. **Storm Watch severity contrast (🔴, open).** `classifyStormRisk` returns raw
-   hexes that bypass the audited `--severity-*` tokens, applied inline at
-   `StormWatch.jsx:207`. The single word telling a user a thunderstorm is
-   coming is the least legible text on the page, and gets worse as risk rises.
-   The fix is mechanical — drive `.storm-level` from a `data-tone` attribute
-   against the existing tokens — but choosing the tones is a colour decision.
-3. **No automated coverage for the sync race.** The fix is verified by reading
+*Current as of 2026-09-01. Items that have since closed are in §I.*
+
+1. **`exposure.js` holds a third copy of the risk ramp.** `getAqiStatus` and
+   the `UV_BANDS` table return hexes that restate `--risk-*` — the same defect
+   #176 removed from both `meteorology.js` classifiers, and the last instance
+   of it. It is the harder one: unlike those two, these hexes **are** read, so
+   removing them changes rendering rather than deleting dead weight. Needs its
+   own change, with before/after colour measurement.
+2. **No automated coverage for the sync race.** The fix is verified by reading
    and by a sentinel test on `getSavedCitiesSignature`, but the hook itself has
    no test: it imports its service module directly, `node:test` in this version
    has no `mock.module`, and adding injection would be an architectural change
-   beyond this scope. A follow-up should introduce a seam.
+   beyond that scope. A follow-up should introduce a seam.
+3. **The render suite is flaky, and it has already gone red on `main`.**
+   `WeatherDashboard supplemental chunk failure` fails roughly 2 runs in 10 and
+   reproduces on clean `main`. The `Quality Gates` run for the #169 merge
+   (`33a7ab7`) concluded **failure** on `main` and was never cleared. A suite
+   that fails intermittently trains readers to re-run rather than read, which
+   is how the next real regression gets waved through.
 4. **`README.md` and `docs/screenshots/dashboard-*.png`** remain stale in ways
    only CI can fix — the dashboard captures need live tile hosts. The
    `refresh-screenshots` workflow added on main is the right vehicle.
@@ -213,6 +220,16 @@ same path for Lighthouse.
    geolocation-denial city reset, the header disappearing on the error screen)
    are worth more than some of what was fixed here — they were left because
    they need product or design decisions rather than because they are minor.
+   Of these, **24, 25 and 26 have a defensible correct behaviour** and need
+   less judgment than the label suggests: do not discard the viewed city on a
+   permission denial, keep navigation on the error screen, and read one source
+   for both the hero and the Week Ahead panel. **21, 22, 23 and 27 are genuine
+   design calls** and should wait on direction.
+6. **Two e2e specs cannot be run in this container.** `readme-screenshots.spec.js`
+   desktop + mobile hang on `leaflet-tile-loaded` because the egress proxy
+   refuses browser TLS to CARTO's tile hosts. They pass in CI, so this is a
+   local verification gap rather than a defect — but it means any change to the
+   radar basemap is unverifiable here.
 
 ## H. Refuted during verification
 
@@ -232,3 +249,22 @@ Recording these because an audit that only reports hits is not measuring itself.
 - **The dangling `--subcard-bg` has no user impact.** It sits in `.stat`, whose
   component (`Stat`) is exported but has zero consumers. Real finding, but dead
   code, not a visual bug — demoted to ⚪.
+
+## I. Status log since the audit
+
+Findings that closed after 2026-08-30, and what closed them. The audit body
+above is left as written; this section is the only place statuses move.
+
+| Date | Finding | Closed by |
+|---|---|---|
+| 2026-08-31 | **6** — Storm Watch severity headline never reaches WCAG contrast | #173 drove `.storm-level` from the audited `--severity-*` text tokens via `data-tone`; #176 then moved the risk meter's pips onto the same tone map. |
+| 2026-08-31 | **4** — InfoDrawer help panels render off-screen on phones | #174 anchored the panel to its card (`position: absolute` against the nearest `.glass`, measured and set at open) instead of leaving it an in-flow right-aligned child that width caps could not contain. An e2e guard opens every drawer at three viewports and asserts containment in both the viewport and the card. |
+| 2026-08-31 | ⚪ — unused `Stat` component, dead `.stat` CSS, dangling `--subcard-bg` | #175 repaired the token reference (and added `src/App.tokens.test.mjs`, which fails on any bare `var()` naming an undefined token, or any comment that has swallowed another); #177 then deleted the component and its CSS. |
+| 2026-08-31 | §H's third entry is now moot | The `Stat` component it described no longer exists. |
+
+**Not a finding from this audit, but closed alongside them:** `classifyStormRisk`
+and `classifyComfort` in `src/domain/meteorology.js` each returned a hex per
+level that was a drifted partial copy of the `--risk-*` ramp. #176 removed
+colour from both, leaving `--risk-*` as the single source of truth for the two,
+and pins the *absence* of a colour key so a hex cannot creep back. The third
+copy, in `exposure.js`, is §G item 1.

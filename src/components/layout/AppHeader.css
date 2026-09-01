@@ -417,7 +417,7 @@
 }
 
 .sync-account-toggle:hover {
-  border-color: rgba(166, 227, 255, 0.42);
+  border-color: rgba(174, 205, 242, 0.42);
   background: rgba(9, 20, 42, 0.62);
   transform: translateY(-1px);
 }
@@ -524,7 +524,7 @@
 }
 
 .sync-account-btn:hover {
-  border-color: rgba(166, 227, 255, 0.5);
+  border-color: rgba(174, 205, 242, 0.5);
   background: rgba(10, 22, 48, 0.72);
   transform: translateY(-1px);
 }

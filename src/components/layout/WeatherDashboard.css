@@ -159,7 +159,7 @@
   box-shadow:
     0 30px 72px rgba(2, 8, 24, 0.42),
     0 6px 18px rgba(7, 20, 46, 0.24),
-    inset 0 0 0 1px rgba(128, 226, 255, 0.34);
+    inset 0 0 0 1px rgba(156, 201, 242, 0.34);
 }
 
 .bento > section[data-refreshing="true"]::before {
@@ -170,9 +170,9 @@
   height: auto;
   padding: 4px 9px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(130, 228, 255, 0.36);
+  border: 1px solid rgba(156, 201, 242, 0.36);
   background: rgba(10, 25, 52, 0.8);
-  color: rgba(218, 244, 255, 0.94);
+  color: rgba(237, 245, 255, 0.94);
   font-size: var(--fs-caption);
   font-weight: 700;
   letter-spacing: var(--track-default);
@@ -183,10 +183,10 @@
 }
 
 .bento > section:focus-within {
-  border-color: rgba(133, 230, 255, 0.72);
+  border-color: rgba(156, 201, 242, 0.72);
   box-shadow:
     0 28px 62px rgba(3, 9, 24, 0.42),
-    0 0 0 2px rgba(133, 230, 255, 0.45),
+    0 0 0 2px rgba(156, 201, 242, 0.45),
     inset 0 1px 0 rgba(243, 248, 255, 0.18);
 }
 
@@ -350,7 +350,7 @@
 }
 
 .data-status-summary:focus-visible {
-  outline: 2px solid rgba(130, 228, 255, 0.66);
+  outline: 2px solid rgba(156, 201, 242, 0.66);
   outline-offset: 2px;
 }
 

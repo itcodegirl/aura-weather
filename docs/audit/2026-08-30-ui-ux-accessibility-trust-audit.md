@@ -206,12 +206,23 @@ same path for Lighthouse.
    no test: it imports its service module directly, `node:test` in this version
    has no `mock.module`, and adding injection would be an architectural change
    beyond that scope. A follow-up should introduce a seam.
-3. **The render suite is flaky, and it has already gone red on `main`.**
-   `WeatherDashboard supplemental chunk failure` fails roughly 2 runs in 10 and
-   reproduces on clean `main`. The `Quality Gates` run for the #169 merge
-   (`33a7ab7`) concluded **failure** on `main` and was never cleared. A suite
-   that fails intermittently trains readers to re-run rather than read, which
-   is how the next real regression gets waved through.
+3. ~~**The render suite is flaky.**~~ **Withdrawn — this was already fixed, and
+   the claim was wrong.** It belongs in §G's history rather than its open list
+   because it was carried here on stale information and is worth the correction.
+
+   The claim was that `WeatherDashboard supplemental chunk failure` fails ~2
+   runs in 10 on clean `main`, citing a red `Quality Gates` run. The red run is
+   real: `33a7ab7` (the #169 merge) failed on exactly that test's first
+   subtest. But it **predates its own fix.** `33a7ab7` is an ancestor of
+   `9da163b` (#163), which replaced the test's fixed four-turn drain with a
+   loop that exits on the condition — the boundary having committed — precisely
+   because a fixed count observed zero fallbacks whenever the box was busy.
+
+   Re-measured on `main` at `2399e46`: **36 runs, zero failures** — 20 of the
+   file alone, 10 of the full render suite, and 6 of the full suite under 2×
+   CPU saturation, since the original failure mode was load-dependent and an
+   idle box would prove nothing. The fix is present (`i < 200` with a condition
+   break; the `i < 4` drain is gone) and 16 commits have landed green since.
 4. **`README.md` and `docs/screenshots/dashboard-*.png`** remain stale in ways
    only CI can fix — the dashboard captures need live tile hosts. The
    `refresh-screenshots` workflow added on main is the right vehicle.

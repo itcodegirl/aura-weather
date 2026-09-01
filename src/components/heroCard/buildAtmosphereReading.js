@@ -1,4 +1,5 @@
 import { classifyUv } from "../../domain/exposure.js";
+import { resolveTodayIndex } from "../../domain/forecastToday.js";
 import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase } from "../../utils/sunlight.js";
@@ -85,6 +86,10 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
     return null;
   }
 
+  // Same day the hero and the Week Ahead use; see resolveTodayIndex. Reading
+  // index 0 put a restored snapshot's yesterday sun times and UV peak here.
+  const todayIndex = resolveTodayIndex(weather, nowMs);
+
   // 1. Severe weather alert — highest priority, supersedes everything.
   const alerts = Array.isArray(weather.alerts) ? weather.alerts : [];
   const seriousAlert = alerts.find(
@@ -130,8 +135,8 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   // sunrise/sunset timestamps. The clock labels rendered below still use
   // the naive strings directly, which already display the location's
   // wall-clock time correctly. See getZonedNow in utils/dates.
-  const sunrise = weather.daily?.sunrise?.[0];
-  const sunset = weather.daily?.sunset?.[0];
+  const sunrise = weather.daily?.sunrise?.[todayIndex];
+  const sunset = weather.daily?.sunset?.[todayIndex];
   const zonedNowMs = Number.isFinite(nowMs)
     ? getZonedNow(weather?.meta?.timezone, nowMs).getTime()
     : nowMs;
@@ -151,7 +156,7 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
     // Band words come from the shared WHO classifier so the reading
     // line can never disagree with the UV chip or panel. Only High and
     // above merits a hero callout; Moderate stays a panel-level fact.
-    const uvIndex = toFiniteNumber(weather.daily?.uvIndexMax?.[0]);
+    const uvIndex = toFiniteNumber(weather.daily?.uvIndexMax?.[todayIndex]);
     const uvBand = classifyUv(uvIndex)?.band;
     if (uvBand === "very-high" || uvBand === "extreme") {
       return {

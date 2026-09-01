@@ -1,5 +1,6 @@
 import { getWeather, UNKNOWN_WEATHER } from "../../domain/weatherCodes.js";
 import { classifyUv } from "../../domain/exposure.js";
+import { resolveTodayIndex } from "../../domain/forecastToday.js";
 import {
   formatTemperatureValue,
   formatTemperatureWithUnit,
@@ -126,9 +127,9 @@ function formatPercent(value) {
   return numeric === null ? "" : `${Math.round(numeric)}%`;
 }
 
-function buildRainGuidance(weather, unit) {
-  const chance = toFiniteNumber(weather?.daily?.rainChanceMax?.[0]);
-  const amount = toFiniteNumber(weather?.daily?.rainAmountTotal?.[0]);
+function buildRainGuidance(weather, unit, todayIndex) {
+  const chance = toFiniteNumber(weather?.daily?.rainChanceMax?.[todayIndex]);
+  const amount = toFiniteNumber(weather?.daily?.rainAmountTotal?.[todayIndex]);
   const chanceLabel = formatPercent(chance);
   // Wire amounts are pinned to inches (source "F") regardless of the
   // display unit; only the rendered label converts to the user's unit.
@@ -183,8 +184,8 @@ function buildRainGuidance(weather, unit) {
   };
 }
 
-function buildUvGuidance(weather) {
-  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[0]);
+function buildUvGuidance(weather, todayIndex) {
+  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
 
   if (uvIndex === null) {
     return {
@@ -286,8 +287,8 @@ const UV_PANEL_COPY = {
  * disagree (the mockup itself ships a "Moderate" label over a 7.5
  * reading — data-driven copy fixes that).
  */
-function buildHeroUvPanel(weather) {
-  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[0]);
+function buildHeroUvPanel(weather, todayIndex) {
+  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
   if (uvIndex === null) {
     return null;
   }
@@ -373,10 +374,10 @@ function buildWindGuidance(weather, unit) {
  * when a reading is missing (unavailable) so the trust contract stays
  * honest.
  */
-function buildDailyGuidance(weather, unit) {
+function buildDailyGuidance(weather, unit, todayIndex) {
   return [
-    buildRainGuidance(weather, unit),
-    buildUvGuidance(weather),
+    buildRainGuidance(weather, unit, todayIndex),
+    buildUvGuidance(weather, todayIndex),
     buildWindGuidance(weather, unit),
   ].filter((item) => item.tone !== "calm");
 }
@@ -389,7 +390,7 @@ const WIND_GUSTY_MPH = 25;
 const AQI_GOOD = 50;
 const AQI_MODERATE = 100;
 
-function buildCharacteristicChips(weather, aqi) {
+function buildCharacteristicChips(weather, aqi, todayIndex) {
   const chips = [];
 
   const dewPoint = toFiniteNumber(weather?.current?.dewPoint);
@@ -446,7 +447,7 @@ function buildCharacteristicChips(weather, aqi) {
     });
   }
 
-  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[0]);
+  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
   if (uvIndex !== null) {
     // Chip casing is "UV <band>", derived from the shared classifier so
     // the chip word can never drift from the panel/reading-line band.
@@ -480,6 +481,12 @@ export function buildHeroData({
   }
 
   const current = weather.current;
+  /*
+   * Which daily entry is today. Read index 0 and a snapshot restored from
+   * yesterday puts yesterday's high, low, sun times and UV peak in the hero
+   * while the Week Ahead below it starts at today. See resolveTodayIndex.
+   */
+  const todayIndex = resolveTodayIndex(weather, nowMs);
   const safeLocationName = pickLocationName(location);
   const safeLocationCountry = pickLocationCountry(location);
   const info = getWeather(current.conditionCode);
@@ -489,11 +496,11 @@ export function buildHeroData({
   const feelsLikeDisplay = formatTemperatureWithUnit(current.feelsLike, unit);
   const dewPointDisplay = formatTemperatureWithUnit(current.dewPoint, unit);
   const todayHighDisplay = formatTemperatureWithUnit(
-    weather?.daily?.temperatureMax?.[0],
+    weather?.daily?.temperatureMax?.[todayIndex],
     unit
   );
   const todayLowDisplay = formatTemperatureWithUnit(
-    weather?.daily?.temperatureMin?.[0],
+    weather?.daily?.temperatureMin?.[todayIndex],
     unit
   );
 
@@ -510,8 +517,8 @@ export function buildHeroData({
       ? MISSING_VALUE_PLACEHOLDER
       : `${Math.round(pressureValue)} hPa`;
 
-  const sunriseValue = weather?.daily?.sunrise?.[0] ?? "";
-  const sunsetValue = weather?.daily?.sunset?.[0] ?? "";
+  const sunriseValue = weather?.daily?.sunrise?.[todayIndex] ?? "";
+  const sunsetValue = weather?.daily?.sunset?.[todayIndex] ?? "";
   const sunriseLabel = formatSunClock(sunriseValue);
   const sunsetLabel = formatSunClock(sunsetValue);
   const daylightLabel = formatDaylightLengthLabel(sunriseValue, sunsetValue, {
@@ -531,7 +538,7 @@ export function buildHeroData({
     unit,
     locationName: safeLocationName,
   });
-  const dailyGuidance = buildDailyGuidance(weather, unit);
+  const dailyGuidance = buildDailyGuidance(weather, unit, todayIndex);
 
   const isCurrentTempMissing = isMissingPlaceholder(currentTempDisplay);
   // The headline condition is "missing" exactly when getWeather fell back to
@@ -547,7 +554,7 @@ export function buildHeroData({
     windDisplay,
   ].some((value) => isMissingPlaceholder(value));
 
-  const characteristicChips = buildCharacteristicChips(weather, aqi);
+  const characteristicChips = buildCharacteristicChips(weather, aqi, todayIndex);
 
   return {
     current,
@@ -577,7 +584,7 @@ export function buildHeroData({
     climateMessage,
     dailyGuidance,
     characteristicChips,
-    uvPanel: buildHeroUvPanel(weather),
+    uvPanel: buildHeroUvPanel(weather, todayIndex),
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
   };
 }

@@ -40,11 +40,15 @@ function buildCity(index) {
  * one-shot `gate`: set it to a promise and the next write stays in flight
  * until that promise resolves.
  */
-function createFakeClient() {
-  const calls = { upserts: [], deletes: [], signInCount: 0 };
+function createFakeClient({ cloudCities = null, selectError = null } = {}) {
+  const calls = { upserts: [], deletes: [], signInCount: 0, selects: 0 };
   const client = {
     calls,
     gate: null,
+    // Second one-shot gate, for the restore. Set it to a promise and the
+    // pull stays in flight until that promise resolves, which is the window
+    // an auto-push must not fire in.
+    selectGate: null,
     auth: {
       getSession: async () => ({ data: { session: null } }),
       signInAnonymously: async () => {
@@ -64,7 +68,21 @@ function createFakeClient() {
           return { error: null };
         },
         select: () => ({
-          maybeSingle: async () => ({ data: null, error: null }),
+          maybeSingle: async () => {
+            if (client.selectGate) {
+              const pending = client.selectGate;
+              client.selectGate = null;
+              await pending;
+            }
+            calls.selects += 1;
+            if (selectError) {
+              return { data: null, error: selectError };
+            }
+            return {
+              data: cloudCities ? { cities: cloudCities } : null,
+              error: null,
+            };
+          },
         }),
         delete: () => ({
           eq: async (column, value) => {
@@ -202,5 +220,131 @@ describe("useSavedLocationsSync", () => {
       "the edit that raced the reconnect must still be backed up"
     );
     assert.equal(probe.read().syncState.status, "ready");
+  });
+});
+
+/*
+ * The cold-start race. A device that already has a backup pulls the cloud row
+ * on mount; an auto-push that lands first invalidates the pull's request
+ * ticket and overwrites the cloud with whatever local state the app started
+ * from. If localStorage had been cleared, that destroys the only copy.
+ *
+ * Two guards stand between those, and neither had a test — the fix was
+ * verified by reading, which is exactly how the defect got in. Both are
+ * driven here through the real effect and debounce plumbing.
+ */
+describe("useSavedLocationsSync on a cold start with an existing backup", () => {
+  function persistAccount() {
+    window.localStorage.setItem(
+      SYNC_ACCOUNT_KEY,
+      JSON.stringify({ syncKey: USER.id, createdAt: Date.now() })
+    );
+  }
+
+  test("a failed restore does not push the local list over the cloud", async () => {
+    /*
+     * The destructive case: failing to READ the cloud must never be followed
+     * by writing over it. A device whose localStorage was cleared would
+     * otherwise replace a full backup with a near-empty list, and the failed
+     * read is exactly when that list is least trustworthy.
+     *
+     * Note on what this does NOT prove. lastSyncedSignatureRef's seed (from
+     * the mount-time list, where it was once "" — a value
+     * getSavedCitiesSignature cannot return, making the "nothing changed"
+     * short-circuit unreachable) is not observable here or anywhere else
+     * through this hook. Mutating the seed back to "" leaves every test in
+     * this file green. The push effect's deps are
+     * [trackedPush, savedCities, savedCitiesSignature, syncAccount], and a
+     * failed pull only moves syncState — so the effect never re-runs, the
+     * gate is never re-consulted, and the seed never decides anything. It is
+     * defence in depth behind the gate, not a load-bearing guard, and the
+     * honest thing is to say so rather than to imply coverage this lacks.
+     */
+    persistAccount();
+    const client = createFakeClient({
+      selectError: { message: "network unreachable" },
+    });
+    const probe = renderProbe(client);
+
+    await waitFor(() => assert.equal(client.calls.selects, 1), {
+      timeout: PUSH_TIMEOUT_MS,
+      interval: 25,
+    });
+    // Past the debounce, with the gate now open and the restore failed.
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+
+    assert.equal(
+      client.calls.upserts.length,
+      0,
+      "a failed restore must not overwrite the cloud with the local list"
+    );
+    assert.equal(probe.read().syncState.status, "error");
+  });
+
+  test("a successful restore on an unchanged list writes nothing", async () => {
+    persistAccount();
+    const client = createFakeClient({
+      cloudCities: [buildCity(0), buildCity(1)],
+    });
+    const probe = renderProbe(client);
+
+    await waitFor(() => assert.equal(client.calls.selects, 1), {
+      timeout: PUSH_TIMEOUT_MS,
+      interval: 25,
+    });
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+
+    assert.equal(client.calls.upserts.length, 0);
+    assert.equal(probe.read().savedCities.length, 2, "the restore landed");
+  });
+
+  test("an edit made while the restore is in flight waits for it", async () => {
+    // Guard two: initialPullSettledRef. The edit is a real change, so the
+    // signature short-circuit does not apply and only the gate can hold the
+    // push back.
+    persistAccount();
+    const client = createFakeClient({ cloudCities: [buildCity(0), buildCity(1)] });
+
+    let releasePull;
+    client.selectGate = new Promise((resolve) => {
+      releasePull = resolve;
+    });
+
+    const probe = renderProbe(client);
+    await probe.addCity(buildCity(9));
+
+    // Past the debounce, with the restore still in flight.
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    assert.equal(
+      client.calls.upserts.length,
+      0,
+      "no push may land while the restore is still in flight"
+    );
+
+    await act(async () => {
+      releasePull();
+      await Promise.resolve();
+    });
+
+    // The restore itself does not push: it raises skipNextSyncPush and records
+    // the merged signature as synced, so the cloud row is left alone and the
+    // merge lands locally.
+    await waitFor(
+      () => assert.equal(probe.read().savedCities.length, 3),
+      { timeout: PUSH_TIMEOUT_MS, interval: 25 }
+    );
+    const merged = probe.read().savedCities.map((city) => city.name);
+    assert.ok(merged.includes("City 9"), "the local edit survived the merge");
+    assert.ok(merged.includes("City 1"), "so did the cloud-only city");
+    assert.equal(client.calls.upserts.length, 0);
+
+    // The gate is not a permanent block: the next genuine change still pushes,
+    // and carries everything the merge produced.
+    await probe.addCity(buildCity(7));
+    await probe.waitForUpserts(1);
+    const pushed = cityNames(client.calls.upserts[0]);
+    for (const name of ["City 0", "City 1", "City 9", "City 7"]) {
+      assert.match(pushed, new RegExp(name), `${name} reached the cloud`);
+    }
   });
 });

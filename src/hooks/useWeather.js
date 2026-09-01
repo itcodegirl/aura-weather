@@ -164,12 +164,27 @@ export function useWeather(options = {}) {
     [applyLocation]
   );
 
+  /*
+   * A failed "My location" request reports without navigating. useLocation
+   * cannot do this through onResolved, because every notice that channel
+   * delivers is attached to a location change — which is exactly how declining
+   * the permission prompt used to move the reader to the default city.
+   */
+  const showLocationNotice = useCallback((notice) => {
+    if (locationNoticeRef.current === notice) {
+      return;
+    }
+    setLocationNotice(notice);
+    locationNoticeRef.current = notice;
+  }, []);
+
   const {
     isLocatingCurrent,
     isGeolocationSupported,
     loadCurrentLocation,
     cancelCurrentLocationLookup,
   } = useLocation(handleLocationResolved, {
+    onNotice: showLocationNotice,
     // A shared ?lat&lon link already won in getInitialLocationState; letting
     // useLocation bootstrap would overwrite it with the startup city.
     skipBootstrap: initialLocationState.source === "url",

@@ -40,7 +40,7 @@
 }
 
 .info-drawer-trigger:hover {
-  border-color: rgba(139, 230, 255, 0.62);
+  border-color: rgba(156, 201, 242, 0.62);
   background: var(--surface-strong);
   transform: translateY(var(--lift-1));
 }

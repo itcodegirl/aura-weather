@@ -52,8 +52,8 @@
 }
 
 .rain-mode-toggle:focus-within {
-  border-color: rgba(130, 228, 255, 0.6);
-  box-shadow: 0 0 0 3px rgba(64, 196, 255, 0.16);
+  border-color: rgba(156, 201, 242, 0.6);
+  box-shadow: 0 0 0 3px rgba(111, 183, 242, 0.16);
 }
 
 .rain-mode-btn {
@@ -92,9 +92,9 @@
 }
 
 .rain-mode-btn:focus-visible {
-  border-color: rgba(114, 224, 255, 0.8);
+  border-color: rgba(111, 183, 242, 0.8);
   box-shadow:
-    0 0 0 2px rgba(64, 196, 255, 0.22),
+    0 0 0 2px rgba(111, 183, 242, 0.22),
     0 6px 14px rgba(4, 12, 28, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
@@ -450,7 +450,7 @@
   position: absolute;
   right: 0;
   top: -8px;
-  font-size: 9px;
+  font-size: var(--fs-label);
   color: var(--text-dim);
   background: rgba(9, 18, 33, 0.6);
   padding: 0 4px;
@@ -464,7 +464,7 @@
   margin: 0;
   padding: 10px 13px;
   border-radius: 11px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-well);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -574,13 +574,13 @@
   }
 
   .rain-touch-sample.is-selected {
-    border-color: rgba(115, 224, 255, 0.56);
+    border-color: rgba(111, 183, 242, 0.56);
     background: rgba(73, 124, 214, 0.3);
-    box-shadow: inset 0 0 0 1px rgba(110, 231, 255, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(111, 183, 242, 0.18);
   }
 
   .rain-touch-sample:focus-visible {
-    outline: 2px solid rgba(110, 231, 255, 0.72);
+    outline: 2px solid rgba(111, 183, 242, 0.72);
     outline-offset: 2px;
   }
 }

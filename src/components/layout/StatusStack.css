@@ -224,7 +224,7 @@
 }
 
 .app-status--loading::before {
-  background: linear-gradient(180deg, #cae8ff, #80dbff);
+  background: linear-gradient(180deg, #cae8ff, #9cc9f2);
   box-shadow: 0 0 0 3px rgba(113, 200, 255, 0.14);
 }
 
@@ -239,13 +239,13 @@
 }
 
 .app-status--update {
-  border-color: rgba(125, 211, 252, 0.44);
-  color: #dff5ff;
+  border-color: rgba(156, 201, 242, 0.44);
+  color: #edf5ff;
 }
 
 .app-status--update::before {
-  background: linear-gradient(180deg, #dff5ff, #7dd3fc);
-  box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.14);
+  background: linear-gradient(180deg, #edf5ff, #9cc9f2);
+  box-shadow: 0 0 0 3px rgba(156, 201, 242, 0.14);
 }
 
 .app-status--ready {
@@ -292,7 +292,7 @@
 }
 
 .app-status-action--primary {
-  border-color: rgba(219, 244, 255, 0.7);
+  border-color: rgba(237, 245, 255, 0.7);
   background: var(--active-pill-bg);
   color: var(--active-pill-color);
 }

@@ -12,7 +12,9 @@ describe("getAqiStatus", () => {
   test("returns no-data status for null/undefined", () => {
     const status = getAqiStatus(null);
     assert.equal(status.label, "");
-    assert.equal(typeof status.color, "string");
+    // A missing reading has no tone: the arc draws its dashed empty track and
+    // never strokes a fill. Anything else would colour an absent measurement.
+    assert.equal(status.tone, null);
 
     const undefinedStatus = getAqiStatus(undefined);
     assert.equal(undefinedStatus.label, "");
@@ -38,18 +40,20 @@ describe("getAqiStatus", () => {
     assert.equal(getAqiStatus(500).label, "Hazardous");
   });
 
-  test("returns distinct colors across every tier", () => {
-    // Six distinct colors — one per tier — so a sighted user can
-    // visually identify the severity from the gauge fill alone.
-    const colors = new Set([
-      getAqiStatus(25).color,
-      getAqiStatus(75).color,
-      getAqiStatus(125).color,
-      getAqiStatus(175).color,
-      getAqiStatus(250).color,
-      getAqiStatus(400).color,
+  test("returns distinct tones across every tier", () => {
+    // Six distinct tones — one per tier — so a sighted user can visually
+    // identify the severity from the gauge fill alone. The tones carry that
+    // promise now; AtmosphereBento.arcTones.test.mjs checks the CSS keeps it
+    // by resolving all six to different colours.
+    const tones = new Set([
+      getAqiStatus(25).tone,
+      getAqiStatus(75).tone,
+      getAqiStatus(125).tone,
+      getAqiStatus(175).tone,
+      getAqiStatus(250).tone,
+      getAqiStatus(400).tone,
     ]);
-    assert.equal(colors.size, 6);
+    assert.equal(tones.size, 6);
   });
 
   test("returns a label string short enough to render in the metric pill without wrapping", () => {
@@ -86,15 +90,28 @@ describe("getUvStatus", () => {
     assert.equal(getUvStatus(15).label, "Extreme");
   });
 
-  test("returns distinct colors per band", () => {
-    const colors = new Set([
-      getUvStatus(1).color,
-      getUvStatus(4).color,
-      getUvStatus(6.5).color,
-      getUvStatus(9).color,
-      getUvStatus(11).color,
+  test("returns distinct tones per band", () => {
+    const tones = new Set([
+      getUvStatus(1).tone,
+      getUvStatus(4).tone,
+      getUvStatus(6.5).tone,
+      getUvStatus(9).tone,
+      getUvStatus(11).tone,
     ]);
-    assert.equal(colors.size, 5);
+    assert.equal(tones.size, 5);
+  });
+
+  test("carries no presentation colour on any band", () => {
+    // Same defect as classifyStormRisk and classifyComfort: the hexes here
+    // were a copy of the --risk-* ramp, and the AQI set restated five of its
+    // six stops byte-for-byte. Guarding the absence stops one creeping back
+    // and re-forking the source of truth.
+    for (const uv of [null, 1, 4, 6.5, 9, 11]) {
+      assert.deepEqual(Object.keys(getUvStatus(uv)).sort(), ["label", "tone"]);
+    }
+    for (const aqi of [null, 25, 75, 125, 175, 250, 400]) {
+      assert.deepEqual(Object.keys(getAqiStatus(aqi)).sort(), ["label", "tone"]);
+    }
   });
 });
 

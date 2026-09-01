@@ -784,7 +784,10 @@ a:focus-visible,
   .storm-risk-pip {
     border: 1px solid ButtonBorder;
   }
-  .storm-risk-pip[style*="rgba(255,255,255,0.1)"] {
+  /* Unfilled pips previously matched on their inline style string; the
+     colours moved to the --risk-* ramp in StormWatch.css, so match the
+     data attribute that replaced it. */
+  .storm-risk-pip:not([data-filled]) {
     background: ButtonFace;
   }
 

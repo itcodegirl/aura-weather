@@ -126,6 +126,69 @@
   overflow: visible;
 }
 
+/*
+ * Arc fill colour, keyed on the scale and the tone the domain layer returns.
+ * getAqiStatus / getUvStatus used to return hexes, and the AQI set was a
+ * third copy of the --risk-* ramp -- five of its six tiers byte-for-byte, in
+ * ramp order, skipping the lime exactly as the storm meter did. Pointing the
+ * AQI arc at the tokens leaves one source of truth, so the ramp and the arc
+ * cannot drift apart the way classifyStormRisk's copy already had.
+ *
+ * UV is NOT the ramp and is not being made into it. Only three of its five
+ * bands were ever ramp colours; "Very High" and "Extreme" are a rose and a
+ * deep maroon that appear nowhere on it. Those values are moved here exactly
+ * as they were -- relocating a palette, not choosing one. Re-picking UV's
+ * stops is a design decision and is left alone.
+ *
+ * Both scales are keyed because each has a "moderate" tone; they happen to
+ * agree today, and nothing here requires them to keep agreeing.
+ */
+.atm-arc-fill[data-scale="aqi"][data-tone="good"] {
+  stroke: var(--risk-low);
+}
+
+.atm-arc-fill[data-scale="aqi"][data-tone="moderate"] {
+  stroke: var(--risk-elevated);
+}
+
+.atm-arc-fill[data-scale="aqi"][data-tone="sensitive"] {
+  stroke: var(--risk-high);
+}
+
+.atm-arc-fill[data-scale="aqi"][data-tone="unhealthy"] {
+  stroke: var(--risk-severe);
+}
+
+.atm-arc-fill[data-scale="aqi"][data-tone="very-unhealthy"] {
+  stroke: var(--risk-extreme);
+}
+
+/* One tier past the ramp's top, which stops at --risk-extreme. */
+.atm-arc-fill[data-scale="aqi"][data-tone="hazardous"] {
+  stroke: #7f1d1d;
+}
+
+.atm-arc-fill[data-scale="uv"][data-tone="low"] {
+  stroke: var(--risk-low);
+}
+
+.atm-arc-fill[data-scale="uv"][data-tone="moderate"] {
+  stroke: var(--risk-elevated);
+}
+
+.atm-arc-fill[data-scale="uv"][data-tone="high"] {
+  stroke: var(--risk-high);
+}
+
+/* Off-ramp by design -- see the note above. */
+.atm-arc-fill[data-scale="uv"][data-tone="very-high"] {
+  stroke: #f43f5e;
+}
+
+.atm-arc-fill[data-scale="uv"][data-tone="extreme"] {
+  stroke: #7f1d1d;
+}
+
 .atm-arc-readout {
   display: flex;
   align-items: baseline;

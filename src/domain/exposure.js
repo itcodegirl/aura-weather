@@ -1,6 +1,19 @@
+/*
+ * Statuses carry a `tone`, never a colour. The hexes that used to live here
+ * were a third copy of the --risk-* ramp in App.css: the AQI tiers restated
+ * five of its six stops byte-for-byte, in ramp order, skipping the lime
+ * exactly as the storm meter did. A copy that nothing checks is a copy that
+ * drifts -- classifyStormRisk's had already drifted before it was removed.
+ * AtmosphereBento.css maps tone to colour now, so the ramp is the one source
+ * of truth for the AQI arc, and the UV arc keeps its own deliberately
+ * distinct palette in one place rather than two.
+ *
+ * A missing reading has no tone. The arc renders its dashed empty track and
+ * never strokes a fill, so the old no-data colour was already unreachable.
+ */
 const NO_DATA_STATUS = {
   label: "",
-  color: "rgba(148, 163, 184, 0.92)",
+  tone: null,
 };
 
 /*
@@ -19,21 +32,21 @@ export function getAqiStatus(aqi) {
     return NO_DATA_STATUS;
   }
   if (aqi <= 50) {
-    return { label: "Good", color: "#22c55e" };
+    return { label: "Good", tone: "good" };
   }
   if (aqi <= 100) {
-    return { label: "Moderate", color: "#eab308" };
+    return { label: "Moderate", tone: "moderate" };
   }
   if (aqi <= 150) {
-    return { label: "Sensitive", color: "#f97316" };
+    return { label: "Sensitive", tone: "sensitive" };
   }
   if (aqi <= 200) {
-    return { label: "Unhealthy", color: "#ef4444" };
+    return { label: "Unhealthy", tone: "unhealthy" };
   }
   if (aqi <= 300) {
-    return { label: "Very Unhealthy", color: "#a855f7" };
+    return { label: "Very Unhealthy", tone: "very-unhealthy" };
   }
-  return { label: "Hazardous", color: "#7f1d1d" };
+  return { label: "Hazardous", tone: "hazardous" };
 }
 
 /**
@@ -84,11 +97,11 @@ export function getAqiGuidance(aqi) {
  * "UV High" on the same card.
  */
 const UV_BANDS = [
-  { band: "extreme", label: "Extreme", min: 11, color: "#7f1d1d" },
-  { band: "very-high", label: "Very High", min: 8, color: "#f43f5e" },
-  { band: "high", label: "High", min: 6, color: "#f97316" },
-  { band: "moderate", label: "Moderate", min: 3, color: "#eab308" },
-  { band: "low", label: "Low", min: 0, color: "#22c55e" },
+  { band: "extreme", label: "Extreme", min: 11 },
+  { band: "very-high", label: "Very High", min: 8 },
+  { band: "high", label: "High", min: 6 },
+  { band: "moderate", label: "Moderate", min: 3 },
+  { band: "low", label: "Low", min: 0 },
 ];
 
 export function classifyUv(uv) {
@@ -105,5 +118,5 @@ export function getUvStatus(uv) {
   if (uvBand === null) {
     return NO_DATA_STATUS;
   }
-  return { label: uvBand.label, color: uvBand.color };
+  return { label: uvBand.label, tone: uvBand.band };
 }

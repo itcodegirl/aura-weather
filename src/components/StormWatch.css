@@ -135,7 +135,38 @@
   flex: 1;
   height: 6px;
   border-radius: 3px;
+  /* Unfilled by default; the filled rungs are tinted by tone below. */
+  background: rgba(255, 255, 255, 0.1);
   transition: background var(--motion-medium) var(--ease-standard);
+}
+
+/*
+ * Filled pips take the shared --risk-* ramp — the same ladder the hero UV
+ * track draws from, and the one App.css names as belonging to "the Storm
+ * Watch severity bar". These used to come from a hex returned by
+ * classifyStormRisk, which had drifted from the ramp it was copying
+ * ("Severe" #dc2626 against the ramp's #ef4444). Keyed off the same
+ * `stormTone` the headline uses, so a level cannot render one colour here
+ * and another there.
+ *
+ * Note the ramp's own naming: storm "Moderate" is the ramp's *elevated*
+ * rung. --risk-moderate (a lime) sits between low and elevated on the hero
+ * UV gradient and is deliberately not a storm level.
+ */
+.storm-risk-meter[data-tone="critical"] .storm-risk-pip[data-filled] {
+  background: var(--risk-severe);
+}
+
+.storm-risk-meter[data-tone="high"] .storm-risk-pip[data-filled] {
+  background: var(--risk-high);
+}
+
+.storm-risk-meter[data-tone="moderate"] .storm-risk-pip[data-filled] {
+  background: var(--risk-elevated);
+}
+
+.storm-risk-meter[data-tone="low"] .storm-risk-pip[data-filled] {
+  background: var(--risk-low);
 }
 
 

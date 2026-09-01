@@ -115,7 +115,19 @@ describe("readRadarOverride", () => {
   test("recognises the supported demo overrides", () => {
     assert.equal(readRadarOverride("?radar=error"), "error");
     assert.equal(readRadarOverride("?radar=empty"), "empty");
-    assert.equal(readRadarOverride("?radar=nocoverage"), "nocoverage");
+    assert.equal(readRadarOverride("?radar=loading"), "loading");
+    assert.equal(readRadarOverride("?radar=ok"), "ok");
+  });
+
+  /*
+   * 'nocoverage' is deliberately absent: the app has no way to derive a
+   * no-coverage state (the payload carries no coverage metadata, and an
+   * uncovered region renders identically to a dry one), so an override
+   * that forced it would assert something unknowable. Pinned so the
+   * override cannot be reintroduced without this decision resurfacing.
+   */
+  test("does not recognise nocoverage — the app cannot derive it", () => {
+    assert.equal(readRadarOverride("?radar=nocoverage"), null);
   });
 
   test("ignores unknown or missing values", () => {

@@ -14,7 +14,15 @@ import "./AtmosphereBento.css";
 const ARC_PATH = "M8 50 A44 44 0 0 1 92 50";
 const ARC_LEN = 138;
 
-function ArcGauge({ fraction, color, ariaLabel, missing }) {
+/*
+ * `scale` and `tone` together pick the fill colour, in CSS. Both are needed:
+ * UV and AQI each have a "moderate" tone and they are not required to agree,
+ * so a tone alone would silently couple two independent scales.
+ *
+ * A `var()` cannot be used in an SVG presentation attribute, so the fill is
+ * given a class and styled in AtmosphereBento.css rather than passed a hex.
+ */
+function ArcGauge({ fraction, scale, tone, ariaLabel, missing }) {
   const filled = !missing && Number.isFinite(fraction) && fraction > 0;
   const dashFill = filled
     ? `${Math.min(Math.round(fraction * ARC_LEN), ARC_LEN)} 200`
@@ -31,9 +39,11 @@ function ArcGauge({ fraction, color, ariaLabel, missing }) {
       />
       {filled && (
         <path
+          className="atm-arc-fill"
+          data-scale={scale}
+          data-tone={tone}
           d={ARC_PATH}
           fill="none"
-          stroke={color}
           strokeWidth="7"
           strokeLinecap="round"
           strokeDasharray={dashFill}
@@ -142,7 +152,7 @@ function UvTile({ uvIndex }) {
   const uv = toFiniteNumber(uvIndex);
   const hasDat = uv !== null;
   const fraction = hasDat ? Math.max(0, Math.min(1, uv / 11)) : null;
-  const { label, color } = getUvStatus(uv);
+  const { label, tone } = getUvStatus(uv);
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
       <TileLabel icon={Sun} help={TILE_HELP.uv}>
@@ -150,7 +160,8 @@ function UvTile({ uvIndex }) {
       </TileLabel>
       <ArcGauge
         fraction={fraction}
-        color={color}
+        scale="uv"
+        tone={tone}
         missing={!hasDat}
         ariaLabel={hasDat ? `UV index ${Math.round(uv)} ${label}` : "UV index unavailable"}
       />
@@ -166,7 +177,7 @@ function AqiTile({ aqi }) {
   const aqiVal = toFiniteNumber(aqi);
   const hasDat = aqiVal !== null;
   const fraction = hasDat ? Math.max(0, Math.min(1, aqiVal / 500)) : null;
-  const { label, color } = getAqiStatus(aqiVal);
+  const { label, tone } = getAqiStatus(aqiVal);
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
       <TileLabel icon={Wind} help={TILE_HELP.aqi} dim={!hasDat}>
@@ -174,7 +185,8 @@ function AqiTile({ aqi }) {
       </TileLabel>
       <ArcGauge
         fraction={fraction}
-        color={color}
+        scale="aqi"
+        tone={tone}
         missing={!hasDat}
         ariaLabel={
           hasDat

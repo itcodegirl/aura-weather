@@ -24,10 +24,10 @@
 
 .hero-sky-glow {
   position: absolute;
-  top: 6px;
+  top: 40px;
   right: 14px;
-  width: 124px;
-  height: 124px;
+  width: 152px;
+  height: 152px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(244, 189, 111, 0.52), transparent 65%);
   animation: hero-glow-pulse 6.5s ease-in-out infinite;
@@ -114,7 +114,7 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
-  color: var(--text-muted);
+  color: rgba(244, 241, 234, 0.9);
   font-size: 16px;
   font-weight: 600;
 }
@@ -131,10 +131,10 @@
 }
 
 .hero-date {
-  color: var(--text-dim);
+  color: rgba(244, 241, 234, 0.62);
   font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .hero-high-low {
@@ -143,9 +143,9 @@
   gap: 14px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(111, 183, 242, 0.3);
-  background: rgba(111, 183, 242, 0.1);
-  box-shadow: inset 0 1px 0 rgba(111, 183, 242, 0.08);
+  border: 1px solid rgba(255, 243, 225, 0.1);
+  background: rgba(255, 243, 225, 0.06);
+  box-shadow: none;
 }
 
 .hero-high-low-item {
@@ -155,18 +155,18 @@
 }
 
 .hero-high-low-label {
-  color: var(--text-dim);
+  color: rgba(244, 241, 234, 0.68);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .hero-high-low-value {
   font-family: var(--font-display);
-  color: var(--paper-dim);
+  color: #f6f2ea;
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 400;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -214,22 +214,22 @@
 .hero-temp-unit {
   margin-left: 6px;
   font-family: var(--font-display);
-  color: rgba(220, 233, 255, 0.92);
+  color: rgba(244, 241, 234, 0.72);
   font-size: var(--hero-unit-size);
-  font-weight: 600;
+  font-weight: 400;
 }
 .hero-condition {
   margin-top: 8px;
   font-size: 22px;
-  font-weight: 650;
+  font-weight: 500;
   letter-spacing: 0;
 }
 
 .hero-feels {
-  margin-top: 5px;
-  color: var(--text-muted);
+  margin-top: 0;
+  color: rgba(244, 241, 234, 0.68);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .hero-insight {
@@ -237,9 +237,9 @@
   max-width: 620px;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(12, 22, 42, 0.68);
-  border: 1px solid rgba(198, 215, 242, 0.18);
-  color: rgba(227, 236, 255, 0.95);
+  background: rgba(255, 243, 225, 0.05);
+  border: 1px solid rgba(255, 238, 214, 0.1);
+  color: rgba(245, 242, 235, 0.9);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -261,16 +261,16 @@
   gap: 5px;
   padding: 5px 11px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.13);
-  color: var(--text);
+  border: 1px solid rgba(255, 243, 225, 0.12);
+  background: rgba(255, 243, 225, 0.07);
+  color: rgba(245, 242, 235, 0.92);
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
 }
 
 .hero-chip-icon {
-  color: var(--glacier-light);
+  color: #f3c98a;
   flex-shrink: 0;
 }
 
@@ -353,9 +353,9 @@
   margin-top: 10px;
   padding: 5px 11px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(111, 183, 242, 0.45);
-  background: rgba(111, 183, 242, 0.18);
-  color: #cfe6fb;
+  border: 1px solid rgba(255, 243, 225, 0.12);
+  background: rgba(255, 243, 225, 0.06);
+  color: rgba(245, 242, 235, 0.82);
   font-size: 11.5px;
   font-weight: 400;
 }
@@ -365,7 +365,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--glacier);
+  background: var(--accent-green);
 }
 
 /* Honest confidence states. "live" keeps the default (green dot); a
@@ -591,21 +591,6 @@
     font-size: 18px;
   }
 
-  .stat-label {
-    font-size: 10px;
-  }
-
-  .stat-value {
-    font-size: 15px;
-  }
-
-  .stat {
-    gap: 10px;
-    padding: 10px;
-  }
-
-  /* Tighten the stats section separator on very small phones */
-
 }
 
 /* ── Calm / warm hero treatment (brand pass) ─────────────────────────────────
@@ -613,37 +598,17 @@
  * warm frosted glass, softened (not hard) borders, lighter sentence-feel
  * labels, and a warm off-white ink kept above the AA legibility floor. The
  * blue/green stays only where it carries meaning (Low temp, confidence dot).
+ *
+ * This root sets the inherited ink; the rest of the pass used to live in a
+ * second block at the foot of the file that re-declared twelve selectors
+ * already defined above and won on source order alone. Those declarations
+ * now sit in the one rule per selector further up, so a reader meets a
+ * single design rather than two competing ones. Values are unchanged --
+ * every merge kept whatever the cascade was already rendering.
  * ------------------------------------------------------------------------- */
 .hero-card.glass {
   color: #f4f1ea;
   border-radius: 20px;
-}
-
-.hero-location {
-  color: rgba(244, 241, 234, 0.9);
-}
-
-.hero-date {
-  text-transform: none;
-  letter-spacing: 0.02em;
-  color: rgba(244, 241, 234, 0.62);
-}
-
-.hero-high-low {
-  border: 1px solid rgba(255, 243, 225, 0.1);
-  background: rgba(255, 243, 225, 0.06);
-  box-shadow: none;
-}
-
-.hero-high-low-label {
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: rgba(244, 241, 234, 0.68);
-}
-
-.hero-high-low-value {
-  color: #f6f2ea;
-  font-weight: 400;
 }
 
 .hero-high-low-item:first-child .hero-high-low-value {
@@ -654,57 +619,11 @@
   color: #bcd2f0;
 }
 
-.hero-temp-unit {
-  color: rgba(244, 241, 234, 0.72);
-  font-weight: 400;
-}
-.hero-condition {
-  font-weight: 500;
-}
-
-.hero-feels {
-  color: rgba(244, 241, 234, 0.68);
-  font-weight: 400;
-}
-
-.hero-insight {
-  background: rgba(255, 243, 225, 0.05);
-  border: 1px solid rgba(255, 238, 214, 0.1);
-  color: rgba(245, 242, 235, 0.9);
-}
-
-.hero-chip {
-  border: 1px solid rgba(255, 243, 225, 0.12);
-  background: rgba(255, 243, 225, 0.07);
-  color: rgba(245, 242, 235, 0.92);
-}
-
-.hero-chip-icon {
-  color: #f3c98a;
-}
-
-.hero-trust-pill {
-  border: 1px solid rgba(255, 243, 225, 0.12);
-  background: rgba(255, 243, 225, 0.06);
-  color: rgba(245, 242, 235, 0.82);
-}
-
-.hero-trust-dot {
-  background: var(--accent-green);
-}
-
 /* ── Hero refinements: sun placement, daylight strip, feels-like ─────────────
  * The decorative sky-orb sat directly under the High/Low pill ("covering the
  * sun"). The big condition icon is the real sun, so drop the redundant orb and
  * let the soft glow halo that icon (lower-right, clear of the High/Low).
  * ------------------------------------------------------------------------- */
-.hero-sky-glow {
-  top: 40px;
-  right: 14px;
-  width: 152px;
-  height: 152px;
-}
-
 /* The orb element still renders but has been hidden since the Glacier pass,
    so its sun/moon styling below could never paint and is gone. Whether the
    night-sky feature comes back or the element goes is DS-04's call, not a
@@ -726,6 +645,3 @@
   color: rgba(244, 241, 234, 0.4);
 }
 
-.hero-feels {
-  margin-top: 0;
-}

@@ -90,7 +90,7 @@ const TILE_HELP = {
   },
   dewPoint: {
     title: "Dew point",
-    body: "The temperature the air would need to cool to before moisture condenses out of it. It tracks how muggy the air feels far better than humidity does: below 55° feels dry, above 65° feels sticky, above 70° feels oppressive whatever the humidity reads.",
+    body: "The temperature the air would need to cool to before moisture condenses out of it. It tracks how muggy the air feels far better than humidity does: below 50° feels dry, above 60° feels sticky, above 70° feels oppressive whatever the humidity reads.",
   },
   visibility: {
     title: "Visibility",

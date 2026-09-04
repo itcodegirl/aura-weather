@@ -32,6 +32,27 @@ const COL = 44; // px — per-hour column width (drives horizontal scroll)
 const LOOKBACK = 2; // hours of recent context shown (dimmed) before "now"
 const WINDOW = 24; // hours rendered
 
+/*
+ * Audit finding 21. Every hour's button read identically — "Select 3 PM,
+ * 40% rain" — while "now" and "already passed" were carried only by
+ * opacity, an is-now class, and an aria-hidden marker line. A screen
+ * reader user tabbing the chart could not tell which hour was current or
+ * which were gone (WCAG 1.3.1: information conveyed by presentation must be
+ * programmatically available). The sr-only summary is a value range and
+ * does not name the hour either. This puts the state the eye already gets
+ * into the accessible name, on both button surfaces.
+ */
+function temporalCue(hour) {
+  if (hour.isNow) return "now";
+  if (hour.isPast) return "passed";
+  return "";
+}
+
+function withCue(label, hour) {
+  const cue = temporalCue(hour);
+  return cue ? `${label}, ${cue}` : label;
+}
+
 const TABS = [
   { key: "tr", label: "Temp & Rain" },
   { key: "precip", label: "Precipitation" },
@@ -492,7 +513,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                         key={hour.key}
                         data-col-key={hour.key}
                         tabIndex={hour.key === tabStopKey ? 0 : -1}
-                        aria-label={`Select ${hour.label}, ${m.aria}`}
+                        aria-label={withCue(`Select ${hour.label}, ${m.aria}`, hour)}
                         onClick={() => setSelectedKey(hour.key)}
                       >
                         {hour.windSpeed !== null && (
@@ -529,7 +550,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                       key={hour.key}
                       data-col-key={hour.key}
                       tabIndex={hour.key === tabStopKey ? 0 : -1}
-                      aria-label={`Select ${hour.label}, ${m.aria}`}
+                      aria-label={withCue(`Select ${hour.label}, ${m.aria}`, hour)}
                       onClick={() => setSelectedKey(hour.key)}
                     >
                       {hour.rain !== null && (
@@ -684,7 +705,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                 type="button"
                 className={`hourly-touch-sample${isSel ? " is-selected" : ""}${hour.isPast ? " is-past" : ""}${hour.isNow ? " is-now" : ""}`}
                 aria-current={isUserPick ? "true" : undefined}
-                aria-label={`Show ${hour.label}, ${m.aria}, ${cond}`}
+                aria-label={withCue(`Show ${hour.label}, ${m.aria}, ${cond}`, hour)}
                 data-sample-key={hour.key}
                 tabIndex={hour.key === tabStopKey ? 0 : -1}
                 onClick={() => setSelectedKey(hour.key)}

@@ -95,7 +95,11 @@ function buildWhyLine(weather, risk, hasCape) {
   const drivers = [];
   if (pressure?.direction === "falling") drivers.push("falling pressure");
   else if (pressure?.direction === "rising") drivers.push("rising pressure");
-  if (comfort && /mugg|oppress|humid|sticky/i.test(comfort.level)) {
+  // Every classifyComfort band from Sticky up. "Miserable" — the wettest
+  // band, ≥75°F — was not matched, so the most humid air mass was the one
+  // air mass this never counted as a driver. ("mugg" matched nothing the
+  // classifier returns and is gone.)
+  if (comfort && /sticky|humid|oppress|miser/i.test(comfort.level)) {
     drivers.push("a muggy dew point");
   }
   if (windClass && /(strong|gale|high|damaging|severe|storm)/i.test(String(windClass))) {

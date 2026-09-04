@@ -382,6 +382,48 @@ describe("buildHeroData", () => {
     assert.equal(labelFor(celsius, "wind"), "Gusty");
   });
 
+  /*
+   * Audit finding 23. The chip used cutoffs of its own (45 / 65) that met the
+   * dew-point tile's classifyComfort boundaries at exactly one point, so one
+   * reading could be "Comfortable" in the hero and "Sticky" on the tile
+   * beneath it. The chip now takes its band from the same classifier.
+   */
+  describe("comfort chip agrees with the dew-point tile", () => {
+    const chipFor = (dewPoint) =>
+      buildHeroData({
+        weather: { ...baseWeather, current: { ...baseWeather.current, dewPoint } },
+        location: baseLocation,
+        unit: "F",
+      }).characteristicChips.find((chip) => chip.id === "comfort")?.label;
+
+    test("never calls a reading comfortable that the tile calls sticky", () => {
+      // 62°F: classifyComfort says Sticky. The chip said "Comfortable".
+      assert.equal(chipFor(62), "Muggy");
+    });
+
+    test("never calls a reading comfortable that the tile calls dry", () => {
+      // 47°F: classifyComfort says Dry. The chip said "Comfortable".
+      assert.equal(chipFor(47), "Dry air");
+    });
+
+    test("maps every classifier band onto the chip's three words", () => {
+      // One sample per classifyComfort band, in ascending order.
+      assert.deepEqual(
+        [45, 52, 57, 62, 67, 72, 90].map(chipFor),
+        ["Dry air", "Comfortable", "Comfortable", "Muggy", "Muggy", "Muggy", "Muggy"]
+      );
+    });
+
+    test("holds the shared boundaries exactly", () => {
+      // The classifier's cutoffs, not the chip's old ones. Mutation target:
+      // restore the 45 / 65 ternary and the first and third pairs flip.
+      assert.equal(chipFor(49.9), "Dry air");
+      assert.equal(chipFor(50), "Comfortable");
+      assert.equal(chipFor(59.9), "Comfortable");
+      assert.equal(chipFor(60), "Muggy");
+    });
+  });
+
   test("renders missing placeholders without misleading unit suffixes", () => {
     const data = buildHeroData({
       weather: {

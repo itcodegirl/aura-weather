@@ -301,3 +301,30 @@ describe("StormWatch headline tone", () => {
     );
   });
 });
+
+describe("StormWatch dew-point driver", () => {
+  const renderWithDewPoint = (dewPoint) => {
+    const weather = buildWeather({ cape: 50 });
+    weather.current.dewPoint = dewPoint;
+    return render(
+      React.createElement(StormWatch, { weather, unit: "F", isRefreshing: false })
+    ).container.textContent;
+  };
+
+  test("counts the wettest band, not just the middling ones", () => {
+    // classifyComfort calls ≥75°F "Miserable". The driver regex matched
+    // Sticky, Humid and Oppressive and stopped, so the most humid air mass
+    // was the one that never fed the explanation.
+    assert.match(renderWithDewPoint(76), /muggy dew point/);
+  });
+
+  test("still counts the bands it always did", () => {
+    assert.match(renderWithDewPoint(62), /muggy dew point/, "Sticky");
+    assert.match(renderWithDewPoint(72), /muggy dew point/, "Oppressive");
+  });
+
+  test("does not call dry or comfortable air a driver", () => {
+    assert.doesNotMatch(renderWithDewPoint(45), /muggy dew point/);
+    assert.doesNotMatch(renderWithDewPoint(52), /muggy dew point/);
+  });
+});

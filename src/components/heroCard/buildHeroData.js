@@ -1,5 +1,6 @@
 import { getWeather, UNKNOWN_WEATHER } from "../../domain/weatherCodes.js";
 import { classifyUv } from "../../domain/exposure.js";
+import { classifyComfort } from "../../domain/meteorology.js";
 import { resolveTodayIndex } from "../../domain/forecastToday.js";
 import {
   formatTemperatureValue,
@@ -402,8 +403,6 @@ function buildDailyGuidance(weather, unit, todayIndex, sunWindow) {
     .filter((item) => item && item.tone !== "calm");
 }
 
-const DEW_POINT_MUGGY_F = 65;
-const DEW_POINT_DRY_F = 45;
 const WIND_CALM_MPH = 5;
 const WIND_BREEZY_MPH = 12;
 const WIND_GUSTY_MPH = 25;
@@ -420,17 +419,32 @@ function buildCharacteristicChips(weather, aqi, todayIndex) {
     // comfort thresholds below are defined in °F, so classify the raw value. Do NOT
     // re-convert by display unit; that double-converts an already-°F reading and
     // mislabels comfort for every °C user.
-    const dpF = dewPoint;
-    chips.push({
-      id: "comfort",
-      icon: "droplets",
-      label:
-        dpF >= DEW_POINT_MUGGY_F
-          ? "Muggy"
-          : dpF <= DEW_POINT_DRY_F
-          ? "Dry air"
-          : "Comfortable",
-    });
+    /*
+     * Audit finding 23. This chip carried its own cutoffs (45 / 65) while
+     * the dew-point tile directly below it is labelled by classifyComfort
+     * (50 / 55 / 60 / 65 / 70 / 75). They agreed at exactly one boundary,
+     * so the same reading got contradictory words: 47° was "Comfortable"
+     * here and "Dry" on the tile, and 62° was "Comfortable" here over a
+     * tile saying "Sticky" — opposites, one above the other.
+     *
+     * The chip keeps its three words and takes its band from the shared
+     * classifier, the same resolution the UV surfaces already use ("the one
+     * UV scale every surface shares"). Dry → "Dry air"; Comfortable and
+     * Pleasant → "Comfortable"; everything from Sticky up → "Muggy".
+     */
+    const { level } = classifyComfort(dewPoint, "F");
+    if (level !== "Unknown") {
+      chips.push({
+        id: "comfort",
+        icon: "droplets",
+        label:
+          level === "Dry"
+            ? "Dry air"
+            : level === "Comfortable" || level === "Pleasant"
+            ? "Comfortable"
+            : "Muggy",
+      });
+    }
   }
 
   const windSpeed = toFiniteNumber(weather?.current?.windSpeed);

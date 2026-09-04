@@ -96,20 +96,42 @@ describe("HeroCard with missing readings", () => {
 
 });
 
-describe("HeroCard daily planning guidance", () => {
-  test("surfaces the actionable rain/UV/wind guidance the hero computes", () => {
-    const weather = buildWeather({
-      current: { windSpeed: 22, windGust: 34 },
-      daily: { rainChanceMax: [68], rainAmountTotal: [0.18], uvIndexMax: [8.4] },
-    });
+/*
+ * HeroCard takes no nowMs prop — it subscribes to useTimeNow, which reads
+ * Date.now() at mount while its bucket is dormant (afterEach's cleanup
+ * unsubscribes, so every test mounts dormant). Stubbing Date.now is
+ * therefore the one honest way to place the hero at a chosen hour. The
+ * fixture's sun window is 06:18–19:41 at -05:00 (11:18–00:41 UTC), and
+ * 18:00 UTC is already aligned to the hero's 5-minute bucket.
+ */
+const DAYLIGHT_NOW = Date.UTC(2026, 3, 21, 18, 0, 0);
+const AFTER_SUNSET = Date.UTC(2026, 3, 22, 2, 0, 0);
 
-    const { container } = render(
-      React.createElement(HeroCard, {
-        weather,
-        location: baseLocation,
-        unit: "F",
-      })
-    );
+function renderHeroAt(nowMs, props) {
+  const realNow = Date.now;
+  Date.now = () => nowMs;
+  try {
+    return render(React.createElement(HeroCard, props));
+  } finally {
+    Date.now = realNow;
+  }
+}
+
+describe("HeroCard daily planning guidance", () => {
+  const decisionDay = buildWeather({
+    current: { windSpeed: 22, windGust: 34 },
+    daily: { rainChanceMax: [68], rainAmountTotal: [0.18], uvIndexMax: [8.4] },
+  });
+
+  test("surfaces the actionable rain/UV/wind guidance the hero computes", () => {
+    // UV advice is daylight-only (audit finding 22), so the hour is part of
+    // the fixture. This test used to render with no clock at all and still
+    // expect sun protection.
+    const { container } = renderHeroAt(DAYLIGHT_NOW, {
+      weather: decisionDay,
+      location: baseLocation,
+      unit: "F",
+    });
 
     const guidance = container.querySelector(".hero-guidance");
     assert.ok(guidance, "guidance grid renders when conditions warrant a decision");
@@ -121,6 +143,34 @@ describe("HeroCard daily planning guidance", () => {
     assert.ok(text.includes("Bring rain gear"), "surfaces rain-gear guidance");
     assert.ok(text.includes("Very high exposure"), "surfaces UV guidance");
     assert.ok(text.includes("Gusty conditions"), "surfaces wind guidance");
+  });
+
+  test("drops the UV pill after sunset and keeps the rest", () => {
+    // The rendered half of finding 22. Three of the hero's four UV
+    // surfaces advised sun protection at midnight; the guidance pill is
+    // present-tense advice and now follows the reading line's daylight
+    // rule. Rain and wind are not time-of-day advice and must survive.
+    const { container } = renderHeroAt(AFTER_SUNSET, {
+      weather: decisionDay,
+      location: baseLocation,
+      unit: "F",
+    });
+
+    const guidance = container.querySelector(".hero-guidance");
+    assert.ok(guidance, "the grid still renders for rain and wind");
+    const text = guidance.textContent || "";
+    assert.ok(text.includes("Bring rain gear"), "rain guidance survives the night");
+    assert.ok(text.includes("Gusty conditions"), "wind guidance survives the night");
+    assert.equal(
+      text.includes("Very high exposure"),
+      false,
+      "no sun advice after dark"
+    );
+    assert.equal(
+      container.querySelectorAll(".hero-guidance-item").length,
+      2,
+      "exactly the two time-independent pills remain"
+    );
   });
 
   test("renders no guidance grid on a calm day so it never narrates a non-event", () => {

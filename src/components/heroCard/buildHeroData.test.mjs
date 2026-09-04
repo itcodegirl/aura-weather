@@ -125,8 +125,16 @@ describe("buildHeroData", () => {
     assert.notEqual(monday.today, tuesday.today);
   });
 
+  // baseWeather's sun window is 06:18–19:41 at -05:00, i.e. 11:18–00:41 UTC.
+  const DAYLIGHT_NOW = Date.UTC(2026, 3, 21, 18, 0, 0);
+  const AFTER_SUNSET = Date.UTC(2026, 3, 22, 2, 0, 0);
+  const BEFORE_SUNRISE = Date.UTC(2026, 3, 21, 9, 0, 0);
+
   test("builds practical daily guidance from forecast readings", () => {
     const data = buildHeroData({
+      // UV advice is daylight-only, so the clock is part of the fixture now;
+      // this test used to assert sun protection with no clock at all.
+      nowMs: DAYLIGHT_NOW,
       weather: {
         ...baseWeather,
         current: {
@@ -149,6 +157,81 @@ describe("buildHeroData", () => {
       data.dailyGuidance.map((item) => item.value),
       ["Bring rain gear", "Very high exposure", "Gusty conditions"]
     );
+  });
+
+  /*
+   * Audit finding 22. The UV pill is present-tense advice and used to render
+   * at midnight — three of the hero's four UV surfaces did. The reading line
+   * has always gated on daylight; these pin the pill to that same rule.
+   */
+  describe("UV guidance is advice, so it keeps daylight hours", () => {
+    const veryHighUvDay = {
+      ...baseWeather,
+      current: { ...baseWeather.current, windGust: 34 },
+      daily: {
+        ...baseWeather.daily,
+        rainChanceMax: [68],
+        rainAmountTotal: [0.18],
+        uvIndexMax: [8.4],
+      },
+    };
+    const guidanceAt = (nowMs, weather = veryHighUvDay) =>
+      buildHeroData({ weather, location: baseLocation, unit: "F", nowMs })
+        .dailyGuidance;
+    const uvPill = (items) => items.find((item) => item.kind === "uv") ?? null;
+
+    test("shows during daylight", () => {
+      const pill = uvPill(guidanceAt(DAYLIGHT_NOW));
+      assert.notEqual(pill, null);
+      assert.equal(pill.value, "Very high exposure");
+    });
+
+    test("is dropped after sunset, and takes nothing else with it", () => {
+      const items = guidanceAt(AFTER_SUNSET);
+      assert.equal(uvPill(items), null, "no sun advice after dark");
+      assert.deepEqual(
+        items.map((item) => item.kind),
+        ["rain", "wind"],
+        "the rain and wind pills are untouched"
+      );
+    });
+
+    test("is dropped before sunrise", () => {
+      assert.equal(uvPill(guidanceAt(BEFORE_SUNRISE)), null);
+    });
+
+    test("an unknown clock suppresses the advice rather than guessing", () => {
+      // HeroCard passes null when useTimeNow yields nothing finite. Advice
+      // that cannot be placed against the sun is not shown — the same rule
+      // the reading line applies.
+      assert.equal(uvPill(guidanceAt(null)), null);
+      assert.equal(uvPill(guidanceAt(undefined)), null);
+    });
+
+    test("a missing UV reading is still reported as unavailable after dark", () => {
+      // The gate is on advice, not on data. A reading that did not arrive is
+      // a trust-contract signal the reader is owed at any hour, so the
+      // missing-data check runs first. Mutation target: swap the order and
+      // this fails.
+      const pill = uvPill(
+        guidanceAt(AFTER_SUNSET, {
+          ...veryHighUvDay,
+          daily: { ...veryHighUvDay.daily, uvIndexMax: [null] },
+        })
+      );
+      assert.notEqual(pill, null);
+      assert.equal(pill.tone, "unavailable");
+    });
+
+    test("missing sun times suppress the advice rather than guessing", () => {
+      const pill = uvPill(
+        guidanceAt(DAYLIGHT_NOW, {
+          ...veryHighUvDay,
+          daily: { ...veryHighUvDay.daily, sunrise: [null], sunset: [null] },
+        })
+      );
+      assert.equal(pill, null);
+    });
   });
 
   test("hides calm-tone guidance pills so non-events do not narrate", () => {

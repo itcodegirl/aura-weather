@@ -7,6 +7,7 @@ import {
   getSunlightPhase,
   getZonedNowMs,
   getDaylightProgress,
+  isDaylight,
 } from "./sunlight.js";
 
 describe("sunlight formatting utils", () => {
@@ -166,5 +167,35 @@ describe("sunlight formatting utils", () => {
       getDaylightProgress("2026-06-15T20:00:00", "2026-06-15T04:00:00", nowMs),
       null
     );
+  });
+});
+
+describe("isDaylight", () => {
+  const SUNRISE = "2026-04-21T11:00:00Z";
+  const SUNSET = "2026-04-21T23:00:00Z";
+  const at = (h, m = 0) => Date.UTC(2026, 3, 21, h, m, 0);
+
+  test("is true strictly inside the window and at both ends", () => {
+    assert.equal(isDaylight(SUNRISE, SUNSET, at(18)), true);
+    assert.equal(isDaylight(SUNRISE, SUNSET, at(11)), true, "inclusive at sunrise");
+    assert.equal(isDaylight(SUNRISE, SUNSET, at(23)), true, "inclusive at sunset");
+  });
+
+  test("is false before sunrise and after sunset", () => {
+    assert.equal(isDaylight(SUNRISE, SUNSET, at(9)), false);
+    assert.equal(isDaylight(SUNRISE, SUNSET, at(10, 59)), false);
+    assert.equal(isDaylight(SUNRISE, SUNSET, at(23, 1)), false);
+    assert.equal(isDaylight(SUNRISE, SUNSET, Date.UTC(2026, 3, 22, 4)), false);
+  });
+
+  test("never guesses: any unusable input is false, not daylight", () => {
+    // A caller that cannot place "now" against the sun must not surface
+    // advice that only makes sense in daylight.
+    assert.equal(isDaylight(null, SUNSET, at(18)), false);
+    assert.equal(isDaylight(SUNRISE, undefined, at(18)), false);
+    assert.equal(isDaylight("not-a-time", SUNSET, at(18)), false);
+    assert.equal(isDaylight(SUNRISE, SUNSET, null), false);
+    assert.equal(isDaylight(SUNRISE, SUNSET, NaN), false);
+    assert.equal(isDaylight(SUNRISE, SUNSET, "18:00"), false);
   });
 });

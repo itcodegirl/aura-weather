@@ -72,6 +72,30 @@ export function getSunlightPhase(sunrise, sunset, nowMs, options = {}) {
 }
 
 /*
+ * Whether `zonedNowMs` falls inside today's daylight window. `sunrise` and
+ * `sunset` are the provider's naive location-local timestamps, so the caller
+ * must pass a "now" already reframed into that clock (see getZonedNowMs) —
+ * comparing the raw device epoch pins a remote city to the device's day.
+ *
+ * Returns false, never a guess, when any input is missing or invalid: a
+ * caller that cannot place "now" against the sun must not surface advice
+ * that only makes sense in daylight. Inclusive at both ends, matching the
+ * gate buildAtmosphereReading has always used.
+ */
+export function isDaylight(sunrise, sunset, zonedNowMs) {
+  const now = toFiniteNumber(zonedNowMs);
+  if (now === null) {
+    return false;
+  }
+  const sunriseDate = toValidDate(sunrise);
+  const sunsetDate = toValidDate(sunset);
+  if (!sunriseDate || !sunsetDate) {
+    return false;
+  }
+  return now >= sunriseDate.getTime() && now <= sunsetDate.getTime();
+}
+
+/*
  * Reframes a real epoch instant into the location's wall clock, returned as
  * epoch ms of a device-local Date carrying those wall-clock parts. Provider
  * sunrise/sunset timestamps are naive location-local strings that parse in

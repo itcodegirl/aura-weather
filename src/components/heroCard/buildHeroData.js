@@ -17,6 +17,7 @@ import {
   formatDaylightLengthLabel,
   getSunlightPhase,
   getZonedNowMs,
+  isDaylight,
 } from "../../utils/sunlight.js";
 import { formatDisplayCountry } from "../../utils/locationDisplay.js";
 import { buildAtmosphereReading } from "./buildAtmosphereReading.js";
@@ -184,9 +185,12 @@ function buildRainGuidance(weather, unit, todayIndex) {
   };
 }
 
-function buildUvGuidance(weather, todayIndex) {
+function buildUvGuidance(weather, todayIndex, sunWindow) {
   const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
 
+  // Missing data is reported before the daylight gate, deliberately. A
+  // reading that did not arrive is a trust-contract signal the reader is
+  // owed at any hour; only *advice* is time-bound.
   if (uvIndex === null) {
     return {
       kind: "uv",
@@ -195,6 +199,19 @@ function buildUvGuidance(weather, todayIndex) {
       value: "UV unavailable",
       detail: "Sun exposure data did not return",
     };
+  }
+
+  /*
+   * Audit finding 22, the correctness half. This pill is present-tense
+   * advice — "Use sun protection", "Very high exposure" — and it rendered
+   * at midnight. The hero's reading line has always gated its own UV note
+   * on daylight ("Only surface during daylight"); this applies that same
+   * rule, through the same helper, so the two cannot disagree. Outside
+   * daylight there is nothing to advise, so the pill is dropped rather
+   * than narrated — the same philosophy as hiding calm-tone pills.
+   */
+  if (!isDaylight(sunWindow?.sunrise, sunWindow?.sunset, sunWindow?.zonedNowMs)) {
+    return null;
   }
 
   const uvLabel = `Peak UV ${uvIndex.toFixed(1)}`;
@@ -374,12 +391,15 @@ function buildWindGuidance(weather, unit) {
  * when a reading is missing (unavailable) so the trust contract stays
  * honest.
  */
-function buildDailyGuidance(weather, unit, todayIndex) {
+function buildDailyGuidance(weather, unit, todayIndex, sunWindow) {
   return [
     buildRainGuidance(weather, unit, todayIndex),
-    buildUvGuidance(weather, todayIndex),
+    buildUvGuidance(weather, todayIndex, sunWindow),
     buildWindGuidance(weather, unit),
-  ].filter((item) => item.tone !== "calm");
+  ]
+    // A builder returns null when it has nothing timely to say (UV after
+    // dark); calm-tone entries are non-events. Neither earns a pill.
+    .filter((item) => item && item.tone !== "calm");
 }
 
 const DEW_POINT_MUGGY_F = 65;
@@ -538,7 +558,11 @@ export function buildHeroData({
     unit,
     locationName: safeLocationName,
   });
-  const dailyGuidance = buildDailyGuidance(weather, unit, todayIndex);
+  const dailyGuidance = buildDailyGuidance(weather, unit, todayIndex, {
+    sunrise: sunriseValue,
+    sunset: sunsetValue,
+    zonedNowMs,
+  });
 
   const isCurrentTempMissing = isMissingPlaceholder(currentTempDisplay);
   // The headline condition is "missing" exactly when getWeather fell back to

@@ -37,6 +37,7 @@
     "preview": "vite preview --configLoader runner",
     "test": "node --test",
     "test:render": "node scripts/run-render-tests.mjs",
+    "check:docs": "node scripts/check-doc-numbers.mjs",
     "test:components": "npm run test:render",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",

@@ -34,11 +34,22 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # shell: bash is load-bearing, not decoration. The default run shell is
+      # `bash -e` without pipefail, so a pipeline reports tee's exit code --
+      # a failing suite would be piped into a passing step. `shell: bash`
+      # gets `-eo pipefail`.
       - name: Unit tests
-        run: npm test
+        shell: bash
+        run: npm test | tee /tmp/unit.tap
 
       - name: Component render tests
-        run: npm run test:components
+        shell: bash
+        run: npm run test:components | tee /tmp/render.tap
+
+      # The README states counts about this repo. Reuse the TAP the two steps
+      # above already produced rather than running either suite a third time.
+      - name: Documented numbers still true
+        run: npm run check:docs -- --unit /tmp/unit.tap --render /tmp/render.tap
 
       - name: Production build
         run: npm run build

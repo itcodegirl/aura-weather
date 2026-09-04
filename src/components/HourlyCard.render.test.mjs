@@ -272,3 +272,65 @@ describe("HourlyCard touch-sample announcement contract", () => {
 // refactor removes the populated test branch above.
 void screen;
 void fireEvent;
+
+/*
+ * Audit finding 21. "Now" and "passed" reached sighted users through opacity
+ * and an aria-hidden marker and reached nobody else. These pin the cue in
+ * the accessible name on both button surfaces. The chart shows LOOKBACK (2)
+ * hours before now, so a series starting two hours ago puts "now" at index 2
+ * with two passed hours ahead of it.
+ */
+describe("HourlyCard announces which hour is now and which have passed", () => {
+  const HOUR = 60 * 60 * 1000;
+
+  function renderWithPast() {
+    const start = Date.now() - 2 * HOUR;
+    const hours = Array.from({ length: 6 }, (_, i) =>
+      new Date(start + i * HOUR).toISOString()
+    );
+    return renderHourly({
+      hourly: {
+        time: hours,
+        temperature: [60, 61, 62, 63, 64, 65],
+        conditionCode: [0, 1, 2, 3, 0, 1],
+        precipitation: [0, 0, 0, 0, 0, 0],
+        rainChance: [10, 10, 10, 10, 10, 10],
+      },
+    });
+  }
+
+  const names = (container, selector) =>
+    Array.from(container.querySelectorAll(selector)).map(
+      (el) => el.getAttribute("aria-label") || ""
+    );
+
+  test("column buttons: exactly one is 'now', the ones before it are 'passed'", () => {
+    const { container } = renderWithPast();
+    const labels = names(container, ".hourly-col");
+    assert.equal(labels.length, 6);
+    assert.deepEqual(
+      labels.map((l) => (l.endsWith(", now") ? "now" : l.endsWith(", passed") ? "passed" : "")),
+      ["passed", "passed", "now", "", "", ""]
+    );
+  });
+
+  test("touch samples carry the same cue", () => {
+    const { container } = renderWithPast();
+    const labels = names(container, ".hourly-touch-sample");
+    assert.equal(labels.length, 6);
+    assert.deepEqual(
+      labels.map((l) => (l.endsWith(", now") ? "now" : l.endsWith(", passed") ? "passed" : "")),
+      ["passed", "passed", "now", "", "", ""]
+    );
+    // The existing "Show" contract is untouched: the cue is a suffix.
+    assert.ok(labels.every((l) => l.startsWith("Show ")));
+  });
+
+  test("a series that starts now has no passed hours and 'now' at index 0", () => {
+    const { container } = renderPopulated();
+    const labels = names(container, ".hourly-col");
+    assert.ok(labels[0].endsWith(", now"), labels[0]);
+    assert.equal(labels.filter((l) => l.endsWith(", passed")).length, 0);
+    assert.equal(labels.filter((l) => l.endsWith(", now")).length, 1);
+  });
+});

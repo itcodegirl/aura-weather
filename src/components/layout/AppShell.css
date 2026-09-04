@@ -1,7 +1,20 @@
 .app--loading,
+/* The crash screen replaces the page, so it centres on the viewport. */
 .app--error {
   display: grid;
   place-items: center;
+}
+
+/*
+ * The data-error screen does not replace the page — it sits under the header
+ * inside .app-inner, so it centres in the space it is given rather than the
+ * viewport, and keeps the header reachable above it.
+ */
+.app-error-region {
+  display: grid;
+  place-items: center;
+  min-height: 46vh;
+  padding: 24px 0;
 }
 
 .loading-card {

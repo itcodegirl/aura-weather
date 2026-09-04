@@ -9,10 +9,24 @@ export const DEFAULT_LOCATION = {
   name: "Palos Hills",
   country: "United States",
 };
+// Cold start with nothing persisted: Palos Hills really is on screen, so this
+// stays accurate. Do not reuse it for a failed lookup — see below.
 export const LOCATION_FALLBACK_NOTICE =
   "Showing Palos Hills until you choose a location";
+/*
+ * Shown when a "My location" request fails after the app is already showing a
+ * city. It deliberately does not name a place: the request failing is not a
+ * reason to take the reader off what they were looking at, so nothing moves
+ * and the notice only explains what happened and how to recover.
+ *
+ * These used to say "Showing Palos Hills", because the failure paths really
+ * did navigate there — a reader looking at Tokyo who tapped the button and
+ * declined the prompt lost Tokyo.
+ */
+export const LOCATION_LOOKUP_FAILED_NOTICE =
+  "Couldn't get your location. Search for a city, or try again.";
 export const LOCATION_PERMISSION_BLOCKED_NOTICE =
-  "Location access is blocked for this site. Showing Palos Hills - search for a city, or allow location in your browser settings.";
+  "Location access is blocked for this site. Allow it in your browser settings, or search for a city.";
 export const SAVED_LOCATION_NOTICE = "Showing your previously selected location";
 export const LOCATION_UNSUPPORTED_NOTICE =
   "Location access is unavailable in this browser. Search for a city instead.";
@@ -394,7 +408,10 @@ function getPreferredReverseGeocodeLanguage() {
   return typeof navigator.language === "string" ? navigator.language.trim() : "";
 }
 
-export function useLocation(onResolved, { skipBootstrap = false } = {}) {
+export function useLocation(
+  onResolved,
+  { skipBootstrap = false, onNotice = null } = {}
+) {
   const [isLocatingCurrent, setIsLocatingCurrent] = useState(false);
   const [isGeolocationSupported] = useState(() => hasGeolocationSupport());
   const isMountedRef = useRef(false);
@@ -404,6 +421,10 @@ export function useLocation(onResolved, { skipBootstrap = false } = {}) {
   const onResolvedRef = useRef(
     typeof onResolved === "function" ? onResolved : null
   );
+  // Reports a location failure without moving the reader. Separate from
+  // onResolved because that channel cannot carry a notice on its own: every
+  // notice it delivers arrives attached to a location change.
+  const onNoticeRef = useRef(typeof onNotice === "function" ? onNotice : null);
 
   const clearFallbackTimer = useCallback(() => {
     if (!fallbackTimerRef.current) {
@@ -438,9 +459,13 @@ export function useLocation(onResolved, { skipBootstrap = false } = {}) {
       typeof onResolved === "function" ? onResolved : null;
   }, [onResolved]);
 
+  useEffect(() => {
+    onNoticeRef.current = typeof onNotice === "function" ? onNotice : null;
+  }, [onNotice]);
+
   const requestCurrentPositionWithFallback = useCallback(
     ({
-      fallbackNotice = LOCATION_FALLBACK_NOTICE,
+      fallbackNotice = LOCATION_LOOKUP_FAILED_NOTICE,
       unsupportedNotice = LOCATION_UNSUPPORTED_NOTICE,
       trackCurrentLookup = false,
     } = {}) => {
@@ -458,6 +483,17 @@ export function useLocation(onResolved, { skipBootstrap = false } = {}) {
         }
       };
 
+      /*
+       * Every route into this function is a user pressing "My location" while
+       * a city is already on screen — requestCurrentPositionWithFallback has
+       * no other caller, and the cold-start path resolves its location
+       * directly in the bootstrap effect below. So there is never a reason to
+       * navigate here: it would discard whatever the reader was looking at as
+       * the response to an error they did not cause.
+       *
+       * It used to resolve DEFAULT_LOCATION, which meant declining the
+       * permission prompt in Tokyo dropped you in Palos Hills.
+       */
       const fallback = (noticeOverride) => {
         clearFallbackTimer();
         clearReverseGeocodeRequest();
@@ -466,14 +502,7 @@ export function useLocation(onResolved, { skipBootstrap = false } = {}) {
         }
 
         markLookupComplete();
-        notifyResolvedLocation(
-          resolveCallback,
-          DEFAULT_LOCATION.lat,
-          DEFAULT_LOCATION.lon,
-          DEFAULT_LOCATION.name,
-          DEFAULT_LOCATION.country,
-          noticeOverride ?? fallbackNotice
-        );
+        onNoticeRef.current?.(noticeOverride ?? fallbackNotice);
       };
 
       clearFallbackTimer();
@@ -485,14 +514,9 @@ export function useLocation(onResolved, { skipBootstrap = false } = {}) {
 
       if (!hasGeolocationSupport()) {
         clearFallbackTimer();
-        notifyResolvedLocation(
-          resolveCallback,
-          DEFAULT_LOCATION.lat,
-          DEFAULT_LOCATION.lon,
-          DEFAULT_LOCATION.name,
-          DEFAULT_LOCATION.country,
-          unsupportedNotice
-        );
+        // Same reasoning as fallback(): a browser without geolocation is not a
+        // reason to move the reader off the city they are reading.
+        onNoticeRef.current?.(unsupportedNotice);
         markLookupComplete();
         return;
       }
@@ -625,7 +649,7 @@ export function useLocation(onResolved, { skipBootstrap = false } = {}) {
 
   const loadCurrentLocation = useCallback(
     ({
-      fallbackNotice = LOCATION_FALLBACK_NOTICE,
+      fallbackNotice = LOCATION_LOOKUP_FAILED_NOTICE,
       unsupportedNotice = LOCATION_UNSUPPORTED_NOTICE,
     } = {}) => {
       requestCurrentPositionWithFallback({

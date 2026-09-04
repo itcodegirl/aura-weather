@@ -1,7 +1,8 @@
 import { classifyUv } from "../../domain/exposure.js";
+import { resolveTodayIndex } from "../../domain/forecastToday.js";
 import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
-import { getSunlightPhase } from "../../utils/sunlight.js";
+import { getSunlightPhase, getZonedNowMs, isDaylight } from "../../utils/sunlight.js";
 import { getZonedNow } from "../../utils/dates.js";
 import { findWindowStartIndex } from "../../utils/timeSeries.js";
 
@@ -17,6 +18,14 @@ import { findWindowStartIndex } from "../../utils/timeSeries.js";
  * branch returns at most one sentence with at most one suffix
  * (sunset clock, time-to-rain, gust value).
  */
+
+function toValidDate(value) {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
 
 const RAIN_IMMINENT_HOURS = 2;
 const RAIN_IMMINENT_PROBABILITY = 50;
@@ -85,6 +94,10 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
     return null;
   }
 
+  // Same day the hero and the Week Ahead use; see resolveTodayIndex. Reading
+  // index 0 put a restored snapshot's yesterday sun times and UV peak here.
+  const todayIndex = resolveTodayIndex(weather, nowMs);
+
   // 1. Severe weather alert — highest priority, supersedes everything.
   const alerts = Array.isArray(weather.alerts) ? weather.alerts : [];
   const seriousAlert = alerts.find(
@@ -130,28 +143,24 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   // sunrise/sunset timestamps. The clock labels rendered below still use
   // the naive strings directly, which already display the location's
   // wall-clock time correctly. See getZonedNow in utils/dates.
-  const sunrise = weather.daily?.sunrise?.[0];
-  const sunset = weather.daily?.sunset?.[0];
-  const zonedNowMs = Number.isFinite(nowMs)
-    ? getZonedNow(weather?.meta?.timezone, nowMs).getTime()
-    : nowMs;
-  const nowDate = Number.isFinite(zonedNowMs) ? new Date(zonedNowMs) : null;
-  const sunriseDate = sunrise ? new Date(sunrise) : null;
-  const sunsetDate = sunset ? new Date(sunset) : null;
-  const isDaylight =
-    nowDate &&
-    sunriseDate &&
-    sunsetDate &&
-    Number.isFinite(sunriseDate.getTime()) &&
-    Number.isFinite(sunsetDate.getTime()) &&
-    nowDate.getTime() >= sunriseDate.getTime() &&
-    nowDate.getTime() <= sunsetDate.getTime();
+  const sunrise = weather.daily?.sunrise?.[todayIndex];
+  const sunset = weather.daily?.sunset?.[todayIndex];
+  const zonedNowMs = getZonedNowMs(weather?.meta?.timezone, nowMs);
+  // Parsed once for the golden-hour clock labels below (null when the
+  // provider string is unusable, so formatHourClock never sees an Invalid
+  // Date). The daylight decision itself goes through isDaylight.
+  const sunriseDate = toValidDate(sunrise);
+  const sunsetDate = toValidDate(sunset);
 
-  if (isDaylight) {
+  // One daylight rule, shared with the hero's UV guidance pill (see
+  // buildUvGuidance). The two used to carry separate copies of this
+  // comparison, and only this one gated at all — so the pill kept saying
+  // "Use sun protection" after dark while the reading correctly went quiet.
+  if (isDaylight(sunrise, sunset, zonedNowMs)) {
     // Band words come from the shared WHO classifier so the reading
     // line can never disagree with the UV chip or panel. Only High and
     // above merits a hero callout; Moderate stays a panel-level fact.
-    const uvIndex = toFiniteNumber(weather.daily?.uvIndexMax?.[0]);
+    const uvIndex = toFiniteNumber(weather.daily?.uvIndexMax?.[todayIndex]);
     const uvBand = classifyUv(uvIndex)?.band;
     if (uvBand === "very-high" || uvBand === "extreme") {
       return {

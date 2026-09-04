@@ -70,9 +70,18 @@ const AppLoadingState = memo(() => {
   );
 });
 
+/*
+ * Renders inside AppShell, below the header, rather than replacing the page.
+ * It used to be its own `app app--error` screen, which took the city search
+ * away at the one moment a reader most needs it — the failure may be specific
+ * to the city they are on, and "Reload weather" only retries that city.
+ *
+ * AppErrorBoundary still owns the `app--error` full-page treatment: a crashed
+ * tree cannot be trusted to render a header.
+ */
 const AppErrorState = memo(({ error, onRetry }) => {
   return (
-    <div className="app app--error">
+    <div className="app-error-region">
       <div className="error-card" role="alert" aria-live="assertive">
         <CloudOff size={42} className="error-card-icon" aria-hidden="true" />
         <h1>We couldn't load weather data</h1>

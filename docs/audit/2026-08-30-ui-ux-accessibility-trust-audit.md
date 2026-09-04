@@ -1,6 +1,6 @@
 # Aura Weather — UI/UX, Accessibility, Trust & Portfolio Audit
 
-**Date:** 2026-08-30 · **Status updated:** 2026-09-01 (see §I)
+**Date:** 2026-08-30 · **Status updated:** 2026-09-04 (see §I)
 **Branch:** `claude/aura-weather-audit-fvswev`
 **Base:** `33a7ab7` (`origin/main`, PR #169)
 **Node:** v22.22.2 · **npm:** 10.9.7
@@ -8,8 +8,9 @@
 > **Where this stands.** The findings, evidence and measurements below are a
 > record of 2026-08-30 and are left as written. Only the **status markers** in
 > §D and the follow-up list in §G are kept current; §I logs what has closed
-> since. Both of §G's original headline risks — the drawer overflow and the
-> Storm Watch contrast — are now **fixed**.
+> since. Of the 28 findings, **26 are closed or closed-as-design**; the two
+> still fully open are ⚪ optional. Every 🔴 and every 🟡 has been resolved
+> or reduced to a stated design decision.
 
 **Method.** Six blind dimension sweeps (accessibility, responsive, product UX,
 real-world states, React correctness, docs/portfolio) run as parallel
@@ -132,13 +133,13 @@ Twenty-eight findings survived verification. **★ = fixed in this branch.**
 | 18 | "Try again" **could not recover a failed chunk** (React caches the rejection permanently) | ◆ |
 | 19 | Three loading live regions announce the cold load; **nothing announces the end** | ◆ |
 | 20 | Focus indicators below WCAG 1.4.11 on chart controls | ◆ |
-| 21 | Hourly chart marks "now"/elapsed with **opacity and an `aria-hidden` tick only** | open |
-| 22 | UV occupies **four hero slots**, three still advising sunscreen after dark | open |
-| 23 | Dew point carries **two incompatible comfort vocabularies** on one page | open |
-| 24 | Denied geolocation **discards the city being viewed** and jumps to the default | open |
-| 25 | Global error screen **removes the header and search**, stranding the user | open |
-| 26 | Hero reads `daily[0]` of a restored snapshot — can disagree with the Week Ahead panel below it | open |
-| 27 | Radar legend links are 9px text / 11px tall; `HourlyCard.css` has **no coarse-pointer rules at all** | open |
+| 21 | Hourly chart marks "now"/elapsed with **opacity and an `aria-hidden` tick only** | ✔ #190 |
+| 22 | UV occupies **four hero slots**, three still advising sunscreen after dark | ✔ #188 (advice after dark) · design: the four slots — see §G |
+| 23 | Dew point carries **two incompatible comfort vocabularies** on one page | ✔ #189 (contradicting thresholds) · design: which vocabulary — see §G |
+| 24 | Denied geolocation **discards the city being viewed** and jumps to the default | ✔ #184 |
+| 25 | Global error screen **removes the header and search**, stranding the user | ✔ #185 |
+| 26 | Hero reads `daily[0]` of a restored snapshot — can disagree with the Week Ahead panel below it | ✔ #186 |
+| 27 | Radar legend links are 9px text / 11px tall; `HourlyCard.css` has **no coarse-pointer rules at all** | measured, closed as design — see §G |
 | 28 | README quoted **three sync-panel button labels that do not exist** | ◆ |
 
 ### ⚪ Optional
@@ -193,19 +194,28 @@ same path for Lighthouse.
 
 ## G. Remaining risks and follow-ups
 
-*Current as of 2026-09-01. Items that have since closed are in §I.*
+*Current as of 2026-09-04. Items that have since closed are in §I.*
 
-1. **`exposure.js` holds a third copy of the risk ramp.** `getAqiStatus` and
-   the `UV_BANDS` table return hexes that restate `--risk-*` — the same defect
-   #176 removed from both `meteorology.js` classifiers, and the last instance
-   of it. It is the harder one: unlike those two, these hexes **are** read, so
-   removing them changes rendering rather than deleting dead weight. Needs its
-   own change, with before/after colour measurement.
-2. **No automated coverage for the sync race.** The fix is verified by reading
-   and by a sentinel test on `getSavedCitiesSignature`, but the hook itself has
-   no test: it imports its service module directly, `node:test` in this version
-   has no `mock.module`, and adding injection would be an architectural change
-   beyond that scope. A follow-up should introduce a seam.
+1. ~~**`exposure.js` holds a third copy of the risk ramp.**~~ **Closed by #181.**
+   AQI's six tiers were five exact ramp stops plus one past the top; UV was a
+   deliberately different palette and was relocated verbatim rather than
+   re-picked. Every tone was measured in Chromium against the built CSS and
+   resolves to exactly the hex it used to return. Still open from that work,
+   and a design call: the **hero UV track** is a gradient across all six ramp
+   stops while the atmosphere UV arc uses UV's own palette, so at UV 11 the
+   hero interpolates to `--risk-extreme` (a purple) and the arc renders
+   `#7f1d1d` (a maroon). One reading, two scales.
+2. ~~**No automated coverage for the sync race.**~~ **Closed by #187 — the seam
+   already existed.** `useSavedLocationsSync` already took `options.client`
+   through to the service's own DI seam. Three tests now hold the restore in
+   flight and prove nothing pushes underneath it. Recorded honestly in the test
+   file: `lastSyncedSignatureRef`'s seed is **not observable** through the hook
+   (mutating it back to `""` leaves every test green — the push effect's deps
+   mean a failed pull never re-runs it), so it is defence in depth behind the
+   gate, not a load-bearing guard. Also noted there, a product question: the
+   restore records its merged list as synced **without pushing it**, so a city
+   that exists only locally at restore time is not backed up until the next
+   edit.
 3. ~~**The render suite is flaky.**~~ **Withdrawn — this was already fixed, and
    the claim was wrong.** It belongs in §G's history rather than its open list
    because it was carried here on stale information and is worth the correction.
@@ -226,16 +236,28 @@ same path for Lighthouse.
 4. **`README.md` and `docs/screenshots/dashboard-*.png`** remain stale in ways
    only CI can fix — the dashboard captures need live tile hosts. The
    `refresh-screenshots` workflow added on main is the right vehicle.
-5. **Findings 21–27 are unfixed** and specified with file:line in §D; each is a
-   real defect, and several (the hourly chart's `aria-hidden` "now" marker, the
-   geolocation-denial city reset, the header disappearing on the error screen)
-   are worth more than some of what was fixed here — they were left because
-   they need product or design decisions rather than because they are minor.
-   Of these, **24, 25 and 26 have a defensible correct behaviour** and need
-   less judgment than the label suggests: do not discard the viewed city on a
-   permission denial, keep navigation on the error screen, and read one source
-   for both the hero and the Week Ahead panel. **21, 22, 23 and 27 are genuine
-   design calls** and should wait on direction.
+5. **Findings 21–27: all seven are now addressed.** 24, 25 and 26 were fixed
+   outright (#184, #185, #186). 21 was fixed (#190). 22 and 23 split cleanly
+   into a correctness half, fixed, and a design half, which remains:
+   - **22 — the UV panel and chip after sunset.** #188 stopped the guidance
+     pill advising sun protection after dark, following the reading line's
+     existing rule. The panel's head is still an imperative ("Cover up
+     outdoors") and after sunset the whole panel describes a finished day —
+     the same stale-day class #186 fixed. Hide it, reframe it, or roll to
+     tomorrow's peak: a layout and product call.
+   - **23 — which dew-point vocabulary wins.** #189 removed the *contradictions*
+     (the hero chip now takes its band from `classifyComfort`, so 62°F is no
+     longer "Comfortable" above a tile saying "Sticky"). Whether the page
+     should carry seven bands or three, "Muggy" or "Humid", is the copy
+     decision the audit named.
+   - **27 — measured, and closed as design.** In Chromium at 320px and 390px:
+     `.hourly-tab` is **31.5px** tall (the only sub-44 target in the card);
+     `.hourly-col` is already **44px** wide; the touch samples are 68×67. The
+     44px floor is applied case-by-case in this repo (three components), not
+     as a rule; `AGENTS.md` states no target floor and says not to touch large
+     layout CSS for polish uninstructed; and the 9px radar attribution is a
+     **documented** choice in #178. Both halves are the sizing judgment the
+     audit filed them as — now with numbers.
 6. **Two e2e specs cannot be run in this container.** `readme-screenshots.spec.js`
    desktop + mobile hang on `leaflet-tile-loaded` because the egress proxy
    refuses browser TLS to CARTO's tile hosts. They pass in CI, so this is a
@@ -272,10 +294,38 @@ above is left as written; this section is the only place statuses move.
 | 2026-08-31 | **4** — InfoDrawer help panels render off-screen on phones | #174 anchored the panel to its card (`position: absolute` against the nearest `.glass`, measured and set at open) instead of leaving it an in-flow right-aligned child that width caps could not contain. An e2e guard opens every drawer at three viewports and asserts containment in both the viewport and the card. |
 | 2026-08-31 | ⚪ — unused `Stat` component, dead `.stat` CSS, dangling `--subcard-bg` | #175 repaired the token reference (and added `src/App.tokens.test.mjs`, which fails on any bare `var()` naming an undefined token, or any comment that has swallowed another); #177 then deleted the component and its CSS. |
 | 2026-08-31 | §H's third entry is now moot | The `Stat` component it described no longer exists. |
+| 2026-09-01 | §G 1 — `exposure.js` third copy of the risk ramp | #181 moved every colour to CSS: AQI onto the ramp tokens, UV's own palette relocated verbatim. A stylesheet-parsing test pins that every tone the domain can return has a stroke rule (a tone with none leaves the SVG fill unstroked — invisible, reading as "low", not "broken"). All eleven tones measured identical before/after. |
+| 2026-09-01 | **24** — denied geolocation discards the viewed city | #184: every failure path resolved `DEFAULT_LOCATION`, so declining the prompt in Tokyo dropped you in Palos Hills. The hook gained an `onNotice` channel to report without moving; the "Showing Palos Hills" copy was corrected to match. Nothing had covered it — the change landed green — so four render tests now pin the absence of a resolve. |
+| 2026-09-01 | **25** — error screen removes header and search | #185: `AppErrorState` returned a bare card in place of the whole app, and "Reload weather" retries the same city. It now renders inside `AppShell` under the same header; `AppHeader` never reads `weather`, and unlike a crash this screen renders in a healthy tree. An e2e routes the forecast to 500 and asserts the search is typable. |
+| 2026-09-01 | **26** — hero reads `daily[0]` of a restored snapshot | #186: reproduced first — a snapshot from yesterday made the hero say **"Peak UV 1.0 — no special protection required"** on a day whose real peak was 9, above a Week Ahead row saying 9. `resolveTodayIndex` now applies `ForecastCard`'s own `date >= today` rule (location timezone) to every hero read; a render test mounts both surfaces and asserts they agree. |
+| 2026-09-01 | §G 2 — sync-race coverage | #187 (see §G 2 for what it does and does not prove). |
+| 2026-09-04 | **22** — sun advice after dark (correctness half) | #188: only the reading line was daylight-gated; the guidance pill said "Use sun protection" at midnight. `isDaylight` moved to `utils/sunlight` so both surfaces share one rule. Load-bearing and tested: missing data is reported *before* the gate (a reading that did not arrive is owed at any hour; only advice is time-bound), and an unknown clock suppresses rather than guesses. |
+| 2026-09-04 | **23** — contradicting dew-point thresholds (correctness half) | #189: the hero chip's own cutoffs (45/65) met the tile's `classifyComfort` boundaries at one point, so 62°F read "Comfortable" above "Sticky". The chip now takes its band from the shared classifier, keeping its three words. Found on the way and fixed in the same PR: StormWatch's driver regex never matched **"Miserable"**, the wettest band, so the most humid air mass was the one never counted as a storm driver. |
+| 2026-09-04 | **21** — "now"/elapsed carried by opacity only | #190: every hour's button read identically; the sr-only summary is a value range and names no hour. Both button surfaces now carry `, now` / `, passed` in their accessible name through one helper. |
+| 2026-09-04 | **27** — touch targets | Measured and closed as design (§G 5). |
 
 **Not a finding from this audit, but closed alongside them:** `classifyStormRisk`
 and `classifyComfort` in `src/domain/meteorology.js` each returned a hex per
 level that was a drifted partial copy of the `--risk-*` ramp. #176 removed
 colour from both, leaving `--risk-*` as the single source of truth for the two,
 and pins the *absence* of a colour key so a hex cannot creep back. The third
-copy, in `exposure.js`, is §G item 1.
+copy, in `exposure.js`, was closed by #181 (§G item 1).
+
+**Observed on 2026-09-04 while working the above, not fixed — the same
+"rule that exists and does nothing" class §G catalogued:**
+
+- `HeroSkyLayer` tests `sunlightPhase` for `"night"` / `"dusk"`, values
+  `getSunlightPhase` never returns, and toggles `hero-sky-orb--moon`, a class
+  with no CSS. The moon can never render.
+- Three `HeroCard` render tests pass a `nowMs` prop the component never
+  reads; they work only because they test the placeholder path. The one that
+  needed a clock (#188) stubs `Date.now` instead, which is the real seam.
+- The hourly chart's axis row (`.hourly-axis`) renders visible short labels
+  with `is-now` / `is-past` classes that are purely visual and is not
+  `aria-hidden` — a screen reader hears "7P 8P 9P…" with no cue. The buttons
+  now carry the cue (#190); hiding the axis as a duplicate is a redundancy
+  judgment left to review.
+- `src/domain/exposure.js` is the repository's **only CRLF file**. An editor
+  that normalises line endings turns a 26-line change into a 231-line diff
+  (#181 hit this and restored CRLF to keep the review honest). Worth one
+  commit in a quiet moment, not while parallel sessions are landing PRs.

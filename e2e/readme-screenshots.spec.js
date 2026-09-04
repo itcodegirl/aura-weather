@@ -8,6 +8,7 @@ import {
   bootstrapVisualState,
   installFixedClock,
 } from "./support/visualCapture.js";
+import { capturePath } from "./support/capturePath.js";
 
 /**
  * Captures the dashboard screenshots that the README references for
@@ -64,7 +65,7 @@ test.describe("README dashboard screenshots", () => {
   test("captures the desktop dashboard hero", async ({ page, context }) => {
     await bootstrapVisualState(page, context, { width: 1366, height: 900 });
     await page.screenshot({
-      path: "docs/screenshots/dashboard-desktop.png",
+      path: capturePath("docs/screenshots/dashboard-desktop.png"),
       fullPage: true,
     });
   });
@@ -72,7 +73,7 @@ test.describe("README dashboard screenshots", () => {
   test("captures the mobile stacked dashboard", async ({ page, context }) => {
     await bootstrapVisualState(page, context, { width: 390, height: 844 });
     await page.screenshot({
-      path: "docs/screenshots/dashboard-mobile.png",
+      path: capturePath("docs/screenshots/dashboard-mobile.png"),
       fullPage: true,
     });
   });
@@ -103,7 +104,7 @@ test.describe("README dashboard screenshots", () => {
     // single card does not need the full-page mount waits.
     const alertsCard = page.locator(".bento-alerts");
     await alertsCard.screenshot({
-      path: "docs/screenshots/alert-overflow.png",
+      path: capturePath("docs/screenshots/alert-overflow.png"),
     });
   });
 });

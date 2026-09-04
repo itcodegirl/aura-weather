@@ -1,7 +1,7 @@
 import { afterEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import "../../../scripts/test-render-setup.mjs";
+import "../../../scripts/render-test-setup.mjs";
 
 const React = (await import("react")).default;
 const { cleanup, fireEvent, render, screen } = await import(

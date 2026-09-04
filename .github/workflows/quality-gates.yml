@@ -89,15 +89,16 @@ jobs:
         run: npm run test:e2e -- --workers=1
 
       - name: Upload regenerated README screenshots
-        # The Playwright run regenerates docs/screenshots in place. Nothing
-        # gates on them any more, but the artifact is still the convenient
-        # way to pick up a refreshed set when the README images are worth
-        # updating by hand.
+        # The capture specs write under test-results/captures/ rather than
+        # over the tracked files (see e2e/support/capturePath.js), so the
+        # checkout stays clean and this artifact is the way to pick up a
+        # refreshed set. The paths inside mirror their repo locations, so a
+        # download unzips straight over the working tree.
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: trust-contract-screenshots
-          path: docs/screenshots/*.png
+          path: test-results/captures/**/*.png
           if-no-files-found: ignore
           retention-days: 30
 

@@ -5,13 +5,14 @@
  *
  * The README's whole argument is that its claims are checkable, so a stale
  * count there is not a typo -- it is the thesis failing on its own front
- * page. It has gone stale twice: once before the docs truth-up, and again
- * within a day of it, because tests kept being added afterwards. Prose does
- * not fail a build; this does.
+ * page. It went stale three times in a week: before the docs truth-up, again
+ * within a day of it, and again in the three days it took to write this --
+ * eight figures moved while the guard was under review. Prose does not fail
+ * a build; this does.
  *
  * Claims are marked in the README so they survive rewording:
  *
- *     `<!--n:unit-tests-->689<!--/n-->` tests across ...
+ *     `<!--n:unit-tests-->N<!--/n-->` tests across ...
  *
  * The comments do not render, so a reader just sees the number. Every marker
  * must resolve to a key below, and every key must appear at least once --
@@ -22,9 +23,12 @@
  * running them twice in CI, so `--unit <file>` and `--render <file>` accept
  * the TAP output an earlier step already captured; without those flags the
  * script runs the suites itself, which is what you want locally.
+ *
+ * `--write` rewrites the markers to the computed values, so adding tests
+ * does not mean hand-editing the README.
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -112,6 +116,23 @@ const actual = {
 };
 
 const readme = readFileSync(README, "utf8");
+
+// `--write` rewrites every marker to the computed figure. The counts move
+// whenever tests are added, so asking a contributor to hand-edit eight
+// numbers is how a guard turns into a nuisance people route around.
+if ("write" in args) {
+  let written = 0;
+  const updated = readme.replace(MARKER, (whole, key, value) => {
+    if (!(key in actual)) return whole;
+    if (Number(value.replace(/,/g, "")) === actual[key]) return whole;
+    written += 1;
+    return `<!--n:${key}-->${actual[key]}<!--/n-->`;
+  });
+  writeFileSync(README, updated);
+  console.log(`README numbers updated: ${written} marker(s) rewritten`);
+  process.exit(0);
+}
+
 const claims = [];
 for (const match of readme.matchAll(MARKER)) {
   claims.push({ key: match[1], value: Number(match[2].replace(/,/g, "")) });

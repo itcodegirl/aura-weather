@@ -168,11 +168,12 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`<!--n:unit-tests-->689<!--/n-->` tests across <!--n:unit-suites-->154<!--/n--> suites, including the <!--n:render-tests-->272<!--/n--> React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`<!--n:unit-tests-->726<!--/n-->` tests across <!--n:unit-suites-->163<!--/n--> suites, including the <!--n:render-tests-->289<!--/n--> React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
 - GitHub Actions runs lint, tests, render tests, build, serial Playwright, and Lighthouse budgets on pull requests
+- `npm run check:docs` re-derives every count stated on this page from the repo and fails if one has drifted; CI runs it too, so these numbers cannot go stale silently (`npm run check:docs -- --write` updates them)
 
 ### Current automated coverage
 
@@ -184,7 +185,7 @@ npm run test:lighthouse
   - saved-location sync normalization and error handling
   - location persistence helpers
   - weather domain utilities and formatters
-- Playwright coverage — <!--n:e2e-behavioural-->29<!--/n--> behavioral checks plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset
+- Playwright coverage — <!--n:e2e-behavioural-->32<!--/n--> behavioral checks plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset
   capture jobs (`readme-screenshots`, `trust-contract-screenshot`,
   `social-pwa-assets`, which regenerate the committed imagery and assert
   little themselves). The behavioral checks cover:
@@ -309,7 +310,7 @@ The contract is locked in by tests at every layer:
 - **API (`openMeteo.test.mjs`)** —
   `fetchHistoricalTemperatureAverage` drops null and empty-string
   archive samples instead of averaging them as 0°F.
-- **React render (`HeroCard.render.test.mjs`, <!--n:herocard-render-tests-->19<!--/n--> tests)** — the
+- **React render (`HeroCard.render.test.mjs`, <!--n:herocard-render-tests-->20<!--/n--> tests)** — the
   rendered DOM contains no `0%`, `0 hPa`, or `—°F` leaks; missing
   values carry the "No data available" announcement, guidance is
   labelled unavailable instead of invented, and confidence claims
@@ -432,7 +433,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — <!--n:unit-tests-->689<!--/n--> Node tests (including <!--n:render-tests-->272<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->29<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — <!--n:unit-tests-->726<!--/n--> Node tests (including <!--n:render-tests-->289<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->32<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

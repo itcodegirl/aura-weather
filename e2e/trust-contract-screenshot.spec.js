@@ -1,5 +1,6 @@
 import { test } from "@playwright/test";
 import { bootstrapMissingMockState } from "./support/visualCapture.js";
+import { capturePath } from "./support/capturePath.js";
 
 /**
  * Captures the missing-data trust-contract screenshot for the README /
@@ -21,7 +22,7 @@ test.describe("trust contract screenshots", () => {
     await bootstrapMissingMockState(page, context, { width: 1366, height: 900 });
 
     await page.screenshot({
-      path: "docs/screenshots/trust-contract-desktop.png",
+      path: capturePath("docs/screenshots/trust-contract-desktop.png"),
       fullPage: true,
     });
   });
@@ -30,7 +31,7 @@ test.describe("trust contract screenshots", () => {
     await bootstrapMissingMockState(page, context, { width: 390, height: 844 });
 
     await page.screenshot({
-      path: "docs/screenshots/trust-contract-mobile.png",
+      path: capturePath("docs/screenshots/trust-contract-mobile.png"),
       fullPage: true,
     });
   });

@@ -3,11 +3,11 @@
 // fetch has no equivalent in node:test, and a component's own code cannot be
 // asked to fail from the outside, so the failure is injected at module load.
 //
-// Register it alongside test-render-setup.mjs and pass the module paths to
+// Register it alongside render-test-setup.mjs and pass the module paths to
 // break through register()'s `data` — module hooks run on their own thread, so
 // they cannot read the test file's variables:
 //
-//   register("../../../scripts/test-render-fail-module-loader.mjs",
+//   register("../../../scripts/render-test-fail-module-loader.mjs",
 //     import.meta.url, { data: { brokenSuffixes: ["/Foo.jsx"] } });
 
 let brokenSuffixes = [];

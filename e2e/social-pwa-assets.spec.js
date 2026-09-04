@@ -3,6 +3,7 @@ import {
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks.js";
+import { capturePath } from "./support/capturePath.js";
 
 /**
  * Captures the committed social-share and PWA-manifest images:
@@ -98,18 +99,18 @@ test.describe("social and PWA manifest assets", () => {
     const heroBox = await page.locator(".bento-hero").first().boundingBox();
     const clipTop = Math.max(0, Math.round((heroBox?.y ?? 0) - 24));
     await page.screenshot({
-      path: "public/og-image.png",
+      path: capturePath("public/og-image.png"),
       clip: { x: 0, y: clipTop, width: 1200, height: 630 },
     });
   });
 
   test("captures the narrow manifest screenshot", async ({ page, context }) => {
     await bootstrapDashboard(page, context, { width: 390, height: 844 });
-    await page.screenshot({ path: "public/screenshots/aura-narrow.png" });
+    await page.screenshot({ path: capturePath("public/screenshots/aura-narrow.png") });
   });
 
   test("captures the wide manifest screenshot", async ({ page, context }) => {
     await bootstrapDashboard(page, context, { width: 1280, height: 800 });
-    await page.screenshot({ path: "public/screenshots/aura-wide.png" });
+    await page.screenshot({ path: capturePath("public/screenshots/aura-wide.png") });
   });
 });

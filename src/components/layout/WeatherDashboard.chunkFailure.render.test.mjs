@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { register } from "node:module";
 
-import "../../../scripts/test-render-setup.mjs";
+import "../../../scripts/render-test-setup.mjs";
 
 // Break the supplemental chunk before WeatherDashboard is imported, so its
 // lazy mount hits a rejecting import() exactly as it would when the network
 // drops the chunk. This lives in its own test file because the hook is
 // process-wide: the sibling WeatherDashboard.render.test.mjs needs the chunk
 // intact.
-register("../../../scripts/test-render-fail-module-loader.mjs", import.meta.url, {
+register("../../../scripts/render-test-fail-module-loader.mjs", import.meta.url, {
   data: { brokenSuffixes: ["/layout/SupplementalWeatherPanels.jsx"] },
 });
 

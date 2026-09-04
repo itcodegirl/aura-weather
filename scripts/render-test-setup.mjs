@@ -8,7 +8,7 @@ import { JSDOM } from "jsdom";
 import { register } from "node:module";
 import { pathToFileURL } from "node:url";
 
-register("./test-render-loader.mjs", import.meta.url);
+register("./render-test-loader.mjs", import.meta.url);
 
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
   url: "http://localhost/",
@@ -88,4 +88,4 @@ export const RENDER_TEST_ENVIRONMENT_READY = true;
 
 // Keep a reference so the loader path resolves correctly when invoked
 // with absolute URLs.
-export const TEST_LOADER_URL = pathToFileURL("./test-render-loader.mjs").href;
+export const TEST_LOADER_URL = pathToFileURL("./render-test-loader.mjs").href;

@@ -243,6 +243,44 @@ describe("HeroCard UV panel", () => {
     );
   });
 
+  /*
+   * Audit finding 22, the design half, verified through the DOM rather than
+   * the builder: the panel keeps reporting the reading after sunset (the
+   * trust contract owes the number at any hour) but stops saying protection
+   * "is worth it" for a day that has ended.
+   */
+  test("states the UV line in past tense after sunset, keeping the reading", () => {
+    const { container } = renderHeroAt(AFTER_SUNSET, {
+      weather: buildWeather({ daily: { uvIndexMax: [7] } }),
+      location: baseLocation,
+      unit: "F",
+    });
+
+    const panel = container.querySelector(".hero-uv-panel");
+    assert.ok(panel, "the reading survives sunset — only the tense changes");
+    const text = panel.textContent || "";
+    assert.match(text, /UV High/, "still names the band");
+    assert.match(text, /Peak UV 7\.0/, "still shows the peak that occurred");
+    assert.match(text, /was worth it midday/, "reports the finished day");
+    assert.doesNotMatch(
+      text,
+      /is worth it/,
+      "no present-tense advice once the sun is down"
+    );
+  });
+
+  test("keeps the UV line in present tense during daylight", () => {
+    const { container } = renderHeroAt(DAYLIGHT_NOW, {
+      weather: buildWeather({ daily: { uvIndexMax: [7] } }),
+      location: baseLocation,
+      unit: "F",
+    });
+
+    const text = container.querySelector(".hero-uv-panel").textContent || "";
+    assert.match(text, /is worth it midday/);
+    assert.doesNotMatch(text, /was worth it/);
+  });
+
   test("drops the UV panel entirely when the UV reading is missing", () => {
     const { container } = render(
       React.createElement(HeroCard, {

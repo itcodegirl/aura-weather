@@ -96,6 +96,34 @@ export function isDaylight(sunrise, sunset, zonedNowMs) {
 }
 
 /*
+ * True only when the clock can be placed AFTER today's sunset. Distinct
+ * from `!isDaylight(...)`, which is also true for an unknown clock, missing
+ * sun times, and the hours before sunrise — isDaylight collapses those into
+ * one false because a caller that cannot place "now" must not surface
+ * daylight advice.
+ *
+ * A caller that cannot drop its surface needs the narrower question. The
+ * hero's UV panel always renders when a reading exists (the trust contract
+ * owes the reader the number), so it must choose a tense rather than
+ * suppress. Past tense asserts the day has ended, which is the harmful
+ * direction to get wrong: telling someone the peak "was" high while it is
+ * actually peaking withdraws protection they still need. So an unknown
+ * clock, missing sun times, and the pre-dawn hours all answer false here
+ * and leave the caller in present tense — the tense that fails safe.
+ */
+export function isAfterSunset(sunset, zonedNowMs) {
+  const now = toFiniteNumber(zonedNowMs);
+  if (now === null) {
+    return false;
+  }
+  const sunsetDate = toValidDate(sunset);
+  if (!sunsetDate) {
+    return false;
+  }
+  return now > sunsetDate.getTime();
+}
+
+/*
  * Reframes a real epoch instant into the location's wall clock, returned as
  * epoch ms of a device-local Date carrying those wall-clock parts. Provider
  * sunrise/sunset timestamps are naive location-local strings that parse in

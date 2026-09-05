@@ -18,6 +18,7 @@ import {
   formatDaylightLengthLabel,
   getSunlightPhase,
   getZonedNowMs,
+  isAfterSunset,
   isDaylight,
 } from "../../utils/sunlight.js";
 import { formatDisplayCountry } from "../../utils/locationDisplay.js";
@@ -296,6 +297,42 @@ const UV_PANEL_COPY = {
 };
 
 /*
+ * After-sunset copy. The panel keeps reporting the reading once the day has
+ * ended — the number is still the honest answer to "what was today like?" —
+ * but the imperative heads above ("Use sun protection") describe a day that
+ * is over, so past tense replaces them. Band words are NOT repeated here;
+ * `level` stays sourced from UV_PANEL_COPY so the panel, the reading line
+ * and the chip cannot drift apart at dusk.
+ */
+const UV_PANEL_COPY_AFTER_SUNSET = {
+  extreme: {
+    head: "Today's peak was extreme",
+    advice: "shade, hat & SPF were essential",
+    line: "Extreme UV today — midday exposure was best avoided.",
+  },
+  "very-high": {
+    head: "Today's peak was very high",
+    advice: "hat, shade & SPF mattered around midday",
+    line: "Very high UV today — midday sun called for cover.",
+  },
+  high: {
+    head: "Today's peak was high",
+    advice: "hat & SPF were worth it midday",
+    line: "High UV today — sun protection was worth it midday.",
+  },
+  moderate: {
+    head: "Today's peak was moderate",
+    advice: "shade helped through midday",
+    line: "Moderate UV today — midday shade helped.",
+  },
+  low: {
+    head: "Today's peak was low",
+    advice: "no special protection was required",
+    line: "Low UV today — it was comfortable to be outside.",
+  },
+};
+
+/*
  * Hero UV index panel data. Reads the raw daily peak directly (NOT the
  * filtered dailyGuidance, which drops "calm"/low-UV days) so the panel
  * renders for EVERY UV level. Returns null when the reading is missing
@@ -304,8 +341,12 @@ const UV_PANEL_COPY = {
  * classifyUv band, so the panel, the chip, and the one-liner never
  * disagree (the mockup itself ships a "Moderate" label over a 7.5
  * reading — data-driven copy fixes that).
+ *
+ * After sunset, the panel's language shifts to past tense — "Today's peak
+ * was high" instead of "Use sun protection" — since the advice no longer
+ * applies to the day that has ended.
  */
-function buildHeroUvPanel(weather, todayIndex) {
+function buildHeroUvPanel(weather, todayIndex, sunWindow) {
   const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
   if (uvIndex === null) {
     return null;
@@ -317,7 +358,14 @@ function buildHeroUvPanel(weather, todayIndex) {
   // (7.5 → ~68%). Clamp so 11+ pins to the Extreme end.
   const markerPct = Math.max(0, Math.min(100, (peak / UV_SCALE_MAX) * 100));
 
-  const { level, head, advice, line } = UV_PANEL_COPY[classifyUv(peak).band];
+  const band = classifyUv(peak).band;
+  const { level } = UV_PANEL_COPY[band];
+  const { head, advice, line } = isAfterSunset(
+    sunWindow?.sunset,
+    sunWindow?.zonedNowMs
+  )
+    ? UV_PANEL_COPY_AFTER_SUNSET[band]
+    : UV_PANEL_COPY[band];
 
   return {
     peak,
@@ -594,6 +642,12 @@ export function buildHeroData({
 
   const characteristicChips = buildCharacteristicChips(weather, aqi, todayIndex);
 
+  const sunWindow = {
+    sunrise: sunriseValue,
+    sunset: sunsetValue,
+    zonedNowMs,
+  };
+
   return {
     current,
     info,
@@ -622,7 +676,7 @@ export function buildHeroData({
     climateMessage,
     dailyGuidance,
     characteristicChips,
-    uvPanel: buildHeroUvPanel(weather, todayIndex),
+    uvPanel: buildHeroUvPanel(weather, todayIndex, sunWindow),
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
   };
 }

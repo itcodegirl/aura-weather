@@ -185,7 +185,7 @@ npm run test:lighthouse
   - saved-location sync normalization and error handling
   - location persistence helpers
   - weather domain utilities and formatters
-- Playwright coverage — <!--n:e2e-behavioural-->32<!--/n--> behavioral checks plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset
+- Playwright coverage — <!--n:e2e-behavioural-->42<!--/n--> behavioral checks plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset
   capture jobs (`readme-screenshots`, `trust-contract-screenshot`,
   `social-pwa-assets`, which regenerate the committed imagery and assert
   little themselves). The behavioral checks cover:
@@ -433,7 +433,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — <!--n:unit-tests-->727<!--/n--> Node tests (including <!--n:render-tests-->289<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->32<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — <!--n:unit-tests-->727<!--/n--> Node tests (including <!--n:render-tests-->289<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->42<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

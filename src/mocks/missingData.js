@@ -75,11 +75,17 @@ export function buildMissingWeatherModel() {
     rainAmount: nullArray(8),
   };
 
+  /*
+   * The demo queries no provider, so alerts cannot be "ready" -- that status
+   * means "we asked, and there is nothing". Saying it here made the demo
+   * that exists to prove the trust contract quietly break it, next to an aqi
+   * and climate already honestly marked unavailable (audit O-04).
+   */
   return {
     ...model,
     aqi: null,
     alerts: [],
-    alertsStatus: "ready",
+    alertsStatus: "unavailable",
   };
 }
 
@@ -120,8 +126,10 @@ export function buildMissingDashboardState({ now = Date.now() } = {}) {
       aqiStatus: "unavailable",
       climateFetchedAt: null,
       climateStatus: "unavailable",
-      alertsFetchedAt: now,
-      alertsStatus: "ready",
+      // No alerts request was made, so there is no time at which one
+       // returned. See the status note above.
+      alertsFetchedAt: null,
+      alertsStatus: "unavailable",
       forecastStatus: "ready",
       cacheStatus: "idle",
       cacheCapturedAt: null,

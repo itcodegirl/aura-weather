@@ -22,9 +22,26 @@ function DataTrustFooter({ weather, location, trustMeta }) {
   const updateTime = formatUpdateTime(trustMeta?.weatherFetchedAt);
 
   const locationStr = [timezone, coords].filter(Boolean).join(" · ");
+
+  /*
+   * Only credit NOAA/NWS where it actually supplied something. Its alerts
+   * are U.S.-only, so for most of the world alertsStatus is "unsupported"
+   * and no NWS request contributed anything to what is on screen -- the
+   * footer was naming a source the page had not used, on the one strip whose
+   * whole job is saying where the data came from (audit O-02).
+   * SourceHealthPanel already branches on this status; this is the same
+   * reading, applied to the line every viewer sees rather than the panel
+   * they have to open.
+   */
+  const alertsStatus = trustMeta?.alertsStatus ?? null;
+  const sources = ["Open-Meteo"];
+  if (alertsStatus === "ready") {
+    sources.push("NOAA/NWS");
+  }
+  const sourceNames = sources.join(" + ");
   const sourceStr = updateTime
-    ? `Open-Meteo + NOAA/NWS · updated ${updateTime}`
-    : "Open-Meteo + NOAA/NWS";
+    ? `${sourceNames} · updated ${updateTime}`
+    : sourceNames;
 
   return (
     <footer className="data-trust-footer" aria-label="Data sources and location">

@@ -22,6 +22,40 @@ describe("missingData mock", () => {
     assert.equal(isMissingMockEnabled(undefined), false);
   });
 
+  /*
+   * The demo's whole claim is that no provider is queried, so nothing it
+   * produces may describe a request that never happened. "ready" is the
+   * status meaning "we asked, and there is nothing" — beside an aqi and a
+   * climate already honestly marked unavailable, alerts alone claimed a
+   * successful fetch, and stamped a time for it (audit O-04). The route that
+   * exists to prove the trust contract was the one place quietly breaking
+   * it.
+   */
+  test("never claims a successful alerts fetch it did not make", () => {
+    const model = buildMissingWeatherModel();
+
+    assert.equal(model.alertsStatus, "unavailable");
+    assert.deepEqual(model.alerts, []);
+  });
+
+  test("stamps no fetch time for the alerts request it never sent", () => {
+    const state = buildMissingDashboardState();
+    const trustMeta = state.trustMeta ?? state;
+
+    assert.equal(trustMeta.alertsStatus, "unavailable");
+    assert.equal(
+      trustMeta.alertsFetchedAt,
+      null,
+      "a fetch that never happened has no time at which it returned"
+    );
+    // The forecast is genuinely synthesised and shown, so its own stamp
+    // stays — this must not become "null everything".
+    assert.ok(
+      trustMeta.weatherFetchedAt,
+      "the demo does render a forecast, so its stamp is real"
+    );
+  });
+
   test("buildMissingWeatherModel produces only null readings", () => {
     const model = buildMissingWeatherModel();
     const currentValues = Object.values(model.current);

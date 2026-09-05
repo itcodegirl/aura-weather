@@ -10,7 +10,7 @@ import {
   DEFAULT_LOCATION,
   LOCATION_FALLBACK_NOTICE,
   SAVED_LOCATION_NOTICE,
-} from "./useLocation.js";
+} from "../domain/location.js";
 
 describe("toLocationPayload", () => {
   test("returns a normalized payload for valid coordinates", () => {

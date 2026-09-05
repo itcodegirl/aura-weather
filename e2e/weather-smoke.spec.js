@@ -313,6 +313,10 @@ test("keeps startup city explicit when switching between saved cities", async ({
   await londonChip.getByRole("button", { name: "Make London your startup city" }).click();
   await expect(page.getByText("London is now your startup city.")).toBeVisible();
   await expect(londonChip.locator(".saved-city-startup-badge")).toBeVisible();
+  // Assert the chip is still there before asserting its badge is gone: a
+  // toHaveCount(0) on a descendant of a locator that matches nothing passes
+  // for the wrong reason.
+  await expect(tokyoChip).toHaveCount(1);
   await expect(tokyoChip.locator(".saved-city-startup-badge")).toHaveCount(0);
 });
 
@@ -498,10 +502,11 @@ test("expands a forecast day for richer detail", async ({ page }) => {
   const detailTrigger = page.getByRole("button", {
     name: /^today,.*show forecast details$/i,
   });
-  if ((await detailTrigger.count()) === 0) {
-    await expect(page.getByText("7-day outlook unavailable")).toBeVisible();
-    return;
-  }
+  // The forecast is fully mocked, so the detail row must exist. The previous
+  // escape hatch here asserted the "unavailable" fallback and returned when
+  // the row was missing -- which meant a ForecastCard that stopped rendering
+  // turned this test green instead of red.
+  await expect(detailTrigger).toBeVisible();
   await detailTrigger.click();
 
   const detailRegion = page.getByRole("region", {

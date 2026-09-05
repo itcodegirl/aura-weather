@@ -668,6 +668,114 @@ describe("buildHeroData", () => {
 
     assert.equal(data.uvPanel.markerPct, 100);
   });
+
+  /*
+   * Audit finding 22, the design half. The pill was gated on daylight in
+   * #188; the panel cannot be — the trust contract owes the reader the
+   * number at any hour — so it changes tense instead of disappearing.
+   */
+  describe("the UV panel reports in past tense once the day has ended", () => {
+    const panelAt = (nowMs) =>
+      buildHeroData({
+        weather: baseWeather,
+        location: baseLocation,
+        unit: "F",
+        nowMs,
+      }).uvPanel;
+
+    test("speaks in the imperative during daylight", () => {
+      const panel = panelAt(DAYLIGHT_NOW);
+      assert.equal(panel.head, "Use sun protection");
+      assert.equal(panel.sub, "Peak UV 7.2 — hat & SPF if you're out midday.");
+      assert.equal(panel.line, "High UV today — sun protection is worth it midday.");
+    });
+
+    test("reports the finished day in past tense after sunset", () => {
+      const panel = panelAt(AFTER_SUNSET);
+      assert.equal(panel.head, "Today's peak was high");
+      assert.equal(panel.sub, "Peak UV 7.2 — hat & SPF were worth it midday.");
+      assert.equal(panel.line, "High UV today — sun protection was worth it midday.");
+    });
+
+    /*
+     * Before sunrise the day has NOT happened yet, so the advice is still
+     * live — "Today's peak was high" would be a claim about a day that has
+     * not started. isDaylight is false here too, which is why this gate
+     * cannot be written as !isDaylight(...).
+     */
+    test("keeps the imperative before sunrise, when the day is still ahead", () => {
+      assert.equal(panelAt(BEFORE_SUNRISE).head, "Use sun protection");
+    });
+
+    /*
+     * HeroCard passes nowMs: null until useTimeNow resolves, so this is a
+     * real render state. Past tense is the harmful direction to guess
+     * wrong — it withdraws protection from someone whose day is peaking —
+     * so an unplaceable clock stays in the tense that fails safe.
+     */
+    test("keeps the imperative when the clock cannot be placed", () => {
+      assert.equal(panelAt(null).head, "Use sun protection");
+      assert.equal(panelAt(Number.NaN).head, "Use sun protection");
+    });
+
+    test("keeps the imperative when the sun times did not arrive", () => {
+      const panel = buildHeroData({
+        weather: {
+          ...baseWeather,
+          daily: { ...baseWeather.daily, sunrise: [null], sunset: [null] },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs: AFTER_SUNSET,
+      }).uvPanel;
+
+      assert.equal(panel.head, "Use sun protection");
+    });
+
+    // The band word is not restated in the after-sunset table; if it ever
+    // is, this catches the copy drifting from the reading line and chip.
+    test("names the same band in either tense", () => {
+      for (const uv of [1, 4, 7, 9, 11.5]) {
+        const weather = {
+          ...baseWeather,
+          daily: { ...baseWeather.daily, uvIndexMax: [uv] },
+        };
+        const at = (nowMs) =>
+          buildHeroData({ weather, location: baseLocation, unit: "F", nowMs })
+            .uvPanel;
+
+        assert.equal(
+          at(AFTER_SUNSET).level,
+          at(DAYLIGHT_NOW).level,
+          `UV ${uv} must carry one band word in both tenses`
+        );
+      }
+    });
+
+    // Every band needs after-sunset copy; a missing key would throw on
+    // destructure at dusk for that band alone.
+    test("covers every band after sunset", () => {
+      for (const [uv, head] of [
+        [1, "Today's peak was low"],
+        [4, "Today's peak was moderate"],
+        [7, "Today's peak was high"],
+        [9, "Today's peak was very high"],
+        [11.5, "Today's peak was extreme"],
+      ]) {
+        const panel = buildHeroData({
+          weather: {
+            ...baseWeather,
+            daily: { ...baseWeather.daily, uvIndexMax: [uv] },
+          },
+          location: baseLocation,
+          unit: "F",
+          nowMs: AFTER_SUNSET,
+        }).uvPanel;
+
+        assert.equal(panel.head, head);
+      }
+    });
+  });
 });
 
 describe("wind guidance never invents a reading", () => {

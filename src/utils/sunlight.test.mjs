@@ -7,6 +7,7 @@ import {
   getSunlightPhase,
   getZonedNowMs,
   getDaylightProgress,
+  isAfterSunset,
   isDaylight,
 } from "./sunlight.js";
 
@@ -197,5 +198,44 @@ describe("isDaylight", () => {
     assert.equal(isDaylight(SUNRISE, SUNSET, null), false);
     assert.equal(isDaylight(SUNRISE, SUNSET, NaN), false);
     assert.equal(isDaylight(SUNRISE, SUNSET, "18:00"), false);
+  });
+});
+
+/*
+ * The narrower question isDaylight cannot answer. isDaylight returns false
+ * for "after sunset", "before sunrise" and "cannot tell" alike, which is
+ * right for suppressing advice but wrong for a caller that must choose
+ * between present and past tense.
+ */
+describe("isAfterSunset", () => {
+  const SUNSET = "2026-04-21T23:00:00Z";
+  const at = (h, m = 0) => Date.UTC(2026, 3, 21, h, m, 0);
+
+  test("is true only once the sun is down", () => {
+    assert.equal(isAfterSunset(SUNSET, at(23, 1)), true);
+    assert.equal(isAfterSunset(SUNSET, Date.UTC(2026, 3, 22, 4)), true);
+  });
+
+  test("is false at sunset itself and every hour before it", () => {
+    // Exclusive at sunset, where isDaylight is inclusive — the two agree
+    // that the final minute of the day is still day.
+    assert.equal(isAfterSunset(SUNSET, at(23)), false, "sunset is not yet past");
+    assert.equal(isAfterSunset(SUNSET, at(18)), false);
+    assert.equal(isAfterSunset(SUNSET, at(9)), false, "pre-dawn is not after sunset");
+  });
+
+  test("never guesses: an unplaceable clock is not a finished day", () => {
+    // The caller renders past tense on true, so a guess here would tell a
+    // reader their peak "was" high while it is still climbing.
+    assert.equal(isAfterSunset(SUNSET, null), false);
+    assert.equal(isAfterSunset(SUNSET, NaN), false);
+    assert.equal(isAfterSunset(SUNSET, "23:30"), false);
+    // Infinity is the input that makes the finite-clock guard load-bearing:
+    // a bare `now > sunset` answers true for it and would strand the panel
+    // in past tense. The others coerce to NaN and compare false anyway.
+    assert.equal(isAfterSunset(SUNSET, Infinity), false);
+    assert.equal(isAfterSunset(null, at(23, 1)), false);
+    assert.equal(isAfterSunset(undefined, at(23, 1)), false);
+    assert.equal(isAfterSunset("not-a-time", at(23, 1)), false);
   });
 });

@@ -333,4 +333,40 @@ describe("HourlyCard announces which hour is now and which have passed", () => {
     assert.equal(labels.filter((l) => l.endsWith(", passed")).length, 0);
     assert.equal(labels.filter((l) => l.endsWith(", now")).length, 1);
   });
+
+  /*
+   * The other half of the same finding. The axis row repeats every hour's
+   * short label with now/past marked by class alone, so once the buttons
+   * carried the cue this row became a second, state-less announcement of
+   * the same 24 hours.
+   */
+  test("the visual axis row is hidden from the accessible tree", () => {
+    const { container } = renderWithPast();
+    const axis = container.querySelector(".hourly-axis");
+
+    assert.ok(axis, "the axis still renders for sighted readers");
+    assert.equal(axis.getAttribute("aria-hidden"), "true");
+    assert.ok(
+      axis.querySelectorAll(".hourly-ax").length > 0,
+      "and still carries its visible labels"
+    );
+  });
+
+  test("hiding the axis leaves every hour reachable and named", () => {
+    const { container } = renderWithPast();
+
+    // The labelled path survives the row being hidden: same six hours,
+    // still carrying their state, on a focusable control.
+    const cols = Array.from(container.querySelectorAll(".hourly-col"));
+    assert.equal(cols.length, 6);
+    assert.ok(
+      cols.every((el) => (el.getAttribute("aria-label") || "").trim().length > 0),
+      "every hour keeps an accessible name"
+    );
+    assert.equal(
+      cols.filter((el) => el.closest("[aria-hidden='true']")).length,
+      0,
+      "no hour button sits inside a hidden subtree"
+    );
+  });
 });

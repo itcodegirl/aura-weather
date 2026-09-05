@@ -261,37 +261,28 @@ function buildUvGuidance(weather, todayIndex, sunWindow) {
 // (classifyUv), the one UV scale every surface shares.
 const UV_SCALE_MAX = 11;
 
-// Panel copy per shared UV band. Level words stay sentence case to
-// match the hero's typographic voice ("Very high", not "Very High").
+// Panel copy per shared UV band: the band word and the one-line summary the
+// panel actually renders. Level words stay sentence case to match the hero's
+// typographic voice ("Very high", not "Very High").
 const UV_PANEL_COPY = {
   extreme: {
     level: "Extreme",
-    head: "Avoid the midday sun",
-    advice: "shade, hat & SPF are essential",
     line: "Extreme UV today — cover up and limit midday exposure.",
   },
   "very-high": {
     level: "Very high",
-    head: "Cover up outdoors",
-    advice: "hat, shade & SPF around midday",
     line: "Very high UV today — protect your skin midday.",
   },
   high: {
     level: "High",
-    head: "Use sun protection",
-    advice: "hat & SPF if you're out midday",
     line: "High UV today — sun protection is worth it midday.",
   },
   moderate: {
     level: "Moderate",
-    head: "Some protection helps",
-    advice: "seek shade through midday",
     line: "Moderate UV today — easy on the sun exposure.",
   },
   low: {
     level: "Low",
-    head: "Minimal protection needed",
-    advice: "no special protection required",
     line: "Low UV today — comfortable to be outside.",
   },
 };
@@ -299,35 +290,25 @@ const UV_PANEL_COPY = {
 /*
  * After-sunset copy. The panel keeps reporting the reading once the day has
  * ended — the number is still the honest answer to "what was today like?" —
- * but the imperative heads above ("Use sun protection") describe a day that
- * is over, so past tense replaces them. Band words are NOT repeated here;
- * `level` stays sourced from UV_PANEL_COPY so the panel, the reading line
- * and the chip cannot drift apart at dusk.
+ * but the present-tense line above ("sun protection is worth it midday")
+ * describes a day that is over, so past tense replaces it. Band words are NOT
+ * repeated here; `level` stays sourced from UV_PANEL_COPY so the panel, the
+ * reading line and the chip cannot drift apart at dusk.
  */
 const UV_PANEL_COPY_AFTER_SUNSET = {
   extreme: {
-    head: "Today's peak was extreme",
-    advice: "shade, hat & SPF were essential",
     line: "Extreme UV today — midday exposure was best avoided.",
   },
   "very-high": {
-    head: "Today's peak was very high",
-    advice: "hat, shade & SPF mattered around midday",
     line: "Very high UV today — midday sun called for cover.",
   },
   high: {
-    head: "Today's peak was high",
-    advice: "hat & SPF were worth it midday",
     line: "High UV today — sun protection was worth it midday.",
   },
   moderate: {
-    head: "Today's peak was moderate",
-    advice: "shade helped through midday",
     line: "Moderate UV today — midday shade helped.",
   },
   low: {
-    head: "Today's peak was low",
-    advice: "no special protection was required",
     line: "Low UV today — it was comfortable to be outside.",
   },
 };
@@ -360,7 +341,7 @@ function buildHeroUvPanel(weather, todayIndex, sunWindow) {
 
   const band = classifyUv(peak).band;
   const { level } = UV_PANEL_COPY[band];
-  const { head, advice, line } = isAfterSunset(
+  const { line } = isAfterSunset(
     sunWindow?.sunset,
     sunWindow?.zonedNowMs
   )
@@ -370,8 +351,6 @@ function buildHeroUvPanel(weather, todayIndex, sunWindow) {
   return {
     peak,
     peakLabel,
-    head,
-    sub: `${peakLabel} — ${advice}.`,
     line,
     level,
     markerPct,

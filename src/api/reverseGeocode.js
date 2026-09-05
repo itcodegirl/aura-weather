@@ -47,6 +47,13 @@ export async function reverseGeocode(latitude, longitude, options = {}) {
   const url = new URL(ENDPOINT);
   url.searchParams.set("latitude", String(coordinates.latitude));
   url.searchParams.set("longitude", String(coordinates.longitude));
+  // English on purpose, not for want of a preference. Open-Meteo's city
+  // search (openMeteo.js) returns English names, so a GPS fix that came back
+  // as "München" would sit in the saved-cities strip beside a searched
+  // "Munich" as two differently named places. useLocation once computed the
+  // browser's language list for a Nominatim adapter that has since been
+  // deleted; the option was dead for months before anyone noticed (audit
+  // O-06). Localise here only together with the search side.
   url.searchParams.set("localityLanguage", "en");
 
   // Cancellation and timeout are composed manually (see requestSignal.js):

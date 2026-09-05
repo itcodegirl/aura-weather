@@ -42,6 +42,31 @@ describe("reverseGeocode", () => {
     assert.equal(requestUrl?.searchParams.get("localityLanguage"), "en");
   });
 
+  test("names places in English whatever language a caller prefers", async () => {
+    // Guards the deliberate choice, not an accident: the adapter and the
+    // city search must agree on a naming language or the same place lands
+    // twice in the saved-cities strip. A future `language` option has to
+    // change this test, which is the point -- it forces the search side to
+    // be considered at the same time.
+    let requestUrl = null;
+    globalThis.fetch = async (url) => {
+      requestUrl = new URL(String(url));
+      return jsonResponse({ city: "Munich", countryName: "Germany" });
+    };
+
+    const result = await reverseGeocode(48.14, 11.58, {
+      language: "de-DE,de",
+    });
+
+    assert.deepEqual(result, { name: "Munich", country: "Germany" });
+    assert.equal(requestUrl?.searchParams.get("localityLanguage"), "en");
+    assert.deepEqual(
+      [...requestUrl.searchParams.keys()].sort(),
+      ["latitude", "localityLanguage", "longitude"],
+      "no language-bearing parameter reaches the provider"
+    );
+  });
+
   test("falls back from city → locality → subdivision when earlier fields are blank", async () => {
     globalThis.fetch = async () =>
       jsonResponse({

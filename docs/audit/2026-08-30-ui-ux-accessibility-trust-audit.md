@@ -8,9 +8,10 @@
 > **Where this stands.** The findings, evidence and measurements below are a
 > record of 2026-08-30 and are left as written. Only the **status markers** in
 > §D and the follow-up list in §G are kept current; §I logs what has closed
-> since. Of the 28 findings, **26 are closed or closed-as-design**; the two
-> still fully open are ⚪ optional. Every 🔴 and every 🟡 has been resolved
-> or reduced to a stated design decision.
+> since. Of the 28 findings, **27 are closed or closed-as-design**; the one
+> still fully open is ⚪ optional and is now measured rather than asserted —
+> it needs a responsive-layout decision AGENTS.md reserves for a human. Every
+> 🔴 and every 🟡 has been resolved or reduced to a stated design decision.
 
 **Method.** Six blind dimension sweeps (accessibility, responsive, product UX,
 real-world states, React correctness, docs/portfolio) run as parallel
@@ -145,8 +146,17 @@ Twenty-eight findings survived verification. **★ = fixed in this branch.**
 ### ⚪ Optional
 
 Rain timeline bars 9.3px wide at 320px despite an aria-label inviting taps
-(open); `DataTrustFooter` stamps a 48h-old snapshot with a clock-only time
-(open); the unused `Stat` component and its dead `.stat` CSS, including a
+(**open — measured 2026-09-05, blocked on a design decision.** Re-measured in
+Chromium: `.rain-bar` is **9.81 × 42px at 320px** and **12.84px at 390px**,
+23 bars in a 269.52px flex row with a 2px gap. Height passes; width is the
+failure. WCAG 2.5.8 wants 24px, which for 23 bars plus gaps needs
+23×24 + 22×2 = **596px** against the 269.52px available — 2.2× over. It
+cannot be reached by widening alone: it needs horizontal scroll or fewer
+bars, both restructurings of the responsive system, which AGENTS.md reserves
+for explicit human design direction. Keyboard access is unaffected — the
+bars already carry a roving `tabIndex` and an arrow-key handler);
+`DataTrustFooter` stamps a 48h-old snapshot with a clock-only time
+(✔ #199); the unused `Stat` component and its dead `.stat` CSS, including a
 dangling `--subcard-bg` (✔ — the token reference was repaired in #175 and the
 component and its CSS deleted in #177).
 
@@ -239,12 +249,22 @@ same path for Lighthouse.
 5. **Findings 21–27: all seven are now addressed.** 24, 25 and 26 were fixed
    outright (#184, #185, #186). 21 was fixed (#190). 22 and 23 split cleanly
    into a correctness half, fixed, and a design half, which remains:
-   - **22 — the UV panel and chip after sunset.** #188 stopped the guidance
-     pill advising sun protection after dark, following the reading line's
-     existing rule. The panel's head is still an imperative ("Cover up
-     outdoors") and after sunset the whole panel describes a finished day —
-     the same stale-day class #186 fixed. Hide it, reframe it, or roll to
-     tomorrow's peak: a layout and product call.
+   - ~~**22 — the UV panel and chip after sunset.**~~ **Closed by #197.** The
+     panel could not be gated like the pill — the trust contract owes the
+     reader the number at any hour — so it changes tense instead of
+     disappearing: after sunset it reports the finished day ("sun protection
+     *was* worth it midday"), keeping the band word, peak and marker. The gate
+     is a new `isAfterSunset` predicate, deliberately **not** `!isDaylight(…)`:
+     that collapses "after sunset", "before sunrise" and "cannot place the
+     clock" into one false, and the last two must stay in the present tense.
+     Past tense is the harmful direction to guess wrong — it withdraws
+     protection from someone whose day is still peaking — so an unplaceable
+     clock (HeroCard passes `nowMs: null` until `useTimeNow` resolves) fails
+     safe. Found while verifying: `uvPanel.head` and `uvPanel.sub` are **dead
+     fields** — only `level`, `peakLabel`, `markerPct` and `line` reach the
+     DOM, and `.hero-uv-head` is the layout row, not that copy. The rendered
+     present-tense text was `line`. Deleting the two dead fields is a separate
+     cleanup, not yet done.
    - **23 — which dew-point vocabulary wins.** #189 removed the *contradictions*
      (the hero chip now takes its band from `classifyComfort`, so 62°F is no
      longer "Comfortable" above a tile saying "Sticky"). Whether the page
@@ -320,12 +340,44 @@ copy, in `exposure.js`, was closed by #181 (§G item 1).
 - Three `HeroCard` render tests pass a `nowMs` prop the component never
   reads; they work only because they test the placeholder path. The one that
   needed a clock (#188) stubs `Date.now` instead, which is the real seam.
-- The hourly chart's axis row (`.hourly-axis`) renders visible short labels
-  with `is-now` / `is-past` classes that are purely visual and is not
-  `aria-hidden` — a screen reader hears "7P 8P 9P…" with no cue. The buttons
-  now carry the cue (#190); hiding the axis as a duplicate is a redundancy
-  judgment left to review.
+- ~~The hourly chart's axis row (`.hourly-axis`) … is not `aria-hidden`.~~
+  **Closed by #199.** A screen reader heard "7P 8P 9P…" with no cue — a
+  second, state-less reading of the same 24 hours the buttons already
+  announce with their state (#190). Hidden rather than relabelled:
+  duplicating the cue would make every hour announce twice. The paired test
+  asserts every hour button stays named and outside any hidden subtree,
+  which is what proves the accessible tree lost nothing.
 - `src/domain/exposure.js` is the repository's **only CRLF file**. An editor
   that normalises line endings turns a 26-line change into a 231-line diff
   (#181 hit this and restored CRLF to keep the review honest). Worth one
   commit in a quiet moment, not while parallel sessions are landing PRs.
+
+### 2026-09-05
+
+| # | Finding | Closed by |
+|---|---|---|
+| 22 | UV panel spoke in the present tense about a finished day (design half) | #197 |
+| ⚪ | `DataTrustFooter` stamped a 48h-old snapshot with a clock-only time | #199 |
+| 21 | `.hourly-axis` announced every hour a second time, without its state | #199 |
+
+Two fail-safe decisions were made this day, and they point in opposite
+directions on purpose. #197 keeps the UV panel in the **present** tense when
+the clock cannot be placed, because claiming a day has ended withdraws
+protection from someone whose day is peaking. #199 **dates** the footer stamp
+when the clock cannot be placed, because a bare clock claims a reading is
+current. In both the unknown case resolves toward the statement that cannot
+harm a reader who trusts it — which is the same rule, not two.
+
+**Measured on 2026-09-05, and left open deliberately:** the rain timeline
+bars, the last ⚪ finding. `.rain-bar` is 9.81 × 42px at 320px and 12.84px at
+390px. Reaching WCAG 2.5.8's 24px needs 596px against 269.52px available, so
+no amount of widening gets there — it takes horizontal scroll or fewer bars.
+AGENTS.md: "If a visual issue requires design judgment, report it and stop."
+Recorded here with the number rather than fixed, the same treatment finding
+27 got.
+
+**Observed on 2026-09-05, not fixed:**
+
+- `uvPanel.head` and `uvPanel.sub` are computed on every render and never
+  reach the DOM (see §G item 5). Deleting them is a clean, small cleanup;
+  the after-sunset table would then carry only `line`.

@@ -15,6 +15,46 @@ const LOCATION = { lat: 41.5, lon: -87.85 };
 const TRUST_META = { weatherFetchedAt: 1_700_000_000_000 };
 const WEATHER = { meta: { timezone: "America/Chicago" } };
 
+describe("DataTrustFooter source attribution", () => {
+  /*
+   * The footer is the one line every viewer sees that says where the data
+   * came from, so it must not name a provider that supplied nothing. NWS
+   * alerts are U.S.-only: outside that coverage alertsStatus is
+   * "unsupported" and no NWS request contributed anything, yet the credit
+   * was printed unconditionally (audit O-02).
+   */
+  function sourceTextFor(alertsStatus) {
+    const { container } = render(
+      React.createElement(DataTrustFooter, {
+        weather: WEATHER,
+        location: LOCATION,
+        trustMeta: { ...TRUST_META, alertsStatus },
+      })
+    );
+    const source = container.querySelector(".data-trust-footer-source");
+    assert.ok(source, "expected the source line to render");
+    return source.textContent;
+  }
+
+  test("credits NOAA/NWS only where its alerts were actually served", () => {
+    assert.match(sourceTextFor("ready"), /NOAA\/NWS/);
+  });
+
+  test("drops the NOAA/NWS credit outside its coverage area", () => {
+    for (const status of ["unsupported", "unavailable", "idle", undefined]) {
+      const text = sourceTextFor(status);
+      assert.equal(
+        text.includes("NOAA"),
+        false,
+        `alertsStatus "${status}" served no NWS data; got: ${text}`
+      );
+      // Open-Meteo did supply the forecast on every one of these paths, so
+      // dropping one credit must not drop the line.
+      assert.match(text, /Open-Meteo/);
+    }
+  });
+});
+
 describe("DataTrustFooter", () => {
   test("renders without crashing", () => {
     const { container } = render(

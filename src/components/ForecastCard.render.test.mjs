@@ -183,6 +183,88 @@ describe("ForecastCard derived-signal honesty", () => {
   });
 });
 
+describe("ForecastCard week-trend honesty", () => {
+  /*
+   * "Stable week" is a qualitative claim about the whole week, and it needs
+   * both ends of the week to make it. The delta used to fall back to 0 when
+   * either endpoint was missing -- which lands in the middle band and prints
+   * exactly that phrase, produced by the absence of data rather than by any
+   * reading (audit O-01). The trio below distinguishes "omitted" from
+   * "computed and happened to be stable", which a single test cannot.
+   */
+  const TREND_PHRASES = ["Stable week", "Warming trend", "Cooling trend"];
+
+  // The shared helper defaults `time` to a single day, and a one-day week is
+  // its own first and last entry — so the endpoints are never missing and
+  // none of this would be exercised. Three real dates give the trend two
+  // distinct ends to read.
+  function threeDates() {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return [0, 1, 2].map((offset) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + offset);
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${date.getFullYear()}-${month}-${day}`;
+    });
+  }
+
+  function summaryOf(container) {
+    const summary = container.querySelector(".forecast-summary");
+    assert.ok(summary, "expected the week summary to render");
+    return summary.textContent;
+  }
+
+  test("omits the trend entirely when the week's last max is missing", () => {
+    const { container } = renderForecastWithDaily({
+      time: threeDates(),
+      conditionCode: [2, 2, 2],
+      rainChanceMax: [20, 20, 20],
+      temperatureMax: [70, 72, null],
+      temperatureMin: [55, 56, 57],
+    });
+
+    const text = summaryOf(container);
+    for (const phrase of TREND_PHRASES) {
+      assert.equal(
+        text.includes(phrase),
+        false,
+        `a missing endpoint cannot support "${phrase}"; got: ${text}`
+      );
+    }
+  });
+
+  test("omits the trend when the week's first max is missing", () => {
+    const { container } = renderForecastWithDaily({
+      time: threeDates(),
+      conditionCode: [2, 2, 2],
+      rainChanceMax: [20, 20, 20],
+      temperatureMax: [null, 72, 74],
+      temperatureMin: [55, 56, 57],
+    });
+
+    const text = summaryOf(container);
+    for (const phrase of TREND_PHRASES) {
+      assert.equal(text.includes(phrase), false, `got: ${text}`);
+    }
+  });
+
+  test("still reports a real trend when both endpoints are present", () => {
+    // The control: without it, a summary that dropped the trend under every
+    // condition would pass the two tests above.
+    const { container } = renderForecastWithDaily({
+      time: threeDates(),
+      conditionCode: [2, 2, 2],
+      rainChanceMax: [20, 20, 20],
+      temperatureMax: [60, 66, 72],
+      temperatureMin: [50, 52, 54],
+    });
+
+    assert.match(summaryOf(container), /Warming trend/);
+  });
+});
+
 describe("ForecastCard weather-code honesty", () => {  test("a missing daily weather code renders 'Not reported', never a fake 'Clear'", () => {
     // Regression guard. A `0` fallback on the local toFiniteNumber turned an
     // absent weather_code into WMO 0 — Clear — so a row showed an amber sun

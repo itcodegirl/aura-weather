@@ -472,12 +472,26 @@ function buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso) {
     return FORECAST_EMPTY_MESSAGE;
   }
 
+  /*
+   * The trend is a claim about the week, so it needs both ends of the week
+   * to make it. A missing first or last max used to fall back to delta = 0,
+   * which lands in the middle band and prints "Stable week" -- a confident
+   * qualitative statement produced by the absence of data, which is the one
+   * thing the trust contract exists to prevent (audit O-01). Omit the phrase
+   * instead: the summary already reads correctly without it.
+   */
   const firstMax = days[0]?.temperatureMax;
   const lastMax = days[days.length - 1]?.temperatureMax;
-  const delta =
-    Number.isFinite(firstMax) && Number.isFinite(lastMax) ? lastMax - firstMax : 0;
-  const trendText =
-    delta >= 3 ? "Warming trend" : delta <= -3 ? "Cooling trend" : "Stable week";
+  const hasTrendEndpoints =
+    Number.isFinite(firstMax) && Number.isFinite(lastMax);
+  const delta = hasTrendEndpoints ? lastMax - firstMax : null;
+  const trendText = !hasTrendEndpoints
+    ? null
+    : delta >= 3
+    ? "Warming trend"
+    : delta <= -3
+    ? "Cooling trend"
+    : "Stable week";
   const wettestDay = days.reduce((highest, day) =>
     (day.rainChanceMax ?? -1) > (highest.rainChanceMax ?? -1)
       ? day
@@ -489,7 +503,7 @@ function buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso) {
       : wettestDay.rainChanceMax >= 25
       ? `${formatDayLabel(wettestDay.date, { timeZone, todayIso })} peaks at ${wettestDay.rainChanceMax}% rain chance`
       : "Rain chances stay mostly low";
-  const summaryParts = [trendText];
+  const summaryParts = trendText ? [trendText] : [];
   if (Number.isFinite(weekMin) && Number.isFinite(weekMax)) {
     const weekMinText = formatForecastTemp(weekMin, unit).text;
     const weekMaxText = formatForecastTemp(weekMax, unit).text;

@@ -394,20 +394,6 @@ function notifyResolvedLocation(
   );
 }
 
-function getPreferredReverseGeocodeLanguage() {
-  if (typeof navigator === "undefined") {
-    return "";
-  }
-
-  if (Array.isArray(navigator.languages) && navigator.languages.length > 0) {
-    return navigator.languages
-      .filter((language) => typeof language === "string" && language.trim())
-      .join(",");
-  }
-
-  return typeof navigator.language === "string" ? navigator.language.trim() : "";
-}
-
 export function useLocation(
   onResolved,
   { skipBootstrap = false, onNotice = null } = {}
@@ -556,14 +542,9 @@ export function useLocation(
             reverseGeocodeRequestRef.current = controller;
 
             try {
-              const reverseResult = await reverseGeocode(
-                latitude,
-                longitude,
-                {
-                  signal: controller.signal,
-                  language: getPreferredReverseGeocodeLanguage(),
-                }
-              );
+              const reverseResult = await reverseGeocode(latitude, longitude, {
+                signal: controller.signal,
+              });
               if (
                 requestId !== activeRequestRef.current ||
                 !isMountedRef.current ||

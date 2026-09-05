@@ -583,8 +583,10 @@ describe("buildHeroData", () => {
     assert.equal(data.uvPanel.peak, 7.2);
     assert.equal(data.uvPanel.peakLabel, "Peak UV 7.2");
     assert.equal(data.uvPanel.level, "High");
-    assert.equal(data.uvPanel.head, "Use sun protection");
-    assert.ok(data.uvPanel.sub.startsWith("Peak UV 7.2 —"));
+    assert.equal(
+      data.uvPanel.line,
+      "High UV today — sun protection is worth it midday."
+    );
     assert.ok(Math.abs(data.uvPanel.markerPct - (7.2 / 11) * 100) < 1e-9);
   });
 
@@ -685,15 +687,19 @@ describe("buildHeroData", () => {
 
     test("speaks in the imperative during daylight", () => {
       const panel = panelAt(DAYLIGHT_NOW);
-      assert.equal(panel.head, "Use sun protection");
-      assert.equal(panel.sub, "Peak UV 7.2 — hat & SPF if you're out midday.");
+      assert.equal(
+        panel.line,
+        "High UV today — sun protection is worth it midday."
+      );
       assert.equal(panel.line, "High UV today — sun protection is worth it midday.");
     });
 
     test("reports the finished day in past tense after sunset", () => {
       const panel = panelAt(AFTER_SUNSET);
-      assert.equal(panel.head, "Today's peak was high");
-      assert.equal(panel.sub, "Peak UV 7.2 — hat & SPF were worth it midday.");
+      assert.equal(
+        panel.line,
+        "High UV today — sun protection was worth it midday."
+      );
       assert.equal(panel.line, "High UV today — sun protection was worth it midday.");
     });
 
@@ -704,7 +710,7 @@ describe("buildHeroData", () => {
      * cannot be written as !isDaylight(...).
      */
     test("keeps the imperative before sunrise, when the day is still ahead", () => {
-      assert.equal(panelAt(BEFORE_SUNRISE).head, "Use sun protection");
+      assert.match(panelAt(BEFORE_SUNRISE).line, /is worth it/);
     });
 
     /*
@@ -714,8 +720,8 @@ describe("buildHeroData", () => {
      * so an unplaceable clock stays in the tense that fails safe.
      */
     test("keeps the imperative when the clock cannot be placed", () => {
-      assert.equal(panelAt(null).head, "Use sun protection");
-      assert.equal(panelAt(Number.NaN).head, "Use sun protection");
+      assert.match(panelAt(null).line, /is worth it/);
+      assert.match(panelAt(Number.NaN).line, /is worth it/);
     });
 
     test("keeps the imperative when the sun times did not arrive", () => {
@@ -729,7 +735,7 @@ describe("buildHeroData", () => {
         nowMs: AFTER_SUNSET,
       }).uvPanel;
 
-      assert.equal(panel.head, "Use sun protection");
+      assert.match(panel.line, /is worth it/);
     });
 
     // The band word is not restated in the after-sunset table; if it ever
@@ -753,14 +759,15 @@ describe("buildHeroData", () => {
     });
 
     // Every band needs after-sunset copy; a missing key would throw on
-    // destructure at dusk for that band alone.
+    // destructure at dusk for that band alone. Asserting the line rather
+    // than a band word also pins the past tense in every band.
     test("covers every band after sunset", () => {
-      for (const [uv, head] of [
-        [1, "Today's peak was low"],
-        [4, "Today's peak was moderate"],
-        [7, "Today's peak was high"],
-        [9, "Today's peak was very high"],
-        [11.5, "Today's peak was extreme"],
+      for (const [uv, line] of [
+        [1, "Low UV today — it was comfortable to be outside."],
+        [4, "Moderate UV today — midday shade helped."],
+        [7, "High UV today — sun protection was worth it midday."],
+        [9, "Very high UV today — midday sun called for cover."],
+        [11.5, "Extreme UV today — midday exposure was best avoided."],
       ]) {
         const panel = buildHeroData({
           weather: {
@@ -772,7 +779,7 @@ describe("buildHeroData", () => {
           nowMs: AFTER_SUNSET,
         }).uvPanel;
 
-        assert.equal(panel.head, head);
+        assert.equal(panel.line, line);
       }
     });
   });

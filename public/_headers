@@ -1,14 +1,39 @@
 # Netlify (and most static hosts) edge headers.
 #
-# Security headers kept to the non-breaking set on purpose. A real
-# Content-Security-Policy is worth adding, but it needs browser
-# validation first: the app talks to several third-party origins —
-# connect-src would need the open-meteo.com family, api.weather.gov,
-# and api.bigdatacloud.net (reverse geocoding). Fonts are now
-# self-hosted so font-src can stay same-origin. That's a follow-up,
-# not a blind change.
+# The Content-Security-Policy below is enforced, not report-only, and it is
+# validated in two places rather than reasoned about: `e2e/csp.spec.js` boots
+# the real dashboard with this exact header applied and fails on any violation
+# the browser reports, and `src/contentSecurityPolicy.test.mjs` re-derives the
+# provider origins from `src/api/` so adding a provider without widening
+# connect-src fails the build (audit O-14).
+#
+# Two relaxations, both load-bearing:
+#
+#   style-src 'unsafe-inline' — the built index.html carries an inline
+#     <style> block for first-paint, and React writes inline style attributes
+#     throughout (the dashboard's --i stagger indices among them). Inline
+#     style attributes fall back to style-src, so this cannot be dropped
+#     without moving both. Scripts take no such exemption: there is not one
+#     inline script in the built output, so script-src stays 'self'.
+#
+#   connect-src https://*.supabase.co — cloud backup and push rules talk to
+#     whatever project VITE_SUPABASE_URL names at build time, which is not
+#     knowable here. The wildcard is scoped to Supabase's own domain rather
+#     than left open.
+#
+# img-src carries the two tile vendors the radar draws from, plus data: and
+# blob: (icons and the canvas the radar composites through).
+#
+# rainviewer.com is allowed by wildcard rather than by the tilecache host it
+# resolves to today, because that host is not ours to pin: RainViewer's
+# catalogue response carries the tile host as a field, so the app fetches
+# whatever it is told. Naming today's subdomain would hand a vendor the
+# ability to break the radar with a routine infrastructure change, and the
+# failure would be an empty map — the exact state UX-01 established the app
+# cannot distinguish from "no rain".
 
 /*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.rainviewer.com https://*.basemaps.cartocdn.com; connect-src 'self' https://api.open-meteo.com https://archive-api.open-meteo.com https://geocoding-api.open-meteo.com https://air-quality-api.open-meteo.com https://api.weather.gov https://api.bigdatacloud.net https://*.rainviewer.com https://*.supabase.co; worker-src 'self'; manifest-src 'self'
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin

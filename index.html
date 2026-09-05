@@ -32,6 +32,17 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Aura Weather" />
+    <!--
+      Both of these name production even when this document is served from a
+      deploy preview, and that is deliberate. A preview is the same content at
+      a throwaway URL: pointing them at the preview host would let a shared
+      preview card resolve to a URL that stops existing when the branch is
+      deleted, and would offer search engines a second address for one page.
+      The canonical link is what says which of those addresses is the real
+      one; the audit found og:url carrying that job alone, with no canonical
+      to back it (O-14).
+    -->
+    <link rel="canonical" href="https://aura-weather-platform.netlify.app/" />
     <meta property="og:url" content="https://aura-weather-platform.netlify.app/" />
     <!--
       Social crawlers resolve og:image without a base URL, so the image

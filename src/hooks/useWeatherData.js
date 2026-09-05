@@ -22,6 +22,8 @@ import {
   writeCachedWeatherSnapshot,
 } from "../services/weatherSnapshotCache";
 import { claimForecastPreload } from "../api/forecastPreload.js";
+import { isAbortError } from "../api/requestSignal.js";
+import { isBrowserOffline } from "../utils/network.js";
 
 const DEFAULT_TRUST_META = {
   weatherFetchedAt: null,
@@ -66,18 +68,6 @@ function getErrorMessage(error, fallback) {
   }
 
   return fallback;
-}
-
-function isAbortError(error) {
-  return error?.name === "AbortError";
-}
-
-function isBrowserOffline() {
-  return (
-    typeof navigator !== "undefined" &&
-    typeof navigator.onLine === "boolean" &&
-    navigator.onLine === false
-  );
 }
 
 function getForecastFailureMessage(error) {

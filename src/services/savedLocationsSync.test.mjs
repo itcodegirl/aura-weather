@@ -15,7 +15,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { MAX_SAVED_CITIES } from "../hooks/useLocation.js";
+import { MAX_SAVED_CITIES } from "../domain/savedCities.js";
 import {
   createSavedLocationsSyncAccount,
   pullSavedLocationsFromSync,

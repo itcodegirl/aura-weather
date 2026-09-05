@@ -11,6 +11,7 @@ import {
   removeRule,
   sendTestNotification,
 } from "../services/pushAlerts.js";
+import { isAbortError as isAbortErrorByName } from "../api/requestSignal.js";
 import {
   createAlertRequestTracker,
   sameLocation,
@@ -38,7 +39,7 @@ const ALERTS_SERVICE = {
 // rejects with a DOMException-shaped AbortError; the signal check covers
 // clients that reject with something plainer.
 function isAbortError(caught, signal) {
-  return caught?.name === "AbortError" || Boolean(signal?.aborted);
+  return isAbortErrorByName(caught) || Boolean(signal?.aborted);
 }
 
 function ruleLocation(location) {

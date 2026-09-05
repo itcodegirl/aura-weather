@@ -17,7 +17,10 @@
 // what it does. It was removed rather than kept as decoration.
 
 import { parseCoordinates } from "../utils/weatherUnits.js";
-import { MAX_SAVED_CITIES } from "../domain/savedCities.js";
+import {
+  MAX_SAVED_CITIES,
+  normalizeLocationName,
+} from "../domain/savedCities.js";
 import { getSupabaseClient, ensureSession } from "./supabaseClient.js";
 
 const TABLE = "saved_cities";
@@ -26,12 +29,6 @@ const NOT_CONFIGURED_MESSAGE =
   "Cloud backup isn't available in this build. Your saved cities are still stored on this device.";
 const NO_SESSION_MESSAGE =
   "Could not start a backup session for this device. Try again in a moment.";
-
-function normalizeName(value, fallback = "") {
-  if (typeof value !== "string") return fallback;
-  const trimmed = value.trim();
-  return trimmed || fallback;
-}
 
 function normalizeSavedCity(value) {
   const coordinates = parseCoordinates(value?.lat, value?.lon);
@@ -42,8 +39,8 @@ function normalizeSavedCity(value) {
   return {
     lat: coordinates.latitude,
     lon: coordinates.longitude,
-    name: normalizeName(value?.name, "Saved place"),
-    country: normalizeName(value?.country, ""),
+    name: normalizeLocationName(value?.name, "Saved place"),
+    country: normalizeLocationName(value?.country, ""),
   };
 }
 

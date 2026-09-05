@@ -3,6 +3,8 @@ import {
   CURRENT_LOCATION_NAME,
   CURRENT_LOCATION_NOTICE,
   DEFAULT_LOCATION,
+} from "../domain/location.js";
+import {
   useLocation,
   persistLocation,
   clearPersistedLocation,

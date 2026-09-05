@@ -1,20 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchHistoricalTemperatureAverage } from "../api";
+import { isAbortError } from "../api/requestSignal.js";
+import { isBrowserOffline } from "../utils/network.js";
 import { buildClimateComparison } from "./climateComparison";
 
 const DEFAULT_API_TEMPERATURE_UNIT = "fahrenheit";
-
-function isAbortError(error) {
-  return error?.name === "AbortError";
-}
-
-function isBrowserOffline() {
-  return (
-    typeof navigator !== "undefined" &&
-    typeof navigator.onLine === "boolean" &&
-    navigator.onLine === false
-  );
-}
 
 /**
  * Owns the historical-archive request lifecycle and exposes

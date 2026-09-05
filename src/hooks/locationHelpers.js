@@ -1,10 +1,10 @@
 import { parseCoordinates } from "../utils/weatherUnits.js";
+import { normalizeLocationName } from "../domain/savedCities.js";
 import {
-  normalizeLocationName,
   DEFAULT_LOCATION,
   LOCATION_FALLBACK_NOTICE,
   SAVED_LOCATION_NOTICE,
-} from "./useLocation.js";
+} from "../domain/location.js";
 
 /**
  * Builds a normalized location payload (lat/lon validated, name/country

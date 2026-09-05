@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import "./App.css";
-import { LOCATION_FALLBACK_NOTICE } from "./hooks/useLocation";
+import { LOCATION_FALLBACK_NOTICE } from "./domain/location.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { usePwaInstallPrompt } from "./hooks/usePwaInstallPrompt";
 import { useServiceWorkerUpdate } from "./hooks/useServiceWorkerUpdate";

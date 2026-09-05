@@ -1,7 +1,10 @@
-// Bump the version when the static APP_SHELL_URLS list changes so
+// Bump CACHE_VERSION when the static APP_SHELL_URLS list changes so
 // existing installs evict the previous shell on next activation.
-// v3 adds best-effort precache (atomic addAll → per-URL add) so a
-// single missing asset can no longer break offline install.
+//
+// Do not describe the current version in prose here: this comment said "v3"
+// for two bumps after the constant had moved on (audit O-14). The constant
+// below is the only statement of the version, and the cache names derive
+// from it.
 const CACHE_VERSION = "aura-weather-v5";
 const APP_SHELL_CACHE = `${CACHE_VERSION}-app-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;

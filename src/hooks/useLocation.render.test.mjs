@@ -5,6 +5,7 @@ import "../../scripts/render-test-setup.mjs";
 
 const React = (await import("react")).default;
 const { render, cleanup, act, waitFor } = await import("@testing-library/react");
+const { useLocation } = await import("./useLocation.js");
 const {
   CURRENT_LOCATION_NAME,
   CURRENT_LOCATION_NOTICE,
@@ -12,8 +13,7 @@ const {
   LOCATION_LOOKUP_FAILED_NOTICE,
   LOCATION_PERMISSION_BLOCKED_NOTICE,
   LOCATION_UNSUPPORTED_NOTICE,
-  useLocation,
-} = await import("./useLocation.js");
+} = await import("../domain/location.js");
 
 const originalGeolocation = navigator.geolocation;
 const realFetch = globalThis.fetch;

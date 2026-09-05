@@ -8,14 +8,16 @@ import {
   getRecentCities,
   getSavedCities,
   MAX_RECENT_CITIES,
-  MAX_SAVED_CITIES,
-  normalizeLocationName,
   persistLocation,
   removeSavedCity,
   replaceSavedCities,
   upsertRecentCity,
   upsertSavedCity,
 } from "./useLocation.js";
+import {
+  MAX_SAVED_CITIES,
+  normalizeLocationName,
+} from "../domain/savedCities.js";
 
 const store = new Map();
 const STORAGE_KEYS = {

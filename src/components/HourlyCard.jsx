@@ -652,7 +652,17 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
             </div>
 
             <div className="hourly-baseline" />
-            <div className="hourly-axis">
+            {/*
+              * Finding 21's remaining half. This row is a visual ruler: it
+              * repeats each hour's short label under the chart and marks
+              * now/past/selected with classes alone. Since #190 the buttons
+              * carry those hours WITH their state in the accessible name, so
+              * to a screen reader this row was a second, state-less reading
+              * of the same 24 hours — noise that dilutes the labelled path
+              * rather than adding to it. Hidden, not relabelled: duplicating
+              * the cue here would make every hour announce twice.
+              */}
+            <div className="hourly-axis" aria-hidden="true">
               {hours.map((h) => (
                 <span
                   className={`hourly-ax${h.key === selected?.key ? " is-sel" : ""}${h.isPast ? " is-past" : ""}${h.isNow ? " is-now" : ""}`}

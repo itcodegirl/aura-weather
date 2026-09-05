@@ -60,6 +60,25 @@ describe("weather scene derivation", () => {
     assert.equal(scene.weatherInfo.label, "Mostly Clear");
   });
 
+  test("reports an unknown scene when there is no weather at all", () => {
+    /*
+     * Distinct from the case below: there, a payload arrived without a code;
+     * here nothing arrived. That path used to ask for code 0 -- "Clear" --
+     * so the app painted a confident sunny gradient over the state of
+     * knowing nothing, and useThemeColor followed it into the browser
+     * chrome (audit O-03).
+     */
+    const scene = deriveWeatherScene({
+      weather: null,
+      loading: false,
+      error: null,
+    });
+
+    assert.equal(scene.hasWeatherData, false);
+    assert.equal(scene.weatherInfo.label, "Not reported");
+    assert.ok(scene.background.startsWith("linear-gradient("));
+  });
+
   test("reports an unknown scene when weather lacks a condition code", () => {
     const scene = deriveWeatherScene({
       weather: { current: {} },

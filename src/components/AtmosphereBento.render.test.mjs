@@ -119,25 +119,35 @@ describe("AtmosphereBento", () => {
   });
 
   test("shows pressure in inHg in imperial unit mode", () => {
-    render(
+    // 1013 hPa × 0.02953 = 29.91 inHg. The unit reads "inHg", never a bare
+    // "in" that a dashboard printing rain depths in inches could be taken for.
+    const { container } = render(
       React.createElement(AtmosphereBento, {
         weather: FULL_WEATHER,
         aqi: null,
         unit: "F",
       })
     );
-    assert.ok(screen.getByText("in"), "imperial pressure unit rendered");
+    assert.equal(container.querySelector(".atm-val--pressure").textContent, "29.91");
+    assert.ok(screen.getByText("inHg"), "imperial pressure unit rendered");
+    assert.equal(screen.queryByText("in"), null, "no bare 'in' unit");
+    assert.ok(
+      screen.getByRole("img", { name: "Pressure 29.91 inches of mercury" }),
+      "the gauge spells the unit out for assistive tech"
+    );
   });
 
   test("shows pressure in hPa in metric unit mode", () => {
-    render(
+    const { container } = render(
       React.createElement(AtmosphereBento, {
         weather: FULL_WEATHER,
         aqi: null,
         unit: "C",
       })
     );
+    assert.equal(container.querySelector(".atm-val--pressure").textContent, "1013");
     assert.ok(screen.getByText("hPa"), "metric pressure unit rendered");
+    assert.ok(screen.getByRole("img", { name: "Pressure 1013 hectopascals" }));
   });
 
   test("explains the em-dash placeholder when a reading is missing", () => {

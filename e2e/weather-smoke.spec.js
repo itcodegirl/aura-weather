@@ -549,7 +549,7 @@ test("renders the missing-data placeholder when the forecast reports null fields
           wind_speed_10m: 9.8,
           wind_gusts_10m: 15.4,
           wind_direction_10m: 220,
-          surface_pressure: null,
+          pressure_msl: null,
           dew_point_2m: 52.1,
           cloud_cover: 34,
           visibility: 12000,

@@ -229,9 +229,28 @@ Deno.test("rain-incoming fires on the peak within the lead window", () => {
   const decision = evaluateRainIncoming(rule, forecast());
   assert.deepEqual(decision, {
     dedupeKey: "rain:2026-09-16T07:15",
-    title: "Rain starting near Palos Hills",
-    body: "60% chance within 20 min. Tap for radar.",
+    title: "Rain likely near Palos Hills",
+    body: "60% peak chance in the next 30 min. Tap for radar.",
   });
+});
+
+Deno.test("rain-incoming quotes the window it scanned, not the rule's setting", () => {
+  // The scan takes whole quarter-hour slots, so any lead rounds up: 20 min
+  // reads 30 minutes of forecast, 1 min still reads 15. Saying "within 20
+  // min" understated how far ahead the number looked. The title changed with
+  // it — the figure is the peak of a chance series, so rain is "likely", not
+  // "starting".
+  for (const [leadMin, windowMin] of [[1, 15], [15, 15], [16, 30], [20, 30], [45, 45]]) {
+    const decision = evaluateRainIncoming(
+      { id: "r", location_name: "Palos Hills", lead_time_min: leadMin, min_probability: 0 },
+      forecast(),
+    );
+    assert.ok(decision, `expected a decision for a ${leadMin} min lead`);
+    assert.ok(
+      decision.body.includes(`in the next ${windowMin} min`),
+      `${leadMin} min lead should report a ${windowMin} min window, got: ${decision.body}`,
+    );
+  }
 });
 
 Deno.test("rain-incoming stays silent below the threshold or without data", () => {
@@ -249,11 +268,11 @@ Deno.test("rain-incoming keeps a real 0 setting instead of swapping in the defau
   const rule = { id: "rule-3", location_name: "Palos Hills", lead_time_min: 15, min_probability: 0 };
   const decision = evaluateRainIncoming(rule, forecast());
   assert.ok(decision);
-  assert.equal(decision.body, "10% chance within 15 min. Tap for radar.");
+  assert.equal(decision.body, "10% peak chance in the next 15 min. Tap for radar.");
   // Missing settings fall back to the defaults: 20 min, 50%.
   const defaults = evaluateRainIncoming({ id: "rule-4", location_name: "Palos Hills" }, forecast());
   assert.ok(defaults);
-  assert.equal(defaults.body, "60% chance within 20 min. Tap for radar.");
+  assert.equal(defaults.body, "60% peak chance in the next 30 min. Tap for radar.");
 });
 
 Deno.test("local hour and date key follow the payload's UTC offset", () => {

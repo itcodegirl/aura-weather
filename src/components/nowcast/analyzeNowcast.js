@@ -3,6 +3,63 @@ import { toFiniteNumber } from "../../utils/numbers.js";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
 export const NOWCAST_STEP_MINUTES = 15;
+
+/*
+ * How precisely this card is allowed to speak.
+ *
+ * The series behind it is `minutely_15.precipitation_probability`: a *chance*
+ * of precipitation, sampled every quarter hour. Two things follow, and the
+ * copy used to respect neither.
+ *
+ * First, a probability crossing a threshold at slot N is not rain beginning at
+ * N x 15 minutes. It is the model's confidence for that window rising past a
+ * bar. "Moderate rain starting in 15 minutes, lasting ~30 minutes" states a
+ * start time and a duration the series does not carry.
+ *
+ * Second, the quarter-hour cadence is not a claim about resolution. Open-Meteo
+ * documents native 15-minutely output for some regions and interpolation from
+ * hourly for others, so "built from 15-minute weather points" is false
+ * wherever the latter applies. (Not re-measured here: the forecast API is not
+ * reachable from this sandbox. The audit measured it against a saved live
+ * response for the default city and found every hour anchor equal to the
+ * hourly value, with the quarter-hour points on a linear ramp between them.)
+ *
+ * So timings go in buckets. The card still answers the question a reader
+ * actually has — is rain likely soon, and for long? — without naming a minute
+ * it cannot know. The buckets live here rather than in the card so the
+ * sentence and the tiles above it cannot drift apart.
+ */
+const START_BUCKETS = [
+  { maxMinutes: 0, tile: "Now", phrase: "now" },
+  { maxMinutes: 30, tile: "< 30 min", phrase: "within the next half hour" },
+  { maxMinutes: 60, tile: "< 1 hr", phrase: "within the hour" },
+  { maxMinutes: Infinity, tile: "1-2 hr", phrase: "later in the next 2 hours" },
+];
+
+const DURATION_BUCKETS = [
+  { maxMinutes: 30, tile: "< 30 min", phrase: "passing quickly" },
+  { maxMinutes: 60, tile: "~1 hr", phrase: "lasting about an hour" },
+  {
+    maxMinutes: Infinity,
+    tile: "1 hr +",
+    phrase: "lasting through most of the window",
+  },
+];
+
+function bucketFor(buckets, minutes) {
+  const value = Number.isFinite(minutes) ? Math.max(0, minutes) : 0;
+  return buckets.find((bucket) => value <= bucket.maxMinutes) ?? buckets.at(-1);
+}
+
+/** When rain becomes likely, coarse enough to be true. `{ tile, phrase }`. */
+export function describeNowcastStart(startInMinutes) {
+  return bucketFor(START_BUCKETS, startInMinutes);
+}
+
+/** How long it stays likely, same register. `{ tile, phrase }`. */
+export function describeNowcastDuration(durationMinutes) {
+  return bucketFor(DURATION_BUCKETS, durationMinutes);
+}
 const NOWCAST_WINDOW_SIZE = 8; // next 2 hours with 15-min resolution
 
 function clampProbability(value) {
@@ -184,13 +241,8 @@ export function analyzeNowcast(nowcast, options = {}) {
         : peakProbability >= 35
           ? "Moderate"
           : "Light";
-  const startMinutesText =
-    startInMinutes === 0
-      ? "now"
-      : `${startInMinutes} minute${startInMinutes === 1 ? "" : "s"}`;
-  const startPhrase =
-    startInMinutes === 0 ? "starting now" : `starting in ${startMinutesText}`;
-  const summary = `${intensity} rain ${startPhrase}, lasting ~${durationMinutes} minutes`;
+  // "likely", not "starting": the series is a chance, not an observation.
+  const summary = `${intensity} rain likely ${describeNowcastStart(startInMinutes).phrase}, ${describeNowcastDuration(durationMinutes).phrase}`;
   const averageProbability = probabilityRows.length
     ? Math.round(
         probabilityRows.reduce((sum, row) => sum + row.probability, 0) /

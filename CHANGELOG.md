@@ -9,6 +9,25 @@ portfolio-grade product. Format roughly follows
 
 ### Fixed
 
+- **The nowcast no longer names a minute it cannot know.** Copy like
+  "Moderate rain starting in 15 minutes, lasting ~30 minutes", the
+  "15 min" / "30 min" tiles above it, and the screen-reader line all
+  derived minute-level timings from `minutely_15.precipitation_probability`
+  — a chance of rain, not a measurement, whose quarter-hour steps the
+  provider models natively in some regions and interpolates from hourly
+  data in others. Timings are bucketed now, in one place both the sentence
+  and the tiles read, and the card's explainer says what the series is
+  instead of claiming "15-minute weather points". The push alert quotes
+  the window it actually scanned: the scan takes whole quarter-hour slots,
+  so a 20-minute lead reads 30 minutes of forecast, and the body used to
+  say 20.
+- **A missing wind direction shows the speed alone.** `windDirectionName`
+  returned "Variable" for a null or unusable heading, so a day with no
+  dominant direction read "Variable 12 mph" in the forecast detail panel.
+  "Variable" is a real reported state — wind that keeps shifting — so this
+  swapped one confident claim for another. It returns null now and the
+  caller omits the direction.
+
 - **Hourly timestamps are resolved through the location's zone, not the
   device's.** Open-Meteo sends naive local strings, and `new Date()` reads
   them in whatever zone the device is on; "now" was reframed to match, so

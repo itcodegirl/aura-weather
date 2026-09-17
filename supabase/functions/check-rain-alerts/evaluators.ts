@@ -132,10 +132,16 @@ export function evaluateRainIncoming(rule: AlertRule, forecast: unknown): Decisi
   if (peak < 0) return null; // no usable data — stay silent (trust contract)
   if (peak < threshold) return null;
   const onset = String(times[peakIdx] ?? `${rule.id}-slot${peakIdx}`);
+  // The scan covers whole quarter-hour slots, so a 20-minute lead reads 30
+  // minutes of forecast. Quoting the rule's setting rather than the window
+  // actually examined understated how far ahead the number looks. And the
+  // figure is the peak of a chance series, not an observation, so the copy
+  // says "rain likely" rather than announcing rain has started.
+  const windowMin = steps * 15;
   return {
     dedupeKey: `rain:${onset}`,
-    title: `Rain starting near ${rule.location_name}`,
-    body: `${Math.round(peak)}% chance within ${lead} min. Tap for radar.`,
+    title: `Rain likely near ${rule.location_name}`,
+    body: `${Math.round(peak)}% peak chance in the next ${windowMin} min. Tap for radar.`,
   };
 }
 

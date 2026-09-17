@@ -37,9 +37,13 @@ export function windDirectionName(degrees) {
     "NW",
     "NNW",
   ];
+  // "Variable" (VRB in a METAR) is a real reported state: wind that keeps
+  // changing direction. Returning it for a *missing* reading turned a known
+  // unknown into a confident meteorological claim, which the data trust
+  // contract forbids. A caller that has no direction gets null and omits it.
   const numeric = toFiniteNumber(degrees);
   if (numeric === null) {
-    return "Variable";
+    return null;
   }
 
   const normalizedDegrees = ((numeric % 360) + 360) % 360;

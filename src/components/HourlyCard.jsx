@@ -18,6 +18,7 @@ import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
 import { WIND_SPEED_CONVERSION } from "../domain/wind";
 import { getZonedNow } from "../utils/dates";
+import { formatClockHour } from "../utils/formatters";
 import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber } from "../utils/numbers";
 import "./HourlyCard.css";
@@ -123,10 +124,10 @@ function buildHours(hourly, unit, timeZone) {
       const time = new Date(t);
       if (!Number.isFinite(time.getTime())) return null;
 
-      const h12 = time.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        hour12: true,
-      }); // "7 PM"
+      const h12 = formatClockHour(time); // "7 PM"
+      // The compact axis label is derived by splitting that string, so it
+      // depends on the shape DISPLAY_LOCALE renders, not just on its value.
+      // A locale change would need this line changed with it.
       const ampm = h12.endsWith("AM") ? "A" : "P";
       const shortLabel = `${h12.replace(/\s?[AP]M$/, "")}${ampm}`; // "7P"
 

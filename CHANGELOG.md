@@ -15,11 +15,14 @@ portfolio-grade product. Format roughly follows
   "Last updated" tooltip, which therefore rendered in the browser's. On a
   German machine the footer read "18. Apr., 19:30" beside a hero reading
   "7:30 pm", in English copy. `utils/formatters.js` now holds the locale
-  and the shared formatters, the four runtime-default surfaces go through
-  it, and a test walks the source tree and fails on any locale left to the
-  runtime. The machine locales that render `YYYY-MM-DD` and feed
-  `formatToParts` are separate exports: they are chosen for their output
-  shape, and a change to what people read must not move them.
+  and the shared formatters, all 21 call sites go through it, and a test
+  walks the source tree and fails on any locale named outside that module
+  — left to the runtime or written as a literal. Three components had each
+  hand-rolled the same try/catch for formatting in the provider's zone;
+  that lives in one place now too. The machine locales that render
+  `YYYY-MM-DD` and feed `formatToParts` are separate exports: they are
+  chosen for their output shape, and a change to what people read must not
+  move them.
 - **Visibility is read in the unit the provider declares.** Open-Meteo
   answers this app's inch-precipitation request with visibility in
   feet, and nothing read the declared unit, so the Atmosphere tile

@@ -5,6 +5,7 @@ import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase, getZonedNowMs, isDaylight } from "../../utils/sunlight.js";
 import { getZonedNow } from "../../utils/dates.js";
+import { formatClockTime } from "../../utils/formatters.js";
 import { findWindowStartIndex } from "../../utils/timeSeries.js";
 
 /*
@@ -81,13 +82,7 @@ function formatHourClock(isoOrDate) {
   if (!Number.isFinite(value.getTime())) {
     return "";
   }
-  return value
-    .toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })
-    .toLowerCase();
+  return formatClockTime(value).toLowerCase();
 }
 
 export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {

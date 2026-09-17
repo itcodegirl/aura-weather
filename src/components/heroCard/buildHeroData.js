@@ -24,6 +24,7 @@ import {
 } from "../../utils/sunlight.js";
 import { formatDisplayCountry } from "../../utils/locationDisplay.js";
 import { formatProviderClock } from "../../utils/dates.js";
+import { formatLongDate } from "../../utils/formatters.js";
 import { buildAtmosphereReading } from "./buildAtmosphereReading.js";
 
 const FALLBACK_LOCATION_NAME = "Current location";
@@ -62,23 +63,7 @@ function todayLocaleString(nowMs, timeZone) {
   if (referenceTime === null) {
     return "today";
   }
-  const date = new Date(referenceTime);
-  const baseOptions = {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  };
-  if (typeof timeZone === "string" && timeZone.trim()) {
-    try {
-      return date.toLocaleDateString("en-US", {
-        ...baseOptions,
-        timeZone: timeZone.trim(),
-      });
-    } catch {
-      // Fall through to the device-local format below.
-    }
-  }
-  return date.toLocaleDateString("en-US", baseOptions);
+  return formatLongDate(new Date(referenceTime), timeZone);
 }
 
 // Show the climate context line only when today is notably different

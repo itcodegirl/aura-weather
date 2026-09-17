@@ -10,6 +10,7 @@ import { classifyComfort } from "../domain";
 import { convertTemp } from "../utils/temperature";
 import { toFiniteNumber, MISSING_VALUE_PLACEHOLDER } from "../utils/numbers";
 import { getDaylightProgress } from "../utils/sunlight";
+import { formatClockHour } from "../utils/formatters";
 import { useTimeNow } from "../hooks/useTimeNow";
 import "./AtmosphereBento.css";
 
@@ -155,9 +156,7 @@ function HumidityTile({ humidity }) {
 function formatPeakHour(time) {
   const date = new Date(time);
   if (!Number.isFinite(date.getTime())) return "";
-  return date
-    .toLocaleTimeString("en-US", { hour: "numeric", hour12: true })
-    .toLowerCase();
+  return formatClockHour(date).toLowerCase();
 }
 
 function describeUvPeak({ peak, peakTime, peakIsPast }) {

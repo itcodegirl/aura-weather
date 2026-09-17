@@ -41,7 +41,7 @@
     "test:components": "npm run test:render",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:edge": "deno check --no-lock --node-modules-dir=none supabase/functions/check-rain-alerts/index.ts && deno test --no-lock \"supabase/tests/**/*.spec.ts\"",
+    "test:edge": "deno check --no-lock --node-modules-dir=none supabase/functions/check-rain-alerts/index.ts && deno test --no-lock --node-modules-dir=none \"supabase/tests/**/*.spec.ts\"",
     "test:lighthouse": "npm run build && node scripts/run-lighthouse-budgets.mjs",
     "screenshots": "node scripts/run-screenshots.mjs",
     "record:trust-contract-demo": "node scripts/record-trust-contract-demo.mjs"

@@ -164,9 +164,12 @@ jobs:
 
       # The rain-alerts function ships on Deno, so its decision logic is
       # type-checked and tested on Deno, not shimmed into `node --test`.
-      # No `npm ci`: the script only invokes deno. The type-check step pulls
-      # the function's npm imports through Deno's own cache; the spec itself
-      # needs no permissions and no registry.
+      # No `npm ci`: the script only invokes deno, and both of its commands
+      # pass --node-modules-dir=none so Deno resolves what it needs (the
+      # function's npm imports, the Node type definitions behind the spec's
+      # `node:assert` import) from its own cache rather than a `node_modules`
+      # that exists on a developer machine and not here. The spec needs no
+      # permissions.
       - name: Edge function type-check and tests
         run: npm run test:edge
 

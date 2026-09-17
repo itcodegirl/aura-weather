@@ -175,7 +175,7 @@ npm run test:lighthouse
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
 - GitHub Actions runs lint, tests, render tests, build, serial Playwright, and Lighthouse budgets on pull requests
 - `npm run check:docs` re-derives every count stated on this page from the repo and fails if one has drifted; CI runs it too, so these numbers cannot go stale silently (`npm run check:docs -- --write` updates them)
-- `npm run test:edge` passes — a Deno type-check of the rain-alerts edge function plus the Deno tests for its decision logic (`supabase/tests/`). It needs Deno 2 locally; CI installs it. `--node-modules-dir=none` keeps Deno resolving the function's `npm:` imports from its own cache instead of this repo's Node `node_modules`
+- `npm run test:edge` passes — a Deno type-check of the rain-alerts edge function plus the Deno tests for its decision logic (`supabase/tests/`). It needs Deno 2 locally; CI installs it. `--node-modules-dir=none` keeps Deno resolving `npm:` packages — the function's imports and the Node type definitions behind the spec's `node:assert` import — from its own cache instead of this repo's Node `node_modules`
 
 ### Current automated coverage
 

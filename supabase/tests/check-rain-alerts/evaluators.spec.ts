@@ -5,8 +5,11 @@
 // suite — sweeps every `*.test.ts` and `*_test.ts` in the repo and would try
 // to run these without a Deno global; `.spec.ts` is outside its patterns,
 // so the file is handed to `deno test` by path instead. `node:assert` keeps
-// the suite free of registry fetches, lockfiles and a deno.json the deployed
-// function does not otherwise need.
+// the suite free of a lockfile and of a deno.json the deployed function does
+// not otherwise need; the only thing Deno fetches is the Node type
+// definitions it type-checks that import against, and `--node-modules-dir=none`
+// makes it fetch them into its own cache rather than look for them in this
+// repo's Node `node_modules` (present locally, absent in CI).
 
 import assert from "node:assert/strict";
 import {

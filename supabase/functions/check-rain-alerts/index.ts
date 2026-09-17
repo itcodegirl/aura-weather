@@ -5,6 +5,9 @@
 // subscriptions. Honesty + no-spam guards: never fires on missing data,
 // respects quiet hours, and dedupes via alert_deliveries' unique constraint.
 //
+// The decisions themselves live in ./evaluators.ts, which is pure and has
+// Deno tests (supabase/tests/check-rain-alerts/); this file is the I/O.
+//
 // Secrets (set in the Supabase dashboard → Edge Functions → Secrets):
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:...)
 //   CRON_SECRET (shared secret the cron job sends in x-cron-secret)
@@ -12,6 +15,15 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import {
+  buildForecastUrl,
+  type Decision,
+  evaluateMorningBrief,
+  evaluateRainIncoming,
+  evaluateSevere,
+  inQuietHours,
+  localHour,
+} from "./evaluators.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -19,9 +31,6 @@ const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:alerts@aura-weather.app";
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
-
-const RAIN_LIKELY_DEFAULT = 50; // matches the app's app-wide "likely" cutoff
-const RAIN_LEAD_DEFAULT_MIN = 20;
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -36,12 +45,7 @@ function appDeepLink(rule: Record<string, unknown>): string {
 
 // Open-Meteo: next ~2h of 15-minute precipitation probability + today's totals.
 async function fetchForecast(lat: number, lon: number) {
-  const url =
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-    `&minutely_15=precipitation_probability,precipitation&forecast_minutely_15=8` +
-    `&daily=precipitation_sum,precipitation_probability_max&forecast_days=1` +
-    `&timezone=auto`;
-  const res = await fetch(url);
+  const res = await fetch(buildForecastUrl(lat, lon));
   if (!res.ok) return null;
   return await res.json();
 }
@@ -55,87 +59,6 @@ async function fetchSevere(lat: number, lon: number) {
   if (!res.ok) return [];
   const json = await res.json();
   return Array.isArray(json?.features) ? json.features : [];
-}
-
-function localHour(forecast: Record<string, any>): number | null {
-  const offset = Number(forecast?.utc_offset_seconds);
-  if (!Number.isFinite(offset)) return null;
-  return new Date(Date.now() + offset * 1000).getUTCHours();
-}
-
-function localDateKey(forecast: Record<string, any>): string {
-  const offset = Number(forecast?.utc_offset_seconds) || 0;
-  return new Date(Date.now() + offset * 1000).toISOString().slice(0, 10);
-}
-
-function inQuietHours(hour: number | null, start: unknown, end: unknown): boolean {
-  if (hour === null || start == null || end == null) return false;
-  const s = Number(start);
-  const e = Number(end);
-  if (!Number.isFinite(s) || !Number.isFinite(e)) return false;
-  return s <= e ? hour >= s && hour < e : hour >= s || hour < e; // handles overnight wrap
-}
-
-type Decision = { dedupeKey: string; title: string; body: string } | null;
-
-function evaluateRainIncoming(rule: any, forecast: any): Decision {
-  const probs: unknown[] = forecast?.minutely_15?.precipitation_probability ?? [];
-  const times: unknown[] = forecast?.minutely_15?.time ?? [];
-  // Finite check, not `|| default`: a legitimate 0 is a real setting —
-  // min_probability 0 means "any rain chance", lead_time_min 0 means "right
-  // now" — and must not be coerced to the default.
-  const leadRaw = Number(rule.lead_time_min);
-  const lead = Number.isFinite(leadRaw) ? leadRaw : RAIN_LEAD_DEFAULT_MIN;
-  const thresholdRaw = Number(rule.min_probability);
-  const threshold = Number.isFinite(thresholdRaw)
-    ? thresholdRaw
-    : RAIN_LIKELY_DEFAULT;
-  const steps = Math.max(1, Math.ceil(lead / 15));
-  let peak = -1;
-  let peakIdx = -1;
-  for (let i = 0; i < Math.min(steps, probs.length); i += 1) {
-    const p = Number(probs[i]);
-    if (Number.isFinite(p) && p > peak) {
-      peak = p;
-      peakIdx = i;
-    }
-  }
-  if (peak < 0) return null; // no usable data — stay silent (trust contract)
-  if (peak < threshold) return null;
-  const onset = String(times[peakIdx] ?? `${rule.id}-slot${peakIdx}`);
-  return {
-    dedupeKey: `rain:${onset}`,
-    title: `Rain starting near ${rule.location_name}`,
-    body: `${Math.round(peak)}% chance within ${lead} min. Tap for radar.`,
-  };
-}
-
-function evaluateSevere(rule: any, features: any[]): Decision {
-  if (!features.length) return null;
-  const f = features[0];
-  const event = f?.properties?.event ?? "Severe weather alert";
-  const id = String(f?.id ?? event);
-  return {
-    dedupeKey: `severe:${id}`,
-    title: `${event} — ${rule.location_name}`,
-    body: String(f?.properties?.headline ?? "Active NWS alert. Tap for details."),
-  };
-}
-
-function evaluateMorningBrief(rule: any, forecast: any): Decision {
-  const hour = localHour(forecast);
-  const briefHour = Number(rule.brief_hour);
-  if (hour === null || !Number.isFinite(briefHour) || hour !== briefHour) return null;
-  const sum = Number(forecast?.daily?.precipitation_sum?.[0]);
-  const pmax = Number(forecast?.daily?.precipitation_probability_max?.[0]);
-  const body = Number.isFinite(sum) && sum > 0.01
-    ? `${sum.toFixed(2)} in expected today${Number.isFinite(pmax) ? ` (${Math.round(pmax)}% peak chance)` : ""}.`
-    : "No meaningful rain expected today.";
-  return {
-    dedupeKey: `brief:${localDateKey(forecast)}`,
-    title: `Good morning — ${rule.location_name}`,
-    body,
-  };
 }
 
 async function sendPush(sub: any, payload: Record<string, unknown>): Promise<"ok" | "expired" | "error"> {

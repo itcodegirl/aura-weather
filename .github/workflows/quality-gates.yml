@@ -150,6 +150,29 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  edge-function-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # The rain-alerts function ships on Deno, so its decision logic is
+      # type-checked and tested on Deno, not shimmed into `node --test`.
+      # No `npm ci`: the script only invokes deno, and both of its commands
+      # pass --node-modules-dir=none so Deno resolves what it needs (the
+      # function's npm imports, the Node type definitions behind the spec's
+      # `node:assert` import) from its own cache rather than a `node_modules`
+      # that exists on a developer machine and not here. The spec needs no
+      # permissions.
+      - name: Edge function type-check and tests
+        run: npm run test:edge
+
   record-trust-contract-demo:
     # Manual only: trigger from the Actions tab ("Run workflow") when the
     # missing-data UI has changed and docs/screenshots/trust-contract-demo.webm

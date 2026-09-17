@@ -87,6 +87,19 @@
   color: var(--text-muted);
 }
 
+/*
+ * The UV tile's second line: today's peak and the hour it arrives, under
+ * this hour's reading. Set like the AQI guidance, but it is a reading
+ * rather than advice, so it keeps its own class and the AQI tests can
+ * keep asking whether any guidance is on screen.
+ */
+.atm-peak-line {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 /* Label row (icon + text) */
 /*
  * --text-muted, not --text-dim. The token floor is calibrated for text

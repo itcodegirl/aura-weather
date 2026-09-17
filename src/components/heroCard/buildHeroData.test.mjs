@@ -285,6 +285,97 @@ describe("buildHeroData", () => {
     assert.equal(data.dailyGuidance[0].kind, "rain");
   });
 
+  /*
+   * Audit finding A-10. Rain guidance read the calendar day: at 9 pm after
+   * a rainy morning it still said "Bring rain gear — 80% peak chance today"
+   * over a dry evening. It now reads the hourly series from this hour to
+   * the end of today, and says so; the calendar-day figures are only a
+   * fallback, and keep the word "today".
+   */
+  describe("rain guidance looks at the hours still ahead", () => {
+    // baseWeather carries no timezone, so the hourly times are instants
+    // (Z) and the clock is compared as an instant. daily.time pins "today"
+    // to the same date whatever zone the runner is in.
+    const hourlyDay = (chanceAt, amountAt) => {
+      const time = [];
+      const rainChance = [];
+      const rainAmount = [];
+      for (let hour = 0; hour < 24; hour += 1) {
+        time.push(`2026-04-21T${String(hour).padStart(2, "0")}:00:00Z`);
+        rainChance.push(chanceAt(hour));
+        rainAmount.push(amountAt(hour));
+      }
+      return { time, rainChance, rainAmount };
+    };
+    const rainPill = (hourly, nowMs) =>
+      buildHeroData({
+        weather: {
+          ...baseWeather,
+          hourly,
+          daily: {
+            ...baseWeather.daily,
+            time: ["2026-04-21"],
+            // The calendar day: what the pill used to read.
+            rainChanceMax: [80],
+            rainAmountTotal: [0.4],
+          },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs,
+      }).dailyGuidance.find((item) => item.kind === "rain") ?? null;
+
+    test("a rainy morning does not keep the evening under a rain-gear warning", () => {
+      const rainyMorning = hourlyDay(
+        (hour) => (hour < 12 ? 80 : 5),
+        (hour) => (hour < 12 ? 0.05 : 0)
+      );
+      const evening = Date.UTC(2026, 3, 21, 21, 0, 0);
+      const data = buildHeroData({
+        weather: {
+          ...baseWeather,
+          hourly: rainyMorning,
+          daily: { ...baseWeather.daily, time: ["2026-04-21"], rainChanceMax: [80], rainAmountTotal: [0.4] },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs: evening,
+      });
+      // Calm-tone guidance is filtered out of the pills: a dry evening
+      // earns no rain pill at all, rather than a rain-gear one.
+      assert.equal(data.dailyGuidance.find((item) => item.kind === "rain"), undefined);
+    });
+
+    test("an afternoon storm still ahead is the peak the morning reader sees", () => {
+      const afternoonStorm = hourlyDay(
+        (hour) => (hour >= 14 && hour <= 16 ? 70 : 10),
+        (hour) => (hour >= 14 && hour <= 16 ? 0.1 : 0)
+      );
+      const morning = Date.UTC(2026, 3, 21, 9, 0, 0);
+      const pill = rainPill(afternoonStorm, morning);
+      assert.equal(pill.value, "Bring rain gear");
+      assert.equal(pill.detail, "70% peak chance for the rest of today");
+    });
+
+    test("the remaining total is what is expected, in the display unit", () => {
+      const showers = hourlyDay(
+        () => null,
+        (hour) => (hour >= 14 && hour <= 16 ? 0.06 : 0)
+      );
+      const morning = Date.UTC(2026, 3, 21, 9, 0, 0);
+      const pill = rainPill(showers, morning);
+      assert.equal(pill.value, "Bring rain gear");
+      assert.equal(pill.detail, "0.18 in expected for the rest of today");
+    });
+
+    test("without an hourly series the calendar-day figures stand in, and say so", () => {
+      const evening = Date.UTC(2026, 3, 21, 21, 0, 0);
+      const pill = rainPill(undefined, evening);
+      assert.equal(pill.value, "Bring rain gear");
+      assert.equal(pill.detail, "80% peak chance today");
+    });
+  });
+
   test("renders the rain-guidance amount in the display unit (mm for °C)", () => {
     // Chance missing forces the amount-based detail line. The wire
     // amount is inches (0.18 in = 4.57 mm); a °C user must see mm.
@@ -630,10 +721,14 @@ describe("buildHeroData", () => {
     // Daylight window: baseWeather sunrise/sunset span 11:18–00:41 UTC,
     // so 18:00 UTC sits inside it and the UV reading is eligible.
     const daylightNow = Date.UTC(2026, 3, 21, 18, 0, 0);
+    // The reading line speaks to this hour, so the hourly reading at the
+    // current slot is set equal to the peak: the claim under test is the
+    // shared classifier, not now versus peak (that is the test below).
     const dataFor = (uv) =>
       buildHeroData({
         weather: {
           ...baseWeather,
+          hourly: { time: ["2026-04-21T18:00:00Z"], uvIndex: [uv] },
           daily: { ...baseWeather.daily, uvIndexMax: [uv] },
         },
         location: baseLocation,
@@ -659,6 +754,52 @@ describe("buildHeroData", () => {
     const moderate = dataFor(3.5);
     assert.equal(moderate.uvPanel.level, "Moderate");
     assert.equal(moderate.atmosphereReading, null);
+  });
+
+  /*
+   * Audit finding A-07. The chip and the reading line are present tense,
+   * and both took the day's peak: "UV very high" at 9 am over an actual
+   * index of 2. They now read the hourly series at the current hour; the
+   * panel and the guidance pill keep the peak, which is what they say.
+   */
+  test("the UV chip and reading line describe this hour, not the day's peak", () => {
+    const daylightNow = Date.UTC(2026, 3, 21, 18, 0, 0);
+    const dataFor = (hourly) =>
+      buildHeroData({
+        weather: {
+          ...baseWeather,
+          hourly,
+          daily: { ...baseWeather.daily, uvIndexMax: [8.4] },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs: daylightNow,
+      });
+    const uvChip = (data) =>
+      data.characteristicChips.find((chip) => chip.id === "uv")?.label;
+
+    // Morning: the day will peak Very High, the index right now is 2.5.
+    const morning = dataFor({ time: ["2026-04-21T18:00:00Z"], uvIndex: [2.5] });
+    assert.equal(uvChip(morning), "UV low");
+    assert.equal(morning.atmosphereReading, null, "no present-tense UV callout at 2.5");
+    assert.equal(morning.uvPanel.peakLabel, "Peak UV 8.4", "the panel keeps the peak");
+    assert.equal(
+      morning.dailyGuidance.find((item) => item.kind === "uv")?.detail,
+      "Peak UV 8.4",
+      "the pill keeps the peak"
+    );
+
+    // Midday: the reading is the peak, and both surfaces say so.
+    const midday = dataFor({ time: ["2026-04-21T18:00:00Z"], uvIndex: [8.4] });
+    assert.equal(uvChip(midday), "UV very high");
+    assert.match(midday.atmosphereReading.text, /Very high UV \(8\.4\)/);
+
+    // No hourly series: no chip and no callout, rather than the peak
+    // wearing a present-tense label.
+    const noHourly = dataFor(undefined);
+    assert.equal(uvChip(noHourly), undefined);
+    assert.equal(noHourly.atmosphereReading, null);
+    assert.equal(noHourly.uvPanel.peakLabel, "Peak UV 8.4");
   });
 
   test("clamps the UV marker to 100% past the top of the scale", () => {

@@ -31,6 +31,17 @@ portfolio-grade product. Format roughly follows
   hand-edited and almost never changed, so browsers saw a byte-identical
   worker, install never re-ran, and the "New version available" banner
   could never fire. It is now stamped from the build's own output hash.
+- **The morning-brief push reports inches, not millimetres.** The
+  rain-alerts edge function never asked Open-Meteo for inches, so the
+  daily total arrived in millimetres and was printed as `N in expected
+  today` — 25× too large — and the "meaningful rain" cutoff was an inch
+  threshold applied to millimetres. The request now says
+  `precipitation_unit=inch`, the brief checks the unit the payload
+  declares before it formats an amount, a missing total sends nothing
+  instead of "no meaningful rain", and a severe-weather push headlines
+  the most severe active alert rather than whichever the feed listed
+  first. The function's decisions are now a pure module with Deno tests
+  that CI runs.
 
 ### Changed
 

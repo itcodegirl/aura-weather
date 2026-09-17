@@ -160,6 +160,7 @@ the Cloud Backup panel reports that backup is unavailable rather than failing.
 ```bash
 npm run lint
 npm test
+npm run test:edge
 npm run build
 npm run test:e2e
 npm run test:lighthouse
@@ -174,6 +175,7 @@ npm run test:lighthouse
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
 - GitHub Actions runs lint, tests, render tests, build, serial Playwright, and Lighthouse budgets on pull requests
 - `npm run check:docs` re-derives every count stated on this page from the repo and fails if one has drifted; CI runs it too, so these numbers cannot go stale silently (`npm run check:docs -- --write` updates them)
+- `npm run test:edge` passes — a Deno type-check of the rain-alerts edge function plus the Deno tests for its decision logic (`supabase/tests/`). It needs Deno 2 locally; CI installs it. `--node-modules-dir=none` keeps Deno resolving the function's `npm:` imports from its own cache instead of this repo's Node `node_modules`
 
 ### Current automated coverage
 
@@ -185,6 +187,7 @@ npm run test:lighthouse
   - saved-location sync normalization and error handling
   - location persistence helpers
   - weather domain utilities and formatters
+- Deno tests for the rain-alerts edge function's decisions: the forecast request asks for inches and the morning brief converts by the unit the payload declares (a millimetre total never prints as inches), a missing total sends nothing, the severe push headlines the most severe active alert, and quiet hours wrap past midnight
 - Playwright coverage — <!--n:e2e-behavioural-->45<!--/n--> behavioral checks plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset
   capture jobs (`readme-screenshots`, `trust-contract-screenshot`,
   `social-pwa-assets`, which regenerate the committed imagery and assert

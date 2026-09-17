@@ -204,7 +204,7 @@ describe("NowcastCard chart text equivalent", () => {
     const text = getChartDescription(container);
     assert.equal(
       text,
-      "Rain chance crosses the 50% rain-likely line about 45 minutes from now, peaking at 80%, rising into the second hour."
+      "Rain chance crosses the 50% rain-likely line within the hour, peaking at 80%, rising into the second hour."
     );
     // The spoken peak is the Peak chance chip's own number, so the drawn and
     // spoken versions cannot disagree.

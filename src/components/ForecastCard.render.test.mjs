@@ -285,3 +285,38 @@ describe("ForecastCard weather-code honesty", () => {  test("a missing daily wea
     );
   });
 });
+
+describe("ForecastCard wind-direction honesty", () => {
+  test("a missing dominant direction shows the speed alone, never 'Variable'", () => {
+    // "Variable" is a real reported state (VRB in a METAR): wind that keeps
+    // shifting. Using it for a *missing* heading turned a known unknown into
+    // a confident meteorological claim. Against the old code this row read
+    // "Variable 18 mph".
+    renderForecastWithDaily({
+      windSpeedMax: [18],
+      windGustMax: [27],
+      windDirectionDominant: [null],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /show forecast details/i }));
+
+    assert.ok(screen.getByText("18 mph"), "the speed is still reported");
+    assert.equal(
+      screen.queryByText(/Variable/i),
+      null,
+      "a missing heading must not render as Variable"
+    );
+    assert.ok(screen.getByText("Gusts 27 mph"), "the gust is unaffected");
+  });
+
+  test("a real heading is still named", () => {
+    renderForecastWithDaily({
+      windSpeedMax: [18],
+      windDirectionDominant: [235],
+    });
+    fireEvent.click(screen.getByRole("button", { name: /show forecast details/i }));
+    // Positive control: the previous case must be the direction being absent,
+    // not the detail panel failing to render its wind row at all.
+    assert.ok(screen.getByText("SW 18 mph"));
+  });
+});

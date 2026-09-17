@@ -192,16 +192,22 @@ describe("meteorology utils", () => {
     assert.equal(windDirectionName(0), "N");
     assert.equal(windDirectionName(45), "NE");
     assert.equal(windDirectionName(225), "SW");
-    assert.equal(windDirectionName("bad"), "Variable");
+    assert.equal(windDirectionName("bad"), null);
   });
 
-  test("windDirectionName returns 'Variable' for nullish input (not 'N')", () => {
-    // Trust contract: a null heading must not silently coerce to 0
-    // and resolve to "N" — that would imply a confident "wind from
-    // the north" reading when the API returned no sample.
-    assert.equal(windDirectionName(null), "Variable");
-    assert.equal(windDirectionName(undefined), "Variable");
-    assert.equal(windDirectionName(""), "Variable");
+  test("windDirectionName returns null for nullish input, not a word", () => {
+    // Trust contract, twice over. A null heading must not coerce to 0 and
+    // resolve to "N" — a confident "wind from the north" the provider never
+    // reported. It must not resolve to "Variable" either: that is a real
+    // reported state (VRB in a METAR), wind that keeps shifting, so using it
+    // for a missing sample swaps one confident claim for another. Null lets
+    // the caller omit the direction and show the speed alone.
+    assert.equal(windDirectionName(null), null);
+    assert.equal(windDirectionName(undefined), null);
+    assert.equal(windDirectionName(""), null);
+    assert.equal(windDirectionName(Number.NaN), null);
+    assert.equal(windDirectionName([]), null);
+    assert.equal(windDirectionName(true), null);
   });
 
   test("classifyWind uses mph thresholds and unit conversion", () => {

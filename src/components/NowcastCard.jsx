@@ -1,7 +1,12 @@
 import { memo, useId, useMemo } from "react";
 import { CloudRain } from "lucide-react";
 import { toFiniteNumber as toStrictFiniteNumber } from "../utils/numbers";
-import { analyzeNowcast, NOWCAST_STEP_MINUTES } from "./nowcast/analyzeNowcast.js";
+import {
+  analyzeNowcast,
+  describeNowcastDuration,
+  describeNowcastStart,
+  NOWCAST_STEP_MINUTES,
+} from "./nowcast/analyzeNowcast.js";
 import { InfoDrawer } from "./ui";
 import "./NowcastCard.css";
 
@@ -100,7 +105,7 @@ function buildNowcastChartDescription(points, peakProbability) {
       ? `Rain chance stays below the ${NC_LIKELY_THRESHOLD}% rain-likely line for the next 2 hours`
       : crossIndex === 0
         ? `Rain chance is already at or above the ${NC_LIKELY_THRESHOLD}% rain-likely line now`
-        : `Rain chance crosses the ${NC_LIKELY_THRESHOLD}% rain-likely line about ${crossIndex * NOWCAST_STEP_MINUTES} minutes from now`;
+        : `Rain chance crosses the ${NC_LIKELY_THRESHOLD}% rain-likely line ${describeNowcastStart(crossIndex * NOWCAST_STEP_MINUTES).phrase}`;
 
   const half = Math.ceil(points.length / 2);
   const firstHalf = present.filter((point) => point.index < half);
@@ -192,12 +197,10 @@ function NowcastCard({
           ? "Moderate immediate risk"
           : "Low immediate risk";
     const start = nowcast.hasRain
-      ? nowcast.startInMinutes === 0
-        ? "Now"
-        : `${nowcast.startInMinutes} min`
+      ? describeNowcastStart(nowcast.startInMinutes).tile
       : "\u2014";
     const duration = nowcast.hasRain
-      ? `${Math.max(0, Math.round(nowcast.durationMinutes))} min`
+      ? describeNowcastDuration(nowcast.durationMinutes).tile
       : nowcast.hasData
         ? dryUnverified
           ? "Likely dry 2h"
@@ -257,11 +260,16 @@ function NowcastCard({
               title="How to read nowcast"
               className="nowcast-help-drawer"
             >
-              Nowcast is short-range guidance built from 15-minute weather points. It estimates start time, likely duration, and peak rain chance over the next 2 hours.
+              Nowcast reads the provider's rain-chance forecast at quarter-hour
+              steps over the next 2 hours. Those steps are modelled separately in
+              some regions and interpolated from hourly data in others, and the
+              series is a chance of rain rather than a measurement of it — so the
+              timings here are deliberately coarse. It answers whether rain is
+              likely soon and roughly for how long, not what minute it starts.
             </InfoDrawer>
           </div>
           <p className="nowcast-explainer">
-            15-minute rain guidance over the next 2 hours.
+            Rain chance over the next 2 hours.
           </p>
           <span className={`severity-badge severity-badge--${nowcastRiskTone}`}>
             {nowcastRiskLabel}

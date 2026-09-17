@@ -215,11 +215,15 @@ function formatWindSummary(day, unit) {
     };
   }
 
+  // A day with a speed but no usable dominant direction shows the speed
+  // alone. It used to read "Variable 12 mph", which states a wind behaviour
+  // the provider never reported.
   const direction = windDirectionName(day.windDirectionDominant);
   const gust = toNumberOrNaN(day.windGustMax);
+  const speedText = formatWindSpeed(speed, unit);
 
   return {
-    value: `${direction} ${formatWindSpeed(speed, unit)}`,
+    value: direction ? `${direction} ${speedText}` : speedText,
     detail: Number.isFinite(gust) ? `Gusts ${formatWindSpeed(gust, unit)}` : "",
     isMissing: false,
   };

@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { toFiniteNumber } from "../../utils/numbers";
+import { formatStamp } from "../../utils/formatters";
 import "./StatusStack.css";
 
 function normalizeSentence(value, fallback) {
@@ -13,12 +14,7 @@ function formatCacheCapturedAt(value) {
     return "";
   }
 
-  return new Date(timestamp).toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatStamp(new Date(timestamp));
 }
 
 function StatusStack({

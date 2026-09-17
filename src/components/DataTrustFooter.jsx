@@ -3,6 +3,7 @@ import { Clock } from "lucide-react";
 import { useTimeNow } from "../hooks/useTimeNow";
 import { getIsoDateInTimeZone } from "../utils/dates";
 import { toFiniteNumber } from "../utils/numbers";
+import { formatClockTime, formatMonthDay } from "../utils/formatters";
 import "./DataTrustFooter.css";
 
 function formatCoords(lat, lon) {
@@ -34,10 +35,7 @@ function formatUpdateTime(fetchedAt, nowMs) {
   const d = new Date(fetchedAt);
   if (!Number.isFinite(d.getTime())) return null;
 
-  const time = d.toLocaleTimeString(undefined, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const time = formatClockTime(d);
   const now = toFiniteNumber(nowMs);
   if (
     now !== null &&
@@ -46,10 +44,7 @@ function formatUpdateTime(fetchedAt, nowMs) {
     return time;
   }
 
-  const date = d.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  const date = formatMonthDay(d);
   return `${date}, ${time}`;
 }
 

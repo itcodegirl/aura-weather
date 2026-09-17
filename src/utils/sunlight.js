@@ -1,5 +1,6 @@
 import { toFiniteNumber } from "./numbers.js";
 import { getZonedNow } from "./dates.js";
+import { formatClockTime } from "./formatters.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -30,11 +31,7 @@ export function formatSunClock(value, options = {}) {
     }
   }
 
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return formatClockTime(date);
 }
 
 /*

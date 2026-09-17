@@ -1,6 +1,7 @@
 import { ChevronDown, Cloud } from "lucide-react";
 import { memo, useId, useMemo, useState } from "react";
 import { toFiniteNumber } from "../../utils/numbers";
+import { formatClockTime } from "../../utils/formatters";
 
 /*
  * Cloud backup, not cloud sync.
@@ -58,10 +59,7 @@ function SyncAccountPanel({
       return "";
     }
 
-    return new Date(lastSyncedAt).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    return formatClockTime(new Date(lastSyncedAt));
   }, [syncState?.lastSyncedAt]);
 
   return (

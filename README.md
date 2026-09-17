@@ -169,7 +169,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`<!--n:unit-tests-->835<!--/n-->` tests across <!--n:unit-suites-->182<!--/n--> suites, including the <!--n:render-tests-->312<!--/n--> React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`<!--n:unit-tests-->862<!--/n-->` tests across <!--n:unit-suites-->190<!--/n--> suites, including the <!--n:render-tests-->314<!--/n--> React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -254,6 +254,15 @@ Short notes on the non-obvious choices a reviewer might question.
 - **NWS alerts are U.S.-only by design.** A 400/404 from `api.weather.gov/alerts/active` is mapped to an explicit `unsupported` status (not `unavailable`) so the UI can say "Alerts unavailable for this region" instead of an ambiguous "no alerts".
 - **Strict numeric coercion at every layer.** `Number(null) === 0` would surface as a fake 0°F humidity / 0% rain chance / 0°F historical sample whenever Open-Meteo returns a missing data point. A single shared `toFiniteNumber` helper rejects nullish, empty-string, boolean, array, and object inputs explicitly, and is now applied at the API boundary, every formatter, every domain classifier, and every chart slot parser. Ten unit tests lock the core helper; additional assertions pin the null contract for each formatter and domain function.
 - **Lazy supplemental panels.** The hero, the severe-alert banner and the data-trust footer render synchronously. Everything else — hourly chart, radar, and the supplemental group (nowcast, rain outlook, storm watch, week ahead, atmosphere) — mounts via `Suspense` behind `useDeferredMount`, which waits for `requestIdleCallback` with a per-panel timeout fallback (900ms hourly, 1800ms supplemental, 2000ms radar, 3000ms rain alerts). The source-health panel defers until its `<details>` is opened, and rain alerts defers furthest because it is the only mount that can pull in the Supabase client.
+- **The display locale has one home.** Every user-facing date and time is
+  formatted through `utils/formatters.js`, which names the locale once.
+  Four surfaces used to pass no locale at all, so a reader outside the US
+  saw their own date format in the trust footer and the status stack while
+  the hero beside them read `en-US`, inside English copy. The two locales
+  that are *not* display decisions — the `en-CA` that renders `YYYY-MM-DD`
+  and the one driving `formatToParts` — are separate exports, so changing
+  what people read cannot move how dates are computed. A test walks the
+  source tree and fails on any runtime-default locale outside that module.
 - **CSS lives next to its component.** App.css holds the global tokens, resets, animations, the shared focus-visible rule, and a handful of cross-component primitives (`.glass`, `.severity-badge*`, `.card-empty*`, `.sr-only`, `.skip-link`). Every feature's CSS is imported by its owning component.
 
 ## Data Trust Contract
@@ -438,7 +447,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — <!--n:unit-tests-->835<!--/n--> Node tests (including <!--n:render-tests-->312<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — <!--n:unit-tests-->862<!--/n--> Node tests (including <!--n:render-tests-->314<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

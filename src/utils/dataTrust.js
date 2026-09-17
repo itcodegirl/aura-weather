@@ -1,4 +1,5 @@
 import { toFiniteNumber } from "./numbers.js";
+import { formatStamp } from "./formatters.js";
 
 // Routes through the strict shared helper so a null lastUpdatedAt
 // cannot be silently coerced to 0 — which would compute an
@@ -51,6 +52,10 @@ export function formatTimestampTitle(lastUpdatedAt) {
     return "No successful update yet";
   }
 
-  return `Last updated ${date.toLocaleString()}`;
+  // The same stamp shape the cache notice uses, so the two freshness
+  // surfaces can be compared at a glance. The bare toLocaleString() this
+  // replaces also printed the year and seconds, which a tooltip on
+  // "Updated 3h ago" does not need.
+  return `Last updated ${formatStamp(date)}`;
 }
 

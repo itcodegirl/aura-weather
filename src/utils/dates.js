@@ -1,5 +1,13 @@
 // src/utils/dates.js
 
+import {
+  ISO_DATE_LOCALE,
+  PARTS_LOCALE,
+  formatClockHour,
+  formatMonthDay,
+  formatWeekdayShort,
+} from "./formatters.js";
+
 /**
  * Parses a bare ISO calendar date like "2024-04-19" as local midnight
  * instead of UTC midnight, which avoids day shifts in US timezones.
@@ -41,8 +49,9 @@ function formatAsIsoDate(date) {
 export function getIsoDateInTimeZone(timeZone, now = new Date()) {
   if (typeof timeZone === "string" && timeZone.trim()) {
     try {
-      // en-CA formats as YYYY-MM-DD directly.
-      return new Intl.DateTimeFormat("en-CA", {
+      // en-CA formats as YYYY-MM-DD directly. A machine format, pinned
+      // in formatters.js so a change to the display locale cannot move it.
+      return new Intl.DateTimeFormat(ISO_DATE_LOCALE, {
         timeZone: timeZone.trim(),
         year: "numeric",
         month: "2-digit",
@@ -86,7 +95,9 @@ export function getZonedNow(timeZone, now = Date.now()) {
   }
 
   try {
-    const parts = new Intl.DateTimeFormat("en-US", {
+    // Reading numeric components, not rendering them: PARTS_LOCALE is
+    // chosen for a stable output shape, never for how it reads.
+    const parts = new Intl.DateTimeFormat(PARTS_LOCALE, {
       timeZone: timeZone.trim(),
       year: "numeric",
       month: "2-digit",
@@ -143,7 +154,7 @@ export function formatDayLabel(
   if (normalized === todayIso) return "Today";
   if (normalized === formatAsIsoDate(tomorrowDate)) return "Tomorrow";
 
-  return date.toLocaleDateString("en-US", { weekday: "short" });
+  return formatWeekdayShort(date);
 }
 
 /**
@@ -155,10 +166,7 @@ export function formatShortDate(isoDate) {
     return "\u2014";
   }
 
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  return formatMonthDay(date);
 }
 
 /**
@@ -169,10 +177,7 @@ export function formatHour(date) {
     return "\u2014";
   }
 
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    hour12: true,
-  });
+  return formatClockHour(date);
 }
 
 /**

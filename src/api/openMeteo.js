@@ -36,6 +36,34 @@ const DEFAULT_TIMEZONE = "UTC";
 const FORECAST_RETRY_DELAYS_MS = [250, 700];
 const GEOCODE_RETRY_DELAYS_MS = [200];
 const SUPPLEMENTAL_RETRY_DELAYS_MS = [300];
+
+/*
+ * How much of the hourly series this app actually reads.
+ *
+ * `forecast_days=7` does NOT bound the hourly block once `past_hours` is set.
+ * Measured against the live API for Palos Hills on 2026-09-17, the request
+ * came back with 432 hourly slots spanning 2026-09-15T12:00 -> 2026-10-03T11:00
+ * — 48 hours back plus SIXTEEN forecast days — in a 60,472-byte payload whose
+ * hourly block alone was 34,287 bytes. `forecast_hours` is what bounds it.
+ *
+ * FORECAST_HOURS is not simply the 24 hours the UI renders, and 24 would be a
+ * bug. A snapshot restored on a degraded path (offline cold start, failed
+ * refresh) can be up to 48 hours old and is rendered in full, hourly card
+ * included. Its forward horizon has to survive that replay:
+ *
+ *   FORECAST_HOURS = 24 (rendered window) + 48 (oldest snapshot ever replayed)
+ *
+ * Both halves live elsewhere — `WINDOW` in HourlyCard, DEGRADED_SNAPSHOT_MAX_AGE_MS
+ * in useWeatherData — and the layer rules stop this module importing either.
+ * `forecastWindow.test.mjs` reads all three from their real homes and fails if
+ * they stop agreeing. That test is the mechanism; this comment is not.
+ *
+ * PAST_HOURS is unchanged. The deepest lookback is analyzeRain's running "so
+ * far today" total, which walks back to the location's own midnight.
+ */
+const FORECAST_HOURS = 72;
+const PAST_HOURS = 48;
+
 export const ALERTS_STATUS = {
   ready: "ready",
   unsupported: "unsupported",
@@ -370,7 +398,8 @@ export async function fetchWeather(lat, lon, options = {}) {
     precipitation_unit: precipitationUnit,
     timezone: "auto",
     forecast_days: "7",
-    past_hours: "48",
+    past_hours: String(PAST_HOURS),
+    forecast_hours: String(FORECAST_HOURS),
   });
 
   const rawResponse = await fetchJsonWithRetry(`${ENDPOINTS.weather}?${params}`, {

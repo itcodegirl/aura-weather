@@ -147,3 +147,76 @@ describe("atmosphere arc tones resolve to colours", () => {
     }
   });
 });
+
+/*
+ * A prop a component does not declare is not a compile error in JSX, a lint
+ * error, or a render failure. It is silently discarded.
+ *
+ * `ArcGauge` takes `{ fraction, scale, tone, ariaLabel, missing }` and the
+ * humidity and pressure tiles were passing it `color="#7fb2e8"` and
+ * `color="#a88cf5"` — two hex literals that had not reached the DOM since the
+ * fill moved from an SVG attribute to a CSS class. They read as the reason
+ * those arcs are coloured, which is the expensive kind of dead code: a
+ * maintainer changing the palette edits them and nothing happens.
+ */
+describe("ArcGauge's call sites pass only props it declares", () => {
+  const BENTO = readFileSync(`${REPO_ROOT}/src/components/AtmosphereBento.jsx`, "utf8");
+
+  function declaredProps(source) {
+    const match = /function ArcGauge\(\{([^}]*)\}\)/.exec(source);
+    assert.ok(match, "ArcGauge's destructured signature moved — update this pattern");
+    return new Set(
+      match[1]
+        .split(",")
+        .map((entry) => entry.split(/[:=]/)[0].trim())
+        .filter(Boolean)
+    );
+  }
+
+  function callSiteProps(source) {
+    return [...source.matchAll(/<ArcGauge\b([\s\S]*?)\/>/g)].map((match) =>
+      [...match[1].matchAll(/(?:^|\s)([a-zA-Z][a-zA-Z0-9]*)\s*=/g)].map((p) => p[1])
+    );
+  }
+
+  test("the detectors see a representative component", () => {
+    // Positive controls. Both patterns returning nothing would make the
+    // comparison below pass over an empty set, which is the same kind of
+    // silent all-clear the header above describes.
+    const sample = `
+      function ArcGauge({ fraction, scale, tone, missing }) { return null; }
+      const a = <ArcGauge fraction={1} color="#fff" />;
+    `;
+    assert.deepEqual(
+      [...declaredProps(sample)].sort(),
+      ["fraction", "missing", "scale", "tone"]
+    );
+    assert.deepEqual(callSiteProps(sample), [["fraction", "color"]]);
+  });
+
+  test("a renamed component fails rather than reporting an empty set", () => {
+    assert.throws(
+      () => declaredProps("function Arc({ fraction }) {}"),
+      /ArcGauge's destructured signature moved/
+    );
+  });
+
+  test("every prop passed to ArcGauge is one ArcGauge reads", () => {
+    const declared = declaredProps(BENTO);
+    const sites = callSiteProps(BENTO);
+
+    assert.ok(declared.size >= 4, `expected a real signature, saw ${declared.size} props`);
+    assert.ok(sites.length >= 3, `expected the real call sites, saw ${sites.length}`);
+
+    const ignored = sites
+      .flat()
+      .filter((prop) => !declared.has(prop))
+      .sort();
+    assert.deepEqual(
+      ignored,
+      [],
+      `ArcGauge is passed props it never reads: ${ignored.join(", ")}. ` +
+        "Either read them or delete them — JSX will not tell you."
+    );
+  });
+});

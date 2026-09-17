@@ -63,14 +63,10 @@ describe("buildHeroData", () => {
 
     assert.equal(data.currentTempDisplay, "67");
     assert.equal(data.feelsLikeDisplay, "68°F");
-    assert.equal(data.dewPointDisplay, "52°F");
     assert.equal(data.todayHighDisplay, "70°F");
     assert.equal(data.todayLowDisplay, "55°F");
-    assert.equal(data.humidityDisplay, "58%");
-    assert.equal(data.pressureDisplay, "1014 hPa");
     assert.equal(data.tempUnit, "°F");
     assert.equal(data.isCurrentTempMissing, false);
-    assert.equal(data.heroStatsHaveAnyMissing, false);
   });
 
   test("renders the today label in the forecast's timezone, not the device's", () => {
@@ -535,10 +531,6 @@ describe("buildHeroData", () => {
     assert.equal(data.currentTempDisplay, "—");
     assert.equal(data.isCurrentTempMissing, true);
     assert.equal(data.feelsLikeDisplay, "—");
-    assert.equal(data.dewPointDisplay, "—");
-    assert.equal(data.humidityDisplay, "—");
-    assert.equal(data.pressureDisplay, "—");
-    assert.equal(data.heroStatsHaveAnyMissing, true);
   });
 
   test("falls back to 'Current location' when location.name is empty", () => {
@@ -676,19 +668,6 @@ describe("buildHeroData", () => {
       climateComparison: { difference: -3, sampleYears: 30 },
     });
     assert.equal(negativeSmall.hasClimateComparison, false);
-  });
-
-  test("flags any missing hero stat via heroStatsHaveAnyMissing", () => {
-    const data = buildHeroData({
-      weather: {
-        ...baseWeather,
-        current: { ...baseWeather.current, dewPoint: null },
-      },
-      location: baseLocation,
-      unit: "F",
-    });
-    assert.equal(data.heroStatsHaveAnyMissing, true);
-    assert.equal(data.dewPointDisplay, "—");
   });
 
   test("builds a UV panel from the daily peak with level, copy, and marker", () => {

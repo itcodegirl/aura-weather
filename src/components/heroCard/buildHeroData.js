@@ -2,7 +2,7 @@ import { getWeather, UNKNOWN_WEATHER } from "../../domain/weatherCodes.js";
 import { classifyUv } from "../../domain/exposure.js";
 import { classifyComfort } from "../../domain/meteorology.js";
 import { resolveTodayIndex } from "../../domain/forecastToday.js";
-import { readUvOutlook } from "../../domain/forecastNow.js";
+import { readRainOutlook, readUvOutlook } from "../../domain/forecastNow.js";
 import {
   formatTemperatureValue,
   formatTemperatureWithUnit,
@@ -131,9 +131,17 @@ function formatPercent(value) {
   return numeric === null ? "" : `${Math.round(numeric)}%`;
 }
 
-function buildRainGuidance(weather, unit, todayIndex) {
-  const chance = toFiniteNumber(weather?.daily?.rainChanceMax?.[todayIndex]);
-  const amount = toFiniteNumber(weather?.daily?.rainAmountTotal?.[todayIndex]);
+/*
+ * Rain over the hours still ahead (see readRainOutlook). This pill read the
+ * calendar day's peak chance and total, hours already gone included, so at
+ * 9 pm after a rainy morning it still said "Bring rain gear — 80% peak
+ * chance today" over a dry evening. The window word follows the source:
+ * "for the rest of today" when the figures come from the hours ahead,
+ * "today" when only the calendar-day figures are available.
+ */
+function buildRainGuidance(unit, outlook) {
+  const { chance, amount, source } = outlook;
+  const window = source === "hourly" ? "for the rest of today" : "today";
   const chanceLabel = formatPercent(chance);
   // Wire amounts are pinned to inches (source "F") regardless of the
   // display unit; only the rendered label converts to the user's unit.
@@ -159,8 +167,8 @@ function buildRainGuidance(weather, unit, todayIndex) {
       label: "Rain",
       value: "Bring rain gear",
       detail: chanceLabel
-        ? `${chanceLabel} peak chance today`
-        : `${amountLabel} expected today`,
+        ? `${chanceLabel} peak chance ${window}`
+        : `${amountLabel} expected ${window}`,
     };
   }
 
@@ -174,8 +182,8 @@ function buildRainGuidance(weather, unit, todayIndex) {
       label: "Rain",
       value: "Possible showers",
       detail: chanceLabel
-        ? `${chanceLabel} peak chance today`
-        : `${amountLabel} expected today`,
+        ? `${chanceLabel} peak chance ${window}`
+        : `${amountLabel} expected ${window}`,
     };
   }
 
@@ -184,7 +192,7 @@ function buildRainGuidance(weather, unit, todayIndex) {
     tone: "calm",
     label: "Rain",
     value: "Dry window",
-    detail: chanceLabel ? `${chanceLabel} peak chance today` : "Low rain signal",
+    detail: chanceLabel ? `${chanceLabel} peak chance ${window}` : "Low rain signal",
   };
 }
 
@@ -420,9 +428,9 @@ function buildWindGuidance(weather, unit) {
  * when a reading is missing (unavailable) so the trust contract stays
  * honest.
  */
-function buildDailyGuidance(weather, unit, todayIndex, sunWindow) {
+function buildDailyGuidance(weather, unit, todayIndex, sunWindow, rainOutlook) {
   return [
-    buildRainGuidance(weather, unit, todayIndex),
+    buildRainGuidance(unit, rainOutlook),
     buildUvGuidance(weather, todayIndex, sunWindow),
     buildWindGuidance(weather, unit),
   ]
@@ -605,11 +613,17 @@ export function buildHeroData({
     unit,
     locationName: safeLocationName,
   });
-  const dailyGuidance = buildDailyGuidance(weather, unit, todayIndex, {
-    sunrise: sunriseValue,
-    sunset: sunsetValue,
-    zonedNowMs,
-  });
+  const dailyGuidance = buildDailyGuidance(
+    weather,
+    unit,
+    todayIndex,
+    {
+      sunrise: sunriseValue,
+      sunset: sunsetValue,
+      zonedNowMs,
+    },
+    readRainOutlook(weather, nowMs)
+  );
 
   const isCurrentTempMissing = isMissingPlaceholder(currentTempDisplay);
   // The headline condition is "missing" exactly when getWeather fell back to

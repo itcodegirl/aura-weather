@@ -1,7 +1,11 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { readUvOutlook, resolveCurrentHourIndex } from "./forecastNow.js";
+import {
+  readRainOutlook,
+  readUvOutlook,
+  resolveCurrentHourIndex,
+} from "./forecastNow.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
@@ -36,11 +40,19 @@ const UV_PEAK_DAILY = 8.4;
 // The live request shape: past_hours=48, so index 0 is two days ago, and
 // the current hour sits at index 48. Yesterday carries the same hourly
 // curve as today, so a peak found in the wrong day is detectable.
+// Rain: every hour before now was wet, every hour from now on is dry, so a
+// figure that counts the past is detectable.
+const PAST_CHANCE = 80;
+const PAST_AMOUNT = 0.1;
+const REMAINING_CHANCE = 5;
+
 function buildHourly({ from = -48, to = 24 } = {}) {
   const slotStart = new Date(NOW);
   slotStart.setMinutes(0, 0, 0);
   const time = [];
   const uvIndex = [];
+  const rainChance = [];
+  const rainAmount = [];
   for (let offset = from; offset <= to; offset += 1) {
     const slot = new Date(slotStart.getTime() + offset * HOUR_MS);
     time.push(naiveLocal(slot));
@@ -48,8 +60,10 @@ function buildHourly({ from = -48, to = 24 } = {}) {
     uvIndex.push(
       offset === 0 ? UV_NOW : hour === PEAK_HOUR ? UV_PEAK_HOURLY : 1
     );
+    rainChance.push(offset < 0 ? PAST_CHANCE : REMAINING_CHANCE);
+    rainAmount.push(offset < 0 ? PAST_AMOUNT : 0);
   }
-  return { time, uvIndex };
+  return { time, uvIndex, rainChance, rainAmount };
 }
 
 const YESTERDAY = new Date(NOW - 24 * HOUR_MS);
@@ -63,6 +77,8 @@ function buildWeather(overrides = {}) {
     daily: {
       time: [isoLocalDate(YESTERDAY), isoLocalDate(LOCAL_NOW), isoLocalDate(TOMORROW)],
       uvIndexMax: [1, UV_PEAK_DAILY, 9],
+      rainChanceMax: [90, 80, 10],
+      rainAmountTotal: [1, 0.5, 0],
     },
     ...overrides,
   };
@@ -178,5 +194,106 @@ describe("readUvOutlook", () => {
     // The daily peak still resolves through resolveTodayIndex's own
     // fallback to index 0, exactly as the hero's panel does.
     assert.equal(outlook.peak, 1);
+  });
+});
+
+describe("readRainOutlook", () => {
+  // Slots from the current hour to 23:00 inclusive: the hour in progress
+  // still counts.
+  const HOURS_LEFT_TODAY = 24 - CURRENT_HOUR;
+
+  test("peak and total cover the hours still ahead, not the calendar day", () => {
+    // Every past hour was 80% and wet; every remaining hour is 5% and dry.
+    // The daily figures for today say 80% and 0.5 in — the calendar day.
+    assert.deepEqual(readRainOutlook(buildWeather(), NOW), {
+      source: "hourly",
+      chance: REMAINING_CHANCE,
+      amount: 0,
+      hoursRemaining: HOURS_LEFT_TODAY,
+    });
+  });
+
+  test("the hour in progress counts, the one before it does not", () => {
+    const hourly = buildHourly();
+    hourly.rainChance[47] = 100; // the previous hour
+    hourly.rainChance[48] = 40; // this hour
+    const outlook = readRainOutlook(buildWeather({ hourly }), NOW);
+    assert.equal(outlook.chance, 40);
+  });
+
+  test("tomorrow's hours do not count, even though the series carries them", () => {
+    const hourly = buildHourly();
+    const tomorrow = isoLocalDate(TOMORROW);
+    hourly.time.forEach((time, index) => {
+      if (time.slice(0, 10) === tomorrow) {
+        hourly.rainChance[index] = 99;
+        hourly.rainAmount[index] = 2;
+      }
+    });
+    const outlook = readRainOutlook(buildWeather({ hourly }), NOW);
+    assert.equal(outlook.chance, REMAINING_CHANCE);
+    assert.equal(outlook.amount, 0);
+  });
+
+  test("the total is the sum of the remaining amounts", () => {
+    const hourly = buildHourly();
+    hourly.rainAmount[48] = 0.05;
+    hourly.rainAmount[49] = 0.15;
+    const outlook = readRainOutlook(buildWeather({ hourly }), NOW);
+    assert.ok(Math.abs(outlook.amount - 0.2) < 1e-9, `amount ${outlook.amount}`);
+  });
+
+  test("a gap in the remaining amounts makes the total unknown, not an undercount", () => {
+    const hourly = buildHourly();
+    hourly.rainAmount[49] = null;
+    const outlook = readRainOutlook(buildWeather({ hourly }), NOW);
+    assert.equal(outlook.amount, null);
+    // A maximum survives the same gap.
+    assert.equal(outlook.chance, REMAINING_CHANCE);
+  });
+
+  test("a gap in the remaining chances leaves the peak to the hours that reported", () => {
+    const hourly = buildHourly();
+    hourly.rainChance[48] = null;
+    hourly.rainChance[49] = 65;
+    const outlook = readRainOutlook(buildWeather({ hourly }), NOW);
+    assert.equal(outlook.chance, 65);
+  });
+
+  test("falls back to today's daily figures without an hourly series", () => {
+    // Today is index 1 of the restored snapshot, not the stale index 0.
+    assert.deepEqual(readRainOutlook(buildWeather({ hourly: undefined }), NOW), {
+      source: "daily",
+      chance: 80,
+      amount: 0.5,
+      hoursRemaining: null,
+    });
+  });
+
+  test("a snapshot that ended yesterday falls back to the daily figures", () => {
+    const stale = buildWeather({ hourly: buildHourly({ from: -48, to: -20 }) });
+    const outlook = readRainOutlook(stale, NOW);
+    assert.equal(outlook.source, "daily");
+    assert.equal(outlook.chance, 80);
+  });
+
+  test("an hourly series with no rain fields falls back to the daily figures", () => {
+    const { time, uvIndex } = buildHourly();
+    const outlook = readRainOutlook(buildWeather({ hourly: { time, uvIndex } }), NOW);
+    assert.equal(outlook.source, "daily");
+    assert.equal(outlook.chance, 80);
+    assert.equal(outlook.amount, 0.5);
+  });
+
+  test("reports nothing when neither series has a figure", () => {
+    const outlook = readRainOutlook(buildWeather({ hourly: undefined, daily: undefined }), NOW);
+    assert.deepEqual(outlook, { source: null, chance: null, amount: null, hoursRemaining: null });
+  });
+
+  test("an unusable clock cannot place the current hour, so the daily figures stand in", () => {
+    const outlook = readRainOutlook(buildWeather(), null);
+    assert.equal(outlook.source, "daily");
+    // resolveTodayIndex's own fallback to index 0, as everywhere else.
+    assert.equal(outlook.chance, 90);
   });
 });

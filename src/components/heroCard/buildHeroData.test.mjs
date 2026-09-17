@@ -285,6 +285,97 @@ describe("buildHeroData", () => {
     assert.equal(data.dailyGuidance[0].kind, "rain");
   });
 
+  /*
+   * Audit finding A-10. Rain guidance read the calendar day: at 9 pm after
+   * a rainy morning it still said "Bring rain gear — 80% peak chance today"
+   * over a dry evening. It now reads the hourly series from this hour to
+   * the end of today, and says so; the calendar-day figures are only a
+   * fallback, and keep the word "today".
+   */
+  describe("rain guidance looks at the hours still ahead", () => {
+    // baseWeather carries no timezone, so the hourly times are instants
+    // (Z) and the clock is compared as an instant. daily.time pins "today"
+    // to the same date whatever zone the runner is in.
+    const hourlyDay = (chanceAt, amountAt) => {
+      const time = [];
+      const rainChance = [];
+      const rainAmount = [];
+      for (let hour = 0; hour < 24; hour += 1) {
+        time.push(`2026-04-21T${String(hour).padStart(2, "0")}:00:00Z`);
+        rainChance.push(chanceAt(hour));
+        rainAmount.push(amountAt(hour));
+      }
+      return { time, rainChance, rainAmount };
+    };
+    const rainPill = (hourly, nowMs) =>
+      buildHeroData({
+        weather: {
+          ...baseWeather,
+          hourly,
+          daily: {
+            ...baseWeather.daily,
+            time: ["2026-04-21"],
+            // The calendar day: what the pill used to read.
+            rainChanceMax: [80],
+            rainAmountTotal: [0.4],
+          },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs,
+      }).dailyGuidance.find((item) => item.kind === "rain") ?? null;
+
+    test("a rainy morning does not keep the evening under a rain-gear warning", () => {
+      const rainyMorning = hourlyDay(
+        (hour) => (hour < 12 ? 80 : 5),
+        (hour) => (hour < 12 ? 0.05 : 0)
+      );
+      const evening = Date.UTC(2026, 3, 21, 21, 0, 0);
+      const data = buildHeroData({
+        weather: {
+          ...baseWeather,
+          hourly: rainyMorning,
+          daily: { ...baseWeather.daily, time: ["2026-04-21"], rainChanceMax: [80], rainAmountTotal: [0.4] },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs: evening,
+      });
+      // Calm-tone guidance is filtered out of the pills: a dry evening
+      // earns no rain pill at all, rather than a rain-gear one.
+      assert.equal(data.dailyGuidance.find((item) => item.kind === "rain"), undefined);
+    });
+
+    test("an afternoon storm still ahead is the peak the morning reader sees", () => {
+      const afternoonStorm = hourlyDay(
+        (hour) => (hour >= 14 && hour <= 16 ? 70 : 10),
+        (hour) => (hour >= 14 && hour <= 16 ? 0.1 : 0)
+      );
+      const morning = Date.UTC(2026, 3, 21, 9, 0, 0);
+      const pill = rainPill(afternoonStorm, morning);
+      assert.equal(pill.value, "Bring rain gear");
+      assert.equal(pill.detail, "70% peak chance for the rest of today");
+    });
+
+    test("the remaining total is what is expected, in the display unit", () => {
+      const showers = hourlyDay(
+        () => null,
+        (hour) => (hour >= 14 && hour <= 16 ? 0.06 : 0)
+      );
+      const morning = Date.UTC(2026, 3, 21, 9, 0, 0);
+      const pill = rainPill(showers, morning);
+      assert.equal(pill.value, "Bring rain gear");
+      assert.equal(pill.detail, "0.18 in expected for the rest of today");
+    });
+
+    test("without an hourly series the calendar-day figures stand in, and say so", () => {
+      const evening = Date.UTC(2026, 3, 21, 21, 0, 0);
+      const pill = rainPill(undefined, evening);
+      assert.equal(pill.value, "Bring rain gear");
+      assert.equal(pill.detail, "80% peak chance today");
+    });
+  });
+
   test("renders the rain-guidance amount in the display unit (mm for °C)", () => {
     // Chance missing forces the amount-based detail line. The wire
     // amount is inches (0.18 in = 4.57 mm); a °C user must see mm.

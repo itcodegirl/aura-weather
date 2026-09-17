@@ -2,6 +2,7 @@ import { getWeather, UNKNOWN_WEATHER } from "../../domain/weatherCodes.js";
 import { classifyUv } from "../../domain/exposure.js";
 import { classifyComfort } from "../../domain/meteorology.js";
 import { resolveTodayIndex } from "../../domain/forecastToday.js";
+import { readUvOutlook } from "../../domain/forecastNow.js";
 import {
   formatTemperatureValue,
   formatTemperatureWithUnit,
@@ -436,7 +437,7 @@ const WIND_GUSTY_MPH = 25;
 const AQI_GOOD = 50;
 const AQI_MODERATE = 100;
 
-function buildCharacteristicChips(weather, aqi, todayIndex) {
+function buildCharacteristicChips(weather, aqi, uvNow) {
   const chips = [];
 
   const dewPoint = toFiniteNumber(weather?.current?.dewPoint);
@@ -508,7 +509,12 @@ function buildCharacteristicChips(weather, aqi, todayIndex) {
     });
   }
 
-  const uvIndex = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
+  // The chips describe now — comfort, wind and air are all current
+  // readings — so UV is this hour's reading too, not the day's peak. The
+  // peak wore this present-tense label ("UV very high" at 9 am over an
+  // actual index of 2); it keeps its place in the UV panel, which says
+  // "Peak". No hourly reading, no chip: the peak is not a stand-in.
+  const uvIndex = toFiniteNumber(uvNow);
   if (uvIndex !== null) {
     // Chip casing is "UV <band>", derived from the shared classifier so
     // the chip word can never drift from the panel/reading-line band.
@@ -619,7 +625,11 @@ export function buildHeroData({
     windDisplay,
   ].some((value) => isMissingPlaceholder(value));
 
-  const characteristicChips = buildCharacteristicChips(weather, aqi, todayIndex);
+  const characteristicChips = buildCharacteristicChips(
+    weather,
+    aqi,
+    readUvOutlook(weather, nowMs).now
+  );
 
   const sunWindow = {
     sunrise: sunriseValue,

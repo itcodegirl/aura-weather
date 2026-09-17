@@ -1,5 +1,6 @@
 import { classifyUv } from "../../domain/exposure.js";
 import { resolveTodayIndex } from "../../domain/forecastToday.js";
+import { readUvOutlook } from "../../domain/forecastNow.js";
 import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase, getZonedNowMs, isDaylight } from "../../utils/sunlight.js";
@@ -157,10 +158,15 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   // comparison, and only this one gated at all — so the pill kept saying
   // "Use sun protection" after dark while the reading correctly went quiet.
   if (isDaylight(sunrise, sunset, zonedNowMs)) {
+    // This hour's reading, not the day's peak. The sentence is present
+    // tense — "if you're heading out" — and with the peak in it, it said
+    // "Very high UV (8.0)" at 9 am over an actual index of about 2. The
+    // peak keeps its place in the UV panel, which says "Peak"; a missing
+    // hourly reading means no callout rather than the peak standing in.
     // Band words come from the shared WHO classifier so the reading
     // line can never disagree with the UV chip or panel. Only High and
     // above merits a hero callout; Moderate stays a panel-level fact.
-    const uvIndex = toFiniteNumber(weather.daily?.uvIndexMax?.[todayIndex]);
+    const uvIndex = readUvOutlook(weather, nowMs).now;
     const uvBand = classifyUv(uvIndex)?.band;
     if (uvBand === "very-high" || uvBand === "extreme") {
       return {

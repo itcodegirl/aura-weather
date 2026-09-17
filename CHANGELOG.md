@@ -9,6 +9,20 @@ portfolio-grade product. Format roughly follows
 
 ### Fixed
 
+- **Hourly timestamps are resolved through the location's zone, not the
+  device's.** Open-Meteo sends naive local strings, and `new Date()` reads
+  them in whatever zone the device is on; "now" was reframed to match, so
+  both sides were wrong in the same direction and cancelled out. They stop
+  cancelling on the device zone's two DST days a year, where the mapping
+  from wall clock to instant is not one-to-one: in `America/Chicago`
+  `2026-03-08T02:00` and `03:00` parse to the same instant, and
+  `2026-11-01T01:00` to `02:00` spans two hours. The hourly "Now" marker
+  landed a slot early on those days. `zonedTime.js` now converts each
+  timestamp through the location's zone, and the shared window lookup every
+  hourly surface uses takes the zone and the real clock. A regression test
+  runs with the device zone set to a transitioning one and fails against the
+  old parsing.
+
 - **One display locale, named once.** The locale was decided at the call
   site 21 times: `en-US` hardcoded in 15 display formatters, and no locale
   at all in the trust footer, the status stack, the sync panel and the

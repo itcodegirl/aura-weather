@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { findWindowStartIndex } from "../utils/timeSeries.js";
 import { toFiniteNumber } from "../utils/numbers.js";
-import { getZonedNow } from "../utils/dates.js";
+import { getIsoDateInTimeZone } from "../utils/dates.js";
+import { toEpochMs, zonedWallClockToEpoch } from "../utils/zonedTime.js";
 
 function getEmptyRainAnalysis() {
   return {
@@ -52,14 +53,13 @@ export function analyzeRain(hourly, timeZone, now = Date.now()) {
     : [];
   const hourlyAmounts = Array.isArray(hourly.rainAmount) ? hourly.rainAmount : [];
 
-  // Reframe "now" into the location's timezone. Open-Meteo timestamps are
-  // naive location wall-clock (timezone=auto), parsed as device-local; the
-  // real clock must be reframed the same way or the window start and day
-  // boundary drift by the device/location offset for a remote city.
-  const zonedNow = getZonedNow(timeZone, now);
+  // Open-Meteo timestamps are the location's naive wall clock
+  // (timezone=auto). The zone goes to findWindowStartIndex, which resolves
+  // them to real instants, so `now` is the real clock.
   const idx = findWindowStartIndex(hourlyTimes, {
     windowSize: 24,
-    now: zonedNow.getTime(),
+    now,
+    timeZone,
   });
   if (idx < 0) {
     return getEmptyRainAnalysis();
@@ -119,15 +119,19 @@ export function analyzeRain(hourly, timeZone, now = Date.now()) {
     ? amountHours.reduce((sum, h) => sum + Math.max(h.amount, 0), 0)
     : null;
 
-  // Location's midnight, in the same device-local frame the forecast
-  // timestamps are parsed in — not the device's midnight.
-  const today = new Date(zonedNow);
-  today.setHours(0, 0, 0, 0);
-  const todayMs = today.getTime();
-  const todayStartIdx = hourly.time.findIndex((t) => {
-    const timestamp = new Date(t).getTime();
-    return Number.isFinite(timestamp) && timestamp >= todayMs;
-  });
+  // The location's midnight as a real instant: its calendar day, then that
+  // day's 00:00 resolved through its own zone. On a spring-forward morning
+  // the location's day starts at 00:00 as usual but is 23 hours long, which
+  // a device-local `setHours(0,0,0,0)` could not express.
+  const todayIso = getIsoDateInTimeZone(timeZone, new Date(now));
+  const todayMs = zonedWallClockToEpoch(`${todayIso}T00:00`, timeZone);
+  const todayStartIdx =
+    todayMs === null
+      ? -1
+      : hourly.time.findIndex((t) => {
+          const timestamp = toEpochMs(t, timeZone);
+          return timestamp !== null && timestamp >= todayMs;
+        });
   let soFarToday = null;
   if (todayStartIdx !== -1) {
     soFarToday = sumFiniteValues(hourlyAmounts.slice(todayStartIdx, idx));

@@ -15,7 +15,8 @@ import {
   classifyComfort,
   classifyWind,
 } from "../domain";
-import { getZonedNow, formatHour } from "../utils/dates";
+import { formatHour } from "../utils/dates";
+import { toEpochMs } from "../utils/zonedTime";
 import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber, MISSING_VALUE_PLACEHOLDER } from "../utils/numbers";
 import { InfoDrawer } from "./ui";
@@ -50,15 +51,14 @@ function joinList(items) {
 }
 
 // Peak storm/rain window over the next ~12h, derived from hourly rain chance.
-function buildPeakWindow(hourly, timeZone) {
+function buildPeakWindow(hourly, timeZone, now = Date.now()) {
   const t = hourly?.time;
   const r = hourly?.rainChance;
   if (!Array.isArray(t) || !Array.isArray(r) || !t.length) return null;
-  const now = getZonedNow(timeZone).getTime();
   const pts = [];
   for (let i = 0; i < t.length; i++) {
-    const tm = new Date(t[i]).getTime();
-    if (!Number.isFinite(tm)) continue;
+    const tm = toEpochMs(t[i], timeZone);
+    if (tm === null) continue;
     if (tm < now - 3600000) continue;
     if (tm > now + 12 * 3600000) break;
     const p = toFiniteNumber(r[i]);
@@ -141,7 +141,7 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
       return null;
     }
     const nowIdx = findWindowStartIndex(times, {
-      now: getZonedNow(weather?.meta?.timezone).getTime(),
+      timeZone: weather?.meta?.timezone,
       currentSlotToleranceMs: 60 * 60 * 1000,
     });
     if (nowIdx < 0) {

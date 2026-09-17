@@ -17,7 +17,6 @@ import { LineChart as LineIcon } from "lucide-react";
 import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
 import { WIND_SPEED_CONVERSION } from "../domain/wind";
-import { getZonedNow } from "../utils/dates";
 import { formatClockHour } from "../utils/formatters";
 import { findWindowStartIndex } from "../utils/timeSeries";
 import { toFiniteNumber } from "../utils/numbers";
@@ -107,8 +106,10 @@ function buildHours(hourly, unit, timeZone) {
     return { hours: [], nowIndex: -1 };
   }
 
+  // `now` is left to findWindowStartIndex, which defaults to the real
+  // clock: reading it here would be an impure call in a render path.
   const nowIdx = findWindowStartIndex(hourly.time, {
-    now: getZonedNow(timeZone).getTime(),
+    timeZone,
     windowSize: WINDOW,
     currentSlotToleranceMs: 60 * 60 * 1000,
   });

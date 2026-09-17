@@ -2,6 +2,8 @@
 import { memo, useId } from "react";
 import { Wind, Droplets, Sun, Eye, Gauge, Thermometer } from "lucide-react";
 import { getAqiStatus, getAqiGuidance, getUvStatus } from "../domain/exposure";
+import { resolveTodayIndex } from "../domain/forecastToday";
+import { readUvOutlook } from "../domain/forecastNow";
 import { InfoDrawer } from "./ui";
 import { formatWindSpeed, windDirectionName, classifyWind } from "../domain/wind";
 import { classifyComfort } from "../domain";
@@ -70,7 +72,7 @@ const TILE_HELP = {
   },
   uv: {
     title: "UV index",
-    body: "How strong the sun's ultraviolet radiation is right now, from 0 to 11+. At 3 or above, unprotected skin can start to burn — 6 to 7 in under half an hour for fair skin. Shade, a hat and sunscreen all move the number that matters.",
+    body: "How strong the sun's ultraviolet radiation is right now, from 0 to 11+, with today's peak and when to expect it underneath. At 3 or above, unprotected skin can start to burn — 6 to 7 in under half an hour for fair skin. Shade, a hat and sunscreen all move the number that matters.",
   },
   aqi: {
     title: "Air quality index",
@@ -148,11 +150,39 @@ function HumidityTile({ humidity }) {
   );
 }
 
-function UvTile({ uvIndex }) {
-  const uv = toFiniteNumber(uvIndex);
+// "1 pm": the hour only. Hourly slots sit on the hour, and the provider's
+// 15-minute interpolation does not justify printing minutes.
+function formatPeakHour(time) {
+  const date = new Date(time);
+  if (!Number.isFinite(date.getTime())) return "";
+  return date
+    .toLocaleTimeString("en-US", { hour: "numeric", hour12: true })
+    .toLowerCase();
+}
+
+function describeUvPeak({ peak, peakTime, peakIsPast }) {
+  if (peak === null) return "";
+  const rounded = Math.round(peak);
+  const hour = peakTime ? formatPeakHour(peakTime) : "";
+  if (!hour) return `Today's peak ${rounded}`;
+  return `${peakIsPast ? "Peaked" : "Peaks"} at ${rounded} around ${hour}`;
+}
+
+/*
+ * The headline number is this hour's reading (hourly uv_index at the
+ * current slot), not the day's maximum. The tile printed daily.uvIndexMax
+ * under help copy that said "right now", so at 9 am it read "8 · Very
+ * High" over an actual index of about 2. The peak keeps its place as the
+ * line underneath, with the hour it arrives — that is the planning fact,
+ * and it is labelled as one.
+ */
+function UvTile({ outlook }) {
+  const uv = outlook.now;
   const hasDat = uv !== null;
   const fraction = hasDat ? Math.max(0, Math.min(1, uv / 11)) : null;
   const { label, tone } = getUvStatus(uv);
+  const peakLine = describeUvPeak(outlook);
+  const peakSpoken = peakLine ? `, ${peakLine.toLowerCase()}` : "";
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
       <TileLabel icon={Sun} help={TILE_HELP.uv}>
@@ -163,12 +193,17 @@ function UvTile({ uvIndex }) {
         scale="uv"
         tone={tone}
         missing={!hasDat}
-        ariaLabel={hasDat ? `UV index ${Math.round(uv)} ${label}` : "UV index unavailable"}
+        ariaLabel={
+          hasDat
+            ? `UV index ${Math.round(uv)} ${label}${peakSpoken}`
+            : `UV index unavailable${peakSpoken}`
+        }
       />
       <div className="atm-arc-readout">
         <span className="atm-val">{hasDat ? Math.round(uv) : "—"}</span>
         <span className="atm-sub">{hasDat ? label : "Unavailable"}</span>
       </div>
+      {peakLine && <p className="atm-peak-line">{peakLine}</p>}
     </div>
   );
 }
@@ -317,8 +352,7 @@ function formatSunTime(d) {
   return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
-function SunTile({ sunrise, sunset, timeZone }) {
-  const nowMs = useTimeNow(60_000);
+function SunTile({ sunrise, sunset, timeZone, nowMs }) {
   const riseDate = sunrise ? new Date(sunrise) : null;
   const setDate = sunset ? new Date(sunset) : null;
   const hasDat =
@@ -468,13 +502,25 @@ function VisibilityTile({ visibility, unit }) {
 
 function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false }) {
   const titleId = useId();
+  // One clock for the panel: the sun's position on its arc, which daily
+  // entry is today, and which hourly slot is this hour all read it.
+  const nowMs = useTimeNow(60_000);
+
+  /*
+   * Which daily entry is today. This panel read index 0 while the hero
+   * resolves today, so a snapshot restored from yesterday put yesterday's
+   * sun times and UV peak here beside a hero showing today's — the same
+   * two-panels-disagree defect resolveTodayIndex was written to close.
+   */
+  const todayIndex = resolveTodayIndex(weather, nowMs);
+  const uvOutlook = readUvOutlook(weather, nowMs);
 
   // Individual tiles already say "Unavailable", but nothing told the
   // reader what the dash itself means. Explain it once, and only when a
   // dash is actually on screen.
   const hasMissingReading = [
     weather?.current?.humidity,
-    weather?.daily?.uvIndexMax?.[0],
+    uvOutlook.now,
     aqi,
     weather?.current?.pressure,
     weather?.current?.dewPoint,
@@ -498,14 +544,15 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
 
       <div className="atm-grid">
         <HumidityTile humidity={weather?.current?.humidity} />
-        <UvTile uvIndex={weather?.daily?.uvIndexMax?.[0]} />
+        <UvTile outlook={uvOutlook} />
         <AqiTile aqi={aqi} />
         <PressureTile pressureHpa={weather?.current?.pressure} unit={unit} />
         <WindTile weather={weather} unit={unit} />
         <SunTile
-          sunrise={weather?.daily?.sunrise?.[0]}
-          sunset={weather?.daily?.sunset?.[0]}
+          sunrise={weather?.daily?.sunrise?.[todayIndex]}
+          sunset={weather?.daily?.sunset?.[todayIndex]}
           timeZone={weather?.meta?.timezone}
+          nowMs={nowMs}
         />
         <DewPointTile dewPoint={weather?.current?.dewPoint} unit={unit} />
         <VisibilityTile visibility={weather?.current?.visibility} unit={unit} />

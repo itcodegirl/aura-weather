@@ -11,6 +11,41 @@ afterEach(() => {
   cleanup();
 });
 
+// The panel reads the clock through useTimeNow, which these tests do not
+// mock, so "today" and "this hour" are the real ones and the fixture is
+// built from them: today's date, and an hourly UV series for today.
+function pad(value) {
+  return String(value).padStart(2, "0");
+}
+
+function naiveLocal(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:00`;
+}
+
+function isoLocalDate(date) {
+  return naiveLocal(date).slice(0, 10);
+}
+
+const NOW = new Date();
+const TODAY = isoLocalDate(NOW);
+const CURRENT_HOUR = NOW.getHours();
+// Today's peak hour, never the current hour, so the two readings differ.
+const PEAK_HOUR = CURRENT_HOUR === 13 ? 14 : 13;
+const UV_NOW = 3.4;
+const UV_PEAK = 8.1;
+
+function todayHourly() {
+  const time = [];
+  const uvIndex = [];
+  for (let hour = 0; hour < 24; hour += 1) {
+    const slot = new Date(NOW);
+    slot.setHours(hour, 0, 0, 0);
+    time.push(naiveLocal(slot));
+    uvIndex.push(hour === CURRENT_HOUR ? UV_NOW : hour === PEAK_HOUR ? UV_PEAK : 1);
+  }
+  return { time, uvIndex };
+}
+
 const FULL_WEATHER = {
   current: {
     humidity: 58,
@@ -23,13 +58,21 @@ const FULL_WEATHER = {
     // reading sits on the clear side of the tile's ten-mile boundary.
     visibility: 16094,
   },
+  hourly: todayHourly(),
   daily: {
-    uvIndexMax: [6.2],
-    sunrise: ["2024-06-15T05:42:00"],
-    sunset: ["2024-06-15T20:18:00"],
+    time: [TODAY],
+    uvIndexMax: [UV_PEAK],
+    sunrise: [`${TODAY}T05:42:00`],
+    sunset: [`${TODAY}T20:18:00`],
   },
   aqi: 42,
 };
+
+function uvTile(container) {
+  return Array.from(container.querySelectorAll(".atm-tile")).find((tile) =>
+    tile.textContent.includes("UV index")
+  );
+}
 
 describe("AtmosphereBento", () => {
   test("renders without crashing on full weather data", () => {
@@ -175,9 +218,10 @@ describe("AtmosphereBento", () => {
         unit: "F",
       })
     );
-    assert.equal(
-      container.querySelector(".atm-footnote"),
-      null,
+    // assert.ok on a boolean, not assert.equal(node, null): when that fails,
+    // Node's assert inspects the jsdom node for its diff and never returns.
+    assert.ok(
+      !container.querySelector(".atm-footnote"),
       "no dash on screen means no footnote"
     );
   });
@@ -277,7 +321,89 @@ describe("AtmosphereBento explains its readings", () => {
     );
 
     // Absent AQI must not render "Air is clean. No precautions needed."
-    assert.equal(container.querySelector(".atm-guidance"), null);
+    // A boolean, not assert.equal(node, null): when that fails, Node's
+    // assert inspects the jsdom node for its diff and never returns.
+    assert.ok(!container.querySelector(".atm-guidance"));
     assert.ok(screen.getByText("Not reported here"));
+  });
+
+  /*
+   * Audit finding A-07. The tile printed daily.uvIndexMax — the day's
+   * maximum — under help copy that said "right now", so at 9 am it read
+   * "8 · Very High" over an actual index of about 2. It now reads this
+   * hour's hourly uv_index, and names the peak underneath as a peak.
+   */
+  test("the UV tile reads this hour, and names today's peak with its hour underneath", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 42,
+        unit: "F",
+      })
+    );
+    const tile = uvTile(container);
+    assert.ok(tile, "UV tile rendered");
+    assert.equal(tile.querySelector(".atm-val").textContent, "3");
+    assert.equal(tile.querySelector(".atm-sub").textContent, "Moderate");
+
+    const peakLine = tile.querySelector(".atm-peak-line").textContent;
+    assert.match(peakLine, /^Peak(s|ed) at 8 around \d{1,2} (am|pm)$/);
+    assert.ok(
+      peakLine.startsWith(PEAK_HOUR > CURRENT_HOUR ? "Peaks" : "Peaked"),
+      `tense follows the clock: ${peakLine}`
+    );
+    // The spoken form carries both readings, in the same order.
+    assert.ok(
+      screen.getByRole("img", { name: /^UV index 3 Moderate, peak(s|ed) at 8 around/ }),
+      "gauge names this hour and the peak"
+    );
+  });
+
+  test("without an hourly UV series the tile shows a dash and still names today's peak", () => {
+    const { container } = render(
+      React.createElement(AtmosphereBento, {
+        weather: { ...FULL_WEATHER, hourly: undefined },
+        aqi: 42,
+        unit: "F",
+      })
+    );
+    const tile = uvTile(container);
+    // The peak must not stand in for the missing reading.
+    assert.equal(tile.querySelector(".atm-val").textContent, "—");
+    assert.equal(tile.querySelector(".atm-sub").textContent, "Unavailable");
+    assert.equal(tile.querySelector(".atm-peak-line").textContent, "Today's peak 8");
+    assert.ok(tile.classList.contains("atm-tile--missing"));
+    assert.ok(container.querySelector(".atm-footnote"), "the dash is explained");
+  });
+
+  /*
+   * Audit finding A-05. The panel read daily index 0 while the hero
+   * resolves today, so a snapshot restored from yesterday showed
+   * yesterday's sun times and UV peak beside a hero showing today's.
+   */
+  test("a snapshot restored from yesterday shows today's sun times and UV peak, not yesterday's", () => {
+    const yesterdayDate = new Date(NOW);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = isoLocalDate(yesterdayDate);
+    const stale = {
+      ...FULL_WEATHER,
+      daily: {
+        time: [yesterday, TODAY],
+        uvIndexMax: [1, UV_PEAK],
+        sunrise: [`${yesterday}T05:00:00`, `${TODAY}T06:05:00`],
+        sunset: [`${yesterday}T20:00:00`, `${TODAY}T19:58:00`],
+      },
+    };
+    const { container } = render(
+      React.createElement(AtmosphereBento, { weather: stale, aqi: 42, unit: "F" })
+    );
+
+    assert.ok(screen.getByText("6:05 am"), "today's sunrise");
+    assert.ok(screen.getByText("7:58 pm"), "today's sunset");
+    assert.ok(!screen.queryByText("5:00 am"), "yesterday's sunrise is not shown");
+    assert.ok(!screen.queryByText("8:00 pm"), "yesterday's sunset is not shown");
+
+    const peakLine = uvTile(container).querySelector(".atm-peak-line").textContent;
+    assert.match(peakLine, /at 8 around/, `today's peak, not the stale index 0: ${peakLine}`);
   });
 });

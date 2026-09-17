@@ -627,10 +627,14 @@ describe("buildHeroData", () => {
     // Daylight window: baseWeather sunrise/sunset span 11:18–00:41 UTC,
     // so 18:00 UTC sits inside it and the UV reading is eligible.
     const daylightNow = Date.UTC(2026, 3, 21, 18, 0, 0);
+    // The reading line speaks to this hour, so the hourly reading at the
+    // current slot is set equal to the peak: the claim under test is the
+    // shared classifier, not now versus peak (that is the test below).
     const dataFor = (uv) =>
       buildHeroData({
         weather: {
           ...baseWeather,
+          hourly: { time: ["2026-04-21T18:00:00Z"], uvIndex: [uv] },
           daily: { ...baseWeather.daily, uvIndexMax: [uv] },
         },
         location: baseLocation,
@@ -656,6 +660,52 @@ describe("buildHeroData", () => {
     const moderate = dataFor(3.5);
     assert.equal(moderate.uvPanel.level, "Moderate");
     assert.equal(moderate.atmosphereReading, null);
+  });
+
+  /*
+   * Audit finding A-07. The chip and the reading line are present tense,
+   * and both took the day's peak: "UV very high" at 9 am over an actual
+   * index of 2. They now read the hourly series at the current hour; the
+   * panel and the guidance pill keep the peak, which is what they say.
+   */
+  test("the UV chip and reading line describe this hour, not the day's peak", () => {
+    const daylightNow = Date.UTC(2026, 3, 21, 18, 0, 0);
+    const dataFor = (hourly) =>
+      buildHeroData({
+        weather: {
+          ...baseWeather,
+          hourly,
+          daily: { ...baseWeather.daily, uvIndexMax: [8.4] },
+        },
+        location: baseLocation,
+        unit: "F",
+        nowMs: daylightNow,
+      });
+    const uvChip = (data) =>
+      data.characteristicChips.find((chip) => chip.id === "uv")?.label;
+
+    // Morning: the day will peak Very High, the index right now is 2.5.
+    const morning = dataFor({ time: ["2026-04-21T18:00:00Z"], uvIndex: [2.5] });
+    assert.equal(uvChip(morning), "UV low");
+    assert.equal(morning.atmosphereReading, null, "no present-tense UV callout at 2.5");
+    assert.equal(morning.uvPanel.peakLabel, "Peak UV 8.4", "the panel keeps the peak");
+    assert.equal(
+      morning.dailyGuidance.find((item) => item.kind === "uv")?.detail,
+      "Peak UV 8.4",
+      "the pill keeps the peak"
+    );
+
+    // Midday: the reading is the peak, and both surfaces say so.
+    const midday = dataFor({ time: ["2026-04-21T18:00:00Z"], uvIndex: [8.4] });
+    assert.equal(uvChip(midday), "UV very high");
+    assert.match(midday.atmosphereReading.text, /Very high UV \(8\.4\)/);
+
+    // No hourly series: no chip and no callout, rather than the peak
+    // wearing a present-tense label.
+    const noHourly = dataFor(undefined);
+    assert.equal(uvChip(noHourly), undefined);
+    assert.equal(noHourly.atmosphereReading, null);
+    assert.equal(noHourly.uvPanel.peakLabel, "Peak UV 8.4");
   });
 
   test("clamps the UV marker to 100% past the top of the scale", () => {

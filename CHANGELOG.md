@@ -87,6 +87,14 @@ portfolio-grade product. Format roughly follows
   high with the 30-year average high for the date, says so ("Today's
   high is 8°F warmer than the 30-year average high for April 21"), and
   the archive request asks for that one daily field instead of three.
+- **The hero names the valid time of its current readings.** "Current"
+  conditions are model output on a 15-minute grid, valid at the
+  provider's `current.time`; the model dropped that field, so a 4:59 pm
+  fetch presented 4:45 pm values as "just now" and nothing on screen
+  said they were a model estimate. The model now keeps `current.time`,
+  `current.interval` and the location's UTC offset, and the hero says
+  "Conditions as of 4:45 pm · model estimate" under the trust pill,
+  whose age stays the fetch — two facts, two labels.
 
 ### Changed
 

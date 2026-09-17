@@ -340,6 +340,43 @@ describe("HeroCard trust pill confidence", () => {
     );
   });
 
+  /*
+   * Audit finding A-09. The pill's age is the fetch; the readings are model
+   * output valid at `current.time`, up to fifteen minutes earlier, and
+   * nothing on screen said so.
+   */
+  test("says what the current readings are: model output as of the valid time", () => {
+    render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ current: { time: "2026-04-21T16:45" } }),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() },
+      })
+    );
+
+    assert.ok(screen.getByText("Conditions as of 4:45 pm · model estimate"));
+    assert.match(
+      screen.getByText(/High confidence/).textContent,
+      /just now/,
+      "the fetch age stays on the pill; the valid time is a separate fact"
+    );
+  });
+
+  test("omits the valid-time line rather than guess when the provider sent no time", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather(),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: Date.now() },
+      })
+    );
+
+    assert.ok(!container.querySelector(".hero-valid-time"));
+    assert.ok(!screen.queryByText(/Conditions as of/));
+  });
+
   test("downgrades to 'Confidence fading' once a live reading goes stale", () => {
     const { container } = render(
       React.createElement(HeroCard, {

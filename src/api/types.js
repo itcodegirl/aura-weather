@@ -7,11 +7,19 @@
  * visibility METRES. The provider declares visibility in feet alongside
  * inch precipitation; `normalizeVisibility` converts it at the boundary so
  * consumers convert for display only.
+ *
+ * Time: `current.time` is the instant the current conditions are valid
+ * for, as the provider's naive location-local string ("2026-09-16T19:30"),
+ * and `current.interval` the model grid in seconds (900). `meta.utcOffsetSeconds`
+ * is the location's offset from UTC, so a naive string can be placed on the
+ * real timeline without the device's zone.
  */
 
 /**
- * @typedef {{latitude: number|null, longitude: number|null, timezone: string}} WeatherMeta
+ * @typedef {{latitude: number|null, longitude: number|null, timezone: string, utcOffsetSeconds: number|null}} WeatherMeta
  * @typedef {{
+ *   time: string|null,
+ *   interval: number|null,
  *   temperature: number|null,
  *   humidity: number|null,
  *   feelsLike: number|null,
@@ -83,8 +91,11 @@ export function createEmptyWeatherModel() {
       latitude: null,
       longitude: null,
       timezone: "UTC",
+      utcOffsetSeconds: null,
     },
     current: {
+      time: null,
+      interval: null,
       temperature: null,
       humidity: null,
       feelsLike: null,

@@ -188,6 +188,7 @@ function HeroCard({
     dailyGuidance,
     today,
     tempUnit,
+    validTimeLabel,
   } = heroData;
 
   // Freshness + confidence for the hero trust pill. The pill used to
@@ -449,6 +450,19 @@ function HeroCard({
               <span className="hero-trust-dot" aria-hidden="true" />
               {trustLabel} · {ageLabel}
             </div>
+          )}
+          {/*
+            * The pill's age is the fetch. The readings themselves are model
+            * output on a 15-minute grid, valid at the provider's `current.time`
+            * — up to a quarter of an hour before a "just now" fetch — and
+            * nothing on screen said so. This names the valid time and what
+            * kind of value it is. Omitted, never guessed, when the provider
+            * sent no time.
+            */}
+          {validTimeLabel && (
+            <p className="hero-valid-time">
+              Conditions as of {validTimeLabel} · model estimate
+            </p>
           )}
         </div>
 

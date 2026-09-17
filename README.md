@@ -217,6 +217,7 @@ npm run test:lighthouse
 - Browser location is opt-in. Users can keep the fallback city, search manually, or grant location access.
 - Device-location success upgrades to a friendly nearby place label when reverse geocoding succeeds.
 - Core weather data loads first. Air quality, alerts, and climate context can recover independently if a secondary API is slow or unavailable.
+- Current conditions say what they are. The hero reads "Conditions as of 4:45 pm · model estimate" — the provider's valid time on its 15-minute model grid, in the location's wall clock — beside the fetch age in the trust pill, so a model value is never presented as a station observation or as newer than it is.
 - The hero summarizes daily decisions from real forecast data: rain gear, UV exposure, and wind comfort. Missing source data is labelled unavailable, not guessed.
 - Mobile rain and hourly cards expose touch-friendly sample controls so users can inspect dense timelines without relying on hover.
 - Saved cities appear as search suggestions on focus, so repeat switching does not require typing.
@@ -309,12 +310,12 @@ The contract is locked in by tests at every layer:
 - **Unit (`numbers.test.mjs`, <!--n:numbers-tests-->10<!--/n--> tests)** — `toFiniteNumber` rejects
   null, undefined, empty strings, booleans, arrays, objects, and
   `NaN`/`Infinity`.
-- **Integration (`transforms.test.mjs`, <!--n:transforms-tests-->13<!--/n--> tests)** —
+- **Integration (`transforms.test.mjs`, <!--n:transforms-tests-->15<!--/n--> tests)** —
   `normalizeWeatherResponse` preserves null current readings end-to-end.
 - **API (`openMeteo.test.mjs`)** —
   `fetchHistoricalTemperatureAverage` drops null and empty-string
   archive samples instead of averaging them as 0°F.
-- **React render (`HeroCard.render.test.mjs`, <!--n:herocard-render-tests-->22<!--/n--> tests)** — the
+- **React render (`HeroCard.render.test.mjs`, <!--n:herocard-render-tests-->24<!--/n--> tests)** — the
   rendered DOM contains no `0%`, `0 hPa`, or `—°F` leaks; missing
   values carry the "No data available" announcement, guidance is
   labelled unavailable instead of invented, and confidence claims

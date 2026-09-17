@@ -21,6 +21,13 @@ function asObject(value) {
   return value && typeof value === "object" ? value : {};
 }
 
+// A provider timestamp is kept as the string the provider sent — the
+// location's wall clock, e.g. "2026-09-16T19:30" — never parsed here. An
+// empty or non-string value is missing.
+function asTimestamp(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 /*
  * Open-Meteo declares the unit of every series it returns (`current_units`,
  * `hourly_units`), and the app cannot assume one. Visibility is documented in
@@ -78,9 +85,16 @@ export function normalizeWeatherResponse(raw) {
       latitude: toNumber(safe.latitude),
       longitude: toNumber(safe.longitude),
       timezone: normalizeTimeZone(safe.timezone),
+      utcOffsetSeconds: toNumber(safe.utc_offset_seconds),
     },
     current: {
       ...model.current,
+      // "Current" conditions are model output on a 15-minute grid, valid
+      // at `time` (the location's wall clock) for `interval` seconds. The
+      // model dropped both, so the only clock the hero could show was the
+      // fetch time — a 4:59 pm fetch presented 4:45 pm values as "just now".
+      time: asTimestamp(current.time),
+      interval: toNumber(current.interval),
       temperature: toNumber(current.temperature_2m),
       humidity: toNumber(current.relative_humidity_2m),
       feelsLike: toNumber(current.apparent_temperature),

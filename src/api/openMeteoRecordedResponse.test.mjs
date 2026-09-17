@@ -80,6 +80,14 @@ describe("recorded Open-Meteo forecast response", () => {
     );
   });
 
+  test("keeps the recorded valid time, interval and offset", () => {
+    const model = normalizeWeatherResponse(fixture);
+    assert.equal(model.current.time, fixture.current.time);
+    assert.equal(model.current.time, "2026-09-16T19:30");
+    assert.equal(model.current.interval, 900);
+    assert.equal(model.meta.utcOffsetSeconds, -18000);
+  });
+
   test("passes every other current reading through unchanged", () => {
     const model = normalizeWeatherResponse(fixture);
 

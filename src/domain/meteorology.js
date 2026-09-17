@@ -1,6 +1,7 @@
 import { toFahrenheit } from "./temperature.js";
 import { toFiniteNumber } from "../utils/numbers.js";
 import { toEpochMs } from "../utils/zonedTime.js";
+import { resolveWindowStart } from "../utils/timeSeries.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 const TREND_LOOKBACK_MS = 6 * HOUR_MS;
@@ -44,6 +45,50 @@ export function classifyStormRisk(cape, weatherCode) {
 }
 
 /**
+ * @typedef {"ok" | "empty" | "stale"} PressureTrendStatus
+ *
+ * `ok`    — the anchor is a real sample at or around now.
+ * `empty` — the series holds no usable pressure/timestamp pair at all.
+ * `stale` — every usable sample lies behind now by more than an hourly slot;
+ *           `staleByMs` says by how much, measured from the last one.
+ *
+ * @typedef {{
+ *   current: number|null,
+ *   delta: number,
+ *   direction: "rising"|"falling"|"steady",
+ *   interpretation: string,
+ *   sparkline: number[],
+ *   status: PressureTrendStatus,
+ *   staleByMs: number|null,
+ * }} PressureTrend
+ */
+
+/**
+ * The fail-closed reading: no current value, no trend, and the reason.
+ *
+ * Deliberately the SAME shape missing data returns. A run-out series knows
+ * nothing about the present, so it must say exactly what an absent series
+ * says — `direction: "steady"` keeps StormWatch's why-line from naming
+ * pressure as a storm driver, and `current: null` keeps a months-old
+ * barometer reading from rendering as the current one.
+ *
+ * @param {PressureTrendStatus} status
+ * @param {number|null} [staleByMs]
+ * @returns {PressureTrend}
+ */
+function noPressureReading(status, staleByMs = null) {
+  return {
+    current: null,
+    delta: 0,
+    direction: "steady",
+    interpretation: "No data",
+    sparkline: [],
+    status,
+    staleByMs,
+  };
+}
+
+/**
  * Calculate barometric pressure trend over the last 6 hours.
  *
  * `timeZone` is the location's IANA zone (`weather.meta.timezone`):
@@ -52,6 +97,28 @@ export function classifyStormRisk(cape, weatherCode) {
  * the right sample. See `utils/zonedTime.js` for why a reframed clock is
  * not equivalent. `now` is an injectable clock for tests, per
  * analyzeNowcast/useRainAnalysis.
+ *
+ * ── The anchor used to clamp ──────────────────────────────────────────────
+ *
+ * Finding the "current" sample was `findIndex(time >= now)` with
+ * `-1 ? paired.length - 1` behind it: when every sample lay behind now, the
+ * anchor silently became the TAIL. A real, in-range index, indistinguishable
+ * from a hit — the same clamp `resolveWindowStart` replaced in
+ * `utils/timeSeries.js`, hand-rolled here and so untouched by that change.
+ *
+ * Measured on an eight-slot series 149 days old, this returned
+ * `{ current: 996.1, direction: "falling", interpretation: "Storm possible" }`
+ * — byte-identical to the same readings on a live series. StormWatch read
+ * `direction` and put "falling pressure" in its why-line, in the present
+ * tense, from a barometer that stopped reporting five months earlier.
+ *
+ * The anchor now goes through `resolveWindowStart`, so a run-out series
+ * reports `stale` and takes the fail-closed branch instead. The tolerance is
+ * the hourly cadence, matching every other hourly caller in this app: the
+ * slot CONTAINING now is a hit, so a series whose last sample landed forty
+ * minutes ago is current, not stale.
+ *
+ * @returns {PressureTrend}
  */
 export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {}) {
   if (
@@ -60,16 +127,9 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
     hourlyPressure.length === 0 ||
     hourlyTime.length === 0
   ) {
-    return {
-      current: null,
-      delta: 0,
-      direction: "steady",
-      interpretation: "No data",
-      sparkline: [],
-    };
+    return noPressureReading("empty");
   }
 
-  const referenceNow = toFiniteNumber(options.now) ?? Date.now();
   const paired = [];
   const maxIndex = Math.min(hourlyPressure.length, hourlyTime.length);
 
@@ -82,17 +142,25 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
   }
 
   if (!paired.length) {
-    return {
-      current: null,
-      delta: 0,
-      direction: "steady",
-      interpretation: "No data",
-      sparkline: [],
-    };
+    return noPressureReading("empty");
   }
 
-  const nowIdx = paired.findIndex((entry) => entry.time >= referenceNow);
-  const currentIdx = nowIdx === -1 ? paired.length - 1 : nowIdx;
+  // `paired[].time` is already a real epoch, resolved through the location's
+  // zone in the loop above, so the helper needs no zone of its own here.
+  const {
+    index: currentIdx,
+    status,
+    staleByMs,
+  } = resolveWindowStart(
+    paired.map((entry) => entry.time),
+    { now: options.now, currentSlotToleranceMs: HOUR_MS }
+  );
+
+  // `stale` and `empty` both resolve to -1 rather than to the tail, so there
+  // is no trailing-index fallback left to read as "now".
+  if (status !== "ok") {
+    return noPressureReading(status, staleByMs);
+  }
 
   // A single usable sample compares against itself (delta 0), which
   // used to read as a confident "Stable" trend computed from no trend
@@ -105,6 +173,8 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
       direction: "steady",
       interpretation: "Not enough data",
       sparkline: paired.map((entry) => entry.value),
+      status: "ok",
+      staleByMs: null,
     };
   }
 
@@ -138,6 +208,8 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
           (entry) => entry.time >= targetTime && entry.time <= currentTime
         )
         .map((entry) => entry.value),
+      status: "ok",
+      staleByMs: null,
     };
   }
 
@@ -166,7 +238,15 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
     }
   }
 
-  return { current, delta, direction, interpretation, sparkline };
+  return {
+    current,
+    delta,
+    direction,
+    interpretation,
+    sparkline,
+    status: "ok",
+    staleByMs: null,
+  };
 }
 
 /**

@@ -1,0 +1,37 @@
+{
+  // Static type checking for plain JavaScript, via JSDoc. Nothing is compiled
+  // — `noEmit` is on and the build stays Vite's.
+  //
+  // `checkJs` is set here rather than by a `// @ts-check` comment in each
+  // file, deliberately. A per-file pragma is opt-in, so a new module lands
+  // unchecked until somebody remembers the line, and nothing fails when they
+  // do not. The `include` list below is the opt-in instead: a new file under
+  // any of these directories is checked the moment it exists.
+  //
+  // The scope is the three layers that hold logic with no React in it — the
+  // provider adapters, the domain rules and the utilities. Components and
+  // hooks are not in scope yet; widening it is a change of its own.
+  //
+  // `strict` is off. This pass was about turning the checker on over real
+  // code without suppressions; `strictNullChecks` over a codebase whose
+  // central convention is "missing is null" is a much larger piece of work
+  // and deserves its own argument.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/api/**/*.js", "src/domain/**/*.js", "src/utils/**/*.js"],
+  // Tests are excluded: they deliberately feed malformed payloads to prove the
+  // boundary rejects them, so type-checking them would mean either suppressions
+  // or weaker tests. The gate is on the code that ships.
+  "exclude": ["**/*.test.*", "**/__fixtures__/**"]
+}

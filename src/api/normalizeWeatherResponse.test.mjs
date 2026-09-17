@@ -50,6 +50,32 @@ describe("normalizeWeatherResponse model mapping", () => {
         precipitation_probability: [10, 45],
         precipitation: [0, 0.01],
       },
+      // The declared units, spelled the way the live API spells them
+      // ("mp/h", not "mph"). transforms.js checks the model's assumptions
+      // against these and refuses a payload that disagrees.
+      current_units: {
+        temperature_2m: "°F",
+        apparent_temperature: "°F",
+        dew_point_2m: "°F",
+        wind_speed_10m: "mp/h",
+        wind_gusts_10m: "mp/h",
+        pressure_msl: "hPa",
+        relative_humidity_2m: "%",
+        visibility: "ft",
+      },
+      hourly_units: {
+        temperature_2m: "°F",
+        precipitation: "inch",
+        precipitation_probability: "%",
+        pressure_msl: "hPa",
+        cape: "J/kg",
+        wind_gusts_10m: "mp/h",
+        visibility: "ft",
+      },
+      minutely_15_units: {
+        precipitation: "inch",
+        precipitation_probability: "%",
+      },
     });
 
     assert.deepEqual(normalized.meta, {
@@ -57,6 +83,27 @@ describe("normalizeWeatherResponse model mapping", () => {
       longitude: -87.63,
       timezone: "America/Chicago",
       utcOffsetSeconds: -18000,
+      // Carried, not assumed: only the fields the payload actually declared.
+      units: {
+        current: {
+          temperature_2m: "°F",
+          apparent_temperature: "°F",
+          dew_point_2m: "°F",
+          wind_speed_10m: "mp/h",
+          wind_gusts_10m: "mp/h",
+          pressure_msl: "hPa",
+          relative_humidity_2m: "%",
+        },
+        hourly: {
+          temperature_2m: "°F",
+          precipitation: "inch",
+          precipitation_probability: "%",
+          pressure_msl: "hPa",
+          cape: "J/kg",
+          wind_gusts_10m: "mp/h",
+        },
+        visibility: { current: "ft", hourly: "ft" },
+      },
     });
     assert.equal(normalized.current.time, "2026-04-20T12:00");
     assert.equal(normalized.current.interval, 900);
@@ -74,6 +121,12 @@ describe("normalizeWeatherResponse model mapping", () => {
     const normalized = normalizeWeatherResponse(null);
 
     assert.equal(normalized.meta.timezone, "UTC");
+    // A payload that declares nothing carries nothing — not a guess.
+    assert.deepEqual(normalized.meta.units, {
+      current: {},
+      hourly: {},
+      visibility: { current: null, hourly: null },
+    });
     assert.equal(normalized.current.temperature, null);
     assert.deepEqual(normalized.hourly.time, []);
     assert.deepEqual(normalized.daily.time, []);

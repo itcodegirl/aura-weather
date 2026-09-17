@@ -111,10 +111,24 @@ export function formatInZone(date, options, timeZone, fallbackOptions) {
   return getFormatter(fallbackOptions ?? options).format(date);
 }
 
+/*
+ * Each shape is annotated rather than left to inference. `{ hour: "numeric" }`
+ * infers `hour: string`, and Intl's own types take a union of literals, so an
+ * unannotated const cannot satisfy `DateTimeFormatOptions` — the checker
+ * rejects every one of these at its call site. The annotation also turns a
+ * typo like `{ hour12: "true" }` into an error here instead of a silently
+ * ignored option at runtime. No shape changed.
+ */
+
+/** @type {Intl.DateTimeFormatOptions} */
 const CLOCK_HOUR_OPTIONS = { hour: "numeric", hour12: true };
+/** @type {Intl.DateTimeFormatOptions} */
 const CLOCK_TIME_OPTIONS = { hour: "numeric", minute: "2-digit", hour12: true };
+/** @type {Intl.DateTimeFormatOptions} */
 const MONTH_DAY_OPTIONS = { month: "short", day: "numeric" };
+/** @type {Intl.DateTimeFormatOptions} */
 const WEEKDAY_SHORT_OPTIONS = { weekday: "short" };
+/** @type {Intl.DateTimeFormatOptions} */
 const STAMP_OPTIONS = { ...MONTH_DAY_OPTIONS, ...CLOCK_TIME_OPTIONS };
 
 /** "3 PM" — the hour alone, for labels where minutes would be noise. */
@@ -146,6 +160,7 @@ export function formatStamp(date, timeZone) {
   return formatInZone(date, STAMP_OPTIONS, timeZone);
 }
 
+/** @type {Intl.DateTimeFormatOptions} */
 const LONG_DATE_OPTIONS = {
   weekday: "long",
   month: "long",

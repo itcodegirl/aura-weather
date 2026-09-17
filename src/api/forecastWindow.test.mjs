@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { fetchWeather } from "./openMeteo.js";
+import { analyzeNowcast } from "../components/nowcast/analyzeNowcast.js";
 
 /*
  * The forecast request must ask for the hours the app reads, and no more.
@@ -38,6 +39,7 @@ const SOURCES = {
   hourlyCard: "../components/HourlyCard.jsx",
   weatherData: "../hooks/useWeatherData.js",
   rainAnalysis: "../hooks/useRainAnalysis.js",
+  nowcast: "../components/nowcast/analyzeNowcast.js",
 };
 
 function read(key) {
@@ -51,6 +53,9 @@ const PATTERNS = {
   degradedMaxAge:
     /const DEGRADED_SNAPSHOT_MAX_AGE_MS\s*=\s*(\d+)\s*\*\s*60\s*\*\s*60\s*\*\s*1000\s*;/,
   rainWindow: /windowSize:\s*(\d+)\s*,/,
+  minutelySteps: /const FORECAST_MINUTELY_15_STEPS\s*=\s*(\d+)\s*;/,
+  nowcastWindow: /const NOWCAST_WINDOW_SIZE\s*=\s*(\d+)\s*;/,
+  nowcastStep: /export const NOWCAST_STEP_MINUTES\s*=\s*(\d+)\s*;/,
 };
 
 /**
@@ -91,6 +96,18 @@ describe("the forecast request covers what the app reads", () => {
       assert.equal(
         readNumber("  const idx = findWindowStartIndex(t, {\n windowSize: 24,\n });", "rainWindow", "x"),
         24
+      );
+      assert.equal(
+        readNumber("const FORECAST_MINUTELY_15_STEPS = 200;", "minutelySteps", "x"),
+        200
+      );
+      assert.equal(
+        readNumber("const NOWCAST_WINDOW_SIZE = 8; // next 2 hours", "nowcastWindow", "x"),
+        8
+      );
+      assert.equal(
+        readNumber("export const NOWCAST_STEP_MINUTES = 15;", "nowcastStep", "x"),
+        15
       );
     });
 
@@ -220,5 +237,74 @@ describe("the request actually carries the window", () => {
       lastSlot - replayedAt >= (renderWindow - 1) * HOUR_MS,
       "the oldest replayable snapshot would render a short hourly card"
     );
+  });
+});
+
+describe("the 15-minute request covers what the nowcast reads", () => {
+  const minutelySteps = readNumber(read("openMeteo"), "minutelySteps", "openMeteo.js");
+  const nowcastWindow = readNumber(read("nowcast"), "nowcastWindow", "analyzeNowcast.js");
+  const stepMinutes = readNumber(read("nowcast"), "nowcastStep", "analyzeNowcast.js");
+  const degradedMaxAgeHours = readNumber(
+    read("weatherData"),
+    "degradedMaxAge",
+    "useWeatherData.js"
+  );
+  const replaySteps = (degradedMaxAgeHours * 60) / stepMinutes;
+
+  test("a replayed snapshot still has a real window ahead of it", () => {
+    const needed = nowcastWindow + replaySteps;
+    assert.ok(
+      minutelySteps >= needed,
+      `forecast_minutely_15=${minutelySteps} leaves a ${degradedMaxAgeHours}h-old snapshot ` +
+        `${minutelySteps - replaySteps} steps forward, and the nowcast reads ${nowcastWindow}. ` +
+        `Ask for at least ${needed}.`
+    );
+  });
+
+  test("the window is trimmed, not merely re-stated", () => {
+    // The finding was 672 steps — seven days of quarter-hours — for a card
+    // that reads eight. Without this, the check above is satisfied by any
+    // large number, including the one that caused the problem.
+    assert.ok(
+      minutelySteps <= nowcastWindow + replaySteps + 24,
+      `forecast_minutely_15=${minutelySteps} is more than six hours of slack over the ` +
+        `${nowcastWindow + replaySteps} steps the app can actually read`
+    );
+  });
+
+  test("bounding it to the window alone would render a stale nowcast as live", () => {
+    /*
+     * This is why the number is not NOWCAST_WINDOW_SIZE, and it is worth a
+     * test rather than a comment because nothing in either file shows it.
+     *
+     * `findWindowStartIndex` does not report that "now" is past the end of a
+     * series — its last branch CLAMPS to the trailing window. So a series
+     * whose slots all lie in the past does not degrade to the card's "No
+     * minute-by-minute points are available". It renders its tail, in the
+     * present tense, as the next two hours.
+     *
+     * If this test ever fails because the clamp was fixed, the bound above
+     * can come down to the window plus refresh slack. Until then it cannot.
+     */
+    const capturedAt = Date.UTC(2026, 8, 15, 17, 0);
+    const time = Array.from({ length: nowcastWindow }, (_, i) =>
+      new Date(capturedAt + i * stepMinutes * 60_000).toISOString().slice(0, 16)
+    );
+    const stale = analyzeNowcast(
+      {
+        time,
+        rainChance: Array(nowcastWindow).fill(90),
+        rainAmount: Array(nowcastWindow).fill(0.2),
+        conditionCode: Array(nowcastWindow).fill(63),
+      },
+      { timeZone: "UTC", now: capturedAt + degradedMaxAgeHours * 60 * 60 * 1000 }
+    );
+
+    assert.equal(
+      stale.hasData,
+      true,
+      "if this is now false the clamp was fixed — re-read the comment above"
+    );
+    assert.match(stale.summary, /now/);
   });
 });

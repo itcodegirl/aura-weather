@@ -74,6 +74,10 @@ export function getIsoDateInTimeZone(timeZone, now = new Date()) {
  * that already track the location's current date (e.g. via a clock
  * tick) can pass `todayIso` directly so every row shares one answer.
  */
+/**
+ * @param {string} isoDate
+ * @param {{timeZone?: string|null, now?: Date, todayIso?: string|null}} [options]
+ */
 export function formatDayLabel(
   isoDate,
   { timeZone, now = new Date(), todayIso: todayIsoOverride } = {}

@@ -167,7 +167,7 @@ describe("the hourly window on the device's own DST day", () => {
       CHICAGO,
       `
       import { zonedWallClockToEpoch } from ${JSON.stringify(MODULE_URL)};
-      import { findWindowStartIndex } from ${JSON.stringify(SERIES_URL)};
+      import { resolveWindowStart } from ${JSON.stringify(SERIES_URL)};
 
       const times = [
         "2026-03-08T01:00",
@@ -187,7 +187,7 @@ describe("the hourly window on the device's own DST day", () => {
 
       // "Now" is the real instant of the location's 02:00 slot.
       const now = Date.UTC(2026, 2, 7, 17, 0); // 2026-03-08T02:00 in Tokyo
-      const index = findWindowStartIndex(times, {
+      const { index } = resolveWindowStart(times, {
         now,
         timeZone: "Asia/Tokyo",
         currentSlotToleranceMs: 60 * 60 * 1000,

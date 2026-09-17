@@ -52,7 +52,7 @@ const PATTERNS = {
   renderWindow: /const WINDOW\s*=\s*(\d+)\s*;/,
   degradedMaxAge:
     /const DEGRADED_SNAPSHOT_MAX_AGE_MS\s*=\s*(\d+)\s*\*\s*60\s*\*\s*60\s*\*\s*1000\s*;/,
-  rainWindow: /windowSize:\s*(\d+)\s*,/,
+  rainWindow: /const RAIN_WINDOW_HOURS\s*=\s*(\d+)\s*;/,
   minutelySteps: /const FORECAST_MINUTELY_15_STEPS\s*=\s*(\d+)\s*;/,
   nowcastWindow: /const NOWCAST_WINDOW_SIZE\s*=\s*(\d+)\s*;/,
   nowcastStep: /export const NOWCAST_STEP_MINUTES\s*=\s*(\d+)\s*;/,
@@ -94,7 +94,7 @@ describe("the forecast request covers what the app reads", () => {
         48
       );
       assert.equal(
-        readNumber("  const idx = findWindowStartIndex(t, {\n windowSize: 24,\n });", "rainWindow", "x"),
+        readNumber("const RAIN_WINDOW_HOURS = 24;", "rainWindow", "x"),
         24
       );
       assert.equal(
@@ -272,19 +272,23 @@ describe("the 15-minute request covers what the nowcast reads", () => {
     );
   });
 
-  test("bounding it to the window alone would render a stale nowcast as live", () => {
+  test("a run-out series now degrades instead of rendering its tail as live", () => {
     /*
-     * This is why the number is not NOWCAST_WINDOW_SIZE, and it is worth a
-     * test rather than a comment because nothing in either file shows it.
+     * This test was written in 7b as a tripwire, asserting the OPPOSITE:
+     * that a run-out series still reported `hasData: true` and spoke in the
+     * present tense, because `findWindowStartIndex` clamped to the trailing
+     * window rather than reporting past-the-end. Its comment said "if this
+     * test ever fails because the clamp was fixed, the bound above can come
+     * down". 7c fixed the clamp, and it fired.
      *
-     * `findWindowStartIndex` does not report that "now" is past the end of a
-     * series — its last branch CLAMPS to the trailing window. So a series
-     * whose slots all lie in the past does not degrade to the card's "No
-     * minute-by-minute points are available". It renders its tail, in the
-     * present tense, as the next two hours.
+     * It is kept, inverted, because the property it guards is the one that
+     * matters: a series whose window has closed must not produce
+     * present-tense copy. It now asserts the honest degradation directly.
      *
-     * If this test ever fails because the clamp was fixed, the bound above
-     * can come down to the window plus refresh slack. Until then it cannot.
+     * The bound above is deliberately NOT lowered here. It could be — the
+     * clamp no longer forces it — but shrinking it changes what an offline
+     * restore shows on the nowcast card, which is a product decision rather
+     * than a consequence of this fix.
      */
     const capturedAt = Date.UTC(2026, 8, 15, 17, 0);
     const time = Array.from({ length: nowcastWindow }, (_, i) =>
@@ -302,9 +306,13 @@ describe("the 15-minute request covers what the nowcast reads", () => {
 
     assert.equal(
       stale.hasData,
-      true,
-      "if this is now false the clamp was fixed — re-read the comment above"
+      false,
+      "a series whose every slot is behind now must not report data"
     );
-    assert.match(stale.summary, /now/);
+    assert.doesNotMatch(
+      stale.summary,
+      /likely now|lasting/i,
+      `the nowcast spoke in the present tense from a run-out series: ${stale.summary}`
+    );
   });
 });

@@ -18,7 +18,7 @@ import { getWeather } from "../domain/weatherCodes";
 import { convertTemp } from "../utils/temperature";
 import { WIND_SPEED_CONVERSION } from "../domain/wind";
 import { formatClockHour } from "../utils/formatters";
-import { findWindowStartIndex } from "../utils/timeSeries";
+import { resolveWindowStart } from "../utils/timeSeries";
 import { toFiniteNumber } from "../utils/numbers";
 import "./HourlyCard.css";
 
@@ -106,11 +106,13 @@ function buildHours(hourly, unit, timeZone) {
     return { hours: [], nowIndex: -1 };
   }
 
-  // `now` is left to findWindowStartIndex, which defaults to the real
-  // clock: reading it here would be an impure call in a render path.
-  const nowIdx = findWindowStartIndex(hourly.time, {
+  // `now` is left to resolveWindowStart, which defaults to the real clock:
+  // reading it here would be an impure call in a render path.
+  //
+  // A `stale` series yields -1, so an expired snapshot renders no strip at
+  // all rather than labelling its last 24 hours with a "Now" marker.
+  const { index: nowIdx } = resolveWindowStart(hourly.time, {
     timeZone,
-    windowSize: WINDOW,
     currentSlotToleranceMs: 60 * 60 * 1000,
   });
   if (nowIdx < 0) return { hours: [], nowIndex: -1 };

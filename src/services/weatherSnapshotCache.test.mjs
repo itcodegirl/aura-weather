@@ -78,6 +78,34 @@ describe("weather snapshot cache", () => {
     assert.equal(snapshot.trustMeta.weatherFetchedAt, 1_700_000_000_000);
   });
 
+  test("does not replay a snapshot written under an earlier cache version", () => {
+    // Version-1 snapshots stored the provider's raw visibility (feet) under a
+    // field the tile now reads as metres. The unit was never recorded, so such
+    // a snapshot cannot be converted and must not be restored.
+    installWindow();
+    const cachedAt = Date.now();
+    store.set(
+      weatherSnapshotCacheInternals.CACHE_KEY,
+      JSON.stringify({
+        version: 1,
+        snapshots: {
+          "41.8781,-87.6298": {
+            version: 1,
+            cachedAt,
+            coordinates: { latitude: 41.8781, longitude: -87.6298 },
+            weather: buildWeather(),
+            trustMeta: {},
+          },
+        },
+      })
+    );
+
+    assert.equal(
+      readCachedWeatherSnapshot({ latitude: 41.8781, longitude: -87.6298 }),
+      null
+    );
+  });
+
   test("returns null for missing storage, corrupt JSON, invalid version, or bad coordinates", () => {
     assert.equal(
       readCachedWeatherSnapshot({ latitude: 41.8781, longitude: -87.6298 }),

@@ -404,6 +404,10 @@ const VIS_BAR_HEIGHTS = [9, 13, 17, 21, 25, 28, 31, 34];
 const VIS_BAR_XS = [2, 16, 30, 44, 58, 72, 86, 100];
 
 function VisibilityTile({ visibility, unit }) {
+  // Metres, guaranteed by normalizeWeatherResponse, which converts from the
+  // unit the provider declared (feet, on this app's inch-precipitation
+  // request). This tile once read that raw feet value as metres and printed
+  // "30 mi · clear" on a nine-mile day.
   const visMeters = toFiniteNumber(visibility);
   const hasDat = visMeters !== null;
   const visMiles = hasDat ? visMeters / 1609.34 : null;

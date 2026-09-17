@@ -19,7 +19,9 @@ const FULL_WEATHER = {
     windGust: 18,
     windDirection: 270,
     pressure: 1013,
-    visibility: 16093,
+    // Metres (the model's unit): ten miles is 16,093.4 m, rounded up so the
+    // reading sits on the clear side of the tile's ten-mile boundary.
+    visibility: 16094,
   },
   daily: {
     uvIndexMax: [6.2],
@@ -168,6 +170,45 @@ describe("AtmosphereBento", () => {
       null,
       "no dash on screen means no footnote"
     );
+  });
+
+  test("renders visibility from a metre reading, in miles and in kilometres", () => {
+    // FULL_WEATHER.visibility is 16,093 m — ten miles. The tile once read the
+    // provider's raw feet as metres (48,885 ft printed "30 mi · clear" on a
+    // nine-mile day); normalizeWeatherResponse now hands it metres, and this
+    // pins the tile's own arithmetic on that contract.
+    const { container, unmount } = render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 42,
+        unit: "F",
+      })
+    );
+    assert.equal(container.querySelector(".atm-val--vis").textContent, "10");
+    assert.ok(screen.getByRole("img", { name: "Visibility 10 mi clear" }));
+    unmount();
+
+    render(
+      React.createElement(AtmosphereBento, {
+        weather: FULL_WEATHER,
+        aqi: 42,
+        unit: "C",
+      })
+    );
+    assert.ok(screen.getByRole("img", { name: "Visibility 16 km clear" }));
+  });
+
+  test("a nine-mile day reads as hazy, not as thirty clear miles", () => {
+    const weather = {
+      ...FULL_WEATHER,
+      current: { ...FULL_WEATHER.current, visibility: 14900 },
+    };
+    render(
+      React.createElement(AtmosphereBento, { weather, aqi: 42, unit: "F" })
+    );
+
+    assert.ok(screen.getByRole("img", { name: "Visibility 9.3 mi hazy" }));
+    assert.equal(screen.queryByRole("img", { name: /Visibility 30 mi/ }), null);
   });
 });
 

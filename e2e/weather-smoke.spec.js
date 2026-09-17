@@ -4,6 +4,7 @@ import {
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks";
+import { weatherSnapshotCacheInternals } from "../src/services/weatherSnapshotCache.js";
 
 async function openDashboard(page) {
   await page.goto("/");
@@ -83,19 +84,23 @@ test("labels granted browser coordinates as current location", async ({ page }) 
 
 test("renders a cached forecast on cold start when the browser is offline", async ({ page }) => {
   const cachedAt = Date.now();
-  await page.addInitScript(({ cachedAtValue }) => {
+  // The seed must be a snapshot the app itself would have written, so the
+  // key and version come from the cache module rather than being restated
+  // here: a version bump (which is how the cache retires snapshots whose
+  // shape or units changed) must not leave this test seeding a stale one.
+  await page.addInitScript(({ cachedAtValue, cacheKey, cacheVersion }) => {
     Object.defineProperty(navigator, "onLine", {
       configurable: true,
       value: false,
     });
 
     window.localStorage.setItem(
-      "aura-weather-last-known-forecast-v1",
+      cacheKey,
       JSON.stringify({
-        version: 1,
+        version: cacheVersion,
         snapshots: {
           "41.6967,-87.8170": {
-            version: 1,
+            version: cacheVersion,
             cachedAt: cachedAtValue,
             coordinates: {
               latitude: 41.6967,
@@ -160,7 +165,11 @@ test("renders a cached forecast on cold start when the browser is offline", asyn
         },
       })
     );
-  }, { cachedAtValue: cachedAt });
+  }, {
+    cachedAtValue: cachedAt,
+    cacheKey: weatherSnapshotCacheInternals.CACHE_KEY,
+    cacheVersion: weatherSnapshotCacheInternals.CACHE_VERSION,
+  });
 
   await openDashboard(page);
 

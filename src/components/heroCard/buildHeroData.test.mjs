@@ -495,7 +495,10 @@ describe("buildHeroData", () => {
       },
     });
     assert.equal(data.hasClimateComparison, true);
-    assert.match(data.climateMessage, /^Today is 13°F warmer than the 30-year/);
+    assert.match(
+      data.climateMessage,
+      /^Today's high is 13°F warmer than the 30-year average high for April 21/
+    );
     assert.match(data.climateMessage, /Chicago/);
   });
 
@@ -511,7 +514,7 @@ describe("buildHeroData", () => {
       },
     });
     assert.equal(data.hasClimateComparison, true);
-    assert.match(data.climateMessage, /^Today is 5°C colder than the 25-year/);
+    assert.match(data.climateMessage, /^Today's high is 5°C colder than the 25-year average high/);
   });
 
   test("falls back to 30-year wording when sampleYears is missing", () => {

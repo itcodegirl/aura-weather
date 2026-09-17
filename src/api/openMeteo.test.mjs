@@ -346,6 +346,27 @@ describe("fetchHistoricalTemperatureAverage", () => {
     );
   }
 
+  test("requests the daily maximum only, the field the comparison uses", async () => {
+    // Audit finding E-03: the request pulled the mean, minimum and
+    // maximum for 30 years to keep 30 samples of the mean. The hero
+    // compares today's high with the average high, so one field is
+    // enough — a third of the payload.
+    let requestUrl = null;
+    globalThis.fetch = async (input) => {
+      requestUrl = new URL(typeof input === "string" ? input : input.url);
+      return createJsonResponse({
+        daily: {
+          time: buildArchiveTimes([2, 1]),
+          temperature_2m_max: [70, 76],
+        },
+      });
+    };
+
+    await fetchHistoricalTemperatureAverage(41.8781, -87.6298, "America/Chicago");
+
+    assert.equal(requestUrl.searchParams.get("daily"), "temperature_2m_max");
+  });
+
   test("ignores null and empty-string samples instead of averaging them as 0", async () => {
     // Historical archive responses can contain null entries when a
     // station was offline. The strict-coercion contract must hold
@@ -355,9 +376,7 @@ describe("fetchHistoricalTemperatureAverage", () => {
       createJsonResponse({
         daily: {
           time: buildArchiveTimes([5, 4, 3, 2, 1]),
-          temperature_2m_mean: [60, null, 62, "", 64],
-          temperature_2m_min: [50, 52, 54, 56, 58],
-          temperature_2m_max: [70, 72, 74, 76, 80],
+          temperature_2m_max: [70, null, 74, "", 80],
         },
       });
 
@@ -368,10 +387,9 @@ describe("fetchHistoricalTemperatureAverage", () => {
     );
 
     assert.ok(result, "expected an averaged result");
-    // Real means: 60, 62, 64. Null + empty samples fall back to
-    // (min+max)/2 = 62 and 66. So the average is (60+62+62+66+64)/5 = 62.8.
-    assert.equal(result.averageTemperature, 62.8);
-    assert.equal(result.sampleYears, 5);
+    // Three real highs: (70 + 74 + 80) / 3 = 74.67, to one decimal.
+    assert.equal(result.averageHighTemperature, 74.7);
+    assert.equal(result.sampleYears, 3);
   });
 
   test("returns null when the archive returns no usable samples", async () => {
@@ -379,8 +397,6 @@ describe("fetchHistoricalTemperatureAverage", () => {
       createJsonResponse({
         daily: {
           time: buildArchiveTimes([1]),
-          temperature_2m_mean: [null],
-          temperature_2m_min: [null],
           temperature_2m_max: [null],
         },
       });
@@ -404,8 +420,6 @@ describe("fetchHistoricalTemperatureAverage", () => {
       return createJsonResponse({
         daily: {
           time: buildArchiveTimes([2, 1]),
-          temperature_2m_mean: [60, 64],
-          temperature_2m_min: [50, 52],
           temperature_2m_max: [70, 76],
         },
       });
@@ -418,7 +432,7 @@ describe("fetchHistoricalTemperatureAverage", () => {
       { retryDelaysMs: [0] }
     );
 
-    assert.equal(result.averageTemperature, 62);
+    assert.equal(result.averageHighTemperature, 73);
     assert.equal(requestCount, 2);
   });
 });

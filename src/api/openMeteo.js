@@ -379,8 +379,14 @@ export async function fetchWeather(lat, lon, options = {}) {
 }
 
 /**
- * Fetches today's temperature average for the same calendar day over
- * the last 30 years using Open-Meteo historical archive API.
+ * Fetches the 30-year average of the daily maximum temperature for
+ * today's calendar day, from the Open-Meteo historical archive.
+ *
+ * The daily maximum is the figure today's forecast high is compared
+ * with (see buildClimateComparison), so it is the only field requested.
+ * This used to pull the daily mean, minimum and maximum for the whole
+ * 30-year span to keep 30 samples of the mean, which it then compared
+ * with the instantaneous current temperature.
  */
 export async function fetchHistoricalTemperatureAverage(
   lat,
@@ -406,7 +412,7 @@ export async function fetchHistoricalTemperatureAverage(
     longitude: coordinates.longitude,
     start_date: start,
     end_date: end,
-    daily: "temperature_2m_mean,temperature_2m_min,temperature_2m_max",
+    daily: "temperature_2m_max",
     temperature_unit: temperatureUnit,
     timezone: normalizeTimeZone(timezone),
   });
@@ -421,12 +427,6 @@ export async function fetchHistoricalTemperatureAverage(
     return null;
   }
 
-  const meanSeries = Array.isArray(daily?.temperature_2m_mean)
-    ? daily.temperature_2m_mean
-    : [];
-  const minSeries = Array.isArray(daily?.temperature_2m_min)
-    ? daily.temperature_2m_min
-    : [];
   const maxSeries = Array.isArray(daily?.temperature_2m_max)
     ? daily.temperature_2m_max
     : [];
@@ -438,17 +438,12 @@ export async function fetchHistoricalTemperatureAverage(
   for (let i = 0; i < times.length; i += 1) {
     if (!times[i]?.endsWith(targetSuffix)) continue;
 
-    const mean = toNumber(meanSeries[i]);
-    const min = toNumber(minSeries[i]);
+    // Strict coercion: a null or empty sample drops out of the average
+    // rather than pulling it toward 0°F.
     const max = toNumber(maxSeries[i]);
+    if (!Number.isFinite(max)) continue;
 
-    let sample = mean;
-    if (!Number.isFinite(sample) && Number.isFinite(min) && Number.isFinite(max)) {
-      sample = (min + max) / 2;
-    }
-    if (!Number.isFinite(sample)) continue;
-
-    total += sample;
+    total += max;
     sampleCount += 1;
   }
 
@@ -456,10 +451,10 @@ export async function fetchHistoricalTemperatureAverage(
     return null;
   }
 
-  const averageTemperature = Number((total / sampleCount).toFixed(1));
+  const averageHighTemperature = Number((total / sampleCount).toFixed(1));
 
   return {
-    averageTemperature,
+    averageHighTemperature,
     averageTemperatureUnit: temperatureUnit,
     sampleYears: sampleCount,
     referenceDateLabel: monthDayLabel,

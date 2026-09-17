@@ -17,7 +17,7 @@ The portfolio story is simple: **Aura never turns missing provider data into fak
 - Show `Recent` and `Saved` locations as distinct sections in the search dropdown.
 - View current conditions, hourly outlook, rain guidance, risk signals, and a 7-day forecast.
 - Expand any forecast day for high/low, rain chance, UV, wind, and sunrise/sunset details.
-- Compare today's temperature against historical Open-Meteo archive context when available.
+- Compare today's forecast high against the 30-year average high for the date, from the Open-Meteo historical archive, when available.
 - See NOAA/NWS severe-alert coverage with explicit unsupported-region messaging.
 - Track observed precipitation on an interactive radar map (Leaflet + RainViewer) with a scrubable timeline, loaded lazily so it never blocks first paint.
 - Opt into rain push alerts for a saved place — a Supabase-backed feature (Postgres + RLS, a Deno edge function on a `pg_cron` schedule) that stays inert unless the Supabase environment variables are configured.
@@ -169,7 +169,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`<!--n:unit-tests-->783<!--/n-->` tests across <!--n:unit-suites-->175<!--/n--> suites, including the <!--n:render-tests-->305<!--/n--> React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`<!--n:unit-tests-->784<!--/n-->` tests across <!--n:unit-suites-->175<!--/n--> suites, including the <!--n:render-tests-->305<!--/n--> React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -436,7 +436,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — <!--n:unit-tests-->783<!--/n--> Node tests (including <!--n:render-tests-->305<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — <!--n:unit-tests-->784<!--/n--> Node tests (including <!--n:render-tests-->305<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

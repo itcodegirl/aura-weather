@@ -88,7 +88,13 @@ export function normalizeWeatherResponse(raw) {
       windSpeed: toNumber(current.wind_speed_10m),
       windGust: toNumber(current.wind_gusts_10m),
       windDirection: toNumber(current.wind_direction_10m),
-      pressure: toNumber(current.surface_pressure),
+      // Mean-sea-level pressure (hPa), the figure other weather sources
+      // quote. The request used to ask for station pressure, which sits
+      // ~21 hPa lower at the default city's 183 m and made the gauge read
+      // wrong against every barometer. Deliberately no fallback to
+      // `surface_pressure`: a station reading on a sea-level gauge is the
+      // bug this replaces, so a payload without `pressure_msl` is missing.
+      pressure: toNumber(current.pressure_msl),
       dewPoint: toNumber(current.dew_point_2m),
       cloudCover: toNumber(current.cloud_cover),
       visibility: normalizeVisibility(
@@ -104,7 +110,7 @@ export function normalizeWeatherResponse(raw) {
       conditionCode: asArray(hourly.weather_code),
       rainChance: asArray(hourly.precipitation_probability),
       rainAmount: asArray(hourly.precipitation),
-      pressure: asArray(hourly.surface_pressure),
+      pressure: asArray(hourly.pressure_msl),
       cape: asArray(hourly.cape),
       windSpeed: asArray(hourly.wind_speed_10m),
       windGust: asArray(hourly.wind_gusts_10m),

@@ -17,7 +17,7 @@ describe("normalizeWeatherResponse", () => {
         wind_speed_10m: 8.4,
         wind_gusts_10m: 11.2,
         wind_direction_10m: 220,
-        surface_pressure: 1014.5,
+        pressure_msl: 1014.5,
         dew_point_2m: 53.1,
         cloud_cover: 35,
         visibility: 16093,
@@ -44,7 +44,7 @@ describe("normalizeWeatherResponse", () => {
         wind_speed_10m: null,
         wind_gusts_10m: null,
         wind_direction_10m: null,
-        surface_pressure: null,
+        pressure_msl: null,
         dew_point_2m: null,
         cloud_cover: null,
         visibility: null,
@@ -66,13 +66,38 @@ describe("normalizeWeatherResponse", () => {
       current: {
         temperature_2m: "",
         relative_humidity_2m: " ",
-        surface_pressure: "1014.5",
+        pressure_msl: "1014.5",
       },
     });
 
     assert.equal(model.current.temperature, null);
     assert.equal(model.current.humidity, null);
     assert.equal(model.current.pressure, 1014.5);
+  });
+
+  test("reads sea-level pressure and never falls back to station pressure", () => {
+    // Live values from the default city (183 m): station 1002.4 hPa beside a
+    // sea-level 1023.9 hPa. The request used to fetch the station figure, so
+    // the gauge disagreed with every barometer by ~21 hPa / 0.6 inHg.
+    const model = normalizeWeatherResponse({
+      current: { pressure_msl: 1023.9, surface_pressure: 1002.4 },
+      hourly: {
+        time: ["2026-09-16T16:00"],
+        pressure_msl: [1023.7],
+        surface_pressure: [1002.2],
+      },
+    });
+
+    assert.equal(model.current.pressure, 1023.9);
+    assert.deepEqual(model.hourly.pressure, [1023.7]);
+
+    // A payload that carries only station pressure is a payload without a
+    // sea-level reading. Presenting the station figure on a sea-level gauge
+    // is the bug this replaced, so the reading is missing, not substituted.
+    const stationOnly = normalizeWeatherResponse({
+      current: { surface_pressure: 1002.4 },
+    });
+    assert.equal(stationOnly.current.pressure, null);
   });
 
   test("returns an empty model when raw is missing or wrong shape", () => {

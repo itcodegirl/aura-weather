@@ -48,7 +48,7 @@ describe("installMissingDataMockIfRequested", () => {
     const payload = await response.json();
     assert.equal(payload.current.temperature_2m, 67.4);
     assert.equal(payload.current.relative_humidity_2m, null);
-    assert.equal(payload.current.surface_pressure, null);
+    assert.equal(payload.current.pressure_msl, null);
     assert.equal(payload.current.dew_point_2m, null);
     assert.equal(payload.current.apparent_temperature, null);
   });

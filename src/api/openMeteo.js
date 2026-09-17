@@ -346,13 +346,19 @@ export async function fetchWeather(lat, lon, options = {}) {
     windSpeedUnit = DEFAULT_WIND_SPEED_UNIT,
     precipitationUnit = DEFAULT_PRECIPITATION_UNIT,
   } = options;
+  // `pressure_msl`, not `surface_pressure`. Station pressure falls with
+  // elevation, so at the default city (183 m) it reads ~21 hPa / 0.6 inHg
+  // below the sea-level figure every weather report, phone app and home
+  // barometer quotes — and the gauge sat near empty for any high city.
+  // Sea-level pressure is the like-for-like number; the 6-hour trend is
+  // unaffected either way because elevation does not change between samples.
   const params = new URLSearchParams({
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
     current:
-      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,surface_pressure,dew_point_2m,cloud_cover,visibility,is_day",
+      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl,dew_point_2m,cloud_cover,visibility,is_day",
     hourly:
-      "temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,weather_code,precipitation_probability,precipitation,surface_pressure,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,visibility",
+      "temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,weather_code,precipitation_probability,precipitation,pressure_msl,cape,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,visibility",
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant",
     minutely_15:

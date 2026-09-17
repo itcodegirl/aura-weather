@@ -17,7 +17,7 @@ describe("normalizeWeatherResponse model mapping", () => {
         wind_speed_10m: 12.3,
         wind_gusts_10m: 17.8,
         wind_direction_10m: 220,
-        surface_pressure: 1014.2,
+        pressure_msl: 1014.2,
         dew_point_2m: 58.7,
       },
       hourly: {
@@ -26,7 +26,7 @@ describe("normalizeWeatherResponse model mapping", () => {
         weather_code: [2, 3],
         precipitation_probability: [10, 20],
         precipitation: [0, 0.02],
-        surface_pressure: [1014.2, 1013.8],
+        pressure_msl: [1014.2, 1013.8],
         cape: [120, 140],
         wind_gusts_10m: [17.8, 18.4],
       },

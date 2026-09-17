@@ -78,7 +78,7 @@ const TILE_HELP = {
   },
   pressure: {
     title: "Barometric pressure",
-    body: "The weight of the atmosphere overhead. The absolute number matters less than which way it is moving: falling pressure usually means unsettled weather approaching, rising pressure means it is clearing.",
+    body: "The weight of the atmosphere overhead, reduced to sea level — the figure weather reports and home barometers quote, so it compares like for like at any elevation. The absolute number matters less than which way it is moving: falling pressure usually means unsettled weather approaching, rising pressure means it is clearing.",
   },
   wind: {
     title: "Wind",
@@ -211,16 +211,25 @@ function AqiTile({ aqi }) {
   );
 }
 
+// 1 hPa = 0.02953 inHg (to four significant figures).
+const INHG_PER_HPA = 0.02953;
+
 function PressureTile({ pressureHpa, unit }) {
+  // Mean-sea-level hPa from the model (see normalizeWeatherResponse). The
+  // 960–1040 arc is a sea-level range: it read near-empty for any high city
+  // while the request still fetched station pressure.
   const hpa = toFiniteNumber(pressureHpa);
   const hasDat = hpa !== null;
   const fraction = hasDat ? Math.max(0, Math.min(1, (hpa - 960) / 80)) : null;
   const displayValue = hasDat
     ? unit === "C"
       ? `${Math.round(hpa)}`
-      : (hpa * 0.02953).toFixed(2)
+      : (hpa * INHG_PER_HPA).toFixed(2)
     : "—";
-  const displayUnit = unit === "C" ? "hPa" : "in";
+  // "inHg", not "in": on a dashboard that also prints rain in inches, a bare
+  // "in" read as a depth. The spoken form spells the unit out.
+  const displayUnit = unit === "C" ? "hPa" : "inHg";
+  const spokenUnit = unit === "C" ? "hectopascals" : "inches of mercury";
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
       <TileLabel icon={Gauge} help={TILE_HELP.pressure}>
@@ -232,7 +241,7 @@ function PressureTile({ pressureHpa, unit }) {
         missing={!hasDat}
         ariaLabel={
           hasDat
-            ? `Pressure ${displayValue} ${displayUnit}`
+            ? `Pressure ${displayValue} ${spokenUnit}`
             : "Pressure unavailable"
         }
       />

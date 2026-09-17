@@ -19,6 +19,15 @@ portfolio-grade product. Format roughly follows
   renders as "—"; a recorded live response pins the units every
   conversion assumes; and the forecast snapshot cache version is bumped
   so a pre-fix snapshot is not restored in the old unit.
+- **Pressure is sea-level pressure, labelled `inHg`.** The forecast
+  request fetched station pressure, which falls with elevation: at the
+  default city (183 m) it reads ~21 hPa / 0.6 inHg below the sea-level
+  figure every weather report, phone app and home barometer quotes, and
+  the 960–1040 hPa gauge sat near empty for any high city. The request
+  now asks for `pressure_msl`, a payload without it reports the reading
+  as missing rather than substituting the station value, and the
+  imperial unit reads "inHg" instead of a bare "in" that sat beside rain
+  depths in inches.
 - **Three readings no longer fabricate data.** A missing daily weather
   code rendered a confident "Clear" sun; the wind tile printed the
   sustained speed as a measured gust; the hourly lede announced "rain

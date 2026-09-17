@@ -98,6 +98,13 @@ portfolio-grade product. Format roughly follows
 
 ### Changed
 
+- **The archive is asked once per place and day.** The climate line's
+  30-year normal is cached in `localStorage` by rounded coordinates,
+  calendar day, year and unit, so switching back to a saved city or
+  refreshing a forecast no longer re-downloads 30 years of daily
+  maxima, and the line still appears offline for a place seen this
+  year. The cache expires when the year changes, because the 30-year
+  window moves with it.
 - **Supabase left the critical path.** The rain-alerts panel was the one
   eagerly-mounted panel, and it pulled a 201 KB client during hydration
   on every production visit — including for the majority who have never

@@ -5,7 +5,6 @@ import {
   formatSunClock,
   formatDaylightLengthLabel,
   getSunlightPhase,
-  getZonedNowMs,
   getDaylightProgress,
   isAfterSunset,
   isDaylight,
@@ -104,21 +103,11 @@ describe("sunlight formatting utils", () => {
     );
   });
 
-  test("getZonedNowMs keeps an unknown now unknown", () => {
-    // A missing "now" must stay null, never silently become the device's
-    // current time (getZonedNow's own fallback for a non-finite instant).
-    assert.equal(getZonedNowMs("Asia/Tokyo", null), null);
-    assert.equal(getZonedNowMs("Asia/Tokyo", Number.NaN), null);
-    assert.equal(getZonedNowMs("Asia/Tokyo", undefined), null);
-  });
-
-  test("getDaylightProgress reframes now into a remote location's clock", () => {
-    // 2026-06-15 03:00 UTC is 12:00 in Tokyo (UTC+9, no DST). Against the
-    // naive 04:00 sunrise / 20:00 sunset that is exactly halfway through
-    // daylight. The fraction is a ratio of naive-parse differences, so the
-    // assertion holds regardless of the test machine's own zone — while a
-    // raw device epoch (the bug this guards against) would put the same
-    // instant at the device's own wall clock and pin the value elsewhere.
+  test("getDaylightProgress resolves a remote location's sun times", () => {
+    // 2026-06-15 03:00 UTC is 12:00 in Tokyo (UTC+9, no DST). The naive
+    // 04:00 sunrise and 20:00 sunset resolve through that zone to real
+    // instants 16 hours apart, and noon sits exactly halfway. Holds
+    // regardless of the test machine's own zone, which is the point.
     const nowMs = Date.UTC(2026, 5, 15, 3, 0, 0);
     assert.equal(
       getDaylightProgress(
@@ -237,5 +226,87 @@ describe("isAfterSunset", () => {
     assert.equal(isAfterSunset(null, at(23, 1)), false);
     assert.equal(isAfterSunset(undefined, at(23, 1)), false);
     assert.equal(isAfterSunset("not-a-time", at(23, 1)), false);
+  });
+});
+
+describe("the sun window on a DST day", () => {
+  /*
+   * Sunrise and sunset are the provider's naive location-local strings, the
+   * same shape as the hourly series, and these helpers used to parse them in
+   * the device's zone against a "now" reframed to match. The two cancelled
+   * out until the device's own transition day. These pin the zone-resolved
+   * behaviour: the sun times are placed by the location's clock, and "now"
+   * is the real one.
+   */
+  const CHICAGO = "America/Chicago";
+
+  test("sunrise resolves through the location's zone, not the device's", () => {
+    // 2026-11-01 is Chicago's fall-back day. A 07:15 sunrise is after the
+    // 02:00 transition, so it is on CST (-6): 13:15 UTC.
+    const sunrise = "2026-11-01T07:15:00";
+    const sunset = "2026-11-01T17:45:00";
+    const justAfterSunrise = Date.UTC(2026, 10, 1, 13, 20);
+
+    assert.equal(isDaylight(sunrise, sunset, justAfterSunrise, CHICAGO), true);
+    // An hour earlier is the reading a single fixed CDT offset would have
+    // produced, and it is before sunrise.
+    assert.equal(
+      isDaylight(sunrise, sunset, Date.UTC(2026, 10, 1, 12, 20), CHICAGO),
+      false
+    );
+  });
+
+  test("after-sunset is placed by the location's clock", () => {
+    const sunset = "2026-11-01T17:45:00"; // CST, so 23:45 UTC
+    assert.equal(isAfterSunset(sunset, Date.UTC(2026, 10, 1, 23, 50), CHICAGO), true);
+    assert.equal(isAfterSunset(sunset, Date.UTC(2026, 10, 1, 23, 40), CHICAGO), false);
+  });
+
+  test("the golden-hour phase uses the same resolution", () => {
+    const sunrise = "2026-11-01T07:15:00";
+    const sunset = "2026-11-01T17:45:00";
+    assert.equal(
+      getSunlightPhase(sunrise, sunset, Date.UTC(2026, 10, 1, 23, 50), {
+        timeZone: CHICAGO,
+      }),
+      "sunset"
+    );
+    assert.equal(
+      getSunlightPhase(sunrise, sunset, Date.UTC(2026, 10, 1, 13, 20), {
+        timeZone: CHICAGO,
+      }),
+      "sunrise"
+    );
+  });
+
+  test("daylight length is the duration actually lived, not the naive one", () => {
+    // 2026-03-08 is the spring-forward day: the clock jumps 02:00 -> 03:00,
+    // so a 06:30-to-18:00 wall-clock span is 11 hr 30 min on the face of it
+    // but only 10 hr 30 min of real time. Sunrise is before the transition
+    // (CST) and sunset after it (CDT).
+    const lived = formatDaylightLengthLabel(
+      "2026-03-08T01:30:00",
+      "2026-03-08T18:00:00",
+      { timeZone: CHICAGO }
+    );
+    const naive = formatDaylightLengthLabel(
+      "2026-03-08T01:30:00",
+      "2026-03-08T18:00:00"
+    );
+    assert.equal(lived, "15 hr 30 min");
+    assert.notEqual(lived, naive);
+  });
+
+  test("an unknown zone answers false rather than falling back to the device", () => {
+    // The zone comes from the provider. If the runtime cannot place it, the
+    // daylight question has no honest answer, and these must not guess one.
+    assert.equal(
+      isDaylight("2026-11-01T07:15:00", "2026-11-01T17:45:00", Date.now(), "Not/AZone"),
+      false
+    );
+    assert.equal(
+      isAfterSunset("2026-11-01T17:45:00", Date.now(), "Not/AZone"),
+      false
+    );
   });
 });

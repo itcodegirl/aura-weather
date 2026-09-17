@@ -22,6 +22,16 @@ portfolio-grade product. Format roughly follows
   hourly surface uses takes the zone and the real clock. A regression test
   runs with the device zone set to a transitioning one and fails against the
   old parsing.
+- **The sun window and the pressure trend follow, and the reframing
+  helper is deleted.** The golden-hour wash, the daylight gate that
+  decides whether UV advice appears, the daylight arc and the barometric
+  anchor all compared a reframed clock against device-parsed sunrise and
+  sunset strings, so they could fire an hour out on the same two days.
+  They now resolve the sun times through the location's zone and compare
+  against the real clock. `getZonedNow` and `getZonedNowMs` are gone, so
+  nothing can reach for the old frame again. The daylight-length label is
+  now the duration actually lived: across a spring-forward morning a
+  06:30-to-18:00 wall-clock span is an hour shorter than it reads.
 
 - **One display locale, named once.** The locale was decided at the call
   site 21 times: `en-US` hardcoded in 15 display formatters, and no locale

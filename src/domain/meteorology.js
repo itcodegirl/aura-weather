@@ -1,6 +1,6 @@
 import { toFahrenheit } from "./temperature.js";
 import { toFiniteNumber } from "../utils/numbers.js";
-import { getZonedNow } from "../utils/dates.js";
+import { toEpochMs } from "../utils/zonedTime.js";
 
 const HOUR_MS = 60 * 60 * 1000;
 const TREND_LOOKBACK_MS = 6 * HOUR_MS;
@@ -47,11 +47,11 @@ export function classifyStormRisk(cape, weatherCode) {
  * Calculate barometric pressure trend over the last 6 hours.
  *
  * `timeZone` is the location's IANA zone (`weather.meta.timezone`):
- * Open-Meteo hourly timestamps are naive location-local strings that
- * `new Date()` parses in the *device* zone, so "now" must be reframed
- * into the location's wall clock (getZonedNow) before any comparison —
- * otherwise a viewer hours away anchors on the wrong sample. `now` is
- * an injectable clock for tests, per analyzeNowcast/useRainAnalysis.
+ * Open-Meteo hourly timestamps are naive location-local strings, and it is
+ * what resolves them into real instants, so a viewer hours away anchors on
+ * the right sample. See `utils/zonedTime.js` for why a reframed clock is
+ * not equivalent. `now` is an injectable clock for tests, per
+ * analyzeNowcast/useRainAnalysis.
  */
 export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {}) {
   if (
@@ -69,14 +69,14 @@ export function calculatePressureTrend(hourlyPressure, hourlyTime, options = {})
     };
   }
 
-  const referenceNow = getZonedNow(options.timeZone, options.now).getTime();
+  const referenceNow = toFiniteNumber(options.now) ?? Date.now();
   const paired = [];
   const maxIndex = Math.min(hourlyPressure.length, hourlyTime.length);
 
   for (let i = 0; i < maxIndex; i += 1) {
     const value = toFiniteNumber(hourlyPressure[i]);
-    const time = new Date(hourlyTime[i]).getTime();
-    if (value !== null && Number.isFinite(time)) {
+    const time = toEpochMs(hourlyTime[i], options.timeZone);
+    if (value !== null && time !== null) {
       paired.push({ value, time });
     }
   }

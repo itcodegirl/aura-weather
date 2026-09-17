@@ -3,7 +3,7 @@ import { resolveTodayIndex } from "../../domain/forecastToday.js";
 import { readUvOutlook } from "../../domain/forecastNow.js";
 import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
-import { getSunlightPhase, getZonedNowMs, isDaylight } from "../../utils/sunlight.js";
+import { getSunlightPhase, isDaylight } from "../../utils/sunlight.js";
 import { formatClockTime } from "../../utils/formatters.js";
 import { findWindowStartIndex } from "../../utils/timeSeries.js";
 
@@ -140,7 +140,7 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   // naive strings directly, which already read as the location's own.
   const sunrise = weather.daily?.sunrise?.[todayIndex];
   const sunset = weather.daily?.sunset?.[todayIndex];
-  const zonedNowMs = getZonedNowMs(weather?.meta?.timezone, nowMs);
+  const sunTimeZone = weather?.meta?.timezone ?? null;
   // Parsed once for the golden-hour clock labels below (null when the
   // provider string is unusable, so formatHourClock never sees an Invalid
   // Date). The daylight decision itself goes through isDaylight.
@@ -151,7 +151,7 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   // buildUvGuidance). The two used to carry separate copies of this
   // comparison, and only this one gated at all — so the pill kept saying
   // "Use sun protection" after dark while the reading correctly went quiet.
-  if (isDaylight(sunrise, sunset, zonedNowMs)) {
+  if (isDaylight(sunrise, sunset, nowMs, sunTimeZone)) {
     // This hour's reading, not the day's peak. The sentence is present
     // tense — "if you're heading out" — and with the peak in it, it said
     // "Very high UV (8.0)" at 9 am over an actual index of about 2. The
@@ -214,8 +214,9 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   }
 
   // 6. Golden hour — quiet seasonal beat.
-  const phase = getSunlightPhase(sunrise, sunset, zonedNowMs, {
+  const phase = getSunlightPhase(sunrise, sunset, nowMs, {
     toleranceMinutes: 30,
+    timeZone: sunTimeZone,
   });
   if (phase === "sunset" && sunsetDate) {
     const clock = formatHourClock(sunsetDate);

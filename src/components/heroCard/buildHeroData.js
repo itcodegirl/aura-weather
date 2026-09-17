@@ -84,6 +84,12 @@ function todayLocaleString(nowMs, timeZone) {
 // from the historical norm. A 1-degree delta is statistical noise to
 // most readers; surface the comparison only when the magnitude crosses
 // a threshold that justifies the line.
+//
+// The line names what it compares: today's forecast high against the
+// 30-year average high for the date (see buildClimateComparison). It
+// read "Today is N° warmer than the 30-year average" over a comparison
+// of the current temperature with the average daily mean, which every
+// afternoon satisfied.
 const CLIMATE_NOTABLE_DELTA_F = 5;
 
 function buildClimateMessage({
@@ -122,7 +128,7 @@ function buildClimateMessage({
 
   return {
     hasClimateComparison: true,
-    climateMessage: `Today is ${climateDeltaDisplay}${tempUnit} ${direction} than the ${climateSource} average for ${climateDate} in ${climateLocation}.`,
+    climateMessage: `Today's high is ${climateDeltaDisplay}${tempUnit} ${direction} than the ${climateSource} average high for ${climateDate} in ${climateLocation}.`,
   };
 }
 

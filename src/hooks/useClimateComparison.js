@@ -97,7 +97,13 @@ export function useClimateComparison(options = {}) {
           return;
         }
 
-        const next = buildClimateComparison(weatherData, historicalAverage);
+        // The comparison reads today's forecast high, so it needs the
+        // clock to know which daily entry is today.
+        const next = buildClimateComparison(
+          weatherData,
+          historicalAverage,
+          Date.now()
+        );
         setClimateComparison(next);
         setClimateLastUpdatedAt(next ? Date.now() : null);
         setClimateStatus(next ? "ready" : "unavailable");

@@ -168,8 +168,7 @@ function buildArchivePayload() {
   return {
     daily: {
       time: times,
-      temperature_2m_mean: [64.8, 65.2, 63.9],
-      temperature_2m_min: [54.7, 55.1, 53.8],
+      // The request asks for the daily maximum only.
       temperature_2m_max: [73.2, 74.0, 72.4],
     },
   };

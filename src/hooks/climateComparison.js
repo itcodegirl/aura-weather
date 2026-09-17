@@ -1,3 +1,4 @@
+import { resolveTodayIndex } from "../domain/forecastToday.js";
 import { toFiniteNumber } from "../utils/numbers.js";
 
 export const SOURCE_TEMPERATURE_UNIT = "F";
@@ -8,29 +9,42 @@ export const SOURCE_TEMPERATURE_UNIT = "F";
 const toFiniteTemperature = toFiniteNumber;
 
 /**
- * Combines a forecast snapshot with a historical archive sample to
- * produce a comparison object. Returns null when either side is
- * missing or non-finite, so the UI can fall back without ambiguity.
+ * Combines a forecast with the historical archive sample to produce a
+ * comparison object. Returns null when either side is missing or
+ * non-finite, so the UI can fall back without ambiguity.
+ *
+ * Like with like: today's forecast high against the 30-year average of
+ * the daily high for this calendar day. This compared the instantaneous
+ * current temperature with the average of the daily *mean*, so afternoons
+ * read "warmer than average" and nights "colder" whatever the anomaly —
+ * the 5°F gate downstream only hid that on mild days. The high is read at
+ * today's daily entry (resolveTodayIndex), not index 0, so a snapshot
+ * restored from yesterday compares today's high, not yesterday's.
+ *
+ * `nowMs` is the caller's clock; without one the day falls back to index
+ * 0, as resolveTodayIndex does everywhere else.
  */
-export function buildClimateComparison(weatherData, historicalAverage) {
+export function buildClimateComparison(weatherData, historicalAverage, nowMs) {
   if (!historicalAverage) {
     return null;
   }
 
-  const currentTemperature = toFiniteTemperature(
-    weatherData?.current?.temperature
+  const todayIndex = resolveTodayIndex(weatherData, nowMs);
+  const todayHighTemperature = toFiniteTemperature(
+    weatherData?.daily?.temperatureMax?.[todayIndex]
   );
-  const historicalTemperature = toFiniteTemperature(
-    historicalAverage?.averageTemperature
+  const historicalHighTemperature = toFiniteTemperature(
+    historicalAverage?.averageHighTemperature
   );
 
-  if (currentTemperature === null || historicalTemperature === null) {
+  if (todayHighTemperature === null || historicalHighTemperature === null) {
     return null;
   }
 
   return {
     ...historicalAverage,
-    difference: currentTemperature - historicalTemperature,
+    todayHighTemperature,
+    difference: todayHighTemperature - historicalHighTemperature,
     differenceUnit: SOURCE_TEMPERATURE_UNIT,
   };
 }

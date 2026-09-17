@@ -79,6 +79,14 @@ portfolio-grade product. Format roughly follows
   the most severe active alert rather than whichever the feed listed
   first. The function's decisions are now a pure module with Deno tests
   that CI runs.
+- **The climate line compares like with like.** "Today is N° warmer
+  than the 30-year average" subtracted the 30-year mean of the daily
+  *mean* from the *instantaneous* current temperature, so afternoons
+  read warmer than average and nights colder whatever the anomaly; the
+  5° gate only hid that on mild days. It now compares today's forecast
+  high with the 30-year average high for the date, says so ("Today's
+  high is 8°F warmer than the 30-year average high for April 21"), and
+  the archive request asks for that one daily field instead of three.
 
 ### Changed
 

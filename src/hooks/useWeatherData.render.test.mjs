@@ -26,7 +26,22 @@ function jsonResponse(body) {
 
 // Minimal but schema-valid Open-Meteo forecast payload: normalizeWeatherResponse
 // only needs `current` plus the array bags to be present.
+//
+// The daily day is dated from the caller's clock, like archivePayload below.
+// It used to be a hardcoded "2026-04-21", which meant the climate test
+// compared an archive average built from TODAY against a forecast high from a
+// day five months gone — and asserted a comparison came back. That only
+// passed because resolveTodayIndex fell back to index 0 on a run-out series.
+// The assertion was resting on the defect.
+function forecastDay() {
+  const now = new Date();
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(now.getUTCDate()).padStart(2, "0");
+  return `${now.getUTCFullYear()}-${month}-${day}`;
+}
+
 function forecastPayload(latitude, longitude) {
+  const today = forecastDay();
   return {
     latitude,
     longitude,
@@ -55,12 +70,12 @@ function forecastPayload(latitude, longitude) {
       wind_gusts_10m: [],
     },
     daily: {
-      time: ["2026-04-21"],
+      time: [today],
       weather_code: [2],
       temperature_2m_max: [67],
       temperature_2m_min: [51],
-      sunrise: ["2026-04-21T11:18:00Z"],
-      sunset: ["2026-04-21T23:41:00Z"],
+      sunrise: [`${today}T11:18:00Z`],
+      sunset: [`${today}T23:41:00Z`],
       uv_index_max: [6],
       precipitation_probability_max: [20],
       precipitation_sum: [0],

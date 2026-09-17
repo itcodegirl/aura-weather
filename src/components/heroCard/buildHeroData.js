@@ -129,7 +129,10 @@ function formatPercent(value) {
  * "today" when only the calendar-day figures are available.
  */
 function buildRainGuidance(unit, outlook) {
-  const { chance, amount, source } = outlook;
+  // readRainOutlook answers null on a run-out series. That lands on the
+  // "Guidance unavailable" branch below — the same one a provider that
+  // returned no precipitation data has always taken.
+  const { chance = null, amount = null, source = null } = outlook ?? {};
   const window = source === "hourly" ? "for the rest of today" : "today";
   const chanceLabel = formatPercent(chance);
   // Wire amounts are pinned to inches (source "F") regardless of the
@@ -558,7 +561,18 @@ export function buildHeroData({
    * yesterday puts yesterday's high, low, sun times and UV peak in the hero
    * while the Week Ahead below it starts at today. See resolveTodayIndex.
    */
-  const todayIndex = resolveTodayIndex(weather, nowMs);
+  const { index: todayIndex, status: todayStatus } = resolveTodayIndex(
+    weather,
+    nowMs
+  );
+  /*
+   * On a run-out series the hero used to print a date read from the clock
+   * over numbers read from the series — "Thursday, September 17" above an
+   * April high of 88°F. The date label is the honest half; the readings are
+   * the ones that must go. Missing renders as "—", per the trust contract,
+   * which is the same thing an absent reading has always rendered.
+   */
+  const isTodayStale = todayStatus === "stale";
   const safeLocationName = pickLocationName(location);
   const safeLocationCountry = pickLocationCountry(location);
   const info = getWeather(current.conditionCode);
@@ -567,11 +581,11 @@ export function buildHeroData({
   const currentTempDisplay = formatTemperatureValue(current.temperature, unit);
   const feelsLikeDisplay = formatTemperatureWithUnit(current.feelsLike, unit);
   const todayHighDisplay = formatTemperatureWithUnit(
-    weather?.daily?.temperatureMax?.[todayIndex],
+    isTodayStale ? null : weather?.daily?.temperatureMax?.[todayIndex],
     unit
   );
   const todayLowDisplay = formatTemperatureWithUnit(
-    weather?.daily?.temperatureMin?.[todayIndex],
+    isTodayStale ? null : weather?.daily?.temperatureMin?.[todayIndex],
     unit
   );
 
@@ -615,7 +629,7 @@ export function buildHeroData({
   const characteristicChips = buildCharacteristicChips(
     weather,
     aqi,
-    readUvOutlook(weather, nowMs).now
+    readUvOutlook(weather, nowMs)?.now ?? null
   );
 
   const sunWindow = {
@@ -651,7 +665,8 @@ export function buildHeroData({
     climateMessage,
     dailyGuidance,
     characteristicChips,
-    uvPanel: buildHeroUvPanel(weather, todayIndex, sunWindow),
+    // The panel owes the reader a number it can stand behind, or none.
+    uvPanel: isTodayStale ? null : buildHeroUvPanel(weather, todayIndex, sunWindow),
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
     // The instant the current conditions are valid for, as the location's
     // wall clock — "" when the provider sent none. The trust pill's age is

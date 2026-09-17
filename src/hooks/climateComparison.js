@@ -29,7 +29,14 @@ export function buildClimateComparison(weatherData, historicalAverage, nowMs) {
     return null;
   }
 
-  const todayIndex = resolveTodayIndex(weatherData, nowMs);
+  // "14°F above the 30-year average for this date" is a claim about TODAY.
+  // On a run-out series it was a claim about an April day made in September,
+  // and no relabelling fixes an anomaly — so there is nothing to compare.
+  const { index: todayIndex, status } = resolveTodayIndex(weatherData, nowMs);
+  if (status === "stale") {
+    return null;
+  }
+
   const todayHighTemperature = toFiniteTemperature(
     weatherData?.daily?.temperatureMax?.[todayIndex]
   );

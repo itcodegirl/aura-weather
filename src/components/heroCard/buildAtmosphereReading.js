@@ -94,7 +94,10 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
 
   // Same day the hero and the Week Ahead use; see resolveTodayIndex. Reading
   // index 0 put a restored snapshot's yesterday sun times and UV peak here.
-  const todayIndex = resolveTodayIndex(weather, nowMs);
+  // Decided unchanged: this surface already returns null on a run-out series,
+  // because its hourly scan (resolveWindowStart, unit 7c) fails first. It
+  // takes the index and leaves `status` to the callers that can still speak.
+  const { index: todayIndex } = resolveTodayIndex(weather, nowMs);
 
   // 1. Severe weather alert — highest priority, supersedes everything.
   const alerts = Array.isArray(weather.alerts) ? weather.alerts : [];
@@ -164,7 +167,7 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
     // Band words come from the shared WHO classifier so the reading
     // line can never disagree with the UV chip or panel. Only High and
     // above merits a hero callout; Moderate stays a panel-level fact.
-    const uvIndex = readUvOutlook(weather, nowMs).now;
+    const uvIndex = readUvOutlook(weather, nowMs)?.now ?? null;
     const uvBand = classifyUv(uvIndex)?.band;
     if (uvBand === "very-high" || uvBand === "extreme") {
       return {

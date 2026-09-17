@@ -98,7 +98,14 @@ export function readUvOutlook(weather, nowMs) {
   const times = Array.isArray(hourly.time) ? hourly.time : [];
   const series = Array.isArray(hourly.uvIndex) ? hourly.uvIndex : [];
 
-  const todayIndex = resolveTodayIndex(weather, nowMs);
+  // A run-out daily series has no "today" to report a peak for. Null rather
+  // than an object of nulls: every consumer reaches straight for a field, so
+  // an unconverted one throws on the first read instead of quietly rendering
+  // the stale day's peak as today's.
+  const { index: todayIndex, status } = resolveTodayIndex(weather, nowMs);
+  if (status === "stale") {
+    return null;
+  }
   const peak = toFiniteNumber(weather?.daily?.uvIndexMax?.[todayIndex]);
 
   const nowIndex = resolveCurrentHourIndex(weather, nowMs);
@@ -159,7 +166,11 @@ export function readRainOutlook(weather, nowMs) {
   const chances = Array.isArray(hourly.rainChance) ? hourly.rainChance : [];
   const amounts = Array.isArray(hourly.rainAmount) ? hourly.rainAmount : [];
 
-  const todayIndex = resolveTodayIndex(weather, nowMs);
+  // Same run-out rule as readUvOutlook: no today, no "rest of today".
+  const { index: todayIndex, status } = resolveTodayIndex(weather, nowMs);
+  if (status === "stale") {
+    return null;
+  }
   const nowIndex = resolveCurrentHourIndex(weather, nowMs);
   const todayIso = resolveTodayIso(weather, todayIndex, nowMs);
 

@@ -175,11 +175,13 @@ function describeUvPeak({ peak, peakTime, peakIsPast }) {
  * and it is labelled as one.
  */
 function UvTile({ outlook }) {
-  const uv = outlook.now;
+  // A null outlook is a run-out daily series, not a missing prop: the tile
+  // renders its existing "Unavailable" state rather than a stale peak.
+  const uv = outlook?.now ?? null;
   const hasDat = uv !== null;
   const fraction = hasDat ? Math.max(0, Math.min(1, uv / 11)) : null;
   const { label, tone } = getUvStatus(uv);
-  const peakLine = describeUvPeak(outlook);
+  const peakLine = outlook ? describeUvPeak(outlook) : null;
   const peakSpoken = peakLine ? `, ${peakLine.toLowerCase()}` : "";
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
@@ -509,7 +511,10 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
    * sun times and UV peak here beside a hero showing today's — the same
    * two-panels-disagree defect resolveTodayIndex was written to close.
    */
-  const todayIndex = resolveTodayIndex(weather, nowMs);
+  // Decided unchanged for the sun tile: it keeps reading index 0 so this
+  // panel and the Week Ahead cannot disagree about which day they show. The
+  // UV tile degrades on its own, because readUvOutlook answers null.
+  const { index: todayIndex } = resolveTodayIndex(weather, nowMs);
   const uvOutlook = readUvOutlook(weather, nowMs);
 
   // Individual tiles already say "Unavailable", but nothing told the
@@ -517,7 +522,7 @@ function AtmosphereBento({ weather, aqi, unit = "F", style, isRefreshing = false
   // dash is actually on screen.
   const hasMissingReading = [
     weather?.current?.humidity,
-    uvOutlook.now,
+    uvOutlook?.now ?? null,
     aqi,
     weather?.current?.pressure,
     weather?.current?.dewPoint,

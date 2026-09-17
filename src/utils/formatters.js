@@ -80,12 +80,19 @@ function getFormatter(options, timeZone) {
  * from us. Falling back to the viewer's clock shows a real time in the wrong
  * zone; throwing would blank the card.
  *
+ * `fallbackOptions` covers the case where the fallback must say *less* than
+ * the zoned form. The severe-alert stamp is the one that needs it: with the
+ * alert area's zone it prints the abbreviation ("7:30 PM CDT"), and when that
+ * zone is unusable it drops the abbreviation rather than printing the
+ * *device's*, which would read as the alert area's and be wrong.
+ *
  * @param {Date} date
  * @param {Intl.DateTimeFormatOptions} options
  * @param {string|null|undefined} timeZone IANA name, e.g. "America/Chicago"
+ * @param {Intl.DateTimeFormatOptions} [fallbackOptions] defaults to `options`
  * @returns {string} "" when `date` is not a usable Date
  */
-export function formatInZone(date, options, timeZone) {
+export function formatInZone(date, options, timeZone, fallbackOptions) {
   if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
     return "";
   }
@@ -101,7 +108,7 @@ export function formatInZone(date, options, timeZone) {
     }
   }
 
-  return getFormatter(options).format(date);
+  return getFormatter(fallbackOptions ?? options).format(date);
 }
 
 const CLOCK_HOUR_OPTIONS = { hour: "numeric", hour12: true };
@@ -137,6 +144,32 @@ export function formatWeekdayShort(date, timeZone) {
  */
 export function formatStamp(date, timeZone) {
   return formatInZone(date, STAMP_OPTIONS, timeZone);
+}
+
+const LONG_DATE_OPTIONS = {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+};
+
+/** "Monday, April 20" — the hero's date line, spelled out. */
+export function formatLongDate(date, timeZone) {
+  return formatInZone(date, LONG_DATE_OPTIONS, timeZone);
+}
+
+/**
+ * "Apr 18, 7:30 PM CDT" — a stamp that names the zone it is read in, for a
+ * time that belongs to somewhere the reader may not be. Falls back to a plain
+ * stamp in the viewer's clock when the zone is unusable: see `formatInZone`
+ * for why the abbreviation is dropped there rather than substituted.
+ */
+export function formatStampWithZoneName(date, timeZone) {
+  return formatInZone(
+    date,
+    { ...STAMP_OPTIONS, timeZoneName: "short" },
+    timeZone,
+    STAMP_OPTIONS
+  );
 }
 
 /** Test seam: the cache is a module-level singleton and leaks across cases. */

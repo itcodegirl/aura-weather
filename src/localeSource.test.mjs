@@ -17,16 +17,18 @@ import { fileURLToPath } from "node:url";
  * sites and the correct ones print identical strings, so every test passed and
  * every review read fine. This is the gate that makes the rule real.
  *
- * What it forbids: formatting for display without naming a locale, anywhere
- * but in the formatters module. A runtime-default locale is the specific
- * defect — `toLocaleString()`, `toLocaleTimeString([])`,
- * `toLocaleDateString(undefined, …)`, `new Intl.DateTimeFormat({ … })`.
+ * It forbids two things, anywhere but in the formatters module:
  *
- * Scope, stated honestly: this leg covers the runtime-default forms only. The
- * remaining hardcoded `en-US` literals in the component and api layers are
- * being routed through the module in a follow-up, and this file gains the
- * literal rule with them. A gate that lands half a rule and says so beats one
- * that waits for the whole sweep and enforces nothing in the meantime.
+ *   1. A runtime-default locale — `toLocaleString()`, `toLocaleTimeString([])`,
+ *      `toLocaleDateString(undefined, …)`, `new Intl.DateTimeFormat({ … })`.
+ *      This was the visible defect.
+ *   2. A locale *literal* — `toLocaleString("en-US", …)`. Consistent, but it
+ *      puts the decision back at the call site: the next such literal is how
+ *      the first drift starts, and 15 of them is how this one did.
+ *
+ * Rule 2 arrived with the sweep that made it true. It was deliberately absent
+ * while 12 literals remained rather than carried as an allow-list, because an
+ * allow-list of things a gate tolerates is how a gate stops meaning anything.
  */
 
 const SRC = fileURLToPath(new URL(".", import.meta.url));
@@ -45,6 +47,15 @@ const LOCALE_OWNER = "utils/formatters.js";
 const RUNTIME_DEFAULT_TO_LOCALE =
   /\.toLocale(?:String|TimeString|DateString)\(\s*(?:\)|undefined\b|null\b|\[\s*\])/g;
 const RUNTIME_DEFAULT_INTL = /new\s+Intl\.[A-Za-z]+\(\s*(?:\)|\{|undefined\b|null\b|\[\s*\])/g;
+
+/*
+ * A locale named as a literal rather than imported from the module. The
+ * pattern is a quoted BCP-47-shaped tag: two or three letters, optionally
+ * followed by a subtag, which is what every locale in this codebase looked
+ * like before the sweep.
+ */
+const LOCALE_LITERAL =
+  /(?:\.toLocale(?:String|TimeString|DateString)|new\s+Intl\.[A-Za-z]+)\(\s*["'][a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*["']/g;
 
 function collectSourceFiles(dir, found = []) {
   for (const entry of readdirSync(dir)) {
@@ -66,7 +77,11 @@ function collectSourceFiles(dir, found = []) {
 
 function runtimeDefaultLocalesIn(source) {
   const hits = [];
-  for (const pattern of [RUNTIME_DEFAULT_TO_LOCALE, RUNTIME_DEFAULT_INTL]) {
+  for (const pattern of [
+    RUNTIME_DEFAULT_TO_LOCALE,
+    RUNTIME_DEFAULT_INTL,
+    LOCALE_LITERAL,
+  ]) {
     pattern.lastIndex = 0;
     for (const match of source.matchAll(pattern)) {
       const line = source.slice(0, match.index).split("\n").length;
@@ -106,19 +121,37 @@ describe("the display locale has one home", () => {
     }
   });
 
-  test("the detector accepts a named locale", () => {
-    const allowed = [
+  test("the detector recognises a locale literal", () => {
+    const offenders = [
       'const s = d.toLocaleString("en-US", { hour: "numeric" });',
-      'const s = d.toLocaleTimeString(DISPLAY_LOCALE, CLOCK_OPTIONS);',
-      'const f = new Intl.DateTimeFormat(PARTS_LOCALE, { timeZone });',
-      'const f = new Intl.DateTimeFormat(ISO_DATE_LOCALE, options);',
+      "const s = d.toLocaleTimeString('en-GB', CLOCK_OPTIONS);",
+      'const s = d.toLocaleDateString("en-CA");',
+      'const f = new Intl.DateTimeFormat("de-DE", { timeZone });',
+      'const f = new Intl.NumberFormat("fr", options);',
+    ];
+    for (const offender of offenders) {
+      assert.equal(
+        runtimeDefaultLocalesIn(offender).length,
+        1,
+        `should flag: ${offender}`
+      );
+    }
+  });
+
+  test("the detector accepts a locale imported from the module", () => {
+    const allowed = [
+      "const s = d.toLocaleTimeString(DISPLAY_LOCALE, CLOCK_OPTIONS);",
+      "const f = new Intl.DateTimeFormat(PARTS_LOCALE, { timeZone });",
+      "const f = new Intl.DateTimeFormat(ISO_DATE_LOCALE, options);",
+      // Not a locale argument at all: a string elsewhere in the call.
+      "const s = formatStamp(date, 'America/Chicago');",
     ];
     for (const line of allowed) {
       assert.deepEqual(runtimeDefaultLocalesIn(line), [], `should allow: ${line}`);
     }
   });
 
-  test("no source file formats in the runtime's own locale", () => {
+  test("no source file names a locale of its own", () => {
     const files = collectSourceFiles(SRC);
 
     // Positive control: a scan of an empty file list would pass vacuously.
@@ -137,7 +170,7 @@ describe("the display locale has one home", () => {
     assert.deepEqual(
       violations,
       [],
-      `format through src/${LOCALE_OWNER} instead of the runtime locale:\n  ${violations.join("\n  ")}`
+      `format through src/${LOCALE_OWNER} instead of naming a locale here:\n  ${violations.join("\n  ")}`
     );
   });
 

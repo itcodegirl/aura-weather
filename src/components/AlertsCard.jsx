@@ -1,6 +1,7 @@
 import { memo, useId, useMemo } from "react";
 import { Siren } from "lucide-react";
 import { useTimeNow } from "../hooks/useTimeNow";
+import { formatStampWithZoneName } from "../utils/formatters";
 import "./AlertsCard.css";
 
 /*
@@ -16,26 +17,7 @@ function formatAlertTime(value, timeZone) {
   const parsed = new Date(value);
   if (!Number.isFinite(parsed.getTime())) return "Unknown";
 
-  const baseOptions = {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  };
-
-  if (typeof timeZone === "string" && timeZone.trim()) {
-    try {
-      return parsed.toLocaleString("en-US", {
-        ...baseOptions,
-        timeZone: timeZone.trim(),
-        timeZoneName: "short",
-      });
-    } catch {
-      // Fall through to the device-local format below.
-    }
-  }
-
-  return parsed.toLocaleString("en-US", baseOptions);
+  return formatStampWithZoneName(parsed, timeZone);
 }
 
 const VISIBLE_ALERT_LIMIT = 4;

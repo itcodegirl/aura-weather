@@ -2,6 +2,7 @@
 
 import { validateCoordinates } from "../utils/weatherUnits.js";
 import { toFiniteNumber } from "../utils/numbers.js";
+import { DISPLAY_LOCALE, PARTS_LOCALE } from "../utils/formatters.js";
 import {
   createAbortError,
   createRequestSignal,
@@ -111,7 +112,8 @@ function getUtcDateParts(now) {
 }
 
 function getDatePartsInTimeZone(now, timeZone) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  // Reading numeric parts, not rendering them.
+  const formatter = new Intl.DateTimeFormat(PARTS_LOCALE, {
     timeZone,
     year: "numeric",
     month: "2-digit",
@@ -244,13 +246,13 @@ function getDateInTimeZone(timeZone) {
     year = parsed.year;
     month = parsed.month;
     day = parsed.day;
-    monthLabel = new Intl.DateTimeFormat("en-US", {
+    monthLabel = new Intl.DateTimeFormat(DISPLAY_LOCALE, {
       timeZone: zone,
       month: "long",
       day: "numeric",
     }).format(now);
   } catch {
-    const fallbackLabel = new Intl.DateTimeFormat("en-US", {
+    const fallbackLabel = new Intl.DateTimeFormat(DISPLAY_LOCALE, {
       month: "long",
       day: "numeric",
       timeZone: DEFAULT_TIMEZONE,

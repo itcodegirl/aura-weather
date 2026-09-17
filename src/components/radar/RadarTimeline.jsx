@@ -1,8 +1,7 @@
 import { memo } from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { RADAR_FRAME_KIND } from "../../domain/radar.js";
-
-const CLOCK_OPTIONS = { hour: "numeric", minute: "2-digit" };
+import { formatClockTime } from "../../utils/formatters.js";
 
 // Radar frame times are real UTC epochs, so the absolute clock must be
 // projected into the *location's* zone (`weather.meta.timezone`) to agree
@@ -12,21 +11,7 @@ const CLOCK_OPTIONS = { hour: "numeric", minute: "2-digit" };
 // Intl's `timeZone` instead.) An absent or unknown zone falls back to the
 // viewer's clock rather than inventing one.
 function formatClock(unixSeconds, timeZone) {
-  const date = new Date(unixSeconds * 1000);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-  if (typeof timeZone === "string" && timeZone.trim()) {
-    try {
-      return date.toLocaleTimeString("en-US", {
-        ...CLOCK_OPTIONS,
-        timeZone: timeZone.trim(),
-      });
-    } catch {
-      // Unknown IANA name — fall through to the viewer's clock.
-    }
-  }
-  return date.toLocaleTimeString("en-US", CLOCK_OPTIONS);
+  return formatClockTime(new Date(unixSeconds * 1000), timeZone);
 }
 
 // Relative age/lead of a frame, in the user's own words. Observed frames

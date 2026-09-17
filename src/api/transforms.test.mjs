@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeWeatherResponse } from "./transforms.js";
+import { normalizeVisibility, normalizeWeatherResponse } from "./transforms.js";
 
 describe("normalizeWeatherResponse", () => {
   test("preserves valid current readings", () => {
@@ -141,5 +141,59 @@ describe("normalizeWeatherResponse", () => {
       normalizeWeatherResponse({ timezone: "Europe/London" }).meta.timezone,
       "Europe/London"
     );
+  });
+
+  test("converts visibility declared in feet into metres", () => {
+    // Live shape: with precipitation_unit=inch Open-Meteo answers
+    // `current_units.visibility: "ft"`. The tile reads metres, so 48,884.5 ft
+    // (9.3 mi) used to render as "30 mi · clear".
+    const model = normalizeWeatherResponse({
+      current_units: { visibility: "ft" },
+      current: { visibility: 48884.516 },
+      hourly_units: { visibility: "ft" },
+      hourly: {
+        time: ["2026-09-16T16:00", "2026-09-16T17:00"],
+        visibility: [45603.676, null],
+      },
+    });
+
+    assert.ok(Math.abs(model.current.visibility - 14900) < 0.01);
+    assert.ok(Math.abs(model.hourly.visibility[0] - 13900) < 0.01);
+    assert.equal(model.hourly.visibility[1], null);
+  });
+
+  test("keeps visibility declared in metres as-is", () => {
+    const model = normalizeWeatherResponse({
+      current_units: { visibility: "m" },
+      current: { visibility: 14900 },
+    });
+
+    assert.equal(model.current.visibility, 14900);
+  });
+
+  test("treats an undeclared visibility unit as the documented default, metres", () => {
+    // Fixtures and mocks omit `current_units`; the provider documents metres.
+    const model = normalizeWeatherResponse({ current: { visibility: 16093 } });
+
+    assert.equal(model.current.visibility, 16093);
+  });
+
+  test("reports a visibility unit it cannot read as missing, never as a number", () => {
+    const model = normalizeWeatherResponse({
+      current_units: { visibility: "furlongs" },
+      current: { visibility: 12 },
+    });
+
+    assert.equal(model.current.visibility, null);
+  });
+
+  test("keeps a null visibility null whatever unit is declared", () => {
+    const model = normalizeWeatherResponse({
+      current_units: { visibility: "ft" },
+      current: { visibility: null },
+    });
+
+    assert.equal(model.current.visibility, null);
+    assert.equal(normalizeVisibility(1, " FT "), 0.3048);
   });
 });

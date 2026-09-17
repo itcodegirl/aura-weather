@@ -1,7 +1,13 @@
 import { toFiniteNumber } from "../utils/numbers.js";
 
 const CACHE_KEY = "aura-weather-last-known-forecast-v1";
-const CACHE_VERSION = 1;
+// Bumped from 1 when the model's visibility unit was fixed (metres, converted
+// from the unit the provider declares). A version-1 snapshot holds the raw
+// provider value — feet — under a field the tile now correctly reads as
+// metres, so replaying one would restore the "30 mi" reading for up to 48
+// hours. An old snapshot cannot be converted on read: it never recorded its
+// unit. Losing one offline restore is the honest price.
+const CACHE_VERSION = 2;
 const MAX_CACHED_LOCATIONS = 8;
 const MAX_SNAPSHOT_AGE_MS = 12 * 60 * 60 * 1000;
 // Snapshots stamped meaningfully in the future mean the device clock

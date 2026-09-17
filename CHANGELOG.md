@@ -9,6 +9,16 @@ portfolio-grade product. Format roughly follows
 
 ### Fixed
 
+- **Visibility is read in the unit the provider declares.** Open-Meteo
+  answers this app's inch-precipitation request with visibility in
+  feet, and nothing read the declared unit, so the Atmosphere tile
+  divided 48,885 ft by 1,609 as though it were metres and printed
+  "30 mi · clear" on a nine-mile day; fog at one mile showed as three.
+  The model now carries visibility in metres, converted at the API
+  boundary from `current_units` / `hourly_units`; a unit it cannot read
+  renders as "—"; a recorded live response pins the units every
+  conversion assumes; and the forecast snapshot cache version is bumped
+  so a pre-fix snapshot is not restored in the old unit.
 - **Three readings no longer fabricate data.** A missing daily weather
   code rendered a confident "Clear" sun; the wind tile printed the
   sustained speed as a measured gust; the hourly lede announced "rain

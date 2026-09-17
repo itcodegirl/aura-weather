@@ -17,6 +17,45 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function asObject(value) {
+  return value && typeof value === "object" ? value : {};
+}
+
+/*
+ * Open-Meteo declares the unit of every series it returns (`current_units`,
+ * `hourly_units`), and the app cannot assume one. Visibility is documented in
+ * metres, but the provider switches it to FEET whenever the request asks for
+ * `precipitation_unit=inch` — which this app always does. Nothing read the
+ * declared unit, so the Atmosphere tile divided a 48,885 ft reading by 1,609
+ * as though it were metres and printed "30 mi · clear" on a nine-mile day;
+ * fog at one mile rendered as three. The model therefore carries visibility
+ * in METRES, converted here from whatever unit the provider declared.
+ *
+ * A payload with no declared unit (fixtures, older mocks) is taken as the
+ * documented default, metres. A declared unit this table does not know is
+ * treated as missing data: an unreadable unit must render "—", never a
+ * number in the wrong unit.
+ */
+const VISIBILITY_METRES_PER_UNIT = {
+  m: 1,
+  ft: 0.3048,
+};
+
+export function normalizeVisibility(value, unit) {
+  const numeric = toNumber(value);
+  if (numeric === null) {
+    return null;
+  }
+  if (unit === undefined || unit === null) {
+    return numeric;
+  }
+  const factor =
+    typeof unit === "string"
+      ? VISIBILITY_METRES_PER_UNIT[unit.trim().toLowerCase()]
+      : undefined;
+  return factor === undefined ? null : numeric * factor;
+}
+
 /**
  * Maps Open-Meteo payload into a stable app-domain weather model.
  * @param {any} raw
@@ -24,14 +63,13 @@ function asArray(value) {
  */
 export function normalizeWeatherResponse(raw) {
   const model = createEmptyWeatherModel();
-  const safe = raw && typeof raw === "object" ? raw : {};
-  const current = safe.current && typeof safe.current === "object" ? safe.current : {};
-  const hourly = safe.hourly && typeof safe.hourly === "object" ? safe.hourly : {};
-  const daily = safe.daily && typeof safe.daily === "object" ? safe.daily : {};
-  const minutely =
-    safe.minutely_15 && typeof safe.minutely_15 === "object"
-      ? safe.minutely_15
-      : {};
+  const safe = asObject(raw);
+  const current = asObject(safe.current);
+  const currentUnits = asObject(safe.current_units);
+  const hourly = asObject(safe.hourly);
+  const hourlyUnits = asObject(safe.hourly_units);
+  const daily = asObject(safe.daily);
+  const minutely = asObject(safe.minutely_15);
 
   return {
     ...model,
@@ -53,7 +91,10 @@ export function normalizeWeatherResponse(raw) {
       pressure: toNumber(current.surface_pressure),
       dewPoint: toNumber(current.dew_point_2m),
       cloudCover: toNumber(current.cloud_cover),
-      visibility: toNumber(current.visibility),
+      visibility: normalizeVisibility(
+        current.visibility,
+        currentUnits.visibility
+      ),
       isDay: toNumber(current.is_day),
     },
     hourly: {
@@ -72,7 +113,9 @@ export function normalizeWeatherResponse(raw) {
       dewPoint: asArray(hourly.dew_point_2m),
       feelsLike: asArray(hourly.apparent_temperature),
       uvIndex: asArray(hourly.uv_index),
-      visibility: asArray(hourly.visibility),
+      visibility: asArray(hourly.visibility).map((value) =>
+        normalizeVisibility(value, hourlyUnits.visibility)
+      ),
     },
     daily: {
       ...model.daily,

@@ -1,5 +1,14 @@
 // src/api/types.js
 
+/*
+ * Units are fixed by the request `fetchWeather` makes and by the conversions
+ * in `transforms.js`, never by whatever the provider happens to send:
+ * temperatures °F, wind speeds mph, precipitation inches, pressure hPa,
+ * visibility METRES. The provider declares visibility in feet alongside
+ * inch precipitation; `normalizeVisibility` converts it at the boundary so
+ * consumers convert for display only.
+ */
+
 /**
  * @typedef {{latitude: number|null, longitude: number|null, timezone: string}} WeatherMeta
  * @typedef {{

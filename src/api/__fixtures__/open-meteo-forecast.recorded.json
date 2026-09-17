@@ -1,0 +1,239 @@
+{
+  "latitude": 41.703445,
+  "longitude": -87.82021,
+  "generationtime_ms": 18.088340759277344,
+  "utc_offset_seconds": -18000,
+  "timezone": "America/Chicago",
+  "timezone_abbreviation": "GMT-5",
+  "elevation": 183,
+  "current_units": {
+    "time": "iso8601",
+    "interval": "seconds",
+    "temperature_2m": "°F",
+    "relative_humidity_2m": "%",
+    "apparent_temperature": "°F",
+    "weather_code": "wmo code",
+    "wind_speed_10m": "mp/h",
+    "wind_gusts_10m": "mp/h",
+    "wind_direction_10m": "°",
+    "surface_pressure": "hPa",
+    "dew_point_2m": "°F",
+    "cloud_cover": "%",
+    "visibility": "ft",
+    "is_day": ""
+  },
+  "current": {
+    "time": "2026-09-16T16:45",
+    "interval": 900,
+    "temperature_2m": 70.5,
+    "relative_humidity_2m": 87,
+    "apparent_temperature": 74.5,
+    "weather_code": 3,
+    "wind_speed_10m": 5.2,
+    "wind_gusts_10m": 9.4,
+    "wind_direction_10m": 40,
+    "surface_pressure": 1002.4,
+    "dew_point_2m": 66.5,
+    "cloud_cover": 100,
+    "visibility": 48884.516,
+    "is_day": 1
+  },
+  "minutely_15_units": {
+    "time": "iso8601",
+    "weather_code": "wmo code",
+    "precipitation_probability": "%",
+    "precipitation": "inch"
+  },
+  "minutely_15": {
+    "time": [
+      "2026-09-16T00:00",
+      "2026-09-16T00:15",
+      "2026-09-16T00:30"
+    ],
+    "weather_code": [
+      2,
+      2,
+      2
+    ],
+    "precipitation_probability": [
+      13,
+      14,
+      17
+    ],
+    "precipitation": [
+      0,
+      0,
+      0
+    ]
+  },
+  "hourly_units": {
+    "time": "iso8601",
+    "temperature_2m": "°F",
+    "relative_humidity_2m": "%",
+    "dew_point_2m": "°F",
+    "apparent_temperature": "°F",
+    "weather_code": "wmo code",
+    "precipitation_probability": "%",
+    "precipitation": "inch",
+    "surface_pressure": "hPa",
+    "cape": "J/kg",
+    "wind_speed_10m": "mp/h",
+    "wind_gusts_10m": "mp/h",
+    "wind_direction_10m": "°",
+    "uv_index": "",
+    "visibility": "ft"
+  },
+  "hourly": {
+    "time": [
+      "2026-09-14T16:00",
+      "2026-09-14T17:00",
+      "2026-09-14T18:00"
+    ],
+    "temperature_2m": [
+      70.5,
+      71.4,
+      71.2
+    ],
+    "relative_humidity_2m": [
+      41,
+      38,
+      38
+    ],
+    "dew_point_2m": [
+      45.6,
+      44.5,
+      44.3
+    ],
+    "apparent_temperature": [
+      66.4,
+      65.8,
+      66
+    ],
+    "weather_code": [
+      3,
+      3,
+      3
+    ],
+    "precipitation_probability": [
+      1,
+      2,
+      1
+    ],
+    "precipitation": [
+      0,
+      0,
+      0
+    ],
+    "surface_pressure": [
+      999.5,
+      998.1,
+      996.9
+    ],
+    "cape": [
+      0,
+      0,
+      0
+    ],
+    "wind_speed_10m": [
+      6.8,
+      10,
+      8.9
+    ],
+    "wind_gusts_10m": [
+      10.1,
+      13.9,
+      17.4
+    ],
+    "wind_direction_10m": [
+      148,
+      132,
+      131
+    ],
+    "uv_index": [
+      2.55,
+      2.05,
+      1.05
+    ],
+    "visibility": [
+      158792.656,
+      169947.52,
+      171587.92
+    ]
+  },
+  "daily_units": {
+    "time": "iso8601",
+    "weather_code": "wmo code",
+    "temperature_2m_max": "°F",
+    "temperature_2m_min": "°F",
+    "sunrise": "iso8601",
+    "sunset": "iso8601",
+    "uv_index_max": "",
+    "precipitation_probability_max": "%",
+    "precipitation_sum": "inch",
+    "wind_speed_10m_max": "mp/h",
+    "wind_gusts_10m_max": "mp/h",
+    "wind_direction_10m_dominant": "°"
+  },
+  "daily": {
+    "time": [
+      "2026-09-16",
+      "2026-09-17",
+      "2026-09-18"
+    ],
+    "weather_code": [
+      61,
+      53,
+      51
+    ],
+    "temperature_2m_max": [
+      73.2,
+      74.6,
+      76.8
+    ],
+    "temperature_2m_min": [
+      66.9,
+      66.9,
+      65.5
+    ],
+    "sunrise": [
+      "2026-09-16T06:32",
+      "2026-09-17T06:33",
+      "2026-09-18T06:34"
+    ],
+    "sunset": [
+      "2026-09-16T18:58",
+      "2026-09-17T18:56",
+      "2026-09-18T18:55"
+    ],
+    "uv_index_max": [
+      5.25,
+      5.2,
+      4.2
+    ],
+    "precipitation_probability_max": [
+      60,
+      64,
+      8
+    ],
+    "precipitation_sum": [
+      0.197,
+      0.035,
+      0.016
+    ],
+    "wind_speed_10m_max": [
+      7,
+      6.1,
+      9.6
+    ],
+    "wind_gusts_10m_max": [
+      15.9,
+      15,
+      23.9
+    ],
+    "wind_direction_10m_dominant": [
+      26,
+      15,
+      71
+    ]
+  }
+}

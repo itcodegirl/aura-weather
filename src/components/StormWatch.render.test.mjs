@@ -328,3 +328,75 @@ describe("StormWatch dew-point driver", () => {
     assert.doesNotMatch(renderWithDewPoint(52), /muggy dew point/);
   });
 });
+
+/*
+ * Covers this component's `resolveWindowStart` call site for a series that
+ * has run out. Listed in utils/callerCoverage.test.mjs, which fails if this
+ * suite stops covering StormWatch.jsx.
+ *
+ * The CAPE anchor used to resolve an expired series to its trailing window,
+ * so a replayed snapshot could headline two-day-old storm energy as live.
+ */
+describe("StormWatch on a series that has run out", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  function expiredWeather(cape) {
+    // Every slot ends two days before now. Nothing here is current.
+    const lastSlot = Date.now() - 2 * DAY_MS;
+    return {
+      current: {
+        conditionCode: 95,
+        windSpeed: 8,
+        windGust: 12,
+        windDirection: 180,
+        pressure: 1014,
+        dewPoint: 52,
+      },
+      hourly: {
+        time: Array.from({ length: 6 }, (_, i) =>
+          new Date(lastSlot - (5 - i) * HOUR_MS).toISOString()
+        ),
+        cape: Array(6).fill(cape),
+        pressure: [1012, 1013, 1013, 1014, 1014, 1015],
+        rainChance: [90, 90, 90, 90, 90, 90],
+      },
+    };
+  }
+
+  test("reports storm energy unavailable rather than reading the tail", () => {
+    const { container } = render(
+      React.createElement(StormWatch, {
+        weather: expiredWeather(STALE_CAPE),
+        unit: "F",
+        isRefreshing: false,
+      })
+    );
+    const text = container.textContent;
+
+    assert.match(
+      text,
+      /unavailable|can't be assessed|cannot be assessed/i,
+      `expected an honest unavailable state, got: ${text}`
+    );
+    assert.doesNotMatch(
+      text,
+      /severe|extreme/i,
+      `a two-day-old CAPE reading was headlined as live storm risk: ${text}`
+    );
+  });
+
+  test("a live series still reads its storm energy", () => {
+    // The control: the fix must not simply blank the card.
+    const { container } = render(
+      React.createElement(StormWatch, {
+        weather: buildWeather({ cape: 2600, conditionCode: 95 }),
+        unit: "F",
+        isRefreshing: false,
+      })
+    );
+    assert.doesNotMatch(
+      container.textContent,
+      /storm-energy data is unavailable/i
+    );
+  });
+});

@@ -370,3 +370,66 @@ describe("HourlyCard announces which hour is now and which have passed", () => {
     );
   });
 });
+
+/*
+ * Covers this component's `resolveWindowStart` call site for a series that
+ * has run out. Listed in utils/callerCoverage.test.mjs, which fails if this
+ * suite stops covering HourlyCard.jsx.
+ *
+ * The "Now" marker used to be placed from a trailing-window index, so a
+ * replayed snapshot labelled an hour from two days ago as the current one.
+ */
+describe("HourlyCard on a series that has run out", () => {
+  const HOUR = 60 * 60 * 1000;
+  const DAY = 24 * HOUR;
+
+  function expiredHourly() {
+    const lastSlot = Date.now() - 2 * DAY;
+    return {
+      time: Array.from({ length: 24 }, (_, i) =>
+        new Date(lastSlot - (23 - i) * HOUR).toISOString()
+      ),
+      temperature: Array.from({ length: 24 }, () => 71),
+      rainChance: Array.from({ length: 24 }, () => 90),
+      windSpeed: Array.from({ length: 24 }, () => 9),
+      windGust: Array.from({ length: 24 }, () => 14),
+      windDirection: Array.from({ length: 24 }, () => 200),
+      conditionCode: Array.from({ length: 24 }, () => 61),
+    };
+  }
+
+  function liveHourly() {
+    const start = Date.now();
+    return {
+      ...expiredHourly(),
+      time: Array.from({ length: 24 }, (_, i) =>
+        new Date(start + i * HOUR).toISOString()
+      ),
+    };
+  }
+
+  test("does not mark an hour from two days ago as Now", () => {
+    const { container } = renderHourly({ hourly: expiredHourly() });
+    // The empty branch is the honest answer here: the card has no hours it
+    // can truthfully place against the current clock.
+    assert.equal(
+      container.querySelectorAll(".hourly-col").length,
+      0,
+      "an expired series must not render an hourly strip"
+    );
+    assert.doesNotMatch(
+      container.textContent,
+      /\bNow\b/,
+      `a "Now" marker was placed from an expired series: ${container.textContent}`
+    );
+  });
+
+  test("a live series still renders its strip", () => {
+    // The control: the fix must not simply blank the card.
+    const { container } = renderHourly({ hourly: liveHourly() });
+    assert.ok(
+      container.querySelectorAll(".hourly-col").length > 0,
+      "a live series must still render hours"
+    );
+  });
+});

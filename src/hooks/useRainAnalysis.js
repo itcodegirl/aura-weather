@@ -1,8 +1,17 @@
 import { useMemo } from "react";
-import { findWindowStartIndex } from "../utils/timeSeries.js";
+import { resolveWindowStart } from "../utils/timeSeries.js";
 import { toFiniteNumber } from "../utils/numbers.js";
 import { getIsoDateInTimeZone } from "../utils/dates.js";
 import { toEpochMs, zonedWallClockToEpoch } from "../utils/zonedTime.js";
+
+/*
+ * Hours of rain this analysis looks ahead. Declared once: it used to be the
+ * literal 24 in two places — the window passed to the series helper and the
+ * slice that actually applied it — which is a fact declared twice by hand.
+ * `forecastWindow.test.mjs` reads this constant to check the forecast request
+ * asks for enough hours to fill it after a replayed snapshot.
+ */
+const RAIN_WINDOW_HOURS = 24;
 
 function getEmptyRainAnalysis() {
   return {
@@ -54,10 +63,14 @@ export function analyzeRain(hourly, timeZone, now = Date.now()) {
   const hourlyAmounts = Array.isArray(hourly.rainAmount) ? hourly.rainAmount : [];
 
   // Open-Meteo timestamps are the location's naive wall clock
-  // (timezone=auto). The zone goes to findWindowStartIndex, which resolves
+  // (timezone=auto). The zone goes to resolveWindowStart, which resolves
   // them to real instants, so `now` is the real clock.
-  const idx = findWindowStartIndex(hourlyTimes, {
-    windowSize: 24,
+  //
+  // A `stale` series — every slot behind now, i.e. a replayed snapshot whose
+  // window has closed — yields -1 and takes the empty branch. It used to
+  // resolve to the series' tail and be analysed as though it were the next
+  // 24 hours.
+  const { index: idx } = resolveWindowStart(hourlyTimes, {
     now,
     timeZone,
   });
@@ -66,7 +79,7 @@ export function analyzeRain(hourly, timeZone, now = Date.now()) {
   }
 
   const hours = hourlyTimes
-    .slice(idx, idx + 24)
+    .slice(idx, idx + RAIN_WINDOW_HOURS)
     .map((timeString, i) => {
       const timestamp = new Date(timeString);
       if (!Number.isFinite(timestamp.getTime())) return null;

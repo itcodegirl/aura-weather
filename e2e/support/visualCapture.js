@@ -1,8 +1,15 @@
 import { Buffer } from "node:buffer";
 import { expect } from "@playwright/test";
-import { installOpenMeteoMocks, mockDeniedGeolocation } from "./openMeteoMocks.js";
+import {
+  CAPTURE_NOW_ISO,
+  installOpenMeteoMocks,
+  mockDeniedGeolocation,
+} from "./openMeteoMocks.js";
 
-const FIXED_TIMESTAMP_ISO = "2026-04-21T12:00:00-05:00";
+// One home for the frozen instant. This used to be the same literal declared
+// here and in openMeteoMocks.js; the captures only worked because both copies
+// happened to agree.
+const FIXED_TIMESTAMP_ISO = CAPTURE_NOW_ISO;
 
 // A 256x256 fully transparent PNG. Radar tiles are the only imagery in these
 // captures that changes with the real weather; serving a fixed tile keeps the
@@ -183,7 +190,8 @@ async function waitForSupplementalPanels(page) {
 export async function bootstrapVisualState(page, context, viewport) {
   await page.setViewportSize({ width: viewport.width, height: viewport.height });
   await mockDeniedGeolocation(context);
-  await installOpenMeteoMocks(page);
+  // The clock is frozen below, so the fixture is dated to the same instant.
+  await installOpenMeteoMocks(page, { now: FIXED_TIMESTAMP_ISO });
   await mockRadar(page);
   await installFixedClock(page);
 

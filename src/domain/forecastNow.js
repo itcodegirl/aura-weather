@@ -1,6 +1,6 @@
 import { getIsoDateInTimeZone } from "../utils/dates.js";
 import { toFiniteNumber } from "../utils/numbers.js";
-import { findWindowStartIndex } from "../utils/timeSeries.js";
+import { resolveWindowStart } from "../utils/timeSeries.js";
 import { toEpochMs } from "../utils/zonedTime.js";
 import { resolveTodayIndex } from "./forecastToday.js";
 
@@ -33,7 +33,7 @@ export function resolveCurrentHourIndex(weather, nowMs) {
     return -1;
   }
 
-  const index = findWindowStartIndex(times, {
+  const { index } = resolveWindowStart(times, {
     now: referenceNow,
     currentSlotToleranceMs: HOUR_MS,
     timeZone,
@@ -42,8 +42,10 @@ export function resolveCurrentHourIndex(weather, nowMs) {
     return -1;
   }
 
-  // findWindowStartIndex falls back to the next slot, or to the series'
-  // tail, when no slot started within the last hour. Neither is now.
+  // resolveWindowStart falls back to the next slot when no slot started
+  // within the last hour, and that slot is not now either. (It no longer
+  // falls back to the series' tail — a run-out series reports `stale` and
+  // is rejected above — but a forward slot an hour ahead still is not now.)
   const slotMs = toEpochMs(times[index], timeZone);
   if (slotMs === null || Math.abs(referenceNow - slotMs) > HOUR_MS) {
     return -1;

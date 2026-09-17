@@ -17,7 +17,7 @@ import {
 } from "../domain";
 import { formatHour } from "../utils/dates";
 import { toEpochMs } from "../utils/zonedTime";
-import { findWindowStartIndex } from "../utils/timeSeries";
+import { resolveWindowStart } from "../utils/timeSeries";
 import { toFiniteNumber, MISSING_VALUE_PLACEHOLDER } from "../utils/numbers";
 import { InfoDrawer } from "./ui";
 import "./StormWatch.css";
@@ -140,7 +140,10 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
     if (!Array.isArray(times) || !Array.isArray(capeSeries)) {
       return null;
     }
-    const nowIdx = findWindowStartIndex(times, {
+    // A `stale` series resolves to -1 here rather than to its tail, so a
+    // replayed snapshot reports "storm energy unavailable" instead of
+    // headlining two-day-old CAPE as live.
+    const { index: nowIdx } = resolveWindowStart(times, {
       timeZone: weather?.meta?.timezone,
       currentSlotToleranceMs: 60 * 60 * 1000,
     });

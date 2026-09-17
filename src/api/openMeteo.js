@@ -80,18 +80,20 @@ const PAST_HOURS = 48;
  * (14:00-15:45), 200 -> 200 slots (14:00 -> +50h).
  *
  * The obvious bound is NOWCAST_WINDOW_SIZE — the 8 slots analyzeNowcast reads,
- * exactly two hours. It is wrong, for a reason worth writing down because the
- * code does not show it: `findWindowStartIndex` does not report that "now" is
- * past the end of a series. Its last branch CLAMPS to the trailing window. So
- * an 8-slot series replayed from a 48-hour-old snapshot does not degrade to
- * the card's "No minute-by-minute points are available" — it renders the tail
- * of a two-day-old window as the next two hours. Measured:
+ * exactly two hours. When this number was chosen it was wrong, for a reason
+ * the code did not show: `findWindowStartIndex` did not report that "now" was
+ * past the end of a series, its last branch CLAMPED to the trailing window.
+ * An 8-slot series replayed from a 48-hour-old snapshot rendered the tail of
+ * a two-day-old window as the next two hours. Measured at the time:
  *
  *   series 2026-09-15T17:00 -> 19:15, read at 2026-09-17T17:00Z
  *   -> "Heavy rain likely now, lasting through most of the window"
  *
- * Bounding tight would manufacture that on every offline restore. So this
- * carries the replay the same way FORECAST_HOURS does:
+ * That clamp is gone — `resolveWindowStart` reports `stale` and every caller
+ * degrades — so a tight bound would no longer produce false copy; it would
+ * produce an empty nowcast card on an offline restore instead. Shrinking it
+ * is therefore a product decision, not a safety one, and until it is made
+ * this carries the replay the same way FORECAST_HOURS does:
  *
  *   FORECAST_MINUTELY_15_STEPS
  *     = NOWCAST_WINDOW_SIZE (8 slots, 2h)

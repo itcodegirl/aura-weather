@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import {
+  CAPTURE_NOW_ISO,
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks.js";
@@ -81,7 +82,9 @@ test.describe("README dashboard screenshots", () => {
   test("captures the alert-overflow state with 6 active alerts", async ({ page, context }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     await mockDeniedGeolocation(context);
-    await installOpenMeteoMocks(page);
+    // installFixedClock below freezes the page to the same instant, so the
+    // fixture is dated from it rather than from the real clock.
+    await installOpenMeteoMocks(page, { now: CAPTURE_NOW_ISO });
 
     // AlertsCard caps the rendered list at 4 alerts and shows a
     // "+N more" overflow chip — feed 6 so the chip is guaranteed visible.

@@ -5,7 +5,7 @@ import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase, isDaylight } from "../../utils/sunlight.js";
 import { formatClockTime } from "../../utils/formatters.js";
-import { findWindowStartIndex } from "../../utils/timeSeries.js";
+import { resolveWindowStart } from "../../utils/timeSeries.js";
 
 /*
  * Picks one short sentence to surface above the hero temperature.
@@ -55,7 +55,11 @@ function findFirstRainHourIndex(hourly, timeZone, nowMs) {
     return -1;
   }
 
-  const nowIdx = findWindowStartIndex(hourly.time, {
+  // A `stale` series yields -1. The forward scan below would have found
+  // nothing from a clamped tail anyway, so this surface never showed the
+  // bug — but it is guarded for the same reason as the rest, not left to
+  // luck.
+  const { index: nowIdx } = resolveWindowStart(hourly.time, {
     now: Number.isFinite(nowMs) ? nowMs : Date.now(),
     currentSlotToleranceMs: 60 * 60 * 1000,
     timeZone,

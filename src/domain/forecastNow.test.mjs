@@ -122,8 +122,10 @@ describe("resolveCurrentHourIndex", () => {
   });
 
   test("a series that ended yesterday has no current hour", () => {
-    // findWindowStartIndex answers with the series' tail here; that hour is
-    // yesterday evening, and a stale snapshot must not present it as now.
+    // resolveWindowStart reports `stale` here rather than answering with the
+    // series' tail. This case passed before that change too, because of the
+    // local tolerance check below the call — but it passed for a weaker
+    // reason, and the tail was one hour-tolerance away from being read as now.
     const stale = buildWeather({ hourly: buildHourly({ from: -48, to: -20 }) });
     assert.equal(resolveCurrentHourIndex(stale, NOW), -1);
     // Nor is a series that starts tomorrow.

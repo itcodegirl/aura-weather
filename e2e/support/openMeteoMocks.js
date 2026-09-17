@@ -1,4 +1,21 @@
-const MOCK_NOW_ISO = "2026-04-21T12:00:00-05:00";
+/*
+ * The instant the capture specs freeze the browser clock to. Exported so
+ * `visualCapture.js` uses this one rather than declaring the same literal.
+ *
+ * It is NOT the default any more. This module used to date every series from
+ * this fixed April instant while the behavioural specs ran against the real
+ * clock — by 2026-09-17 the fixture was five months in the past, and the only
+ * reason the hourly, rain and nowcast cards rendered at all was that
+ * `findWindowStartIndex` clamped a run-out series to its trailing window and
+ * handed back a real index. Every hourly assertion in the behavioural suite
+ * was reading a trailing window and calling it "now".
+ *
+ * That clamp is gone (see src/utils/timeSeries.js), so a stale fixture now
+ * renders as what it is: unavailable. The default below is the real clock,
+ * which is what a forecast mock should have been all along. A caller that
+ * freezes the browser clock passes the same instant here so the two agree.
+ */
+export const CAPTURE_NOW_ISO = "2026-04-21T12:00:00-05:00";
 
 function toIsoMinute(date) {
   return date.toISOString().slice(0, 16);
@@ -8,12 +25,23 @@ function toDateAtOffset(baseDate, minutesOffset) {
   return new Date(baseDate.getTime() + minutesOffset * 60_000);
 }
 
-function getMockNow() {
-  return new Date(MOCK_NOW_ISO);
+/**
+ * The instant this payload is dated from.
+ *
+ * @param {string|number|Date} [base] defaults to the real clock
+ */
+function getMockNow(base) {
+  const resolved = base === undefined ? new Date() : new Date(base);
+  if (!Number.isFinite(resolved.getTime())) {
+    throw new TypeError(
+      `installOpenMeteoMocks was given an unusable \`now\`: ${String(base)}`
+    );
+  }
+  return resolved;
 }
 
-function buildWeatherPayload(latitude, longitude) {
-  const now = getMockNow();
+function buildWeatherPayload(latitude, longitude, base) {
+  const now = getMockNow(base);
   now.setSeconds(0, 0);
   const currentHour = new Date(now);
   currentHour.setMinutes(0, 0, 0);
@@ -157,8 +185,8 @@ function buildWeatherPayload(latitude, longitude) {
   };
 }
 
-function buildArchivePayload() {
-  const now = getMockNow();
+function buildArchivePayload(base) {
+  const now = getMockNow(base);
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const day = String(now.getUTCDate()).padStart(2, "0");
   const currentYear = now.getUTCFullYear();
@@ -174,7 +202,13 @@ function buildArchivePayload() {
   };
 }
 
-export async function installOpenMeteoMocks(page) {
+/**
+ * @param {import("@playwright/test").Page} page
+ * @param {{now?: string|number|Date}} [options] the instant every series is
+ *   dated from. Defaults to the real clock. Pass `CAPTURE_NOW_ISO` when the
+ *   spec also freezes the browser clock, so the fixture and the page agree.
+ */
+export async function installOpenMeteoMocks(page, { now } = {}) {
   await page.route("https://api.open-meteo.com/v1/forecast**", async (route) => {
     const requestUrl = new URL(route.request().url());
     const latitude = Number(requestUrl.searchParams.get("latitude"));
@@ -186,7 +220,8 @@ export async function installOpenMeteoMocks(page) {
       body: JSON.stringify(
         buildWeatherPayload(
           Number.isFinite(latitude) ? latitude : 41.8781,
-          Number.isFinite(longitude) ? longitude : -87.6298
+          Number.isFinite(longitude) ? longitude : -87.6298,
+          now
         )
       ),
     });
@@ -208,7 +243,7 @@ export async function installOpenMeteoMocks(page) {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(buildArchivePayload()),
+      body: JSON.stringify(buildArchivePayload(now)),
     });
   });
 

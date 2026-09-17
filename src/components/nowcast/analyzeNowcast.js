@@ -1,4 +1,4 @@
-import { findWindowStartIndex } from "../../utils/timeSeries.js";
+import { resolveWindowStart } from "../../utils/timeSeries.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 
 const RAIN_WEATHER_CODES = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99]);
@@ -105,12 +105,16 @@ export function analyzeNowcast(nowcast, options = {}) {
     : [];
 
   // The 15-minute timestamps are the location's naive wall clock. The zone
-  // goes to findWindowStartIndex, which turns them into real instants, so
+  // goes to resolveWindowStart, which turns them into real instants, so
   // `now` is the real clock rather than one reframed to match a misparse.
+  //
+  // A `stale` status means the whole series lies behind now — a replayed
+  // snapshot whose window has closed. It takes the same branch as no data
+  // at all, deliberately: this card's copy is present-tense throughout, and
+  // there is no honest way to say "rain likely now" from a closed window.
   const referenceNow = toFiniteNumber(options.now) ?? Date.now();
-  const normalizedStartIdx = findWindowStartIndex(time, {
+  const { index: normalizedStartIdx } = resolveWindowStart(time, {
     now: referenceNow,
-    windowSize: NOWCAST_WINDOW_SIZE,
     timeZone: options.timeZone,
   });
 

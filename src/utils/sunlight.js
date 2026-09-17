@@ -1,6 +1,29 @@
 import { toFiniteNumber } from "./numbers.js";
-import { getZonedNow } from "./dates.js";
 import { formatClockTime } from "./formatters.js";
+import { toEpochMs } from "./zonedTime.js";
+
+/*
+ * Sunrise and sunset arrive as the provider's naive location-local strings,
+ * the same shape as the hourly series. These helpers used to parse them with
+ * `new Date()` — the device's zone — and take a "now" the caller had already
+ * reframed to match, so both sides were wrong together. `zonedTime.js` says
+ * why that stops working twice a year; here it meant the golden-hour wash and
+ * the daylight gate could fire an hour out on those days.
+ *
+ * They now resolve the sun times through the location's zone and compare
+ * against the real clock. Every one of them still answers false or null when
+ * it cannot place "now" against the sun, rather than guessing.
+ */
+function toSunEpoch(value, timeZone) {
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isFinite(time) ? time : null;
+  }
+  if (!value) {
+    return null;
+  }
+  return toEpochMs(value, timeZone);
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -42,7 +65,7 @@ export function formatSunClock(value, options = {}) {
  * deliberately quiet during the rest.
  */
 export function getSunlightPhase(sunrise, sunset, nowMs, options = {}) {
-  const { toleranceMinutes = 30 } = options;
+  const { toleranceMinutes = 30, timeZone = null } = options;
   const tolerance = toFiniteNumber(toleranceMinutes);
   if (tolerance === null || tolerance <= 0) {
     return null;
@@ -55,13 +78,13 @@ export function getSunlightPhase(sunrise, sunset, nowMs, options = {}) {
 
   const toleranceMs = tolerance * 60_000;
 
-  const sunriseDate = toValidDate(sunrise);
-  if (sunriseDate && Math.abs(now - sunriseDate.getTime()) <= toleranceMs) {
+  const sunriseMs = toSunEpoch(sunrise, timeZone);
+  if (sunriseMs !== null && Math.abs(now - sunriseMs) <= toleranceMs) {
     return "sunrise";
   }
 
-  const sunsetDate = toValidDate(sunset);
-  if (sunsetDate && Math.abs(now - sunsetDate.getTime()) <= toleranceMs) {
+  const sunsetMs = toSunEpoch(sunset, timeZone);
+  if (sunsetMs !== null && Math.abs(now - sunsetMs) <= toleranceMs) {
     return "sunset";
   }
 
@@ -69,27 +92,26 @@ export function getSunlightPhase(sunrise, sunset, nowMs, options = {}) {
 }
 
 /*
- * Whether `zonedNowMs` falls inside today's daylight window. `sunrise` and
- * `sunset` are the provider's naive location-local timestamps, so the caller
- * must pass a "now" already reframed into that clock (see getZonedNowMs) —
- * comparing the raw device epoch pins a remote city to the device's day.
+ * Whether `nowMs` falls inside today's daylight window. `sunrise` and
+ * `sunset` are the provider's naive location-local timestamps; `timeZone`
+ * is what turns them into real instants, so `nowMs` is the real clock.
  *
  * Returns false, never a guess, when any input is missing or invalid: a
  * caller that cannot place "now" against the sun must not surface advice
  * that only makes sense in daylight. Inclusive at both ends, matching the
  * gate buildAtmosphereReading has always used.
  */
-export function isDaylight(sunrise, sunset, zonedNowMs) {
-  const now = toFiniteNumber(zonedNowMs);
+export function isDaylight(sunrise, sunset, nowMs, timeZone) {
+  const now = toFiniteNumber(nowMs);
   if (now === null) {
     return false;
   }
-  const sunriseDate = toValidDate(sunrise);
-  const sunsetDate = toValidDate(sunset);
-  if (!sunriseDate || !sunsetDate) {
+  const sunriseMs = toSunEpoch(sunrise, timeZone);
+  const sunsetMs = toSunEpoch(sunset, timeZone);
+  if (sunriseMs === null || sunsetMs === null) {
     return false;
   }
-  return now >= sunriseDate.getTime() && now <= sunsetDate.getTime();
+  return now >= sunriseMs && now <= sunsetMs;
 }
 
 /*
@@ -108,61 +130,42 @@ export function isDaylight(sunrise, sunset, zonedNowMs) {
  * clock, missing sun times, and the pre-dawn hours all answer false here
  * and leave the caller in present tense — the tense that fails safe.
  */
-export function isAfterSunset(sunset, zonedNowMs) {
-  const now = toFiniteNumber(zonedNowMs);
-  if (now === null) {
-    return false;
-  }
-  const sunsetDate = toValidDate(sunset);
-  if (!sunsetDate) {
-    return false;
-  }
-  return now > sunsetDate.getTime();
-}
-
-/*
- * Reframes a real epoch instant into the location's wall clock, returned as
- * epoch ms of a device-local Date carrying those wall-clock parts. Provider
- * sunrise/sunset timestamps are naive location-local strings that parse in
- * the device zone, so any comparison against "now" must first move "now"
- * into the same frame — comparing the raw device epoch pins remote-city
- * results to the device's clock, not the location's. Returns null when
- * nowMs is not a finite number: an unknown "now" must stay unknown, never
- * silently become the device's current time.
- */
-export function getZonedNowMs(timeZone, nowMs) {
+export function isAfterSunset(sunset, nowMs, timeZone) {
   const now = toFiniteNumber(nowMs);
   if (now === null) {
-    return null;
+    return false;
   }
-  return getZonedNow(timeZone, now).getTime();
+  const sunsetMs = toSunEpoch(sunset, timeZone);
+  if (sunsetMs === null) {
+    return false;
+  }
+  return now > sunsetMs;
 }
 
 /*
- * Fraction of today's daylight already elapsed, clamped to 0..1, in the
- * location's frame (see getZonedNowMs). Returns null when sunrise, sunset,
- * or nowMs is missing/invalid, or when the sunrise/sunset pair spans no
- * positive daylight interval — callers must not draw a sun position they
+ * Fraction of today's daylight already elapsed, clamped to 0..1. Returns
+ * null when sunrise, sunset, or nowMs is missing/invalid, or when the pair
+ * spans no positive daylight — callers must not draw a sun position they
  * cannot compute.
  */
 export function getDaylightProgress(sunrise, sunset, nowMs, timeZone) {
-  const sunriseDate = toValidDate(sunrise);
-  const sunsetDate = toValidDate(sunset);
-  if (!sunriseDate || !sunsetDate) {
+  const sunriseMs = toSunEpoch(sunrise, timeZone);
+  const sunsetMs = toSunEpoch(sunset, timeZone);
+  if (sunriseMs === null || sunsetMs === null) {
     return null;
   }
 
-  const spanMs = sunsetDate.getTime() - sunriseDate.getTime();
+  const spanMs = sunsetMs - sunriseMs;
   if (spanMs <= 0) {
     return null;
   }
 
-  const zonedNowMs = getZonedNowMs(timeZone, nowMs);
-  if (zonedNowMs === null) {
+  const now = toFiniteNumber(nowMs);
+  if (now === null) {
     return null;
   }
 
-  return Math.max(0, Math.min(1, (zonedNowMs - sunriseDate.getTime()) / spanMs));
+  return Math.max(0, Math.min(1, (now - sunriseMs) / spanMs));
 }
 
 export function formatDaylightLengthLabel(
@@ -170,14 +173,17 @@ export function formatDaylightLengthLabel(
   sunset,
   options = {}
 ) {
-  const { fallback = null } = options;
-  const sunriseDate = toValidDate(sunrise);
-  const sunsetDate = toValidDate(sunset);
-  if (!sunriseDate || !sunsetDate) {
+  const { fallback = null, timeZone = null } = options;
+  const sunriseMs = toSunEpoch(sunrise, timeZone);
+  const sunsetMs = toSunEpoch(sunset, timeZone);
+  if (sunriseMs === null || sunsetMs === null) {
     return fallback;
   }
 
-  let diffMs = sunsetDate.getTime() - sunriseDate.getTime();
+  // A real elapsed duration, so both ends resolve through the zone: on the
+  // location's own transition day the naive difference is an hour out from
+  // the daylight anyone there actually gets.
+  let diffMs = sunsetMs - sunriseMs;
   if (diffMs <= 0) {
     diffMs += DAY_MS;
   }

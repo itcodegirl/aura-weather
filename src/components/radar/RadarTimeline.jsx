@@ -7,9 +7,9 @@ import { formatClockTime } from "../../utils/formatters.js";
 // projected into the *location's* zone (`weather.meta.timezone`) to agree
 // with every other timestamp on the page — a viewer in Berlin reading a
 // Chicago radar otherwise sees a Berlin wall clock beside Chicago times.
-// (`getZonedNow` is for Open-Meteo's naive local strings; an epoch needs
-// Intl's `timeZone` instead.) An absent or unknown zone falls back to the
-// viewer's clock rather than inventing one.
+// (`zonedTime.js` handles Open-Meteo's naive local strings; an epoch like
+// this one only needs Intl's `timeZone`.) An absent or unknown zone falls
+// back to the viewer's clock rather than inventing one.
 function formatClock(unixSeconds, timeZone) {
   return formatClockTime(new Date(unixSeconds * 1000), timeZone);
 }

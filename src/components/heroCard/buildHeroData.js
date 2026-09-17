@@ -18,7 +18,6 @@ import {
   formatSunClock,
   formatDaylightLengthLabel,
   getSunlightPhase,
-  getZonedNowMs,
   isAfterSunset,
   isDaylight,
 } from "../../utils/sunlight.js";
@@ -213,7 +212,14 @@ function buildUvGuidance(weather, todayIndex, sunWindow) {
    * daylight there is nothing to advise, so the pill is dropped rather
    * than narrated — the same philosophy as hiding calm-tone pills.
    */
-  if (!isDaylight(sunWindow?.sunrise, sunWindow?.sunset, sunWindow?.zonedNowMs)) {
+  if (
+    !isDaylight(
+      sunWindow?.sunrise,
+      sunWindow?.sunset,
+      sunWindow?.nowMs,
+      sunWindow?.timeZone
+    )
+  ) {
     return null;
   }
 
@@ -344,7 +350,8 @@ function buildHeroUvPanel(weather, todayIndex, sunWindow) {
   const { level } = UV_PANEL_COPY[band];
   const { line } = isAfterSunset(
     sunWindow?.sunset,
-    sunWindow?.zonedNowMs
+    sunWindow?.nowMs,
+    sunWindow?.timeZone
   )
     ? UV_PANEL_COPY_AFTER_SUNSET[band]
     : UV_PANEL_COPY[band];
@@ -590,14 +597,15 @@ export function buildHeroData({
   const sunsetLabel = formatSunClock(sunsetValue);
   const daylightLabel = formatDaylightLengthLabel(sunriseValue, sunsetValue, {
     fallback: MISSING_VALUE_PLACEHOLDER,
+    timeZone: weather?.meta?.timezone ?? null,
   });
   // The golden-hour phase compares "now" against the location's naive
-  // sunrise/sunset timestamps, so it must use the location's wall clock
-  // (not the device's) to avoid mistiming the warm wash for remote
-  // cities. The date label below intentionally keeps the real nowMs —
-  // todayLocaleString formats that instant *into* the location's zone.
-  const zonedNowMs = getZonedNowMs(weather?.meta?.timezone, nowMs);
-  const sunlightPhase = getSunlightPhase(sunriseValue, sunsetValue, zonedNowMs);
+  // sunrise/sunset timestamps. The zone is what resolves those into real
+  // instants, so the comparison uses the real clock (see zonedTime.js).
+  const sunTimeZone = weather?.meta?.timezone ?? null;
+  const sunlightPhase = getSunlightPhase(sunriseValue, sunsetValue, nowMs, {
+    timeZone: sunTimeZone,
+  });
   const atmosphereReading = buildAtmosphereReading({ weather, nowMs, unit });
 
   const { hasClimateComparison, climateMessage } = buildClimateMessage({
@@ -612,7 +620,8 @@ export function buildHeroData({
     {
       sunrise: sunriseValue,
       sunset: sunsetValue,
-      zonedNowMs,
+      nowMs,
+      timeZone: sunTimeZone,
     },
     readRainOutlook(weather, nowMs)
   );
@@ -640,7 +649,8 @@ export function buildHeroData({
   const sunWindow = {
     sunrise: sunriseValue,
     sunset: sunsetValue,
-    zonedNowMs,
+    nowMs,
+    timeZone: sunTimeZone,
   };
 
   return {

@@ -169,7 +169,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`<!--n:unit-tests-->862<!--/n-->` tests across <!--n:unit-suites-->190<!--/n--> suites, including the <!--n:render-tests-->314<!--/n--> React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`<!--n:unit-tests-->863<!--/n-->` tests across <!--n:unit-suites-->190<!--/n--> suites, including the <!--n:render-tests-->314<!--/n--> React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -262,7 +262,8 @@ Short notes on the non-obvious choices a reviewer might question.
   that are *not* display decisions — the `en-CA` that renders `YYYY-MM-DD`
   and the one driving `formatToParts` — are separate exports, so changing
   what people read cannot move how dates are computed. A test walks the
-  source tree and fails on any runtime-default locale outside that module.
+  source tree and fails on any locale named outside that module, whether
+  it was left to the runtime or written out as a literal.
 - **CSS lives next to its component.** App.css holds the global tokens, resets, animations, the shared focus-visible rule, and a handful of cross-component primitives (`.glass`, `.severity-badge*`, `.card-empty*`, `.sr-only`, `.skip-link`). Every feature's CSS is imported by its owning component.
 
 ## Data Trust Contract
@@ -447,7 +448,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — <!--n:unit-tests-->862<!--/n--> Node tests (including <!--n:render-tests-->314<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — <!--n:unit-tests-->863<!--/n--> Node tests (including <!--n:render-tests-->314<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

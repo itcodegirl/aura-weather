@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import {
+  CAPTURE_NOW_ISO,
   installOpenMeteoMocks,
   mockDeniedGeolocation,
 } from "./support/openMeteoMocks";
@@ -477,8 +478,14 @@ test("keeps the mobile dashboard within the viewport width", async ({ page }) =>
 });
 
 test("expands a forecast day for richer detail", async ({ page }) => {
-  await page.addInitScript(() => {
-    const fixedTime = new Date("2026-04-21T12:00:00-05:00").valueOf();
+  // This test freezes the page clock, so the fixture has to be dated from the
+  // same instant — the beforeEach installs it against the real clock, which is
+  // right for every other test in this file. Registering the route again wins,
+  // because Playwright matches routes in reverse registration order.
+  await installOpenMeteoMocks(page, { now: CAPTURE_NOW_ISO });
+
+  await page.addInitScript((fixedIso) => {
+    const fixedTime = new Date(fixedIso).valueOf();
     const RealDate = Date;
 
     class MockDate extends RealDate {
@@ -497,7 +504,7 @@ test("expands a forecast day for richer detail", async ({ page }) => {
 
     Object.setPrototypeOf(MockDate, RealDate);
     globalThis.Date = MockDate;
-  });
+  }, CAPTURE_NOW_ISO);
 
   await openDashboard(page);
 

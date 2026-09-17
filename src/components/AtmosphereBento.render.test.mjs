@@ -406,4 +406,55 @@ describe("AtmosphereBento explains its readings", () => {
     const peakLine = uvTile(container).querySelector(".atm-peak-line").textContent;
     assert.match(peakLine, /at 8 around/, `today's peak, not the stale index 0: ${peakLine}`);
   });
+
+  /*
+   * Unit 8b. getDaylightProgress clamped to 1.0 for every moment past
+   * sunset, and SunTile's only guard is `progress !== null`, so a run-out
+   * pair drew the bead parked at the end of the arc — pixel-identical to
+   * the sun having just gone down, from a snapshot months old.
+   *
+   * These assert on the drawn bead rather than on the helper, because the
+   * helper's own tests would have passed either way: what was wrong was
+   * what a reader saw.
+   */
+  function sunArcCircles(container) {
+    const arc = container.querySelector(".atm-sun-arc");
+    assert.ok(arc, "the sun arc is rendered");
+    return arc.querySelectorAll("circle");
+  }
+
+  test("draws no sun bead for a sun pair that ran out months ago", () => {
+    const runOutDay = "2026-04-21";
+    const runOut = {
+      ...FULL_WEATHER,
+      daily: {
+        time: [runOutDay],
+        uvIndexMax: [UV_PEAK],
+        sunrise: [`${runOutDay}T05:42:00`],
+        sunset: [`${runOutDay}T20:18:00`],
+      },
+    };
+    const { container } = render(
+      React.createElement(AtmosphereBento, { weather: runOut, aqi: 42, unit: "F" })
+    );
+
+    assert.equal(
+      sunArcCircles(container).length,
+      0,
+      "a run-out pair must not place the sun anywhere on the arc"
+    );
+  });
+
+  test("still draws the sun bead for today's sun pair", () => {
+    // The control that stops this being fixed by never drawing the bead.
+    const { container } = render(
+      React.createElement(AtmosphereBento, { weather: FULL_WEATHER, aqi: 42, unit: "F" })
+    );
+
+    assert.equal(
+      sunArcCircles(container).length,
+      2,
+      "today's pair still places the sun on the arc"
+    );
+  });
 });

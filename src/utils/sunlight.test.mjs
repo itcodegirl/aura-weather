@@ -143,6 +143,36 @@ describe("sunlight formatting utils", () => {
     );
   });
 
+  test("getDaylightProgress returns null for a run-out pair, not 1", () => {
+    // The clamp is the defect. Math.min(1, ...) turns EVERY moment past
+    // sunset into exactly 1.0, so AtmosphereBento's `progress !== null`
+    // guard cannot reject it: the bead drew parked at the end of the arc
+    // from a snapshot 149 days old, indistinguishable from the sun having
+    // just gone down.
+    const readAt = Date.UTC(2026, 8, 17, 17, 0);
+    assert.equal(
+      getDaylightProgress("2026-04-21T11:00:00Z", "2026-04-21T23:00:00Z", readAt),
+      null
+    );
+  });
+
+  test("getDaylightProgress still clamps to 1 for an ordinary evening", () => {
+    // The control that stops this being fixed by hiding the bead every
+    // night. An evening past sunset is a real state and must still draw.
+    const sunsetMs = Date.parse("2026-06-15T20:00:00Z");
+    const twoHoursLater = sunsetMs + 2 * 60 * 60 * 1000;
+    assert.equal(
+      getDaylightProgress("2026-06-15T04:00:00Z", "2026-06-15T20:00:00Z", twoHoursLater),
+      1
+    );
+    // ...and right up to the one-day boundary, so the whole overnight holds.
+    const justUnderADay = sunsetMs + 24 * 60 * 60 * 1000;
+    assert.equal(
+      getDaylightProgress("2026-06-15T04:00:00Z", "2026-06-15T20:00:00Z", justUnderADay),
+      1
+    );
+  });
+
   test("getDaylightProgress returns null for uncomputable inputs", () => {
     const nowMs = Date.UTC(2026, 5, 15, 3, 0, 0);
     assert.equal(getDaylightProgress(null, "2026-06-15T20:00:00", nowMs), null);
@@ -295,6 +325,26 @@ describe("the sun window on a DST day", () => {
     );
     assert.equal(lived, "15 hr 30 min");
     assert.notEqual(lived, naive);
+  });
+
+  test("a run-out pair is not a finished day either", () => {
+    // The e2e fixtures carried this exact shape for five months: a sun pair
+    // dated 2026-04-21 read at 2026-09-17. `now > sunsetMs` is true of a
+    // sunset two hours ago and of one 149 days ago alike, and the hero's UV
+    // panel renders past tense on true — "midday exposure was best avoided"
+    // about a midday five months gone.
+    const RUN_OUT_SUNSET = "2026-04-21T23:00:00Z";
+    const READ_AT = Date.UTC(2026, 8, 17, 17, 0);
+    assert.equal(isAfterSunset(RUN_OUT_SUNSET, READ_AT), false);
+  });
+
+  test("the run-out boundary is one day, and it is not off by one", () => {
+    // A pair describes one day. Exactly a day past sunset is still that
+    // day's evening; past that it describes nothing about now.
+    const SUNSET_MS = Date.parse("2026-04-21T23:00:00Z");
+    const DAY = 24 * 60 * 60 * 1000;
+    assert.equal(isAfterSunset(SUNSET_MS, SUNSET_MS + DAY), true, "a day past is the boundary, still inside");
+    assert.equal(isAfterSunset(SUNSET_MS, SUNSET_MS + DAY + 1), false, "a millisecond beyond it is run out");
   });
 
   test("an unknown zone answers false rather than falling back to the device", () => {

@@ -12,6 +12,7 @@ import {
   readRainOutlook,
   readUvOutlook,
 } from "../domain/forecastNow.js";
+import { calculatePressureTrend } from "../domain/meteorology.js";
 
 /*
  * What a series that has entirely run out is allowed to say: nothing, in the
@@ -41,7 +42,7 @@ import {
  * drives each consumer that reaches provider timestamps through the helper
  * and asserts on what a reader would see.
  *
- * Six production call sites, enumerated by grep rather than memory
+ * Seven production call sites, enumerated by grep rather than memory
  * (`grep -rn "resolveWindowStart(" src/ --include=*.js --include=*.jsx`):
  *
  *   1. components/nowcast/analyzeNowcast.js   the nowcast summary
@@ -50,12 +51,18 @@ import {
  *   4. components/heroCard/buildAtmosphereReading.js  imminent-rain scan
  *   5. hooks/useRainAnalysis.js               the rain window
  *   6. domain/forecastNow.js                  rain and UV "right now" readers
+ *   7. domain/meteorology.js                  the barometric pressure anchor
  *
- * Four are pure and are driven here. The two React components are driven in
+ * Five are pure and are driven here. The two React components are driven in
  * their own render suites (StormWatch.render.test.mjs, HourlyCard.render.test.mjs),
  * because their calls sit inside component bodies rather than exported functions.
  * `src/utils/callerCoverage.test.mjs` asserts that this list still matches the
- * grep, so a seventh caller cannot land uncovered.
+ * grep, so an eighth caller cannot land uncovered.
+ *
+ * Number 7 is the one this file's own gate caught. `calculatePressureTrend`
+ * never imported the helper — it had hand-rolled the identical clamp
+ * (`findIndex(...) === -1 ? paired.length - 1`) in its own body, so unit 7c
+ * passed straight over it. It is a call site now, and covered here.
  */
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -284,6 +291,78 @@ describe("a series that has run out says so", () => {
     test("a live series still reads as hourly", () => {
       const outlook = readRainOutlook(weatherWith(liveSeries(24, HOUR_MS)), NOW);
       assert.equal(outlook.source, "hourly");
+    });
+  });
+
+  describe("7. the barometric pressure anchor", () => {
+    // A steadily falling series. On a live window this is the reading
+    // StormWatch turns into "falling pressure is feeding today's storm
+    // risk" — so if the expired case still says "falling", the card is
+    // asserting a storm driver from a barometer that stopped reporting.
+    const FALLING = [1002, 1001.4, 1000.8, 1000.1, 999.5, 998.6, 997.4, 996.1];
+
+    test("an expired series reports no current reading and no trend", () => {
+      const expired = calculatePressureTrend(
+        FALLING,
+        expiredSeries(FALLING.length, HOUR_MS),
+        { timeZone: TZ, now: NOW }
+      );
+
+      assert.equal(expired.current, null);
+      assert.equal(expired.direction, "steady");
+      assert.equal(expired.interpretation, "No data");
+      assert.equal(expired.status, "stale");
+      assert.equal(expired.staleByMs, STALE_BY_MS);
+    });
+
+    test("the expired reading is the same one missing data returns", () => {
+      // StormWatch has no staleness branch of its own: it reads `direction`
+      // and names a driver. Fail-closed here means answering exactly what an
+      // absent series answers, so the card needs no new conditional.
+      const expired = calculatePressureTrend(
+        FALLING,
+        expiredSeries(FALLING.length, HOUR_MS),
+        { timeZone: TZ, now: NOW }
+      );
+      const absent = calculatePressureTrend([], [], { timeZone: TZ, now: NOW });
+
+      assert.deepEqual(
+        { ...expired, status: null, staleByMs: null },
+        { ...absent, status: null, staleByMs: null }
+      );
+    });
+
+    test("no trailing-index fallback survives anywhere in the source", () => {
+      // The defect was not the helper's — it was a second copy of the clamp
+      // living in this function. A regex, so a re-introduction has to be
+      // deliberate rather than accidental.
+      const source = readFileSync(
+        fileURLToPath(new URL("../domain/meteorology.js", import.meta.url)),
+        "utf8"
+      );
+      assert.ok(
+        !/length\s*-\s*1\s*:/.test(source) && !/:\s*paired\.length\s*-\s*1/.test(source),
+        "a trailing-index fallback is back in calculatePressureTrend"
+      );
+    });
+
+    test("a live series still computes the trend", () => {
+      // The control that stops this being fixed by making the reading
+      // useless. The whole point is that normal operation is untouched.
+      const live = calculatePressureTrend(
+        FALLING,
+        liveSeries(FALLING.length, HOUR_MS).map((t, i, all) =>
+          // Shift the window back so it ENDS at now: a pressure trend needs
+          // ~6h of history behind the anchor, not 8h of forecast ahead of it.
+          naive(NOW - (all.length - 1 - i) * HOUR_MS)
+        ),
+        { timeZone: TZ, now: NOW }
+      );
+
+      assert.equal(live.status, "ok");
+      assert.equal(live.current, 996.1);
+      assert.equal(live.direction, "falling");
+      assert.equal(live.interpretation, "Storm possible");
     });
   });
 });

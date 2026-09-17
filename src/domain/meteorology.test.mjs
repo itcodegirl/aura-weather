@@ -61,14 +61,36 @@ describe("meteorology utils", () => {
     // One usable reading compares against itself (delta 0), which used
     // to present as a confident "Stable" trend computed from no trend
     // data. The current value is still surfaced; the trend is not.
+    //
+    // The usable sample sits in the LAST slot — the one containing now —
+    // on purpose. It used to sit in the first, seven hours back, and the
+    // assertion below passed only because the anchor clamped to the tail:
+    // a test for trend copy, resting on the defect this unit removes.
     const times = buildHourlyIsoTimes(8, 0);
     const singleSample = calculatePressureTrend(
-      [1012, null, null, null, null, null, null, null],
+      [null, null, null, null, null, null, null, 1012],
       times
     );
     assert.equal(singleSample.current, 1012);
     assert.equal(singleSample.interpretation, "Not enough data");
     assert.equal(singleSample.direction, "steady");
+    assert.equal(singleSample.status, "ok");
+  });
+
+  test("calculatePressureTrend will not surface a lone hours-old sample as current", () => {
+    // The other half of the fixture above, and a real behaviour change: a
+    // series whose only usable barometer reading is seven hours old knows
+    // nothing about the present. It used to answer `current: 1012` — the
+    // clamped tail — which is a stale reading rendered as the live one.
+    const times = buildHourlyIsoTimes(8, 0);
+    const loneStaleSample = calculatePressureTrend(
+      [1012, null, null, null, null, null, null, null],
+      times
+    );
+    assert.equal(loneStaleSample.current, null);
+    assert.equal(loneStaleSample.interpretation, "No data");
+    assert.equal(loneStaleSample.status, "stale");
+    assert.ok(loneStaleSample.staleByMs > 6 * 60 * 60 * 1000);
   });
 
   test("calculatePressureTrend returns defaults for invalid input", () => {
@@ -79,6 +101,8 @@ describe("meteorology utils", () => {
       direction: "steady",
       interpretation: "No data",
       sparkline: [],
+      status: "empty",
+      staleByMs: null,
     });
   });
 

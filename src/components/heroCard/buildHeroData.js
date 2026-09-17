@@ -23,6 +23,7 @@ import {
   isDaylight,
 } from "../../utils/sunlight.js";
 import { formatDisplayCountry } from "../../utils/locationDisplay.js";
+import { formatProviderClock } from "../../utils/dates.js";
 import { buildAtmosphereReading } from "./buildAtmosphereReading.js";
 
 const FALLBACK_LOCATION_NAME = "Current location";
@@ -687,5 +688,9 @@ export function buildHeroData({
     characteristicChips,
     uvPanel: buildHeroUvPanel(weather, todayIndex, sunWindow),
     today: todayLocaleString(nowMs, weather?.meta?.timezone),
+    // The instant the current conditions are valid for, as the location's
+    // wall clock — "" when the provider sent none. The trust pill's age is
+    // the fetch; this is what the fetched values describe.
+    validTimeLabel: formatProviderClock(current.time),
   };
 }

@@ -31,6 +31,38 @@ describe("normalizeWeatherResponse", () => {
     assert.equal(model.current.dewPoint, 53.1);
   });
 
+  test("keeps the valid time, its interval and the location's UTC offset", () => {
+    // Audit finding A-09. "Current" conditions are model output valid at
+    // `current.time` on a 15-minute grid; the model dropped the time, so
+    // the only clock the hero could show was the fetch.
+    const model = normalizeWeatherResponse({
+      utc_offset_seconds: -18000,
+      timezone: "America/Chicago",
+      current: { time: " 2026-09-16T19:30 ", interval: 900, temperature_2m: 68.2 },
+    });
+
+    assert.equal(model.meta.utcOffsetSeconds, -18000);
+    assert.equal(model.current.time, "2026-09-16T19:30");
+    assert.equal(model.current.interval, 900);
+  });
+
+  test("a missing valid time or offset stays missing", () => {
+    const model = normalizeWeatherResponse({
+      current: { time: "", interval: null, temperature_2m: 68.2 },
+    });
+    assert.equal(model.meta.utcOffsetSeconds, null);
+    assert.equal(model.current.time, null);
+    assert.equal(model.current.interval, null);
+
+    const junk = normalizeWeatherResponse({
+      utc_offset_seconds: "later",
+      current: { time: 1758050000000, interval: "900s" },
+    });
+    assert.equal(junk.meta.utcOffsetSeconds, null);
+    assert.equal(junk.current.time, null, "a number is not a provider timestamp");
+    assert.equal(junk.current.interval, null);
+  });
+
   test("preserves null when the API reports a missing current field", () => {
     // Trust contract: a partial response cannot surface as fake 0% / 0 hPa.
     // The normalized model must keep the nullness so downstream

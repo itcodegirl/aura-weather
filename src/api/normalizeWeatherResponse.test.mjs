@@ -9,7 +9,10 @@ describe("normalizeWeatherResponse model mapping", () => {
       latitude: 41.88,
       longitude: -87.63,
       timezone: "America/Chicago",
+      utc_offset_seconds: -18000,
       current: {
+        time: "2026-04-20T12:00",
+        interval: 900,
         temperature_2m: 72.4,
         relative_humidity_2m: 60,
         apparent_temperature: 74.1,
@@ -53,7 +56,10 @@ describe("normalizeWeatherResponse model mapping", () => {
       latitude: 41.88,
       longitude: -87.63,
       timezone: "America/Chicago",
+      utcOffsetSeconds: -18000,
     });
+    assert.equal(normalized.current.time, "2026-04-20T12:00");
+    assert.equal(normalized.current.interval, 900);
     assert.equal(normalized.current.temperature, 72.4);
     assert.equal(normalized.current.conditionCode, 2);
     assert.deepEqual(normalized.hourly.temperature, [72.4, 73.1]);

@@ -574,6 +574,32 @@ describe("buildHeroData", () => {
     assert.equal(data.safeLocationCountry, "United States");
   });
 
+  /*
+   * Audit finding A-09. Current conditions are model output valid at the
+   * provider's `current.time`; the hero could only show the fetch age.
+   */
+  test("names the valid time of the current readings as the location's wall clock", () => {
+    const data = buildHeroData({
+      weather: {
+        ...baseWeather,
+        meta: { timezone: "America/Chicago", utcOffsetSeconds: -18000 },
+        current: { ...baseWeather.current, time: "2026-04-21T16:45" },
+      },
+      location: baseLocation,
+      unit: "F",
+    });
+    assert.equal(data.validTimeLabel, "4:45 pm");
+  });
+
+  test("has no valid-time label when the provider sent no time", () => {
+    const data = buildHeroData({
+      weather: baseWeather,
+      location: baseLocation,
+      unit: "F",
+    });
+    assert.equal(data.validTimeLabel, "");
+  });
+
   test("builds a 'warmer than average' climate message in Fahrenheit", () => {
     const data = buildHeroData({
       weather: baseWeather,

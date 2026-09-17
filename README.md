@@ -169,7 +169,7 @@ npm run test:lighthouse
 ### Latest local QA snapshot
 
 - `npm run lint` passes
-- `npm test` passes (`<!--n:unit-tests-->817<!--/n-->` tests across <!--n:unit-suites-->179<!--/n--> suites, including the <!--n:render-tests-->308<!--/n--> React render tests via `jsdom` + `esbuild`)
+- `npm test` passes (`<!--n:unit-tests-->828<!--/n-->` tests across <!--n:unit-suites-->180<!--/n--> suites, including the <!--n:render-tests-->310<!--/n--> React render tests via `jsdom` + `esbuild`)
 - `npm run build` passes
 - `npm run test:e2e -- --workers=1` passes (Playwright checks covering smoke, screenshots, cached offline restore, offline app-shell reload, honest GPS labels, missing-data placeholder guard, demo-provider guard, unicode-escape leak guard, and axe-core a11y)
 - `npm run test:lighthouse` passes the local app-shell budget gate against the labelled `?mock=missing` demo route
@@ -217,6 +217,7 @@ npm run test:lighthouse
 - Browser location is opt-in. Users can keep the fallback city, search manually, or grant location access.
 - Device-location success upgrades to a friendly nearby place label when reverse geocoding succeeds.
 - Core weather data loads first. Air quality, alerts, and climate context can recover independently if a secondary API is slow or unavailable.
+- Current conditions say what they are. The hero reads "Conditions as of 4:45 pm · model estimate" — the provider's valid time on its 15-minute model grid, in the location's wall clock — beside the fetch age in the trust pill, so a model value is never presented as a station observation or as newer than it is.
 - The hero summarizes daily decisions from real forecast data: rain gear, UV exposure, and wind comfort. Missing source data is labelled unavailable, not guessed.
 - Mobile rain and hourly cards expose touch-friendly sample controls so users can inspect dense timelines without relying on hover.
 - Saved cities appear as search suggestions on focus, so repeat switching does not require typing.
@@ -308,12 +309,12 @@ The contract is locked in by tests at every layer:
 - **Unit (`numbers.test.mjs`, <!--n:numbers-tests-->10<!--/n--> tests)** — `toFiniteNumber` rejects
   null, undefined, empty strings, booleans, arrays, objects, and
   `NaN`/`Infinity`.
-- **Integration (`transforms.test.mjs`, <!--n:transforms-tests-->13<!--/n--> tests)** —
+- **Integration (`transforms.test.mjs`, <!--n:transforms-tests-->15<!--/n--> tests)** —
   `normalizeWeatherResponse` preserves null current readings end-to-end.
 - **API (`openMeteo.test.mjs`)** —
   `fetchHistoricalTemperatureAverage` drops null and empty-string
   archive samples instead of averaging them as 0°F.
-- **React render (`HeroCard.render.test.mjs`, <!--n:herocard-render-tests-->22<!--/n--> tests)** — the
+- **React render (`HeroCard.render.test.mjs`, <!--n:herocard-render-tests-->24<!--/n--> tests)** — the
   rendered DOM contains no `0%`, `0 hPa`, or `—°F` leaks; missing
   values carry the "No data available" announcement, guidance is
   labelled unavailable instead of invented, and confidence claims
@@ -436,7 +437,7 @@ Other strong stories:
 - **Resilient client composition** — three independent fetch tracks (forecast, supplemental AQI/alerts, historical archive) with separate AbortControllers and request-id stale-result guards, plus a per-panel error boundary so a lazy chunk failure cannot blank out the dashboard.
 - **Responsive, mobile-first dashboard** — the bento layout has explicit breakpoints at 1200/980/860/760/640/560/420 px, hover-only effects gated behind `(hover: hover)`, and `prefers-reduced-motion` overrides for every animation. Co-located component CSS replaces what was a 2k-line monolith.
 - **Accessibility past axe baseline** — scoped live regions (`role="alert"` for errors, `role="status"` for last-synced metadata), `aria-busy` on async buttons, decorative SVG cleanup, keyboard combobox for search, and a regression test that scans rendered text for literal `\uXXXX` escape sequences.
-- **QA maturity** — <!--n:unit-tests-->817<!--/n--> Node tests (including <!--n:render-tests-->308<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
+- **QA maturity** — <!--n:unit-tests-->828<!--/n--> Node tests (including <!--n:render-tests-->310<!--/n--> React render tests) covering API normalization, source retries, climate comparison, location persistence, sync helpers, service worker registration/update/install-prompt flows, time-series snap, timezone-aware "now" framing, AQI/UV/weather-code lookup, trust-meta age formatting, render-level fallback states, and the null-coercion contract at every domain layer; <!--n:e2e-behavioural-->45<!--/n--> behavioral Playwright checks (plus <!--n:e2e-capture-->8<!--/n--> screenshot/asset capture jobs) for cached offline restore, offline app-shell reload, honest GPS labels, search, sync failure, regional alerts, missing-demo provider isolation, mobile overflow, text-clipping and hero-fit layout guards, axe-core (WCAG 2.1 AA + 2.2 AA), and the unicode-escape leak guard; CI Lighthouse budget gate.
 
 ## Screenshot Guidance
 

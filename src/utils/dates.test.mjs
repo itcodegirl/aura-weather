@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  formatProviderClock,
   formatDayLabel,
   formatShortDate,
   getIsoDateInTimeZone,
@@ -176,5 +177,36 @@ describe("dates utils", () => {
       formatDayLabel(chicagoToday, { timeZone: "America/Chicago" }),
       "Today"
     );
+  });
+});
+
+describe("formatProviderClock", () => {
+  // Open-Meteo's `current.time` is a naive location-local timestamp
+  // ("2026-09-16T19:30"). The label is read straight off the string so the
+  // wall clock shown is the location's, never the device's.
+  test("renders the wall-clock hour and minute in 12-hour form", () => {
+    assert.equal(formatProviderClock("2026-09-16T19:30"), "7:30 pm");
+    assert.equal(formatProviderClock("2026-09-16T09:07"), "9:07 am");
+  });
+
+  test("midnight and noon read 12, not 0", () => {
+    assert.equal(formatProviderClock("2026-09-16T00:05"), "12:05 am");
+    assert.equal(formatProviderClock("2026-09-16T12:00"), "12:00 pm");
+  });
+
+  test("tolerates surrounding whitespace and trailing seconds", () => {
+    assert.equal(formatProviderClock("  2026-09-16T19:30 "), "7:30 pm");
+    assert.equal(formatProviderClock("2026-09-16T19:30:00"), "7:30 pm");
+  });
+
+  test("returns an empty label rather than guessing for anything else", () => {
+    assert.equal(formatProviderClock(null), "");
+    assert.equal(formatProviderClock(undefined), "");
+    assert.equal(formatProviderClock(1758051000), "");
+    assert.equal(formatProviderClock(""), "");
+    assert.equal(formatProviderClock("2026-09-16"), "");
+    assert.equal(formatProviderClock("19:30"), "");
+    assert.equal(formatProviderClock("2026-09-16T25:00"), "");
+    assert.equal(formatProviderClock("2026-09-16T19:60"), "");
   });
 });

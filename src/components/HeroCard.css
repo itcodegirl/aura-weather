@@ -460,6 +460,15 @@
   background: #94a3b8;
 }
 
+/* The valid time of the current readings, under the trust pill. Quieter than
+   the pill and in the same muted tone as the date line above the temperature:
+   it is context for the number, not a second status indicator. */
+.hero-valid-time {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: rgba(244, 241, 234, 0.67);
+}
+
 /* Keep guidance items for the daily guidance that still shows on
    notice/watch conditions (rain-gear alerts etc.) */
 .hero-guidance {

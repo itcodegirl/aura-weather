@@ -174,3 +174,30 @@ export function formatHour(date) {
     hour12: true,
   });
 }
+
+/**
+ * "7:30 pm" from a provider timestamp such as "2026-09-16T19:30", read
+ * straight from its digits. Open-Meteo's timestamps are the location's
+ * wall clock (the request says `timezone=auto`), so the label needs no
+ * zone arithmetic — and parsing the string with `new Date()` would read
+ * it in the device's zone instead. A string carrying its own zone suffix
+ * is labelled in that zone, not converted. Returns "" for anything that
+ * is not an ISO-like date-time.
+ */
+export function formatProviderClock(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+  const match = /^\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2})/.exec(value.trim());
+  if (!match) {
+    return "";
+  }
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) {
+    return "";
+  }
+  const suffix = hours >= 12 ? "pm" : "am";
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+}

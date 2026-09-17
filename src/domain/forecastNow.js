@@ -1,7 +1,7 @@
 import { getIsoDateInTimeZone } from "../utils/dates.js";
 import { toFiniteNumber } from "../utils/numbers.js";
-import { getZonedNowMs } from "../utils/sunlight.js";
 import { findWindowStartIndex } from "../utils/timeSeries.js";
+import { toEpochMs } from "../utils/zonedTime.js";
 import { resolveTodayIndex } from "./forecastToday.js";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -12,8 +12,8 @@ const HOUR_MS = 60 * 60 * 1000;
  * The forecast request carries `past_hours=48`, so hourly index 0 is two
  * days ago and "the current hour" has to be found, never assumed. The
  * lookup is the one HourlyCard's "Now" marker and the hero's imminent-rain
- * scan already use: reframe "now" into the location's wall clock (the
- * provider's timestamps are naive local strings, see getZonedNow) and take
+ * scan already use: resolve the provider's naive local strings into real
+ * instants through the location's zone (see `utils/zonedTime.js`) and take
  * the slot that started within the last hour.
  *
  * Returns -1 when there is no hourly series, the clock is unusable, or the
@@ -27,14 +27,16 @@ export function resolveCurrentHourIndex(weather, nowMs) {
     return -1;
   }
 
-  const zonedNowMs = getZonedNowMs(weather?.meta?.timezone, nowMs);
-  if (zonedNowMs === null) {
+  const timeZone = weather?.meta?.timezone;
+  const referenceNow = toFiniteNumber(nowMs);
+  if (referenceNow === null) {
     return -1;
   }
 
   const index = findWindowStartIndex(times, {
-    now: zonedNowMs,
+    now: referenceNow,
     currentSlotToleranceMs: HOUR_MS,
+    timeZone,
   });
   if (index < 0) {
     return -1;
@@ -42,8 +44,8 @@ export function resolveCurrentHourIndex(weather, nowMs) {
 
   // findWindowStartIndex falls back to the next slot, or to the series'
   // tail, when no slot started within the last hour. Neither is now.
-  const slotMs = new Date(times[index]).getTime();
-  if (!Number.isFinite(slotMs) || Math.abs(zonedNowMs - slotMs) > HOUR_MS) {
+  const slotMs = toEpochMs(times[index], timeZone);
+  if (slotMs === null || Math.abs(referenceNow - slotMs) > HOUR_MS) {
     return -1;
   }
   return index;

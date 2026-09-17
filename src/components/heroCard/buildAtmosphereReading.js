@@ -4,7 +4,6 @@ import { readUvOutlook } from "../../domain/forecastNow.js";
 import { formatWindSpeed } from "../../domain/wind.js";
 import { toFiniteNumber } from "../../utils/numbers.js";
 import { getSunlightPhase, getZonedNowMs, isDaylight } from "../../utils/sunlight.js";
-import { getZonedNow } from "../../utils/dates.js";
 import { formatClockTime } from "../../utils/formatters.js";
 import { findWindowStartIndex } from "../../utils/timeSeries.js";
 
@@ -57,10 +56,9 @@ function findFirstRainHourIndex(hourly, timeZone, nowMs) {
   }
 
   const nowIdx = findWindowStartIndex(hourly.time, {
-    now: Number.isFinite(nowMs)
-      ? getZonedNow(timeZone, nowMs).getTime()
-      : getZonedNow(timeZone).getTime(),
+    now: Number.isFinite(nowMs) ? nowMs : Date.now(),
     currentSlotToleranceMs: 60 * 60 * 1000,
+    timeZone,
   });
   if (nowIdx < 0) {
     return -1;
@@ -134,11 +132,12 @@ export function buildAtmosphereReading({ weather, nowMs, unit = "F" } = {}) {
   }
 
   // 3. High UV warrants a sunscreen note. Only surface during daylight.
-  // Reframe "now" into the location's wall clock so the daylight gate
-  // and golden-hour phase below line up with Open-Meteo's naive
-  // sunrise/sunset timestamps. The clock labels rendered below still use
-  // the naive strings directly, which already display the location's
-  // wall-clock time correctly. See getZonedNow in utils/dates.
+  // The daylight gate and golden-hour phase still reframe "now" into the
+  // location's wall clock, to line up with Open-Meteo's naive sunrise and
+  // sunset strings. That path carries the DST hazard `zonedTime.js`
+  // describes and is converted with the rest of the sun helpers; the hourly
+  // scan above no longer does. The clock labels rendered below use the
+  // naive strings directly, which already read as the location's own.
   const sunrise = weather.daily?.sunrise?.[todayIndex];
   const sunset = weather.daily?.sunset?.[todayIndex];
   const zonedNowMs = getZonedNowMs(weather?.meta?.timezone, nowMs);

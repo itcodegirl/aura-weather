@@ -1,7 +1,23 @@
 import { toFiniteNumber } from "./numbers.js";
+import { toEpochMs } from "./zonedTime.js";
 
+/**
+ * The index of the slot that "now" falls in, or the next one ahead of it.
+ *
+ * `timeZone` is the location's IANA zone. Pass it whenever `timeValues` are
+ * the provider's naive local strings, which is every caller in this app: it
+ * is what turns those strings into real instants, so `now` can be the real
+ * clock. Callers used to reframe `now` into the location's wall clock to
+ * match the way `new Date()` misreads those strings, and that cancelled out
+ * on every day except the device zone's two DST days. See `zonedTime.js`.
+ */
 export function findWindowStartIndex(timeValues, options = {}) {
-  const { now = Date.now(), windowSize = 1, currentSlotToleranceMs = 0 } = options;
+  const {
+    now = Date.now(),
+    windowSize = 1,
+    currentSlotToleranceMs = 0,
+    timeZone = null,
+  } = options;
 
   if (!Array.isArray(timeValues) || timeValues.length === 0) {
     return -1;
@@ -26,8 +42,8 @@ export function findWindowStartIndex(timeValues, options = {}) {
         return null;
       }
 
-      const timestamp = new Date(value).getTime();
-      return Number.isFinite(timestamp) ? { index, timestamp } : null;
+      const timestamp = toEpochMs(value, timeZone);
+      return timestamp === null ? null : { index, timestamp };
     })
     .filter(Boolean);
 

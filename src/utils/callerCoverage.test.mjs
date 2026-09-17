@@ -31,6 +31,7 @@ const COVERED_BY = {
   "hooks/useRainAnalysis.js": "utils/staleWindow.test.mjs",
   "components/heroCard/buildAtmosphereReading.js": "utils/staleWindow.test.mjs",
   "domain/forecastNow.js": "utils/staleWindow.test.mjs",
+  "domain/meteorology.js": "utils/staleWindow.test.mjs",
   // These two call from inside a component body rather than an exported
   // function, so they are driven through the DOM in their own render suites.
   "components/StormWatch.jsx": "components/StormWatch.render.test.mjs",

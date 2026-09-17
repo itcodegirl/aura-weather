@@ -873,6 +873,22 @@ describe("buildHeroData", () => {
       assert.match(panelAt(Number.NaN).line, /is worth it/);
     });
 
+    /*
+     * The run-out case, and the reason unit 8b exists. `isAfterSunset` used
+     * to answer `now > sunsetMs` with nothing between an evening and a
+     * geological age, so a snapshot replayed five months later flipped this
+     * panel into past tense about a day long over. Past tense is the
+     * harmful direction: it tells a reader their peak "was" high while
+     * today's, which nobody has measured, could be anything.
+     *
+     * No new conditional in buildHeroUvPanel — the helper answers false and
+     * the existing ternary lands on the present-tense table by itself.
+     */
+    test("keeps the imperative for a sun pair that ran out months ago", () => {
+      const FIVE_MONTHS_ON = Date.UTC(2026, 8, 17, 17, 0, 0);
+      assert.match(panelAt(FIVE_MONTHS_ON).line, /is worth it/);
+    });
+
     test("keeps the imperative when the sun times did not arrive", () => {
       const panel = buildHeroData({
         weather: {

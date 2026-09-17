@@ -27,6 +27,29 @@ function toSunEpoch(value, timeZone) {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/*
+ * A sunrise/sunset pair describes ONE day, so it stops describing "today"
+ * once a day has passed. Past that, the caller is holding a pair from a
+ * snapshot whose window has closed, and cannot place now against the sun at
+ * all.
+ *
+ * The distinction matters because "after sunset" is an ordinary evening
+ * state: at 20:00 against a 19:42 sunset the sun really has set, and the
+ * surfaces below should say so. At 149 days past that same sunset they must
+ * not — the answer is identical, and it is the wrong answer, in exactly the
+ * way the trailing-index clamp in `timeSeries.js` was wrong. One day is the
+ * cadence of the series, the same role `currentSlotToleranceMs` plays for
+ * the hourly callers.
+ *
+ * Only the past direction is checked. A pair dated in the FUTURE clamps to
+ * the start of the arc, which is also what a genuine pre-dawn hour does —
+ * but no cache can hand a caller tomorrow's snapshot, so that case is
+ * unreachable here and is left alone rather than guarded speculatively.
+ */
+function isRunOut(sunsetMs, nowMs) {
+  return nowMs - sunsetMs > DAY_MS;
+}
+
 function toValidDate(value) {
   if (!value) {
     return null;
@@ -129,6 +152,13 @@ export function isDaylight(sunrise, sunset, nowMs, timeZone) {
  * actually peaking withdraws protection they still need. So an unknown
  * clock, missing sun times, and the pre-dawn hours all answer false here
  * and leave the caller in present tense — the tense that fails safe.
+ *
+ * A run-out pair joins them, and for the same reason. `now > sunsetMs` is
+ * true of a sunset two hours ago and of one 149 days ago alike, so a
+ * replayed snapshot used to flip the hero's UV panel into "Extreme UV today
+ * — midday exposure was best avoided" about a midday five months gone. That
+ * is the past tense this docblock calls the harmful direction, reached by a
+ * comparison that could not tell the two apart.
  */
 export function isAfterSunset(sunset, nowMs, timeZone) {
   const now = toFiniteNumber(nowMs);
@@ -139,14 +169,27 @@ export function isAfterSunset(sunset, nowMs, timeZone) {
   if (sunsetMs === null) {
     return false;
   }
+  if (isRunOut(sunsetMs, now)) {
+    return false;
+  }
   return now > sunsetMs;
 }
 
 /*
  * Fraction of today's daylight already elapsed, clamped to 0..1. Returns
- * null when sunrise, sunset, or nowMs is missing/invalid, or when the pair
- * spans no positive daylight — callers must not draw a sun position they
- * cannot compute.
+ * null when sunrise, sunset, or nowMs is missing/invalid, when the pair
+ * spans no positive daylight, or when the pair has run out — callers must
+ * not draw a sun position they cannot compute.
+ *
+ * The clamp is the reason the run-out check is here. `Math.min(1, …)` turned
+ * every moment past sunset into exactly 1.0 — a real, in-range value that
+ * AtmosphereBento's `progress !== null` guard cannot reject, so a snapshot
+ * 149 days old drew the bead parked at the end of the arc, indistinguishable
+ * from the sun having just gone down. Same shape as the trailing-index clamp
+ * unit 7c removed: a fallback that looks like an answer.
+ *
+ * An ordinary evening still clamps to 1 and still draws the bead there. What
+ * it no longer does is keep doing that for five months.
  */
 export function getDaylightProgress(sunrise, sunset, nowMs, timeZone) {
   const sunriseMs = toSunEpoch(sunrise, timeZone);
@@ -162,6 +205,10 @@ export function getDaylightProgress(sunrise, sunset, nowMs, timeZone) {
 
   const now = toFiniteNumber(nowMs);
   if (now === null) {
+    return null;
+  }
+
+  if (isRunOut(sunsetMs, now)) {
     return null;
   }
 

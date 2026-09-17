@@ -12,6 +12,12 @@ import {
 } from "./requestSignal.js";
 import { normalizeTimeZone, normalizeWeatherResponse } from "./transforms.js";
 
+/**
+ * An HTTP failure this module raises. `status` drives the retry decision and
+ * `url` names the endpoint in logs; neither is on the built-in `Error`.
+ * @typedef {Error & {status?: number, url?: string}} RequestError
+ */
+
 const ENDPOINTS = {
   weather: "https://api.open-meteo.com/v1/forecast",
   archive: "https://archive-api.open-meteo.com/v1/archive",
@@ -64,6 +70,38 @@ const SUPPLEMENTAL_RETRY_DELAYS_MS = [300];
 const FORECAST_HOURS = 72;
 const PAST_HOURS = 48;
 
+/*
+ * The same bound, for the 15-minute series behind the nowcast card.
+ *
+ * `forecast_days=7` DOES bound this block, and seven days of quarter-hours is
+ * 672 slots: 18,192 bytes measured on 2026-09-17, which was 55% of the whole
+ * response once the hourly block was trimmed. `forecast_minutely_15` counts
+ * timesteps from the current quarter-hour, measured: 8 -> 8 slots
+ * (14:00-15:45), 200 -> 200 slots (14:00 -> +50h).
+ *
+ * The obvious bound is NOWCAST_WINDOW_SIZE — the 8 slots analyzeNowcast reads,
+ * exactly two hours. It is wrong, for a reason worth writing down because the
+ * code does not show it: `findWindowStartIndex` does not report that "now" is
+ * past the end of a series. Its last branch CLAMPS to the trailing window. So
+ * an 8-slot series replayed from a 48-hour-old snapshot does not degrade to
+ * the card's "No minute-by-minute points are available" — it renders the tail
+ * of a two-day-old window as the next two hours. Measured:
+ *
+ *   series 2026-09-15T17:00 -> 19:15, read at 2026-09-17T17:00Z
+ *   -> "Heavy rain likely now, lasting through most of the window"
+ *
+ * Bounding tight would manufacture that on every offline restore. So this
+ * carries the replay the same way FORECAST_HOURS does:
+ *
+ *   FORECAST_MINUTELY_15_STEPS
+ *     = NOWCAST_WINDOW_SIZE (8 slots, 2h)
+ *     + DEGRADED_SNAPSHOT_MAX_AGE_MS as quarter-hours (48h -> 192 slots)
+ *
+ * `forecastWindow.test.mjs` derives all of that from the real files and fails
+ * in both directions.
+ */
+const FORECAST_MINUTELY_15_STEPS = 200;
+
 export const ALERTS_STATUS = {
   ready: "ready",
   unsupported: "unsupported",
@@ -101,19 +139,23 @@ function waitForRetry(delayMs, signal) {
     return Promise.resolve();
   }
 
-  return new Promise((resolve, reject) => {
-    const timeoutId = setTimeout(() => {
-      signal?.removeEventListener?.("abort", handleAbort);
-      resolve();
-    }, delayMs);
+  // The annotation is what lets `resolve()` be called with no argument:
+  // without it the checker infers `Promise<unknown>` and demands one.
+  return /** @type {Promise<void>} */ (
+    new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        signal?.removeEventListener?.("abort", handleAbort);
+        resolve();
+      }, delayMs);
 
-    function handleAbort() {
-      clearTimeout(timeoutId);
-      reject(createAbortError());
-    }
+      function handleAbort() {
+        clearTimeout(timeoutId);
+        reject(createAbortError());
+      }
 
-    signal?.addEventListener?.("abort", handleAbort, { once: true });
-  });
+      signal?.addEventListener?.("abort", handleAbort, { once: true });
+    })
+  );
 }
 
 // The request-timing knobs travel together so every adapter in this module
@@ -189,10 +231,14 @@ async function fetchJson(url, options = {}) {
     });
 
     if (!response.ok) {
-      const error = new Error(`Request failed (${response.status})`);
+      // `status` and `url` are read by isRetryableError and by the UI's
+      // failure copy. They are not on Error, so the shape is declared.
+      const error = /** @type {RequestError} */ (
+        new Error(`Request failed (${response.status})`)
+      );
       error.name = "RequestError";
       error.status = response.status;
-      error.url = url;
+      error.url = String(url);
       throw error;
     }
 
@@ -383,8 +429,8 @@ export async function fetchWeather(lat, lon, options = {}) {
   // Sea-level pressure is the like-for-like number; the 6-hour trend is
   // unaffected either way because elevation does not change between samples.
   const params = new URLSearchParams({
-    latitude: coordinates.latitude,
-    longitude: coordinates.longitude,
+    latitude: String(coordinates.latitude),
+    longitude: String(coordinates.longitude),
     current:
       "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,pressure_msl,dew_point_2m,cloud_cover,visibility,is_day",
     hourly:
@@ -400,6 +446,7 @@ export async function fetchWeather(lat, lon, options = {}) {
     forecast_days: "7",
     past_hours: String(PAST_HOURS),
     forecast_hours: String(FORECAST_HOURS),
+    forecast_minutely_15: String(FORECAST_MINUTELY_15_STEPS),
   });
 
   const rawResponse = await fetchJsonWithRetry(`${ENDPOINTS.weather}?${params}`, {
@@ -439,8 +486,8 @@ export async function fetchHistoricalTemperatureAverage(
   const end = `${endYear}-${month}-${day}`;
 
   const params = new URLSearchParams({
-    latitude: coordinates.latitude,
-    longitude: coordinates.longitude,
+    latitude: String(coordinates.latitude),
+    longitude: String(coordinates.longitude),
     start_date: start,
     end_date: end,
     daily: "temperature_2m_max",

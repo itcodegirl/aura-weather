@@ -8,6 +8,14 @@
  * inch precipitation; `normalizeVisibility` converts it at the boundary so
  * consumers convert for display only.
  *
+ * That paragraph used to be the whole guarantee, and a paragraph cannot fail
+ * a build. `transforms.js` now checks the provider's declared units against
+ * it on every response and throws a `UnitContractError` naming the field and
+ * both units, rather than letting a number in the wrong unit through — which
+ * is how this app's three worst bugs each began. `meta.units` carries what
+ * was declared, so the assumption is visible in the model instead of only in
+ * this comment.
+ *
  * Time: `current.time` is the instant the current conditions are valid
  * for, as the provider's naive location-local string ("2026-09-16T19:30"),
  * and `current.interval` the model grid in seconds (900). `meta.utcOffsetSeconds`
@@ -16,7 +24,12 @@
  */
 
 /**
- * @typedef {{latitude: number|null, longitude: number|null, timezone: string, utcOffsetSeconds: number|null}} WeatherMeta
+ * @typedef {{
+ *   current: Record<string, string>,
+ *   hourly: Record<string, string>,
+ *   visibility: {current: string|null, hourly: string|null}
+ * }} WeatherDeclaredUnits
+ * @typedef {{latitude: number|null, longitude: number|null, timezone: string, utcOffsetSeconds: number|null, units: WeatherDeclaredUnits}} WeatherMeta
  * @typedef {{
  *   time: string|null,
  *   interval: number|null,
@@ -92,6 +105,13 @@ export function createEmptyWeatherModel() {
       longitude: null,
       timezone: "UTC",
       utcOffsetSeconds: null,
+      // Empty rather than absent: a consumer reading meta.units.hourly on a
+      // skeleton model gets {}, not a TypeError.
+      units: {
+        current: {},
+        hourly: {},
+        visibility: { current: null, hourly: null },
+      },
     },
     current: {
       time: null,

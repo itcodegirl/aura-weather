@@ -34,6 +34,7 @@
     "dev:safe": "vite --configLoader runner --host 127.0.0.1 --port 5173 --strictPort false",
     "build": "vite build --configLoader runner",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
     "preview": "vite preview --configLoader runner",
     "test": "node --test",
     "test:render": "node scripts/run-render-tests.mjs",
@@ -72,6 +73,7 @@
     "jsdom": "^30.0.0",
     "lighthouse": "^13.4.1",
     "prettier": "^3.8.3",
+    "typescript": "^7.0.2",
     "vite": "^8.1.5"
   }
 }

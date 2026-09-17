@@ -30,13 +30,14 @@ function asTimestamp(value) {
 
 /*
  * Open-Meteo declares the unit of every series it returns (`current_units`,
- * `hourly_units`), and the app cannot assume one. Visibility is documented in
- * metres, but the provider switches it to FEET whenever the request asks for
- * `precipitation_unit=inch` — which this app always does. Nothing read the
- * declared unit, so the Atmosphere tile divided a 48,885 ft reading by 1,609
- * as though it were metres and printed "30 mi · clear" on a nine-mile day;
- * fog at one mile rendered as three. The model therefore carries visibility
- * in METRES, converted here from whatever unit the provider declared.
+ * `hourly_units`, `minutely_15_units`), and the app cannot assume one.
+ * Visibility is documented in metres, but the provider switches it to FEET
+ * whenever the request asks for `precipitation_unit=inch` — which this app
+ * always does. Nothing read the declared unit, so the Atmosphere tile divided
+ * a 48,885 ft reading by 1,609 as though it were metres and printed
+ * "30 mi · clear" on a nine-mile day; fog at one mile rendered as three. The
+ * model therefore carries visibility in METRES, converted here from whatever
+ * unit the provider declared.
  *
  * A payload with no declared unit (fixtures, older mocks) is taken as the
  * documented default, metres. A declared unit this table does not know is
@@ -63,6 +64,134 @@ export function normalizeVisibility(value, unit) {
   return factor === undefined ? null : numeric * factor;
 }
 
+/*
+ * ── The unit contract ─────────────────────────────────────────────────────
+ *
+ * Visibility is converted. Everything else is *assumed*, and the assumption
+ * has been wrong three times: the feet-for-metres bug above, station pressure
+ * read as sea-level, and precipitation read in the wrong unit. All three
+ * shared one shape — a number arrived in a unit nobody checked, and every
+ * layer downstream treated it as the unit it expected. A wrong unit is the
+ * worst failure this app has, because it is the only one that produces a
+ * plausible number. "30 mi · clear" on a nine-mile day looks like data.
+ *
+ * `types.js` already stated the invariant in prose: temperatures °F, wind
+ * speeds mph, precipitation inches, pressure hPa. Prose does not fail a
+ * build. This is the same statement as a check.
+ *
+ * The values are what the live API returns for the request `fetchWeather`
+ * builds, read off a real response on 2026-09-17 rather than from the docs —
+ * note `mp/h`, which is Open-Meteo's spelling and not `mph`. A table written
+ * from memory would have been wrong on its first field.
+ *
+ * Scope, and why each is in or out:
+ *
+ *   in  — every series whose NUMBER a downstream layer interprets against a
+ *         threshold: temperatures, wind speeds, pressure, precipitation,
+ *         percentages, CAPE.
+ *   out — `visibility`, deliberately. Its declared unit is an input to
+ *         `normalizeVisibility`, not a thing to assert; pinning it to "ft"
+ *         would break the documented metres default.
+ *   out — `time` ("iso8601"), `weather_code` ("wmo code"), `uv_index` and
+ *         `is_day` (both ""), which carry no magnitude to misread.
+ *
+ * A field the payload does not declare is skipped, not failed: fixtures and
+ * hand-built mocks carry no `*_units` block and are not wrong, merely silent.
+ * A field that IS declared and disagrees throws, naming both units — the
+ * request is refused rather than rendered, because the trust contract's whole
+ * position is that a plausible wrong number is worse than no number.
+ */
+const EXPECTED_UNITS = {
+  current: {
+    temperature_2m: "°F",
+    apparent_temperature: "°F",
+    dew_point_2m: "°F",
+    wind_speed_10m: "mp/h",
+    wind_gusts_10m: "mp/h",
+    pressure_msl: "hPa",
+    relative_humidity_2m: "%",
+    cloud_cover: "%",
+  },
+  hourly: {
+    temperature_2m: "°F",
+    apparent_temperature: "°F",
+    dew_point_2m: "°F",
+    wind_speed_10m: "mp/h",
+    wind_gusts_10m: "mp/h",
+    pressure_msl: "hPa",
+    relative_humidity_2m: "%",
+    precipitation: "inch",
+    precipitation_probability: "%",
+    cape: "J/kg",
+  },
+  minutely_15: {
+    precipitation: "inch",
+    precipitation_probability: "%",
+  },
+};
+
+/**
+ * Thrown when the provider declares a unit the model is not denominated in.
+ *
+ * A distinct name so a caller can tell a contract breach from a network
+ * failure: one is retryable, the other will fail identically forever.
+ */
+export class UnitContractError extends Error {
+  /**
+   * @param {string} section  "current", "hourly" or "minutely_15"
+   * @param {string} field    the provider's field name
+   * @param {string} declared the unit the payload declared
+   * @param {string} expected the unit this model reads it as
+   */
+  constructor(section, field, declared, expected) {
+    super(
+      `Open-Meteo declared ${section}.${field} in "${declared}", but this ` +
+        `model reads it as "${expected}". Refusing the payload: a reading in ` +
+        `the wrong unit renders as a plausible number, not as missing data.`
+    );
+    this.name = "UnitContractError";
+    this.section = section;
+    this.field = field;
+    this.declared = declared;
+    this.expected = expected;
+  }
+}
+
+/**
+ * Checks one declared-units block against what this model reads.
+ *
+ * @param {Record<string, unknown>} declared the payload's `*_units` object
+ * @param {Record<string, string>} expected  the matching EXPECTED_UNITS entry
+ * @param {string} section                   name used in the error
+ * @throws {UnitContractError} on the first field that disagrees
+ */
+function assertDeclaredUnits(declared, expected, section) {
+  for (const [field, want] of Object.entries(expected)) {
+    const got = declared[field];
+    // Undeclared is not wrong. Only a stated unit can contradict.
+    if (got === undefined || got === null) {
+      continue;
+    }
+    const normalized = typeof got === "string" ? got.trim() : String(got);
+    if (normalized !== want) {
+      throw new UnitContractError(section, field, normalized, want);
+    }
+  }
+}
+
+/** The declared units, kept on the model so a reader can see them. */
+function readDeclaredUnits(units, expected) {
+  /** @type {Record<string, string>} */
+  const carried = {};
+  for (const field of Object.keys(expected)) {
+    const value = units[field];
+    if (typeof value === "string" && value.trim()) {
+      carried[field] = value.trim();
+    }
+  }
+  return carried;
+}
+
 /**
  * Maps Open-Meteo payload into a stable app-domain weather model.
  * @param {any} raw
@@ -77,6 +206,13 @@ export function normalizeWeatherResponse(raw) {
   const hourlyUnits = asObject(safe.hourly_units);
   const daily = asObject(safe.daily);
   const minutely = asObject(safe.minutely_15);
+  const minutelyUnits = asObject(safe.minutely_15_units);
+
+  // Before anything is read. A payload in the wrong unit must not reach the
+  // model at all — half a model built from it is worse than none.
+  assertDeclaredUnits(currentUnits, EXPECTED_UNITS.current, "current");
+  assertDeclaredUnits(hourlyUnits, EXPECTED_UNITS.hourly, "hourly");
+  assertDeclaredUnits(minutelyUnits, EXPECTED_UNITS.minutely_15, "minutely_15");
 
   return {
     ...model,
@@ -86,6 +222,24 @@ export function normalizeWeatherResponse(raw) {
       longitude: toNumber(safe.longitude),
       timezone: normalizeTimeZone(safe.timezone),
       utcOffsetSeconds: toNumber(safe.utc_offset_seconds),
+      // What the provider said, not what we assumed. Empty for a payload
+      // that declared nothing, which is every fixture and hand-built mock.
+      units: {
+        current: readDeclaredUnits(currentUnits, EXPECTED_UNITS.current),
+        hourly: readDeclaredUnits(hourlyUnits, EXPECTED_UNITS.hourly),
+        // The one unit the model converts rather than asserts, kept so a
+        // reader can see which side of normalizeVisibility they are on.
+        visibility: {
+          current:
+            typeof currentUnits.visibility === "string"
+              ? currentUnits.visibility
+              : null,
+          hourly:
+            typeof hourlyUnits.visibility === "string"
+              ? hourlyUnits.visibility
+              : null,
+        },
+      },
     },
     current: {
       ...model.current,

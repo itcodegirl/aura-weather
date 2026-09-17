@@ -133,6 +133,7 @@ export function deriveRadarState(payload) {
   };
 }
 
+/** @param {{signal?: AbortSignal}} [options] */
 async function fetchWeatherMaps({ signal } = {}) {
   // Cancellation and timeout are composed manually (see requestSignal.js):
   // AbortSignal.any is missing on Safari <17 / Firefox <115, and the previous
@@ -162,6 +163,8 @@ async function fetchWeatherMaps({ signal } = {}) {
  * an explicit abort (which the caller ignores) — every other failure is
  * folded into the honest 'error' state so callers have one degraded
  * path to render.
+ *
+ * @param {{signal?: AbortSignal}} [options]
  */
 export async function loadRadarState({ signal } = {}) {
   try {

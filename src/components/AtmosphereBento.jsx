@@ -139,7 +139,6 @@ function HumidityTile({ humidity }) {
       </TileLabel>
       <ArcGauge
         fraction={fraction}
-        color="#7fb2e8"
         missing={!hasDat}
         ariaLabel={hasDat ? `Humidity ${Math.round(h)} percent ${label}` : "Humidity unavailable"}
       />
@@ -271,7 +270,6 @@ function PressureTile({ pressureHpa, unit }) {
       </TileLabel>
       <ArcGauge
         fraction={fraction}
-        color="#a88cf5"
         missing={!hasDat}
         ariaLabel={
           hasDat

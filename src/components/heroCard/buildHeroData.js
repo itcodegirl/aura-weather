@@ -15,8 +15,6 @@ import {
 import { formatWindSpeed } from "../../domain/wind.js";
 import { formatPrecipitation } from "../../utils/weatherUnits.js";
 import {
-  formatSunClock,
-  formatDaylightLengthLabel,
   getSunlightPhase,
   isAfterSunset,
   isDaylight,
@@ -568,7 +566,6 @@ export function buildHeroData({
 
   const currentTempDisplay = formatTemperatureValue(current.temperature, unit);
   const feelsLikeDisplay = formatTemperatureWithUnit(current.feelsLike, unit);
-  const dewPointDisplay = formatTemperatureWithUnit(current.dewPoint, unit);
   const todayHighDisplay = formatTemperatureWithUnit(
     weather?.daily?.temperatureMax?.[todayIndex],
     unit
@@ -578,27 +575,8 @@ export function buildHeroData({
     unit
   );
 
-  const windDisplay = formatWindSpeed(current.windSpeed, unit);
-
-  const humidityValue = toFiniteNumber(current.humidity);
-  const humidityDisplay =
-    humidityValue === null
-      ? MISSING_VALUE_PLACEHOLDER
-      : `${Math.round(humidityValue)}%`;
-  const pressureValue = toFiniteNumber(current.pressure);
-  const pressureDisplay =
-    pressureValue === null
-      ? MISSING_VALUE_PLACEHOLDER
-      : `${Math.round(pressureValue)} hPa`;
-
   const sunriseValue = weather?.daily?.sunrise?.[todayIndex] ?? "";
   const sunsetValue = weather?.daily?.sunset?.[todayIndex] ?? "";
-  const sunriseLabel = formatSunClock(sunriseValue);
-  const sunsetLabel = formatSunClock(sunsetValue);
-  const daylightLabel = formatDaylightLengthLabel(sunriseValue, sunsetValue, {
-    fallback: MISSING_VALUE_PLACEHOLDER,
-    timeZone: weather?.meta?.timezone ?? null,
-  });
   // The golden-hour phase compares "now" against the location's naive
   // sunrise/sunset timestamps. The zone is what resolves those into real
   // instants, so the comparison uses the real clock (see zonedTime.js).
@@ -633,12 +611,6 @@ export function buildHeroData({
   // that object by reference. Paired with isCurrentTempMissing so the hero can
   // tell when either half of its headline is absent.
   const isConditionMissing = info === UNKNOWN_WEATHER;
-  const heroStatsHaveAnyMissing = [
-    humidityDisplay,
-    pressureDisplay,
-    dewPointDisplay,
-    windDisplay,
-  ].some((value) => isMissingPlaceholder(value));
 
   const characteristicChips = buildCharacteristicChips(
     weather,
@@ -653,8 +625,16 @@ export function buildHeroData({
     timeZone: sunTimeZone,
   };
 
+  /*
+   * Every key here is destructured by HeroCard — `heroContract.test.mjs`
+   * fails if one stops being. Eleven were not: the hero's own humidity,
+   * pressure, dew point and wind strings (and the `heroStatsHaveAnyMissing`
+   * flag over them), the sunrise/sunset/daylight labels, the raw sun values,
+   * and `current` itself. The bento tiles took those readings over and the
+   * hero kept computing its versions, so a stale formatting rule here could
+   * never be seen — the strings were built on every render and thrown away.
+   */
   return {
-    current,
     info,
     tempUnit,
     safeLocationName,
@@ -663,18 +643,8 @@ export function buildHeroData({
     isCurrentTempMissing,
     isConditionMissing,
     feelsLikeDisplay,
-    dewPointDisplay,
     todayHighDisplay,
     todayLowDisplay,
-    windDisplay,
-    humidityDisplay,
-    pressureDisplay,
-    heroStatsHaveAnyMissing,
-    sunriseValue,
-    sunsetValue,
-    sunriseLabel,
-    sunsetLabel,
-    daylightLabel,
     sunlightPhase,
     atmosphereReading,
     hasClimateComparison,

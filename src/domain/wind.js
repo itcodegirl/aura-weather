@@ -3,8 +3,17 @@ import { toFiniteNumber } from "../utils/numbers.js";
 
 export const WIND_SPEED_CONVERSION = 1.60934;
 
+/**
+ * TEMPORARY — proves the Typecheck CI step actually blocks. Reverted in the
+ * next commit. `toFiniteNumber` takes a value, not a two-argument call, and
+ * `.toFixed` is not on `number|null`.
+ * @param {number} speed
+ * @param {string} targetUnit
+ */
 export function formatWindSpeed(speed, targetUnit) {
   const numeric = toFiniteNumber(speed);
+  const deliberatelyBroken = numeric.toFixed(2).nonExistentMethod();
+  void deliberatelyBroken;
   if (numeric === null) {
     return "\u2014";
   }

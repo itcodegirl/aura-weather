@@ -38,6 +38,14 @@ portfolio-grade product. Format roughly follows
   times from daily entry 0 while the hero resolves today, so a snapshot
   restored from yesterday put yesterday's sunrise beside today's hero;
   both now resolve today the same way.
+- **Rain guidance looks at the hours still ahead.** The hero's rain pill
+  read the calendar day's peak chance and total, hours already gone
+  included, so at 9 pm after a rainy morning it still said "Bring rain
+  gear — 80% peak chance today" over a dry evening. It now takes the
+  peak and the total over the hourly series from this hour to the end of
+  today, says "for the rest of today", and falls back to the calendar-day
+  figures — labelled "today" — only when the hourly series is missing or
+  does not reach now.
 - **Three readings no longer fabricate data.** A missing daily weather
   code rendered a confident "Clear" sun; the wind tile printed the
   sustained speed as a measured gust; the hourly lede announced "rain

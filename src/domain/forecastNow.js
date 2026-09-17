@@ -69,6 +69,26 @@ export function resolveCurrentHourIndex(weather, nowMs) {
  * says whether that hour is already behind us, or null when either side is
  * unknown.
  */
+/*
+ * Today's calendar date as "YYYY-MM-DD", for matching hourly slots (whose
+ * naive strings start with the location-local date) to today. It is the
+ * daily entry that `todayIndex` points at, so a peak or a total is matched
+ * to the day its daily figure describes, falling back to the location's
+ * calendar date when the daily series carries no dates. Null without a
+ * usable clock: "today" is then not knowable, and nothing below should
+ * pretend otherwise.
+ */
+function resolveTodayIso(weather, todayIndex, nowMs) {
+  const referenceTime = toFiniteNumber(nowMs);
+  if (referenceTime === null) {
+    return null;
+  }
+  const dailyDate = weather?.daily?.time?.[todayIndex];
+  return typeof dailyDate === "string" && dailyDate.trim()
+    ? dailyDate.trim().slice(0, 10)
+    : getIsoDateInTimeZone(weather?.meta?.timezone, new Date(referenceTime));
+}
+
 export function readUvOutlook(weather, nowMs) {
   const hourly = weather?.hourly ?? {};
   const times = Array.isArray(hourly.time) ? hourly.time : [];
@@ -81,18 +101,8 @@ export function readUvOutlook(weather, nowMs) {
   const now = nowIndex >= 0 ? toFiniteNumber(series[nowIndex]) : null;
 
   // The peak hour is searched within today only, so a snapshot that also
-  // carries yesterday cannot answer with yesterday's afternoon. "Today" is
-  // the daily entry the peak value belongs to, falling back to the
-  // location's calendar date when the daily series has no dates.
-  const dailyDate = weather?.daily?.time?.[todayIndex];
-  const referenceTime = toFiniteNumber(nowMs);
-  let todayIso = null;
-  if (referenceTime !== null) {
-    todayIso =
-      typeof dailyDate === "string" && dailyDate.trim()
-        ? dailyDate.trim().slice(0, 10)
-        : getIsoDateInTimeZone(weather?.meta?.timezone, new Date(referenceTime));
-  }
+  // carries yesterday cannot answer with yesterday's afternoon.
+  const todayIso = resolveTodayIso(weather, todayIndex, nowMs);
 
   let peakIndex = -1;
   let peakValue = -Infinity;
@@ -115,5 +125,74 @@ export function readUvOutlook(weather, nowMs) {
     peak,
     peakTime: peakIndex >= 0 ? times[peakIndex] : null,
     peakIsPast: peakIndex >= 0 && nowIndex >= 0 ? peakIndex < nowIndex : null,
+  };
+}
+
+/**
+ * Rain the way the rest of today looks from this hour.
+ *
+ * The hero's rain guidance read `daily.rainChanceMax` and
+ * `daily.rainAmountTotal`: the whole calendar day, hours already gone
+ * included. At 9 pm after a rainy morning it still said "Bring rain gear —
+ * 80% peak chance today" over a dry evening. This reads the hourly series
+ * from the current slot to the end of today instead: `chance` is the
+ * highest hourly probability among those hours, `amount` their total.
+ *
+ * A maximum survives gaps — a missing slot cannot lower it — so `chance` is
+ * null only when every remaining hour is missing. A total does not: with
+ * any remaining amount missing, `amount` is null rather than an undercount
+ * presented as the expected rain.
+ *
+ * `source` says where the figures came from. "hourly" is the rest of today.
+ * "daily" is the calendar-day fallback, used when the hourly series is
+ * absent, does not cover now (a snapshot restored from yesterday), or
+ * carries no rain fields; guidance built on it should say "today", not
+ * "the rest of today". null means neither series had a figure.
+ */
+export function readRainOutlook(weather, nowMs) {
+  const hourly = weather?.hourly ?? {};
+  const times = Array.isArray(hourly.time) ? hourly.time : [];
+  const chances = Array.isArray(hourly.rainChance) ? hourly.rainChance : [];
+  const amounts = Array.isArray(hourly.rainAmount) ? hourly.rainAmount : [];
+
+  const todayIndex = resolveTodayIndex(weather, nowMs);
+  const nowIndex = resolveCurrentHourIndex(weather, nowMs);
+  const todayIso = resolveTodayIso(weather, todayIndex, nowMs);
+
+  if (nowIndex >= 0 && todayIso !== null) {
+    let chance = null;
+    let amount = 0;
+    let amountKnown = true;
+    let hoursRemaining = 0;
+    for (let i = nowIndex; i < times.length; i += 1) {
+      const time = times[i];
+      if (typeof time !== "string" || time.slice(0, 10) !== todayIso) {
+        continue;
+      }
+      hoursRemaining += 1;
+      const hourChance = toFiniteNumber(chances[i]);
+      if (hourChance !== null && (chance === null || hourChance > chance)) {
+        chance = hourChance;
+      }
+      const hourAmount = toFiniteNumber(amounts[i]);
+      if (hourAmount === null) {
+        amountKnown = false;
+      } else {
+        amount += hourAmount;
+      }
+    }
+    const knownAmount = amountKnown && hoursRemaining > 0 ? amount : null;
+    if (chance !== null || knownAmount !== null) {
+      return { source: "hourly", chance, amount: knownAmount, hoursRemaining };
+    }
+  }
+
+  const chance = toFiniteNumber(weather?.daily?.rainChanceMax?.[todayIndex]);
+  const amount = toFiniteNumber(weather?.daily?.rainAmountTotal?.[todayIndex]);
+  return {
+    source: chance === null && amount === null ? null : "daily",
+    chance,
+    amount,
+    hoursRemaining: null,
   };
 }

@@ -120,6 +120,26 @@ describe("describeAlertTiming — lead-time buckets", () => {
     });
   }
 
+  test("the approved phrase set is exactly these eight literals", () => {
+    // Pinned as literals HERE, not read back from the module: the sweep
+    // below checks membership in ALERT_TIMING_PHRASES, and that export is
+    // built from the same constants the function returns, so without this
+    // the sweep could not fail on a phrase that grew a countdown.
+    assert.deepEqual(
+      [...ALERT_TIMING_PHRASES],
+      [
+        "Starts within the hour",
+        "Starts in the next few hours",
+        "Starts within 12 hours",
+        "Starts within a day",
+        "Starts within 2 days",
+        "Starts in more than 2 days",
+        "In effect now",
+        "Ends within the hour",
+      ]
+    );
+  });
+
   test("no phrase ever carries a remaining-time numeral", () => {
     // The bucket BOUNDS are numbers; the remaining time never is. Sweep the
     // measured range at a coarse step and check every phrase is approved.
@@ -205,8 +225,9 @@ describe("describeAlertTiming — the malformed case is onset after ends", () =>
 
   /*
    * expires before onset is NOT malformed. It is a message deadline falling
-   * before the weather it describes — 99 of 243 live alerts. It never reaches
-   * the comparison because `ends` is resolved first.
+   * before the weather it describes — 99 of 243 live alerts — and the
+   * comparison is against `ends` alone, so `expires` never takes part in it,
+   * whether or not `ends` is present.
    */
   test("expires before onset is normal when ends is present, and reads as pending", () => {
     assert.deepEqual(
@@ -215,11 +236,25 @@ describe("describeAlertTiming — the malformed case is onset after ends", () =>
     );
   });
 
-  test("expires before onset with NO ends is the one case that is genuinely inconsistent", () => {
-    // Only `expires` to resolve the end from, and it precedes the start.
+  test("expires before onset with NO ends is still not malformed — the start is known", () => {
+    // 20 of 243 live alerts carry no `ends`. Only `expires` is available, and
+    // it is a message deadline, not a hazard end: it must not turn a known
+    // future start into `invalid`, which would silence the phase on exactly
+    // the alerts whose "Until …" line says least.
     assert.deepEqual(
       describeAlertTiming(iso(NOW + 7 * HOUR), null, iso(NOW - 1 * HOUR), NOW),
-      { phase: "invalid", phrase: null }
+      { phase: "pending", phrase: "Starts within 12 hours" }
+    );
+    assert.deepEqual(
+      describeAlertTiming(iso(NOW + 7 * HOUR), null, iso(NOW + 1 * HOUR), NOW),
+      { phase: "pending", phrase: "Starts within 12 hours" }
+    );
+  });
+
+  test("a past onset after an expires-only end has simply ended, not malformed", () => {
+    assert.deepEqual(
+      describeAlertTiming(iso(NOW - 1 * HOUR), null, iso(NOW - 3 * HOUR), NOW),
+      { phase: "ended", phrase: null }
     );
   });
 });

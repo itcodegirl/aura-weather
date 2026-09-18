@@ -43,11 +43,15 @@
  *
  * ## The malformed case
  *
- * An onset AFTER its own end is garbage and is reported as such, before any
- * phase is chosen. An `expires` before `onset` is NOT malformed — 99 of the
- * 243 sampled alerts had exactly that, because `expires` is a message
- * deadline and routinely falls before the weather it describes — and it
- * never reaches this module: the end is resolved to `ends` first.
+ * An onset AFTER its own `ends` is garbage and is reported as such, before
+ * any phase is chosen. The comparison is against `ends` ONLY — the hazard
+ * end — never against the `expires` fallback. An `expires` before `onset` is
+ * NOT malformed: 99 of the 243 sampled alerts had exactly that, because
+ * `expires` is a message deadline and routinely falls before the weather it
+ * describes, and 20 of those 243 carried no `ends` at all. For them the
+ * start is still known, so a future onset is still `pending`; calling it
+ * malformed would silence the phase on precisely the alerts whose "Until …"
+ * is least informative.
  */
 
 import { resolveAlertEnd } from "./alertWindow.js";
@@ -118,8 +122,9 @@ function bucketForLead(leadMinutes) {
  *   `ended`    the end has passed. Null phrase. The card's filter drops
  *              these before they render; reported here so the function is
  *              honest on its own.
- *   `invalid`  onset is after its own end. Null phrase. Reported before any
- *              phase, so garbage never reads as pending or active.
+ *   `invalid`  onset is after its own `ends`. Null phrase. Reported before
+ *              any phase, so garbage never reads as pending or active. An
+ *              onset after `expires` alone is not this case.
  *   `unknown`  no usable onset, no usable clock, or a past onset with no
  *              resolvable end (active and ended are indistinguishable).
  *              A FUTURE onset with no end is still `pending`: the start is
@@ -136,16 +141,22 @@ export function describeAlertTiming(onsetAt, endsAt, expiresAt, nowMs) {
     return { phase: "unknown", phrase: null };
   }
 
+  /*
+   * The malformed check reads the hazard end alone. The `expires` fallback
+   * below is for deciding active-versus-ended, where it is the same rule the
+   * filter applies; it is not evidence about when the hazard ends.
+   */
+  const hazardEnd = toInstant(endsAt);
+  if (hazardEnd !== null && onset > hazardEnd) {
+    return { phase: "invalid", phrase: null };
+  }
+
   const end = toInstant(
     resolveAlertEnd({
       endsAt: typeof endsAt === "string" ? endsAt : null,
       expiresAt: typeof expiresAt === "string" ? expiresAt : null,
     })
   );
-
-  if (end !== null && onset > end) {
-    return { phase: "invalid", phrase: null };
-  }
 
   if (onset > now) {
     /*

@@ -3,6 +3,7 @@ import { Siren } from "lucide-react";
 import { useTimeNow } from "../hooks/useTimeNow";
 import { formatStampWithZoneName } from "../utils/formatters";
 import { toAlertParagraphs } from "../domain/alertText";
+import { getAlertResponseLabel } from "../domain/alertResponse";
 import "./AlertsCard.css";
 
 /*
@@ -43,6 +44,40 @@ const VISIBLE_ALERT_LIMIT = 4;
  * craft advisories — noise where the app's own rule is that a missing
  * answer is silence, not an apology.
  */
+/*
+ * The recommended action, as one word.
+ *
+ * CAP `response` is an enumerated token present on every one of the 205
+ * features sampled on 2026-09-17, where the prose `instruction` was absent on
+ * roughly 40%. So this chip is the part of "what should I do" that survives a
+ * payload carrying no guidance text at all, which is why it renders above the
+ * instruction rather than beside it.
+ *
+ * `None` and unrecognised tokens render nothing — `getAlertResponseLabel`
+ * returns null for both, and a chip reading "None" would spend the row's most
+ * prominent slot saying nothing.
+ */
+function AlertResponseChip({ response }) {
+  const label = getAlertResponseLabel(response);
+  if (!label) {
+    return null;
+  }
+
+  return (
+    <p className="alerts-response">
+      {/*
+       * Named the same way the priority badge is: the visible text is the
+       * action alone, and the aria-label supplies the dimension so a screen
+       * reader hears what kind of value this is rather than a bare verb
+       * phrase between two other bare phrases.
+       */}
+      <span className="alerts-response-chip" aria-label={`Recommended response: ${label}`}>
+        {label}
+      </span>
+    </p>
+  );
+}
+
 function AlertGuidance({ instruction, description }) {
   const guidance = useMemo(() => toAlertParagraphs(instruction), [instruction]);
   const detail = useMemo(() => toAlertParagraphs(description), [description]);
@@ -202,9 +237,20 @@ function AlertsCard({
               >
                 <div className="alerts-item-main">
                   <p className="alerts-event">{alert.event}</p>
+                  {/*
+                   * Where, in the provider's own words. `areaDesc` reached
+                   * the model but nothing read it, so a county-wide advisory
+                   * and one covering three states rendered identically. It
+                   * sits under the event name rather than in the meta column
+                   * because it qualifies WHAT is happening, not when.
+                   */}
+                  {alert.area ? (
+                    <p className="alerts-area">{alert.area}</p>
+                  ) : null}
                   <p className="alerts-headline">
                     {alert.headline || "Severe weather statement in effect"}
                   </p>
+                  <AlertResponseChip response={alert.response} />
                   <AlertGuidance
                     instruction={alert.instruction}
                     description={alert.description}

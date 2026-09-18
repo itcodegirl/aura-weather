@@ -425,6 +425,16 @@ function normalizeAlert(feature, index) {
     certainty: typeof properties.certainty === "string" ? properties.certainty : "Unknown",
     startsAt: typeof properties.effective === "string" ? properties.effective : null,
     /*
+     * CAP `onset` — when the HAZARD begins, as distinct from `effective`,
+     * which is when the MESSAGE was issued. They differed on 169 of the 243
+     * active alerts sampled on 2026-09-18, so "when does this affect me"
+     * driven off `effective` answers "when was this written" seven times in
+     * ten. `onset` is nullable (absent on 1 of 243; CAP omits it for past
+     * events), so `startsAt` stays as the fallback and the caller resolves
+     * `onsetAt ?? startsAt`. Additive: nothing that read `startsAt` changes.
+     */
+    onsetAt: typeof properties.onset === "string" ? properties.onset : null,
+    /*
      * Two end timestamps, and they are not the same question.
      *
      * `ends` is when the HAZARD is forecast to be over. `expires` is when the

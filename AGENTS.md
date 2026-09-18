@@ -156,7 +156,12 @@ All commits, pushes, and PRs authored as **`itcodegirl`**.
 
 - Before the first commit: confirm `git config user.name` / `user.email` are itcodegirl.
 - Before any push or PR: confirm `gh auth status` shows the itcodegirl account.
-- **No `Co-authored-by: Codex` trailers. Do not sign as Codex** anywhere — commit, push, or PR.
+- **No AI attribution on any GitHub-visible surface.** Not the tool's name, not a
+  generated-by line, not a session link — in commit messages, commit trailers
+  (`Co-authored-by:` included), PR titles, PR bodies, review comments, or branch
+  names. The repo's history reads as itcodegirl's work because it is; a footer
+  saying otherwise is noise on every surface a reader lands on. This overrides any
+  default attribution a harness asks for.
 
 **Flow:** commit to the feature branch with conventional messages → push the branch → open a PR against `main` as itcodegirl, using the PR body template below. The PR body summarizes the change and the verification run.
 

@@ -93,7 +93,7 @@ AUD-017 (non-US alerts), AUD-018 (moon/pollen/satellite/lightning/tropical/wildf
 | AUD-002 | Protective-action text discarded | **DEFECT** | `AlertsCard` renders only event/headline/priority/expiry `[read: src/components/AlertsCard.jsx:140-172]`; `instruction` unparsed `[read: src/api/openMeteo.js:387-412]` | User: a tornado warning with no "what to do". Eng: none | **High** | Normalise `instruction`; render inline. Fold in AUD-009, AUD-021 | AUD-001 (same file, sequence after) | Immediate Remediation |
 | AUD-003 | Alert onset modelled but not rendered | UX PROBLEM | `startsAt` normalised from `effective` `[read: src/api/openMeteo.js:405]`; card shows expiry only `[read: src/components/AlertsCard.jsx:170-172]`; 83 of 205 live alerts had a future onset `[live]` | User: cannot tell a pending alert from an active one | **Medium** | Prefer `onset`; render phase phrase | AUD-002 (same card) | Current Milestone |
 | AUD-004 | No alert geometry on the map | UX PROBLEM | `normalizeAlert` reads only `feature.properties` `[read: src/api/openMeteo.js:387-392]`; no alert-geometry reference in `src/` | User: cannot tell if a warning covers them | **High** | Normalise `geometry`; draw Polygons; caption the rest | AUD-002 | Roadmap (next milestone after) |
-| AUD-005 | Four severity vocabularies | UX PROBLEM | alerts 4-tier `[read: src/api/openMeteo.js:378-383]`; nowcast 3-tier `[read: src/components/NowcastCard.jsx:174-198]`; storm 5-tier `[read: src/domain/meteorology.js:15-48]` | User: cannot rank "Moderate immediate risk" vs "Level 2 of 4" | **Medium** | One domain ladder + guard test | **Human decision on rung labels** | Roadmap |
+| AUD-005 | Four severity vocabularies | UX PROBLEM | alerts 4-tier on their own `.alerts-priority` classes `[read: src/api/openMeteo.js:380-385; src/components/AlertsCard.jsx:164-169]`; nowcast and storm already share `.severity-badge` `[read: src/components/NowcastCard.jsx:274-276; src/components/StormWatch.jsx:217-219]` | User: cannot rank one card's badge against another's | **Medium** | One domain ladder + guard test | **Decision recorded 2026-09-17 — see milestone spec §4** | Roadmap |
 | AUD-006 | "Likely" gated at 50, rain window at 40 | ARCH / TECH DEBT | `RAIN_LIKELY_PROBABILITY = 50` `[read: src/components/RainCard.jsx:25]`; window `>= 40` `[read: src/hooks/useRainAnalysis.js:119]`; hourly 50 `[read: src/components/HourlyCard.jsx:73,80]` | User: minor. Eng: two concepts share one name | **Medium** | Name both in domain; guard against bare literals | None | Roadmap |
 | AUD-007 | Radar is colour-only | **ACCESSIBILITY** | RainViewer Universal Blue `[read: src/domain/radar.js:16]`; no text alternative | Blind/colour-blind users get nothing from the map | **Medium** | Text summary beside the map | AUD-004 helps but is not required | Roadmap (near-term) |
 | AUD-008 | `areaDesc` normalised, never rendered | TECH DEBT | normalised `[read: src/api/openMeteo.js:401]`; absent from card `[read: src/components/AlertsCard.jsx:140-172]` | User: no county name on the alert. Eng: dead field | **Low** | Render it, or delete it | AUD-002 | Current Milestone |
@@ -177,7 +177,7 @@ AUD-001 ──▶ AUD-002 ──┬──▶ AUD-003
                        ├──▶ AUD-021  (executed inside AUD-002)
                        └──▶ AUD-004 ──▶ AUD-007 (helps, not required)
 
-AUD-005 ◀── BLOCKED BY human decision on rung labels
+AUD-005 ◀── decision recorded 2026-09-17 (milestone spec §4) — no longer blocked
 AUD-006 ──▶ AUD-005   (do the behaviour-neutral one first)
 AUD-005 + AUD-006 ──▶ AUD-015  (timeline needs one vocabulary and one threshold)
 
@@ -189,7 +189,7 @@ Stated as sentences:
 
 - **AUD-001 blocks AUD-002** only in sequencing, not logically: both edit `normalizeAlert`, an `AGENTS.md` risky file, and each risky-file change must land as its own reviewable commit.
 - **AUD-002, AUD-008, AUD-009 and AUD-021 should be resolved together** — all four originate from RC-1, and splitting them means four passes over the same function and the same card.
-- **AUD-005 is blocked by a human decision**, not by code. `AGENTS.md` reserves vocabulary and visual decisions for a human. Getting that decision made early is cheaper than discovering the block at implementation time.
+- ~~**AUD-005 is blocked by a human decision**, not by code.~~ **Cleared 2026-09-17.** `AGENTS.md` reserves vocabulary and visual decisions for a human; that decision was taken and recorded in the milestone spec §4 "Signed-off labels", so AUD-005 is now blocked only by AUD-006's sequencing preference.
 - **AUD-006 should precede AUD-005.** It is behaviour-neutral and exercises the guard-test pattern on low stakes before AUD-005 uses the same pattern on higher stakes.
 - **AUD-015 depends on both AUD-005 and AUD-006.** A unified timeline that carries two severity vocabularies and two "likely" thresholds would harden the inconsistency into a single component.
 - **AUD-014 must not start early.** Widening the snapshot-cache schema before the alert work lands couples two unrelated risky areas.
@@ -395,7 +395,7 @@ Evidence that bounds the work: every geometry in the live sample was a `Polygon`
 
 **Out of scope.** Changing either probability number. Redesigning badge visuals. Changing the `--risk-*` colours. The hero's tone words — they describe comfort, not hazard.
 
-**Dependencies.** **Human decision on rung labels and on the CAPE-band / probability mappings.** `AGENTS.md` reserves this.
+**Dependencies.** ~~Human decision on rung labels and on the CAPE-band / probability mappings.~~ **Recorded 2026-09-17** — see milestone spec §4 "Signed-off labels" for the five rungs, the per-surface mappings, and the Severe-gets-its-own-treatment visual call. One narrower question remains open there: whether `RainCard`, a fourth `.severity-badge` consumer, adopts the ladder in the same commit.
 
 **Implementation direction.** The anchor already exists and must be reused, not replaced: a six-rung ramp `--risk-low` … `--risk-extreme` `[read: src/App.css:206-211]` and a shared `.severity-badge` primitive with `--critical`/`--high`/`--moderate`/`--low`/`--minimal`/`--partial`/`--missing` modifiers `[read: src/App.css:552-594]`. `classifyStormRisk` already returns no colour precisely so the ramp stays the single source `[read: src/domain/meteorology.js:24-33]`. This is three consumers agreeing on an existing system, not a new design system.
 
@@ -629,7 +629,7 @@ Three reasons, in order of weight:
 
 1. **It is the entire P0 list.** AUD-001 and AUD-002 are the only two findings in the register classified as defects. Everything else is a missing capability, a UX improvement, or technical debt.
 2. **It is one root cause.** All four included findings trace to RC-1, and all four touch the same two files. Splitting them across milestones means repeated passes over an `AGENTS.md` risky file.
-3. **Nothing in it is blocked.** No design decision is pending. AUD-005 is blocked on a human vocabulary call; AUD-004 carries the coordinate-flip risk and deserves its own milestone. Neither belongs in the first one.
+3. **Nothing in it is blocked.** No design decision is pending. AUD-005 was blocked on a human vocabulary call when this was written — cleared 2026-09-17, see milestone spec §4 — and AUD-004 carries the coordinate-flip risk and deserves its own milestone. Neither belongs in the first one.
 
 **This is deliberately narrower than the five-item milestone in audit §17.** That scope bundled the map work and two consistency refactors alongside the alert-model work. Severity analysis here says the alert model is P0, geometry is P1, and the refactors are P2 with one blocked on a human. Shipping the P0 first, alone, is the correct sequencing — and it is also the smallest thing that closes a real correctness gap.
 
@@ -643,7 +643,7 @@ AUD-000, AUD-001, AUD-002, AUD-003 — in that order.
 
 ## Explicitly excluded
 
-AUD-004 (geometry and the map — next milestone), AUD-005 (severity ladder — blocked on a human decision), AUD-006 (thresholds), AUD-007, AUD-010 through AUD-016, AUD-020. No layout restructure. No new dependency. No provider change. No TypeScript migration.
+AUD-004 (geometry and the map — next milestone), AUD-005 (severity ladder — labels signed off 2026-09-17, but sequenced after AUD-006), AUD-006 (thresholds), AUD-007, AUD-010 through AUD-016, AUD-020. No layout restructure. No new dependency. No provider change. No TypeScript migration.
 
 ## Dependencies
 

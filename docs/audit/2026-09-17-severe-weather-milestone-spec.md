@@ -330,28 +330,101 @@ Exact minute countdowns. Per-second ticking. Notification scheduling from onset.
 
 ### Problem
 
-Four scales, verified on current source:
+> **Corrected 2026-09-17 against current source.** The table below previously
+> listed four scales and said a user "cannot rank 'Moderate immediate risk'
+> against 'Level 2 of 4'". **Storm Watch does not render "Level N of 4" and
+> has not for some time.** It renders `{risk.level} risk` — "Moderate risk",
+> "Severe risk" — through the shared `.severity-badge` primitive
+> `[read: src/components/StormWatch.jsx:217-219]`, and its source comment
+> records the move off that private vocabulary explicitly: "so Storm Watch
+> speaks the same Low/Moderate/High/Severe language as Nowcast and Alerts
+> rather than a private 'Level N of 4' vocabulary"
+> `[read: src/components/StormWatch.jsx:26-30]`. The claim was carried in
+> from the competitive audit's §5 without re-verification. It is corrected
+> here rather than repeated.
 
-| Surface | Vocabulary | Tiers | Source |
+The divergence is real but **narrower than this section originally stated**,
+and it is about wording and one outlier consumer, not about four unrelated
+scales:
+
+| Surface | Badge primitive | Vocabulary rendered | Source |
 | --- | --- | --- | --- |
-| Alerts | critical / high / moderate / low | 4 | `[read: src/api/openMeteo.js:378-383]` |
-| Nowcast | "High / Moderate / Low immediate risk" at ≥70 / ≥40 | 3 | `[read: src/components/NowcastCard.jsx:174-198]` |
-| Storm Watch | Severe / High / Moderate / Low / Minimal, score 0–4 on CAPE | 5 | `[read: src/domain/meteorology.js:15-48]` |
-| Hero | tone words | — | `[read: src/components/HeroCard.jsx]` |
+| Storm Watch | shared `.severity-badge--{tone}` | `{level} risk` — Minimal / Low / Moderate / High / **Severe** risk | `[read: src/components/StormWatch.jsx:217-219, :30-36; src/domain/meteorology.js:15-48]` |
+| Nowcast | shared `.severity-badge--{tone}` | "High / Moderate / Low **immediate risk**", plus "Dry window", "Likely dry", "Rain signal", "Reading unavailable" | `[read: src/components/NowcastCard.jsx:166-198, :274-276]` |
+| Rain outlook | shared `.severity-badge--{tone}` | its own `rainRiskLabel` | `[read: src/components/RainCard.jsx:366-367]` |
+| Alerts | **own `.alerts-priority--{priority}` classes** | critical / high / moderate / low | `[read: src/components/AlertsCard.jsx:164-169; src/api/openMeteo.js:380-385]` |
+| Hero | n/a | tone words | `[read: src/components/HeroCard.jsx]` |
 
-A user cannot rank "Moderate immediate risk" against "Level 2 of 4".
+So the actual gaps are three, and each is small:
+
+1. **Alerts is the outlier.** Three cards already share `.severity-badge`; Alerts renders a parallel `.alerts-priority` pill with its own CSS `[read: src/components/AlertsCard.css:131-165]`.
+2. **The top rung is spoken two ways.** Storm Watch's tone class for score 4 is `critical` while the word it prints is `Severe` `[read: src/components/StormWatch.jsx:30-36; src/domain/meteorology.js:18]`, and Alerts prints `critical` `[read: src/api/openMeteo.js:381]`.
+3. **Each card suffixes the rung differently** — " risk", " immediate risk", none — so the same rung reads as a different phrase per card.
 
 ### The unification anchor already exists
 
-`App.css` defines a six-rung ramp — `--risk-low`, `--risk-moderate`, `--risk-elevated`, `--risk-high`, `--risk-severe`, `--risk-extreme` `[read: src/App.css:206-211]` — and a shared `.severity-badge` primitive with `--critical`, `--high`, `--moderate`, `--low`, `--minimal`, `--partial`, `--missing` modifiers `[read: src/App.css:552-594]`. `classifyStormRisk` already deliberately returns no colour, deferring to that ramp `[read: src/domain/meteorology.js:24-33]`.
+`App.css` defines a six-rung ramp — `--risk-low`, `--risk-moderate`, `--risk-elevated`, `--risk-high`, `--risk-severe`, `--risk-extreme` `[read: src/App.css:206-211]` — and a shared `.severity-badge` primitive with `--critical`, `--high`, `--moderate`, `--low`, `--minimal`, `--partial`, `--missing` modifiers `[read: src/App.css:552-599]`. `classifyStormRisk` already deliberately returns no colour, deferring to that ramp `[read: src/domain/meteorology.js:24-33]`.
 
-So this is **not** a new design system. It is making three existing consumers agree on the one that is already there.
+So this is **not** a new design system, and it is not three consumers adopting one either: three already have. It is bringing the fourth in and settling the wording.
+
+One documentation drift found while verifying: the `.severity-badge` comment in `App.css` says the primitive is "used by NowcastCard and RainCard" `[read: src/App.css:546-547]`, which predates Storm Watch adopting it `[read: src/components/StormWatch.jsx:217]`. Worth correcting in the implementation commit.
 
 ### Experience
 
 One ladder, five rungs, one badge treatment, one colour per rung. Each surface maps its own measurement onto it and keeps its own *noun* — what differs between cards is what is being measured, not how severity is spoken.
 
-**This item requires a human design decision** on the rung labels and on the mapping of CAPE bands and rain probabilities to rungs. `AGENTS.md` forbids agents making subjective visual and vocabulary decisions without exact instructions. This spec therefore defines the *mechanism* and stops at the *labels*.
+**This item required a human design decision** on the rung labels and on the mapping of CAPE bands and rain probabilities to rungs. `AGENTS.md` forbids agents making subjective visual and vocabulary decisions without exact instructions `[read: AGENTS.md "UI / Visual Design Ownership"]`. That decision has now been made and is recorded below.
+
+### Signed-off labels
+
+**Signed off by Jenna Zawaski, 2026-09-17.** This is the authority the implementation commit builds against; it is not an agent proposal.
+
+**1. One ladder, five rungs**, lowest to highest:
+
+| Rank | Rung |
+| --- | --- |
+| 0 | Minimal |
+| 1 | Low |
+| 2 | Moderate |
+| 3 | High |
+| 4 | Severe |
+
+**"Critical" is retired from user-facing copy.** It currently reaches the UI only through the alert priority string `[read: src/api/openMeteo.js:381]`; Storm Watch's score-4 tone class is already named `critical` but prints "Severe" `[read: src/components/StormWatch.jsx:30-36; src/domain/meteorology.js:18]`, so the word is nearly gone already.
+
+**2. Badge text is the rung word only.** The card title supplies the noun; the badge's `aria-label` names the dimension — "Rain risk: high", "Storm risk: severe", "Alert priority: high". **Storm Watch's `{level} risk` suffix goes** `[read: src/components/StormWatch.jsx:218]`, as does Nowcast's "immediate risk" phrasing `[read: src/components/NowcastCard.jsx:194-198]`.
+
+**3. Mappings.**
+
+| Surface | Input | Rung |
+| --- | --- | --- |
+| Alerts | `critical` | Severe |
+| | `high` | High |
+| | `moderate` | Moderate |
+| | `low` | Low |
+| | no alert | **no badge** |
+| Nowcast | peak probability ≥ 70 | High |
+| | ≥ 40 | Moderate |
+| | < 40 | Low |
+| | no rain | Minimal |
+| Storm Watch | score 4 | Severe |
+| | 3 | High |
+| | 2 | Moderate |
+| | 1 | Low |
+| | 0 | Minimal |
+
+**Nowcast is capped at High. Rain probability alone never earns Severe** — a 95% chance of rain is a certainty about an ordinary event, not a hazard, and letting it print the same word as a tornado warning is what the ladder exists to prevent. Nowcast's existing `partial` and `missing` states are unchanged `[read: src/components/NowcastCard.jsx:166-178]`.
+
+Storm Watch's mapping is the score it already computes `[read: src/domain/meteorology.js:15-30]`, so its rung assignment does not change — only the suffix it prints.
+
+**4. Missing and partial data keep the `--partial` / `--missing` badge treatment** `[read: src/App.css:593-599]` and **never render as Minimal.** Minimal is a reading; missing is the absence of one, and collapsing them is the fake all-clear the trust contract exists to prevent.
+
+**5. Severe gets its own visual treatment.** Today `.severity-badge--critical` and `.severity-badge--high` are a single rule sharing one palette `[read: src/App.css:568-573]`, so the top two rungs are visually identical. Severe is to be built on the existing `--risk-severe` ramp stop `[read: src/App.css:210]`. **No other colour changes** — the ramp itself is untouched.
+
+**6. Hero tone words are out of scope.** Calm / notice / watch / unavailable describe guidance, not hazard, and are a different job.
+
+#### What this leaves for implementation
+
+Not decided here, and still ordinary engineering judgment: the internal tone-class names (`critical` may stay as a CSS class name since it is not user-facing, or be renamed to `severe` for consistency), and whether `RainCard`'s existing `rainRiskLabel` — a fourth `.severity-badge` consumer this sign-off does not name `[read: src/components/RainCard.jsx:366-367]` — adopts the ladder in the same commit or a follow-up. **Flagged rather than assumed:** the sign-off covers Alerts, Nowcast and Storm Watch, so Rain outlook needs a yes or no before it is touched.
 
 ### States
 
@@ -387,7 +460,7 @@ Each badge keeps its `aria-label` naming the dimension, per the existing pattern
 2. Any two badges are rankable by a user without reading the card body.
 3. Missing data never renders as the lowest rung.
 4. The guard test fails on a reintroduced rogue vocabulary.
-5. **Human sign-off on the rung labels before implementation.**
+5. ~~**Human sign-off on the rung labels before implementation.**~~ **Resolved 2026-09-17** — signed off by Jenna Zawaski; the labels and mappings are recorded under "Signed-off labels" above. Implementation may proceed against them.
 
 ### Non-goals
 
@@ -543,7 +616,7 @@ Ordered smallest and highest-consequence first. Each line is one narrow commit w
 | 8 | `feat(alerts): carry alert geometry through the model` | `openMeteo.js`, test | ⚠️ | Third and last risky-file touch, alone. |
 | 9 | `feat(radar): draw alert polygons on the map` | `RadarMap.jsx`, `RadarPanel.jsx/.css`, `WeatherDashboard.jsx`, render test, e2e, axe | ⚠️ | Largest UI change; lands on a proven model and a tested converter. |
 | 10 | `refactor(domain): one home for rain probability thresholds` | `precipitation.js`, `RainCard`, `HourlyCard`, `useRainAnalysis`, guard test | ⚠️ | Behaviour-neutral. Existing tests must pass untouched — the proof it is neutral. |
-| 11 | `feat(domain): shared severity ladder` | `severity.js` + test + guard | | Pure. **Blocked on human sign-off of rung labels.** |
+| 11 | `feat(domain): shared severity ladder` | `severity.js` + test + guard | | Pure. ~~Blocked on human sign-off of rung labels.~~ **Block cleared 2026-09-17** — labels and mappings signed off, see §4 "Signed-off labels". |
 | 12 | `refactor(ui): one severity vocabulary across cards` | `AlertsCard`, `NowcastCard`, `meteorology.js`, tests | | Last: it touches the most surfaces and benefits from everything else being settled. |
 
 Commits 1–9 are independently shippable. Commits 10–12 are the consistency pass and could be a second PR if the first grows large.
@@ -567,7 +640,7 @@ Startable immediately. No blockers, no design input, no open questions. Add `sta
 
 ## 10. Open questions
 
-1. Rung labels and threshold mappings for item 4. **Human decision, blocking commit #11.** `[design]`
+1. ~~Rung labels and threshold mappings for item 4. **Human decision, blocking commit #11.**~~ **Resolved 2026-09-17** — signed off by Jenna Zawaski; see §4 "Signed-off labels". Commit #11 is unblocked. One narrower question opened in its place: whether `RainCard`, a fourth `.severity-badge` consumer the sign-off does not name, adopts the ladder in the same commit or a follow-up. `[design]`
 2. Whether any item 5 copy shifts once the constants are imported rather than inlined. Determinable only by running the suites. `[UNVERIFIED]`
 3. Whether `instruction` and `geometry` presence ratios hold across seasons — the §0 snapshot has no winter products and no active Tornado Warning. The structural facts hold regardless; the ratios should be re-sampled before being quoted. `[UNVERIFIED]`
 4. Whether `MultiPolygon` ever appears on NWS alerts. 0 of 35 in this snapshot; the spec treats it as null. `[UNVERIFIED]`

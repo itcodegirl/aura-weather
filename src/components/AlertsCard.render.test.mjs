@@ -578,3 +578,83 @@ describe("AlertsCard alerted area", () => {
     assert.equal(container.querySelector(".alerts-area"), null);
   });
 });
+
+describe("AlertsCard hazard-end window", () => {
+  /*
+   * The regression at the component level. CAP `expires` is when the
+   * MESSAGE must be reissued; `ends` is when the HAZARD is over. The card
+   * keyed its filter on the former, so an alert whose message had expired
+   * but whose weather was still hours away vanished — measured 2026-09-18,
+   * 8 of 136 future-onset alerts. `endsAt` now carries `ends`, with
+   * `expiresAt` as the fallback when the provider sends no `ends`.
+   */
+  test("keeps an alert past its message expiry while its hazard end is ahead", () => {
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: inHours(9), expiresAt: inHours(-1) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.ok(screen.getByText("Severe Thunderstorm Warning"));
+  });
+
+  test("the Until line shows the hazard end, not the message expiry", () => {
+    const endsAt = inHours(9);
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt, expiresAt: inHours(-1) })],
+        alertsStatus: "ready",
+        timeZone: "UTC",
+      })
+    );
+
+    const window = container.querySelector(".alerts-window");
+    assert.ok(window);
+    // Same resolved instant the filter used: the hour of `endsAt`, not the
+    // already-passed expiry. Compared on the hour so the assertion does not
+    // depend on the formatter's minute or zone-name spelling.
+    const expectedHour = new Date(endsAt).getUTCHours();
+    const shown = window.textContent;
+    const shownHour = new Date(endsAt).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      timeZone: "UTC",
+    });
+    assert.match(shown, /^Until /);
+    assert.ok(
+      shown.includes(shownHour.replace(/\s?(AM|PM)$/i, "")) || shown.includes(String(expectedHour % 12 || 12)),
+      `expected the Until line to name the hazard-end hour; got "${shown}"`
+    );
+  });
+
+  test("falls back to the message expiry when the alert carries no hazard end", () => {
+    // Old behaviour, preserved: with no `ends` the window is what it always was.
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: null, expiresAt: inHours(2) })],
+        alertsStatus: "ready",
+      })
+    );
+    assert.ok(screen.getByText("Severe Thunderstorm Warning"));
+
+    cleanup();
+
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: null, expiresAt: inHours(-1) })],
+        alertsStatus: "ready",
+      })
+    );
+    assert.equal(container.querySelector(".alerts-card"), null);
+  });
+
+  test("an alert with neither timestamp is not rendered, as before", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ endsAt: null, expiresAt: null })],
+        alertsStatus: "ready",
+      })
+    );
+    assert.equal(container.querySelector(".alerts-card"), null);
+  });
+});

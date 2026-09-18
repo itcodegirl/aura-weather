@@ -384,6 +384,27 @@ function getAlertPriority(score, severityScore) {
   return "low";
 }
 
+/*
+ * CAP `status` separates a real transmission from a drill. NWS publishes
+ * `Test`, `Exercise`, `System` and `Draft` messages on the same endpoint as
+ * `Actual` ones — a `Test Message` was live in the national feed on
+ * 2026-09-17 — and this card renders whatever it is handed, so a drill read
+ * as an active hazard.
+ *
+ * A missing `status` keeps the alert. `status` is required by CAP and was
+ * present on all 205 active features sampled, so its absence means a
+ * malformed payload rather than a drill, and on this surface dropping a real
+ * warning is a false all-clear — the one failure this app exists to prevent.
+ * Drop only what explicitly declares itself something other than actual.
+ */
+function isActualAlert(feature) {
+  const status = feature?.properties?.status;
+  if (typeof status !== "string") {
+    return true;
+  }
+  return status.trim().toLowerCase() === "actual";
+}
+
 function normalizeAlert(feature, index) {
   const properties =
     feature && typeof feature === "object" && feature.properties && typeof feature.properties === "object"
@@ -406,6 +427,15 @@ function normalizeAlert(feature, index) {
     endsAt: typeof properties.expires === "string" ? properties.expires : null,
     sender: typeof properties.senderName === "string" ? properties.senderName : "National Weather Service",
     description: typeof properties.description === "string" ? properties.description : "",
+    /*
+     * The protective action — "Seek shelter inside a well-built structure".
+     * Nullable in a way `description` is not: present on 122 of the 205
+     * active features sampled on 2026-09-17, but on 14 of 14 carrying
+     * `urgency: Immediate` and on every warning-grade product in that feed.
+     * Absence tracks low consequence (marine advisories, air-quality
+     * notices), so the card says nothing about it rather than apologising.
+     */
+    instruction: typeof properties.instruction === "string" ? properties.instruction : "",
     priority: getAlertPriority(alertScore, severityScore),
     priorityScore: alertScore,
   };
@@ -613,6 +643,7 @@ export async function fetchSevereWeatherAlerts(lat, lon, options = {}) {
     const features = Array.isArray(payload?.features) ? payload.features : [];
     return {
       alerts: features
+        .filter(isActualAlert)
         .map((feature, index) => normalizeAlert(feature, index))
         .sort((a, b) => b.priorityScore - a.priorityScore),
       status: ALERTS_STATUS.ready,

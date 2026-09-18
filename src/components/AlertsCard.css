@@ -232,3 +232,59 @@
 }
 
 
+
+/*
+ * Protective action + full advisory.
+ *
+ * `.alerts-item` is a row: main content beside the priority/expiry meta
+ * column. Prose lands inside `.alerts-item-main`, which is already a
+ * min-width:0 flex column, so long unbroken NWS strings wrap instead of
+ * forcing the row wide.
+ */
+.alerts-instruction {
+  margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alerts-instruction-line {
+  margin: 0;
+  color: var(--paper);
+  font-size: 12px;
+  line-height: 1.45;
+  /* Outranks .alerts-headline: this is the sentence the reader acts on. */
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.alerts-detail {
+  margin-top: 6px;
+}
+
+.alerts-detail-summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--track-default);
+  /* 44px tall including the padding, so the disclosure is a real touch
+     target on the mobile layout rather than an 11px word. */
+  padding: 14px 0;
+  list-style: revert;
+}
+
+.alerts-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 4px;
+}
+
+.alerts-detail-line {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}

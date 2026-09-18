@@ -86,6 +86,15 @@ describe("toLeafletPositions — what is not drawable", () => {
     );
   });
 
+  test("the type is checked, not merely the shape", () => {
+    // Coordinates structurally identical to a valid Polygon's, under a
+    // different `type`. Without the type check this converts cleanly — which
+    // is exactly how a MultiPolygon's first ring could reach the map as if it
+    // were the whole alert. Drop the check and only this test notices.
+    assert.equal(toLeafletPositions({ type: "MultiPolygon", coordinates: [SQUARE] }), null);
+    assert.equal(toLeafletPositions({ type: "Polygon", coordinates: [SQUARE] })?.length, SQUARE.length);
+  });
+
   test("other geometry types are not drawn", () => {
     assert.equal(toLeafletPositions({ type: "Point", coordinates: [-87.8, 41.7] }), null);
     assert.equal(toLeafletPositions({ type: "LineString", coordinates: SQUARE }), null);

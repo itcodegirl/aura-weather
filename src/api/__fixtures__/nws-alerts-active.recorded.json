@@ -1,0 +1,494 @@
+{
+  "//": "See src/api/nwsAlertFixtures.test.mjs for what this is and how to re-record it.",
+  "captured": "2026-09-18T02:30:09+00:00",
+  "source": "https://api.weather.gov/alerts/active",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dfdde196aa1912f71bd123635fb544bf9b31d609.001.1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -102.6,
+              41.52
+            ],
+            [
+              -102.64,
+              41.62
+            ],
+            [
+              -102.64,
+              41.69
+            ],
+            [
+              -102.3,
+              41.82
+            ],
+            [
+              -102.2,
+              41.58
+            ],
+            [
+              -102.6,
+              41.52
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dfdde196aa1912f71bd123635fb544bf9b31d609.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.dfdde196aa1912f71bd123635fb544bf9b31d609.001.1",
+        "areaDesc": "Garden, NE",
+        "geocode": {
+          "SAME": [
+            "031069"
+          ],
+          "UGC": [
+            "NEC069"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/NEC069"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.db4934658b326474dfaf0222ebc4f8c83e8af239.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.db4934658b326474dfaf0222ebc4f8c83e8af239.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2026-09-17T20:13:00-06:00"
+          },
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8642bf464b56dda19571cdfa0d583b9c911b16fb.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.8642bf464b56dda19571cdfa0d583b9c911b16fb.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2026-09-17T19:57:00-06:00"
+          }
+        ],
+        "sent": "2026-09-17T20:23:00-06:00",
+        "effective": "2026-09-17T20:23:00-06:00",
+        "onset": "2026-09-17T20:23:00-06:00",
+        "expires": "2026-09-17T20:45:00-06:00",
+        "ends": "2026-09-17T20:45:00-06:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Severe",
+        "certainty": "Observed",
+        "urgency": "Immediate",
+        "event": "Severe Thunderstorm Warning",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS North Platte NE",
+        "headline": "Severe Thunderstorm Warning issued September 17 at 8:23PM MDT until September 17 at 8:45PM MDT by NWS North Platte NE",
+        "description": "At 823 PM MDT, a severe thunderstorm was located 9 miles southwest of\nCrescent Lake National Wildlife Refuge, or 16 miles northwest of\nOshkosh, moving east at 15 mph.\n\nHAZARD...Ping pong ball size hail and 60 mph wind gusts.\n\nSOURCE...Radar indicated.\n\nIMPACT...People and animals outdoors will be injured. Expect hail\ndamage to roofs, siding, windows, and vehicles. Expect wind\ndamage to roofs, siding, and trees.\n\nLocations impacted include...\nCrescent Lake National Wildlife Refuge, Richardson Lake, Deer Lake,\nMumper, and Dogtown Flats.",
+        "instruction": "For your protection move to an interior room on the lowest floor of a\nbuilding.\n\nTo report severe weather contact your nearest law enforcement agency.\nThey will send your report to the National Weather Service office in\nNorth Platte.",
+        "response": "Shelter",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": [
+            "SVSLBF"
+          ],
+          "WMOidentifier": [
+            "WWUS53 KLBF 180223"
+          ],
+          "NWSheadline": [
+            "A SEVERE THUNDERSTORM WARNING REMAINS IN EFFECT UNTIL 845 PM MDT FOR WEST CENTRAL GARDEN COUNTY"
+          ],
+          "eventMotionDescription": [
+            "2026-09-18T02:23:00-00:00...storm...250DEG...12KT...41.62,-102.51"
+          ],
+          "windThreat": [
+            "RADAR INDICATED"
+          ],
+          "maxWindGust": [
+            "60 MPH"
+          ],
+          "hailThreat": [
+            "RADAR INDICATED"
+          ],
+          "maxHailSize": [
+            "1.50"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "EAS-ORG": [
+            "WXR"
+          ],
+          "VTEC": [
+            "/O.CON.KLBF.SV.W.0446.000000T0000Z-260918T0245Z/"
+          ],
+          "eventEndingTime": [
+            "2026-09-17T20:45:00-06:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "SVS"
+          ],
+          "NationalWeatherService": [
+            "SVW"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d829dc6e97002459489f0a9a75638fd55a385d05.001.1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -112.58,
+              43.65
+            ],
+            [
+              -112.09,
+              43.29
+            ],
+            [
+              -112.72,
+              42.93
+            ],
+            [
+              -112.89,
+              43.23
+            ],
+            [
+              -112.58,
+              43.65
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d829dc6e97002459489f0a9a75638fd55a385d05.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.d829dc6e97002459489f0a9a75638fd55a385d05.001.1",
+        "areaDesc": "Arco/Mud Lake Desert; Upper Snake River Plain; Lower Snake River Plain",
+        "geocode": {
+          "SAME": [
+            "016011",
+            "016019",
+            "016023",
+            "016051",
+            "016043",
+            "016065",
+            "016005",
+            "016077"
+          ],
+          "UGC": [
+            "IDZ052",
+            "IDZ053",
+            "IDZ054"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/IDZ052",
+          "https://api.weather.gov/zones/forecast/IDZ053",
+          "https://api.weather.gov/zones/forecast/IDZ054"
+        ],
+        "references": [],
+        "sent": "2026-09-17T20:25:00-06:00",
+        "effective": "2026-09-17T20:25:00-06:00",
+        "onset": "2026-09-17T20:25:00-06:00",
+        "expires": "2026-09-17T21:15:00-06:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Observed",
+        "urgency": "Expected",
+        "event": "Special Weather Statement",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Pocatello ID",
+        "headline": "Special Weather Statement issued September 17 at 8:25PM MDT by NWS Pocatello ID",
+        "description": "At 824 PM MDT, Doppler radar was tracking a strong thunderstorm 8\nmiles southwest of Taber, or 19 miles west of Blackfoot, moving\nnortheast at 25 mph.\n\nHAZARD...Wind gusts in excess of 35 mph and nickel size hail.\n\nSOURCE...Radar indicated.\n\nIMPACT...Gusty winds could knock down tree limbs and blow around\nunsecured objects. Minor hail damage to outdoor objects is\npossible.\n\nLocations impacted include...\nBlackfoot, eastern American Falls Reservoir, Firth, Rose, Fort Hall\nEagle Lodge, Taber, Springfield, Rockford, Moreland, Pingree,\nGroveland, Basalt, Sterling, East Butte, and Wapello.",
+        "instruction": "If outdoors, consider seeking shelter inside a building.\n\nTorrential rainfall is also occurring with this storm and may lead to\nlocalized flooding. Do not drive your vehicle through flooded\nroadways.\n\nFrequent cloud to ground lightning is occurring with this storm.\nLightning can strike 10 miles away from a thunderstorm. Seek a safe\nshelter inside a building or vehicle.",
+        "response": "Execute",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": [
+            "SPSPIH"
+          ],
+          "WMOidentifier": [
+            "WWUS85 KPIH 180225"
+          ],
+          "NWSheadline": [
+            "A STRONG THUNDERSTORM WILL IMPACT SOUTHWESTERN JEFFERSON... NORTHWESTERN BANNOCK...WESTERN BONNEVILLE AND WESTERN BINGHAM COUNTIES THROUGH 915 PM MDT"
+          ],
+          "eventMotionDescription": [
+            "2026-09-18T02:24:00-00:00...storm...197DEG...22KT...43.22,-112.72"
+          ],
+          "maxWindGust": [
+            "35 MPH"
+          ],
+          "maxHailSize": [
+            "0.88"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "EAS-ORG": [
+            "WXR"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "SPS"
+          ],
+          "NationalWeatherService": [
+            "SPS"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10a5b2132be695eb29db1c895de4711bd00a9342.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10a5b2132be695eb29db1c895de4711bd00a9342.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.10a5b2132be695eb29db1c895de4711bd00a9342.001.1",
+        "areaDesc": "Lake; Northern Cook; Central Cook",
+        "geocode": {
+          "SAME": [
+            "017097",
+            "017031"
+          ],
+          "UGC": [
+            "ILZ006",
+            "ILZ103",
+            "ILZ104"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/ILZ006",
+          "https://api.weather.gov/zones/forecast/ILZ103",
+          "https://api.weather.gov/zones/forecast/ILZ104"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e1d84d7286193cc78a2067a30f43e8a9d6b2aae8.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.e1d84d7286193cc78a2067a30f43e8a9d6b2aae8.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2026-09-17T14:39:00-05:00"
+          }
+        ],
+        "sent": "2026-09-17T21:29:00-05:00",
+        "effective": "2026-09-17T21:29:00-05:00",
+        "onset": "2026-09-18T05:00:00-05:00",
+        "expires": "2026-09-18T05:30:00-05:00",
+        "ends": "2026-09-18T15:00:00-05:00",
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Moderate",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Beach Hazards Statement",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Chicago IL",
+        "headline": "Beach Hazards Statement issued September 17 at 9:29PM CDT until September 18 at 3:00PM CDT by NWS Chicago IL",
+        "description": "* WHAT...High wave action and dangerous currents expected at\nLake Michigan beaches. Waves of 3 to 6 ft expected.\n\n* WHERE...Lake IL, Northern Cook, and Central Cook Counties.\n\n* WHEN...From late tonight through Friday afternoon.\n\n* IMPACTS...Swimming conditions will be life-threatening,\nespecially for inexperienced swimmers.\n\n* ADDITIONAL DETAILS...An additional period of dangerous\nswimming conditions is expected Friday night into early next\nweek.",
+        "instruction": "Remain out of the water to avoid dangerous swimming conditions\nand do not venture out onto piers, jetties, breakwalls, or other\nshoreline structures.",
+        "response": "Avoid",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": [
+            "CFWLOT"
+          ],
+          "WMOidentifier": [
+            "WHUS43 KLOT 180229"
+          ],
+          "NWSheadline": [
+            "BEACH HAZARDS STATEMENT REMAINS IN EFFECT FROM 5 AM CDT FRIDAY THROUGH FRIDAY AFTERNOON"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ],
+          "VTEC": [
+            "/O.CON.KLOT.BH.S.0015.260918T1000Z-260918T2000Z/"
+          ],
+          "eventEndingTime": [
+            "2026-09-18T15:00:00-05:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "BHS"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5f886949fdcea7766d4e1428c4daa861d7d44f6.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5f886949fdcea7766d4e1428c4daa861d7d44f6.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.f5f886949fdcea7766d4e1428c4daa861d7d44f6.001.1",
+        "areaDesc": "Crittenden; DeSoto; Shelby",
+        "geocode": {
+          "SAME": [
+            "005035",
+            "028033",
+            "047157"
+          ],
+          "UGC": [
+            "ARZ036",
+            "MSZ001",
+            "TNZ088"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/ARZ036",
+          "https://api.weather.gov/zones/forecast/MSZ001",
+          "https://api.weather.gov/zones/forecast/TNZ088"
+        ],
+        "references": [],
+        "sent": "2026-09-17T20:00:00-05:00",
+        "effective": "2026-09-17T20:00:00-05:00",
+        "onset": "2026-09-17T20:00:00-05:00",
+        "expires": "2026-09-18T17:30:00-05:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Air Quality Alert",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Memphis TN",
+        "headline": "Air Quality Alert issued September 17 at 8:00PM CDT by NWS Memphis TN",
+        "description": "AQAMEG\n\nThe Shelby County Health Department has issued a Code Orange Ozone\nForecast effective for Shelby County Tennessee, Crittenden County\nArkansas, and DeSoto County Mississippi, including the city of\nMemphis for Friday. This ozone forecast is due to forecasted ozone\nvalues that will be unhealthy for sensitive groups. These values will\nexceed the Environmental Protection Agency's federal safe health\nstandard. The Shelby County Health Department recommends that\nsensitive groups which include active children and adults, and\npeople with respiratory disease, such as asthma, limit prolonged\noutdoor exertion.\n\nPlease continue to check the latest air quality forecasts and updates\nuntil monitored values return to safe levels. For more information go\nto www.airnow.gov.",
+        "instruction": null,
+        "response": "Monitor",
+        "note": "Non-Weather Emergency Message. Not sent to IPAWS.",
+        "parameters": {
+          "AWIPSidentifier": [
+            "AQAMEG"
+          ],
+          "WMOidentifier": [
+            "AEUS74 KMEG 180100"
+          ],
+          "NWSheadline": [
+            "CODE ORANGE OZONE FORECAST FOR FRIDAY"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "AQA"
+          ]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPALIVE-4875",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPALIVE-4875",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0-KEEPALIVE-4875",
+        "areaDesc": "Montgomery",
+        "geocode": {
+          "SAME": [
+            "024031"
+          ],
+          "UGC": [
+            "MDC031"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/MDC031"
+        ],
+        "references": [],
+        "sent": "2026-09-18T02:23:09+00:00",
+        "effective": "2026-09-18T02:23:09+00:00",
+        "onset": null,
+        "expires": "2026-09-18T02:33:09+00:00",
+        "ends": null,
+        "status": "Test",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Test Message",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS",
+        "headline": null,
+        "description": "Monitoring message only. Please disregard.",
+        "instruction": "Monitoring message only. Please disregard.",
+        "response": "None",
+        "note": "This is only a test for monitoring of vital dissemination systems.",
+        "parameters": {
+          "AWIPSidentifier": [
+            "KEPWBC"
+          ],
+          "WMOidentifier": [
+            "NZUS91 KWBC 180223"
+          ],
+          "BLOCKCHANNEL": [
+            "CMAS",
+            "EAS",
+            "NWEM"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "TST"
+          ]
+        }
+      }
+    }
+  ]
+}

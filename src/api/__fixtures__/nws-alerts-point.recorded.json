@@ -1,0 +1,120 @@
+{
+  "//": "See src/api/nwsAlertFixtures.test.mjs for what this is and how to re-record it.",
+  "captured": "2026-09-18T02:30:09+00:00",
+  "source": "https://api.weather.gov/alerts/active?point=41.6672,-87.7845",
+  "note": "Palos Hills, IL — the app default city. The degraded case: one alert, no geometry, no instruction.",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5d1cd9969f75fec6383a57833f776eb9ec7fff1b.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5d1cd9969f75fec6383a57833f776eb9ec7fff1b.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.5d1cd9969f75fec6383a57833f776eb9ec7fff1b.001.1",
+        "areaDesc": "Boone, IL; Cook, IL; De Kalb, IL; DuPage, IL; Grundy, IL; Kane, IL; Kendall, IL; Lake, IL; La Salle, IL; Lee, IL; McHenry, IL; Ogle, IL; Will, IL; Winnebago, IL; Lake, IN",
+        "geocode": {
+          "SAME": [
+            "017007",
+            "017031",
+            "017037",
+            "017043",
+            "017063",
+            "017089",
+            "017093",
+            "017097",
+            "017099",
+            "017103",
+            "017111",
+            "017141",
+            "017197",
+            "017201",
+            "018089"
+          ],
+          "UGC": [
+            "ILC007",
+            "ILC031",
+            "ILC037",
+            "ILC043",
+            "ILC063",
+            "ILC089",
+            "ILC093",
+            "ILC097",
+            "ILC099",
+            "ILC103",
+            "ILC111",
+            "ILC141",
+            "ILC197",
+            "ILC201",
+            "INC089"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/ILC007",
+          "https://api.weather.gov/zones/county/ILC031",
+          "https://api.weather.gov/zones/county/ILC037",
+          "https://api.weather.gov/zones/county/ILC043",
+          "https://api.weather.gov/zones/county/ILC063",
+          "https://api.weather.gov/zones/county/ILC089",
+          "https://api.weather.gov/zones/county/ILC093",
+          "https://api.weather.gov/zones/county/ILC097",
+          "https://api.weather.gov/zones/county/ILC099",
+          "https://api.weather.gov/zones/county/ILC103",
+          "https://api.weather.gov/zones/county/ILC111",
+          "https://api.weather.gov/zones/county/ILC141",
+          "https://api.weather.gov/zones/county/ILC197",
+          "https://api.weather.gov/zones/county/ILC201",
+          "https://api.weather.gov/zones/county/INC089"
+        ],
+        "references": [],
+        "sent": "2026-09-17T13:26:00-05:00",
+        "effective": "2026-09-17T13:26:00-05:00",
+        "onset": "2026-09-17T13:26:00-05:00",
+        "expires": "2026-09-18T01:00:00-05:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Possible",
+        "urgency": "Future",
+        "event": "Hydrologic Outlook",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Chicago IL",
+        "headline": "Hydrologic Outlook issued September 17 at 1:26PM CDT by NWS Chicago IL",
+        "description": "ESFLOT\n\nSeveral rounds of showers and thunderstorms are possible starting\nlate Friday night and continuing into Monday across southern\nWisconsin, northern Illinois, and part of northwestern Indiana. High\nmoisture content in the atmosphere will lead to torrential downpours\nwhere thunderstorms are most frequent, leading to the potential for\nseveral inches of rain on a widespread basis.\n\nThe favored area for several rounds of showers and thunderstorms\nFriday night through Monday will be near and north of Interstate 80\nwhere several inches of rain have fallen in the past 24 hours. The\nintersection of increasingly saturated soils and repeated downpours\nmay lead to areas of flooding and rises in river levels, including\nalong the Rock, Fox, DuPage, and Illinois rivers.\n\nThis outlook means that elevated water levels and potential impacts\nare possible, but not yet certain. Persons should closely monitor\nforecasts including the possibility of flood watches, warnings, and\nadvisories.\n\nAdditional statements or outlooks may be issued by tomorrow morning.",
+        "instruction": null,
+        "response": "Monitor",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": [
+            "ESFLOT"
+          ],
+          "WMOidentifier": [
+            "FGUS73 KLOT 171826"
+          ],
+          "NWSheadline": [
+            "Areas of flooding and rises in river levels possible next week"
+          ],
+          "BLOCKCHANNEL": [
+            "EAS",
+            "NWEM",
+            "CMAS"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": [
+            "NWS"
+          ],
+          "NationalWeatherService": [
+            "ESF"
+          ]
+        }
+      }
+    }
+  ]
+}

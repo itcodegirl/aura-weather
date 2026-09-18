@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, CircleMarker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, CircleMarker, Pane, Polygon, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { radarTileUrlTemplate, RADAR_MAX_ZOOM } from "../../domain/radar.js";
 
@@ -30,6 +30,40 @@ const DOT_OPTIONS = {
   fillColor: "#6fb7f2",
   fillOpacity: 1,
 };
+
+/*
+ * The alert outline. Amber against a light basemap, and deliberately
+ * low-fill: this is a boundary, and a solid wash would hide the very radar
+ * echoes the reader is comparing it against.
+ */
+const ALERT_SHAPE_OPTIONS = {
+  color: "#f2a33c",
+  weight: 2,
+  fillColor: "#f2a33c",
+  fillOpacity: 0.12,
+};
+
+/*
+ * A direct prop, not a `pathOptions` key: react-leaflet hands `pathOptions`
+ * to `setStyle`, which does not touch the element's class list, while
+ * Leaflet reads `options.className` once at path creation. Inside
+ * `pathOptions` this silently does nothing.
+ */
+const ALERT_SHAPE_CLASS = "radar-alert-shape";
+
+/*
+ * Leaflet stacks vector layers by insertion order within one pane, and
+ * react-leaflet adds each layer in a passive effect — so a polygon that
+ * mounts after the location marker paints on top of it, which is the one
+ * thing WP-2 says must never happen. A named pane takes the ordering out of
+ * mount order entirely: 350 sits above the radar tiles (tilePane, 200) and
+ * below the marker (overlayPane, 400), whenever either arrives.
+ */
+const ALERT_PANE = "alert-shapes";
+const ALERT_PANE_STYLE = { zIndex: 350 };
+
+/** Stable empty default, so an alert-less map never re-renders on identity. */
+const NO_SHAPES = [];
 
 // Pan the existing map when the active location changes, instead of
 // re-mounting <MapContainer> (which would trip Leaflet's "Map container
@@ -100,7 +134,7 @@ function CooperativeGestures() {
   return null;
 }
 
-function RadarMap({ host, frames, activeIndex, center, retina = false }) {
+function RadarMap({ host, frames, activeIndex, center, retina = false, alertShapes = NO_SHAPES }) {
   const [lat, lon] = center;
 
   return (
@@ -151,6 +185,19 @@ function RadarMap({ host, frames, activeIndex, center, retina = false }) {
           />
         );
       })}
+
+      {alertShapes.length > 0 ? (
+        <Pane name={ALERT_PANE} style={ALERT_PANE_STYLE}>
+          {alertShapes.map((shape) => (
+            <Polygon
+              key={shape.id}
+              positions={shape.positions}
+              pathOptions={ALERT_SHAPE_OPTIONS}
+              className={ALERT_SHAPE_CLASS}
+            />
+          ))}
+        </Pane>
+      ) : null}
 
       <CircleMarker center={center} radius={13} pathOptions={HALO_OPTIONS} />
       <CircleMarker center={center} radius={5} pathOptions={DOT_OPTIONS} />

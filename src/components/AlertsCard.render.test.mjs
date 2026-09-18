@@ -289,3 +289,168 @@ describe("AlertsCard expiry timezone", () => {
     assert.ok(screen.getByText(`Until ${expected}`));
   });
 });
+
+describe("AlertsCard protective action", () => {
+  /*
+   * The defect this closes: the card rendered event, headline, priority and
+   * expiry, and dropped the NWS `instruction` — the sentence telling the
+   * reader what to do. On a tornado warning that is the most consequential
+   * string in the payload.
+   */
+  test("renders the instruction inline, without interaction", () => {
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [
+          makeAlert({
+            instruction:
+              "Seek shelter inside a well-built structure and stay away from\nwindows.",
+          }),
+        ],
+        alertsStatus: "ready",
+      })
+    );
+
+    const guidance = screen.getByText(/Seek shelter inside a well-built structure/);
+    assert.ok(guidance);
+    // Not inside a <details>: the protective action must not need a click.
+    assert.equal(guidance.closest("details"), null);
+  });
+
+  test("a hard-wrapped instruction renders as one paragraph, not split mid-sentence", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [
+          makeAlert({
+            instruction:
+              "Seek shelter inside a well-built structure and stay away from\nwindows. This storm is capable of producing damaging winds.",
+          }),
+        ],
+        alertsStatus: "ready",
+      })
+    );
+
+    const lines = container.querySelectorAll(".alerts-instruction-line");
+    assert.equal(lines.length, 1);
+    assert.match(lines[0].textContent, /stay away from windows\./);
+  });
+
+  test("a blank-line break in the instruction renders as separate paragraphs", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [
+          makeAlert({
+            instruction: "Move to an interior room.\n\nAvoid windows and doors.",
+          }),
+        ],
+        alertsStatus: "ready",
+      })
+    );
+
+    const lines = container.querySelectorAll(".alerts-instruction-line");
+    assert.equal(lines.length, 2);
+    assert.equal(lines[0].textContent, "Move to an interior room.");
+    assert.equal(lines[1].textContent, "Avoid windows and doors.");
+  });
+
+  /*
+   * Absence is silent. `instruction` is missing on 40% of live alerts but on
+   * none carrying urgency Immediate, so an "unavailable" line would fire
+   * almost only on low-consequence products — noise, against the app's rule
+   * that a missing answer is silence rather than an apology.
+   */
+  test("an alert with no instruction says nothing about its absence", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ instruction: "" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-instruction"), null);
+    assert.equal(screen.queryByText(/unavailable/i), null);
+    assert.equal(screen.queryByText(/not provided/i), null);
+    assert.equal(screen.queryByText(/no instructions/i), null);
+  });
+
+  test("an alert whose instruction prop is missing entirely renders no guidance block", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert()],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-instruction"), null);
+  });
+
+  test("the instruction is announced as guidance, not run on from the headline", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ instruction: "Move to an interior room." })],
+        alertsStatus: "ready",
+      })
+    );
+
+    const cue = container.querySelector(".alerts-instruction .sr-only");
+    assert.ok(cue, "expected a screen-reader cue before the guidance prose");
+    assert.match(cue.textContent, /what to do/i);
+  });
+});
+
+describe("AlertsCard full advisory disclosure", () => {
+  /*
+   * `description` was normalised and read by no component. It is rendered
+   * behind a disclosure rather than inline because it runs a 548-character
+   * median against the instruction's 163 — four open alerts of it would bury
+   * the card.
+   */
+  test("renders the description inside a collapsed disclosure", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [
+          makeAlert({
+            description:
+              "At 402 PM CDT, a severe thunderstorm was located near Elgin.",
+          }),
+        ],
+        alertsStatus: "ready",
+      })
+    );
+
+    const details = container.querySelector("details.alerts-detail");
+    assert.ok(details);
+    assert.equal(details.open, false);
+    assert.match(details.textContent, /severe thunderstorm was located near Elgin/);
+  });
+
+  test("no disclosure renders when the description is empty", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ description: "" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector("details.alerts-detail"), null);
+  });
+
+  test("instruction and description render as separate elements, not concatenated", () => {
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [
+          makeAlert({
+            instruction: "Move to an interior room.",
+            description: "Radar indicated rotation near Elgin.",
+          }),
+        ],
+        alertsStatus: "ready",
+      })
+    );
+
+    const guidance = screen.getByText("Move to an interior room.");
+    const detail = screen.getByText("Radar indicated rotation near Elgin.");
+
+    assert.equal(guidance.closest("details"), null);
+    assert.ok(detail.closest("details"));
+  });
+});

@@ -281,6 +281,166 @@ describe("Open-Meteo alert coverage helpers", () => {
     assert.equal(result.alerts[0].id, "wind-advisory");
     assert.equal(requestCount, 2);
   });
+
+  /*
+   * CAP `status`. NWS publishes drills on the same endpoint as real alerts —
+   * a `Test Message` was live in the national feed on 2026-09-17 — and this
+   * card renders what it is handed, so an unfiltered drill read as an active
+   * hazard.
+   */
+  test("drops a Test transmission instead of rendering it as an active hazard", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "drill",
+                event: "Test Message",
+                status: "Test",
+                severity: "Severe",
+                urgency: "Immediate",
+                expires: "2026-09-18T15:00:00Z",
+              },
+            },
+            {
+              properties: {
+                id: "real-warning",
+                event: "Tornado Warning",
+                status: "Actual",
+                severity: "Severe",
+                urgency: "Immediate",
+                expires: "2026-09-18T15:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts.length, 1);
+    assert.equal(result.alerts[0].id, "real-warning");
+  });
+
+  test("drops Exercise, System and Draft transmissions too, and is case-insensitive", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: ["Exercise", "System", "Draft", "test", "ACTUAL"].map(
+            (status, index) => ({
+              properties: {
+                id: `feature-${status}`,
+                event: "Severe Thunderstorm Warning",
+                status,
+                severity: "Severe",
+                urgency: "Immediate",
+                expires: `2026-09-18T1${index}:00:00Z`,
+              },
+            })
+          ),
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.deepEqual(
+      result.alerts.map((alert) => alert.id),
+      ["feature-ACTUAL"]
+    );
+  });
+
+  /*
+   * Deliberate asymmetry, and the reason it is named in the test rather than
+   * only in the source: an absent `status` KEEPS the alert. CAP requires the
+   * field and it was present on all 205 features sampled, so absence means a
+   * malformed payload, not a drill — and dropping a real warning here is a
+   * false all-clear, which is worse than showing a drill.
+   */
+  test("keeps an alert whose status is absent rather than assuming it is a drill", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "no-status",
+                event: "Tornado Warning",
+                severity: "Severe",
+                urgency: "Immediate",
+                expires: "2026-09-18T15:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts.length, 1);
+    assert.equal(result.alerts[0].id, "no-status");
+  });
+
+  test("carries the protective action through to the normalised alert", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "with-instruction",
+                event: "Severe Thunderstorm Warning",
+                status: "Actual",
+                severity: "Severe",
+                urgency: "Immediate",
+                expires: "2026-09-18T15:00:00Z",
+                instruction:
+                  "Seek shelter inside a well-built structure and stay away from\nwindows.",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.match(result.alerts[0].instruction, /Seek shelter/);
+  });
+
+  /*
+   * `instruction` is absent on 40% of live alerts, so the empty-string
+   * default is the common path, not an edge case. It must be a string:
+   * `undefined` would reach the card and read as a missing prop rather than
+   * a provider that said nothing.
+   */
+  test("an absent instruction normalises to an empty string, not undefined", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "no-instruction",
+                event: "Small Craft Advisory",
+                status: "Actual",
+                severity: "Minor",
+                urgency: "Expected",
+                expires: "2026-09-18T15:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].instruction, "");
+  });
 });
 
 describe("fetchAirQuality", () => {

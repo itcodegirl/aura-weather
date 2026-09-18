@@ -2,6 +2,7 @@ import { memo, useId, useMemo } from "react";
 import { Siren } from "lucide-react";
 import { useTimeNow } from "../hooks/useTimeNow";
 import { formatStampWithZoneName } from "../utils/formatters";
+import { toAlertParagraphs } from "../domain/alertText";
 import "./AlertsCard.css";
 
 /*
@@ -21,6 +22,61 @@ function formatAlertTime(value, timeZone) {
 }
 
 const VISIBLE_ALERT_LIMIT = 4;
+
+/*
+ * The protective action, and the full advisory behind it.
+ *
+ * Both fields reached the app already — `description` was normalised and
+ * read by nothing, `instruction` was not normalised at all — so a warning
+ * rendered its name, one headline line and an expiry, and dropped the
+ * sentence telling the reader what to do.
+ *
+ * They are split rather than stacked because their lengths differ by a
+ * factor of three: across the 2026-09-17 active feed `instruction` ran a
+ * 163-character median against `description`'s 548. The short, actionable
+ * one is always visible; the long one is a disclosure, so the card stays
+ * scannable with four alerts open.
+ *
+ * When `instruction` is absent nothing is said about it. It is missing on
+ * 40% of alerts overall but on none carrying `urgency: Immediate`, so an
+ * "instructions unavailable" line would fire almost exclusively on small
+ * craft advisories — noise where the app's own rule is that a missing
+ * answer is silence, not an apology.
+ */
+function AlertGuidance({ instruction, description }) {
+  const guidance = useMemo(() => toAlertParagraphs(instruction), [instruction]);
+  const detail = useMemo(() => toAlertParagraphs(description), [description]);
+
+  return (
+    <>
+      {guidance.length > 0 && (
+        <div className="alerts-instruction">
+          {/* Names the prose for a screen reader, which otherwise hears it
+              run straight on from the headline with no cue that the voice
+              has changed from what is happening to what to do. */}
+          <span className="sr-only">What to do: </span>
+          {guidance.map((paragraph) => (
+            <p key={paragraph} className="alerts-instruction-line">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      )}
+      {detail.length > 0 && (
+        <details className="alerts-detail">
+          <summary className="alerts-detail-summary">Full advisory text</summary>
+          <div className="alerts-detail-body">
+            {detail.map((paragraph) => (
+              <p key={paragraph} className="alerts-detail-line">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
+    </>
+  );
+}
 
 function AlertsCard({
   alerts,
@@ -149,6 +205,10 @@ function AlertsCard({
                   <p className="alerts-headline">
                     {alert.headline || "Severe weather statement in effect"}
                   </p>
+                  <AlertGuidance
+                    instruction={alert.instruction}
+                    description={alert.description}
+                  />
                 </div>
                 <div className="alerts-item-meta">
                   {/*

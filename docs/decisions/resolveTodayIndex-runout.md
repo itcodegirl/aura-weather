@@ -1,8 +1,31 @@
 # `resolveTodayIndex` on a run-out daily series
 
-**Status:** open — needs a decision before any code.
+**Status:** **decided — option B, implemented.**
 **Finding:** #2 of the run-out audit. #1 shipped as unit 8a, #3 and #4 as unit 8b.
 **Written:** 2026-09-17, against `main` at `6da2927`.
+**Decided:** 2026-09-17 by Jenna Zawaski.
+
+> ## The decision
+>
+> **Option B, with the `callerCoverage` gate.**
+>
+> - Run-out is `findIndex === -1` against the location's calendar date — the
+>   series' own cadence, and nothing else. **No new threshold constant, and
+>   deliberately not unified with `DEGRADED_SNAPSHOT_MAX_AGE_MS`:** snapshot
+>   age and series run-out are different questions.
+> - `resolveTodayIndex` returns `{ index: 0, status: "stale", staleByMs }`,
+>   where `staleByMs` is now minus the last daily entry. The index stays 0, so
+>   the panels cannot disagree about which day they show.
+> - **`ForecastCard` does not join.** It keeps its own fallback.
+> - Present-tense callers render "—" per the trust contract on `"stale"`:
+>   `buildHeroData` high/low and `uvPanel`; `buildClimateComparison` → `null`;
+>   `readUvOutlook` and `readRainOutlook` → `null`. Dated-row callers are
+>   unchanged.
+> - `callerCoverage.test.mjs` gains the matching gate, so a caller cannot land
+>   without a decision recorded for it.
+>
+> Sections 3 and 4 below are the options as they were weighed, kept as the
+> record of why B rather than A or C. Section 6 records what shipped.
 
 ---
 
@@ -182,3 +205,58 @@ will format a five-month-old sunrise without comment. Its only caller
 (`ForecastCard`) labels every row with that row's own date, so it is not
 making a present-tense claim, and it is not part of this finding. Recorded
 so the next audit does not have to rediscover it.
+
+---
+
+## 6. What shipped
+
+Implemented as written above. Two details worth recording, because both were
+decided at the keyboard rather than in section 3:
+
+**`unknown` is a third status, and is not `stale`.** `resolveTodayIndex` has
+two pre-existing early returns — no usable daily dates, and no usable clock —
+that also answered `0`. Neither is a run-out series. HeroCard passes
+`nowMs: null` until `useTimeNow` resolves, which is a real first-paint state,
+so collapsing it into `stale` would blank the hero on every first paint: a
+different failure, not a fix. They answer `unknown`, and every caller treats
+`unknown` exactly as it behaved before.
+
+**The two readers return `null`, not an object of nulls.** Unit 7c argued the
+opposite way for `resolveWindowStart`, and the difference is the consumers.
+Every guard there was `if (index < 0)`, and `null < 0` is false, so `null`
+would have sailed through silently. Every consumer of `readUvOutlook` and
+`readRainOutlook` instead reaches straight for a field, so `null` throws on
+the first read. In both cases the choice is whichever value makes an
+unconverted caller break loudly. A test asserts the throw.
+
+Four consumers needed a guard for that: the two `readUvOutlook(...).now` reads
+in `buildHeroData` and `buildAtmosphereReading`, `UvTile`'s `outlook.now`, and
+`buildRainGuidance`'s destructure — which already had a "Guidance unavailable"
+branch for absent precipitation data, so a run-out series now lands there.
+
+**Measured, before and after.** Series `2026-04-21..23`, read `2026-09-17T17:00Z`:
+
+| surface | before | after |
+|---|---|---|
+| `resolveTodayIndex` | `0` | `{index: 0, status: "stale", staleByMs: 12744000000}` |
+| hero high / low | `88°F` / `70°F` | `—` / `—` |
+| hero `uvPanel` | "Very high UV today — protect your skin midday." | `null` |
+| hero date label | "Thursday, September 17" | unchanged — it was the honest half |
+| hero rain guidance | "Bring rain gear — 95% peak chance today" | "Guidance unavailable" |
+| `buildClimateComparison` | high 88, **+14** vs average | `null` |
+| `readUvOutlook` | `{now: null, peak: 9.4, peakTime: "2026-04-21T00:00"}` | `null` |
+| `readRainOutlook` | `{source: "daily", chance: 95, amount: 1.4}` | `null` |
+| AtmosphereBento UV tile | peak 8.1 rendered | "Unavailable" |
+| AtmosphereBento sun tile | index 0 times | unchanged, by decision |
+
+A control on `2026-09-17..19` is identical before and after on every row.
+
+## 7. Still open
+
+The sun tile keeps rendering the run-out day's sunrise and sunset under a
+help string that reads "Today's sunrise and sunset for this location". That is
+the decision — index 0 keeps this panel and the Week Ahead on the same day —
+but the tile's own wording still says "today" about a day that is not. Unit 8b
+already withholds the sun bead there (`getDaylightProgress` answers `null`), so
+the arc is empty beside two live-looking times. Wording, not indexing; not in
+this unit's scope.

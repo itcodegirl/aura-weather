@@ -5,7 +5,9 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /*
- * Every caller of `resolveWindowStart` must be covered by a stale-series test.
+ * Every caller of a run-out-aware helper must be covered by a stale-series
+ * test. Two helpers now: `resolveWindowStart` (hourly, unit 7c) and
+ * `resolveTodayIndex` (daily, finding #2).
  *
  * `staleWindow.test.mjs` drives six call sites and names them in its header.
  * A list in a comment is a list that goes stale: the seventh caller lands,
@@ -25,7 +27,7 @@ import { fileURLToPath } from "node:url";
 const SRC = fileURLToPath(new URL("..", import.meta.url));
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "__fixtures__"]);
 
-/** Files that hold the call sites, and the file that must cover each. */
+/** Files that hold the `resolveWindowStart` call sites, and their cover. */
 const COVERED_BY = {
   "components/nowcast/analyzeNowcast.js": "utils/staleWindow.test.mjs",
   "hooks/useRainAnalysis.js": "utils/staleWindow.test.mjs",
@@ -92,6 +94,77 @@ describe("stale-series coverage of resolveWindowStart", () => {
 
   test("each covering suite exists and names the file it covers", () => {
     for (const [caller, suite] of Object.entries(COVERED_BY)) {
+      const body = readFileSync(join(SRC, suite), "utf8");
+      const basename = caller.split("/").pop();
+      assert.ok(
+        body.includes(basename) || body.includes(caller),
+        `${suite} is meant to cover ${caller} but never mentions it`
+      );
+    }
+  });
+});
+
+/*
+ * The same gate for the daily series.
+ *
+ * `resolveTodayIndex` returns index 0 on a run-out series ON PURPOSE — it
+ * matches ForecastCard's fallback, so the hero and the Week Ahead cannot
+ * disagree about which day they show. That makes an uncovered caller MORE
+ * dangerous here than for the hourly helper, not less: 0 is always a real,
+ * in-range index, so a new caller reads the stale day's numbers and nothing
+ * anywhere goes wrong-looking. The decision record
+ * (`docs/decisions/resolveTodayIndex-runout.md`) is only worth what this
+ * test enforces.
+ *
+ * Listing a caller here is the decision: either its surface makes a
+ * present-tense claim and degrades on `status === "stale"`, or it renders a
+ * dated row and is deliberately left alone. Both are fine. Neither happening
+ * by default is the point.
+ */
+const TODAY_INDEX_COVERED_BY = {
+  "components/heroCard/buildHeroData.js": "domain/staleDay.test.mjs",
+  "components/heroCard/buildAtmosphereReading.js": "domain/staleDay.test.mjs",
+  "hooks/climateComparison.js": "domain/staleDay.test.mjs",
+  "domain/forecastNow.js": "domain/staleDay.test.mjs",
+  // Calls from inside a component body rather than an exported function, so
+  // it is driven through the DOM in its own render suite.
+  "components/AtmosphereBento.jsx": "components/AtmosphereBento.render.test.mjs",
+};
+
+const TODAY_CALL_SITE = /\bresolveTodayIndex\s*\(/;
+
+function todayIndexCallerFiles() {
+  return collectSourceFiles(SRC)
+    .filter((file) => TODAY_CALL_SITE.test(readFileSync(file, "utf8")))
+    .map((file) => relative(SRC, file).split("\\").join("/"))
+    .filter((rel) => rel !== "domain/forecastToday.js")
+    .sort();
+}
+
+describe("stale-day coverage of resolveTodayIndex", () => {
+  test("the detector finds a call and ignores a mention", () => {
+    // Positive control. A regex that matched nothing would make the
+    // comparison below pass over an empty set — "no callers, all covered".
+    assert.ok(TODAY_CALL_SITE.test("const { index } = resolveTodayIndex(w, now);"));
+    assert.ok(TODAY_CALL_SITE.test("  resolveTodayIndex (a, b)"));
+    assert.ok(!TODAY_CALL_SITE.test("// see resolveTodayIndex for why"));
+    assert.ok(!TODAY_CALL_SITE.test("import { resolveTodayIndex } from './x.js';"));
+  });
+
+  test("the documented caller list matches the code", () => {
+    assert.deepEqual(
+      todayIndexCallerFiles(),
+      Object.keys(TODAY_INDEX_COVERED_BY).sort(),
+      "a caller of resolveTodayIndex was added or removed. Decide whether its " +
+        "surface makes a present-tense claim about today: if so it must degrade " +
+        "on status 'stale'; if it renders a dated row it may be left alone. " +
+        "Add a run-out case either way, then list it here — index 0 is always " +
+        "in range, so an uncovered caller shows the stale day and looks fine."
+    );
+  });
+
+  test("each covering suite exists and names the file it covers", () => {
+    for (const [caller, suite] of Object.entries(TODAY_INDEX_COVERED_BY)) {
       const body = readFileSync(join(SRC, suite), "utf8");
       const basename = caller.split("/").pop();
       assert.ok(

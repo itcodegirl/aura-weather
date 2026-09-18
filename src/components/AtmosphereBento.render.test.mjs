@@ -457,4 +457,68 @@ describe("AtmosphereBento explains its readings", () => {
       "today's pair still places the sun on the arc"
     );
   });
+
+  /*
+   * Finding #2. This panel is a resolveTodayIndex caller, and the decision
+   * (docs/decisions/resolveTodayIndex-runout.md) splits it: the UV tile makes
+   * a present-tense claim and degrades, the sun tile keeps reading index 0 so
+   * this panel and the Week Ahead cannot disagree about which day they show.
+   *
+   * Both halves are pinned, because "decided unchanged" and "nobody looked"
+   * are indistinguishable a year from now.
+   */
+  describe("a daily series that has run out", () => {
+    const RUN_OUT_DAY = "2026-04-21";
+    function runOutWeather() {
+      return {
+        ...FULL_WEATHER,
+        daily: {
+          time: [RUN_OUT_DAY],
+          uvIndexMax: [UV_PEAK],
+          sunrise: [`${RUN_OUT_DAY}T05:42:00`],
+          sunset: [`${RUN_OUT_DAY}T20:18:00`],
+        },
+      };
+    }
+
+    test("the UV tile reads Unavailable rather than the stale day's peak", () => {
+      const { container } = render(
+        React.createElement(AtmosphereBento, { weather: runOutWeather(), aqi: 42, unit: "F" })
+      );
+      const tile = uvTile(container);
+
+      assert.match(tile.textContent, /Unavailable/);
+      assert.ok(
+        !tile.textContent.includes(String(UV_PEAK)),
+        `the run-out day's peak must not render: ${tile.textContent}`
+      );
+      assert.equal(
+        tile.querySelector(".atm-peak-line"),
+        null,
+        "no peak line without a day to attribute it to"
+      );
+    });
+
+    test("the panel still renders rather than crashing on a null outlook", () => {
+      // readUvOutlook answers null, not an object of nulls. UvTile has to
+      // take that without throwing, or the whole bento goes down with it.
+      const { container } = render(
+        React.createElement(AtmosphereBento, { weather: runOutWeather(), aqi: 42, unit: "F" })
+      );
+      assert.ok(container.querySelector(".bento-atm"), "the panel rendered");
+    });
+
+    test("the sun tile still reads index 0, by decision", () => {
+      const { container } = render(
+        React.createElement(AtmosphereBento, { weather: runOutWeather(), aqi: 42, unit: "F" })
+      );
+      // Same day ForecastCard falls back to, so the two cannot disagree.
+      assert.ok(screen.getByText("5:42 am"), "the sun times still come from index 0");
+      assert.equal(
+        sunArcCircles(container).length,
+        0,
+        "the bead is still withheld — getDaylightProgress answers null (unit 8b)"
+      );
+    });
+  });
 });

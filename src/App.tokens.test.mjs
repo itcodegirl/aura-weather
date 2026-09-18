@@ -173,3 +173,114 @@ describe("CSS custom property contract", () => {
     );
   });
 });
+
+/*
+ * The semantic layer is only worth having while everything still goes
+ * through it. The failure it guards against is quiet and easy: someone
+ * inlines a colour back into --bg-large-card because a literal is easier
+ * to read at the call site, the app looks exactly the same, and the next
+ * palette change silently applies to everything except that one surface.
+ *
+ * So this pins the direction of the arrow — role first, named token
+ * second — rather than any particular colour. Changing a value is a
+ * one-line edit here and the test does not care. Changing where the
+ * value lives is what it stops.
+ */
+const APP_CSS = readFileSync(join(REPO_ROOT, "src/App.css"), "utf8").replace(
+  CSS_COMMENT,
+  ""
+);
+
+// Reads the declared (unexpanded) value of a :root token.
+function declaredValue(name) {
+  const match = APP_CSS.match(
+    new RegExp(`(?:^|[;{\\s])${name}\\s*:\\s*([^;]+);`)
+  );
+  return match ? match[1].trim().replace(/\s+/g, " ") : null;
+}
+
+const SEMANTIC_ROLES = [
+  "--ground-top",
+  "--ground",
+  "--ground-bottom",
+  "--panel",
+  "--panel-raised",
+  "--panel-well",
+  "--wire-structural",
+  "--wire-rhythm",
+  "--ink",
+  "--ink-muted",
+  "--ink-dim",
+  "--status-accent",
+  "--status-ok",
+  "--status-warn",
+  "--status-crit",
+];
+
+// legacy name -> the role it must defer to.
+const DERIVED_FROM = {
+  "--text": "--ink",
+  "--text-muted": "--ink-muted",
+  "--text-dim": "--ink-dim",
+  "--bg-large-card": "--panel",
+  "--bg-tile": "--panel-raised",
+  "--bg-well": "--panel-well",
+  "--card-border": "--wire-structural",
+  "--border-soft": "--wire-rhythm",
+  "--accent": "--status-accent",
+  "--glacier": "--status-accent",
+  "--accent-green": "--status-ok",
+  "--green-good": "--status-ok",
+  "--accent-warm": "--status-warn",
+  "--amber": "--status-warn",
+  "--accent-rose": "--status-crit",
+};
+
+describe("the semantic token layer", () => {
+  test("every role is declared", () => {
+    const missing = SEMANTIC_ROLES.filter((name) => declaredValue(name) === null);
+    assert.deepEqual(missing, [], `roles with no declaration in App.css`);
+  });
+
+  test("each role holds a value rather than deferring to a legacy token", () => {
+    /*
+     * The arrow points one way. A role defined as `var(--accent)` would
+     * read as layered but leave the colour where it was, so the theme
+     * switch would still have to find and edit the old name.
+     */
+    const deferring = SEMANTIC_ROLES.filter((name) =>
+      /var\(/.test(declaredValue(name) ?? "")
+    );
+    assert.deepEqual(
+      deferring,
+      [],
+      `a role must own its colour, not point back at the token it replaced`
+    );
+  });
+
+  test("the tokens components use resolve through a role", () => {
+    const inlined = Object.entries(DERIVED_FROM)
+      .filter(([token, role]) => !(declaredValue(token) ?? "").includes(`var(${role})`))
+      .map(([token, role]) => `${token} should read var(${role}), reads ${declaredValue(token)}`);
+
+    assert.deepEqual(
+      inlined,
+      [],
+      `a colour was inlined back over the layer — it will be missed by the ` +
+        `next palette change:\n  ${inlined.join("\n  ")}`
+    );
+  });
+
+  test("the page background is drawn from the ground ramp", () => {
+    // The only consumer of the layer outside the token block, and the one
+    // surface a theme change is most visible on.
+    const body = APP_CSS.match(/\nbody\s*\{([\s\S]*?)\n\}/);
+    assert.ok(body, "expected a body rule in App.css");
+    for (const role of ["--ground-top", "--ground", "--ground-bottom"]) {
+      assert.ok(
+        body[1].includes(`var(${role})`),
+        `body's background no longer reads var(${role})`
+      );
+    }
+  });
+});

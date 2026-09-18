@@ -701,6 +701,106 @@ describe("Open-Meteo alert coverage helpers", () => {
   });
 });
 
+describe("fetchSevereWeatherAlerts — geometry", () => {
+  /*
+   * `geometry` is the one field on the alert model that comes from outside
+   * `properties`. It is kept in the provider's own GeoJSON order — the swap
+   * into Leaflet's [lat, lon] is domain/alertGeometry.js's job at draw time,
+   * and this model is what gets persisted to the snapshot cache.
+   */
+  const alertWith = (geometry) => ({
+    ...(geometry === undefined ? {} : { geometry }),
+    properties: {
+      id: "geo-alert",
+      event: "Severe Thunderstorm Warning",
+      status: "Actual",
+      severity: "Severe",
+      urgency: "Immediate",
+      effective: "2026-09-18T12:00:00Z",
+      expires: "2026-09-18T18:00:00Z",
+    },
+  });
+
+  const respondWith = (feature) => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        { features: [feature] },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+  };
+
+  const RING = [
+    [-102.6, 41.52],
+    [-102.64, 41.62],
+    [-102.3, 41.82],
+    [-102.6, 41.52],
+  ];
+
+  test("carries a drawable Polygon through in GeoJSON order, unswapped", async () => {
+    respondWith(alertWith({ type: "Polygon", coordinates: [RING] }));
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.deepEqual(result.alerts[0].geometry, { type: "Polygon", coordinates: [RING] });
+    assert.deepEqual(
+      result.alerts[0].geometry.coordinates[0][0],
+      [-102.6, 41.52],
+      "longitude still first — the model records what the provider sent"
+    );
+  });
+
+  test("a zone-issued alert records null geometry, not a missing field", async () => {
+    respondWith(alertWith(null));
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].geometry, null);
+    assert.ok(
+      "geometry" in result.alerts[0],
+      "the key must be present so a restored pre-geometry alert stays distinguishable"
+    );
+  });
+
+  test("an absent geometry key normalises to null rather than undefined", async () => {
+    respondWith(alertWith(undefined));
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].geometry, null);
+    assert.ok("geometry" in result.alerts[0]);
+  });
+
+  test("a MultiPolygon is recorded as no geometry — not drawn, rather than drawn in part", async () => {
+    respondWith(alertWith({ type: "MultiPolygon", coordinates: [[RING]] }));
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].geometry, null);
+  });
+
+  test("a malformed vertex voids the whole geometry", async () => {
+    const broken = [[-102.6, 41.52], [-102.64, null], [-102.3, 41.82], [-102.6, 41.52]];
+    respondWith(alertWith({ type: "Polygon", coordinates: [broken] }));
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].geometry, null);
+  });
+
+  test("geometry does not disturb the fields already on the model", async () => {
+    respondWith(alertWith({ type: "Polygon", coordinates: [RING] }));
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+    const alert = result.alerts[0];
+
+    assert.equal(alert.id, "geo-alert");
+    assert.equal(alert.event, "Severe Thunderstorm Warning");
+    assert.equal(alert.startsAt, "2026-09-18T12:00:00Z");
+    assert.equal(alert.expiresAt, "2026-09-18T18:00:00Z");
+    assert.equal(alert.priority, "high");
+  });
+});
+
 describe("fetchAirQuality", () => {
   test("retries transient AQI failures before returning a reading", async () => {
     let requestCount = 0;

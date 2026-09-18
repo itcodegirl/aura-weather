@@ -2,6 +2,7 @@
 
 import { validateCoordinates } from "../utils/weatherUnits.js";
 import { toFiniteNumber } from "../utils/numbers.js";
+import { normaliseAlertGeometry } from "../domain/alertGeometry.js";
 import { DISPLAY_LOCALE, PARTS_LOCALE } from "../utils/formatters.js";
 import {
   createAbortError,
@@ -475,6 +476,22 @@ function normalizeAlert(feature, index) {
     response: typeof properties.response === "string" ? properties.response : "",
     priority: getAlertPriority(alertScore, severityScore),
     priorityScore: alertScore,
+    /*
+     * The only field on this model that comes from outside `properties`.
+     *
+     * NWS ships a drawable outline on storm-based products and nothing at
+     * all on zone-issued ones: 2 of the 5 recorded features carry a
+     * single-ring `Polygon`, the other 3 carry `geometry: null`, which is
+     * the provider saying "this covers whole counties", not a gap.
+     *
+     * Kept in GeoJSON order, exactly as sent. The swap into Leaflet's
+     * `[lat, lon]` happens at draw time in domain/alertGeometry.js, so this
+     * model — which is also what gets persisted to the snapshot cache —
+     * records the provider's own coordinates rather than a map library's
+     * arrangement of them. Anything not drawable (MultiPolygon, a ring with
+     * a hole, a malformed vertex) normalises to null: never a partial shape.
+     */
+    geometry: normaliseAlertGeometry(feature?.geometry),
   };
 }
 

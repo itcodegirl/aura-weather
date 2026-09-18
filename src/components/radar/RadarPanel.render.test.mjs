@@ -369,3 +369,158 @@ describe("RadarTimeline absolute clock timezone", () => {
     assert.equal(clock.textContent, viewerClock);
   });
 });
+
+describe("RadarPanel alert geometry", () => {
+  beforeEach(() => {
+    // No `?radar=` override: these tests need the READY map.
+    window.history.replaceState(null, "", "/");
+  });
+
+  const RING = [
+    [-87.9, 41.6],
+    [-87.7, 41.6],
+    [-87.7, 41.8],
+    [-87.9, 41.8],
+    [-87.9, 41.6],
+  ];
+
+  const inHours = (hours) => new Date(Date.now() + hours * 3_600_000).toISOString();
+
+  const alert = (id, geometry, overrides = {}) => ({
+    id,
+    event: "Severe Thunderstorm Warning",
+    endsAt: inHours(3),
+    geometry,
+    ...overrides,
+  });
+
+  const drawable = (id) => alert(id, { type: "Polygon", coordinates: [RING] });
+  const zoneIssued = (id) => alert(id, null);
+
+  // Local mount, so the shared READY helper above keeps its exact signature.
+  async function renderRadarWithAlerts(alerts) {
+    const now = Math.floor(Date.now() / 1000);
+    globalThis.fetch = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => weatherMapsPayload({ past: now - 600, active: now - 300, nowcast: now + 600 }),
+    });
+
+    let view;
+    await act(async () => {
+      view = render(
+        React.createElement(RadarPanel, {
+          location: { lat: 41.8781, lon: -87.6298, name: "Chicago" },
+          alerts,
+        })
+      );
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    return view;
+  }
+
+  test("a drawable alert paints an outline on the map", async () => {
+    const { container } = await renderRadarWithAlerts([drawable("storm-1")]);
+
+    const shapes = container.querySelectorAll("path.radar-alert-shape");
+    assert.equal(shapes.length, 1);
+  });
+
+  test("the outline sits in its own pane, below the location marker", async () => {
+    // Leaflet stacks vector layers by insertion order inside one pane, and
+    // the marker mounts first — so ordering has to come from the pane, not
+    // from JSX position. 350 is between tilePane (200) and overlayPane (400).
+    const { container } = await renderRadarWithAlerts([drawable("storm-1")]);
+
+    const shape = container.querySelector("path.radar-alert-shape");
+    const pane = shape.closest(".leaflet-pane");
+    assert.ok(pane, "the outline must live in a Leaflet pane");
+    assert.equal(pane.style.zIndex, "350");
+    assert.ok(
+      Number(pane.style.zIndex) < 400,
+      "the marker's overlay pane is 400 and must stay on top"
+    );
+  });
+
+  test("two drawable alerts paint two outlines and say nothing", async () => {
+    const { container } = await renderRadarWithAlerts([drawable("a"), drawable("b")]);
+
+    assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 2);
+    assert.equal(container.querySelector(".radar-alert-note"), null);
+  });
+
+  test("a zone-issued alert draws nothing and says why", async () => {
+    const { container } = await renderRadarWithAlerts([zoneIssued("beach-1")]);
+
+    assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 0);
+    assert.equal(
+      container.querySelector(".radar-alert-note").textContent,
+      "County-level alert — not drawn on map"
+    );
+  });
+
+  test("a mixed set draws what it can and counts what it cannot", async () => {
+    const { container } = await renderRadarWithAlerts([
+      drawable("storm-1"),
+      zoneIssued("beach-1"),
+      zoneIssued("air-1"),
+    ]);
+
+    assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 1);
+    assert.equal(
+      container.querySelector(".radar-alert-note").textContent,
+      "2 county-level alerts — not drawn on map"
+    );
+  });
+
+  test("an expired alert is neither drawn nor counted — the map and the card agree", async () => {
+    // AlertsCard drops it through the same isAlertActive; a shape with no
+    // row beside it would be the map asserting something the list denies.
+    const expired = alert("gone", { type: "Polygon", coordinates: [RING] }, { endsAt: inHours(-1) });
+    const { container } = await renderRadarWithAlerts([expired, zoneIssued("beach-1")]);
+
+    assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 0);
+    assert.equal(
+      container.querySelector(".radar-alert-note").textContent,
+      "County-level alert — not drawn on map"
+    );
+  });
+
+  test("an alert restored from before geometry existed is neither drawn nor called county-level", async () => {
+    const restored = { id: "old", event: "Flood Warning", endsAt: inHours(3) };
+    assert.equal("geometry" in restored, false);
+
+    const { container } = await renderRadarWithAlerts([restored]);
+
+    assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 0);
+    assert.equal(container.querySelector(".radar-alert-note"), null);
+  });
+
+  test("no alerts at all leaves the map exactly as it was", async () => {
+    for (const value of [[], undefined, null]) {
+      const { container } = await renderRadarWithAlerts(value);
+      assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 0);
+      assert.equal(container.querySelector(".radar-alert-note"), null);
+      cleanup();
+    }
+  });
+
+  test("a malformed outline is not drawn, and is counted as undrawable", async () => {
+    const broken = alert("broken", { type: "Polygon", coordinates: [[[-87.9, 41.6], [null, 41.6], [-87.7, 41.8], [-87.9, 41.6]]] });
+    const { container } = await renderRadarWithAlerts([broken]);
+
+    assert.equal(container.querySelectorAll("path.radar-alert-shape").length, 0);
+    assert.ok(container.querySelector(".radar-alert-note"));
+  });
+
+  test("the caption is plain text — no role, no live region", async () => {
+    const { container } = await renderRadarWithAlerts([zoneIssued("beach-1")]);
+
+    const note = container.querySelector(".radar-alert-note");
+    assert.equal(note.getAttribute("role"), null);
+    assert.equal(note.getAttribute("aria-live"), null);
+    assert.equal(note.closest("[aria-hidden='true']"), null, "no ancestor hides the caption");
+  });
+});

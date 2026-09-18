@@ -524,3 +524,19 @@
     height: 22px;
   }
 }
+
+/*
+ * The count of alerts the map could not draw. Sits directly under the map,
+ * above the timeline, in the same dim register as the legend note — it
+ * explains an absence, so it must not compete with the shapes that are
+ * there. The amber marker ties it to the alert outlines on the map.
+ */
+.radar-alert-note {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid rgba(242, 163, 60, 0.55);
+  color: var(--text-dim);
+  font-size: var(--fs-label);
+  line-height: 1.45;
+  letter-spacing: var(--track-tight);
+}

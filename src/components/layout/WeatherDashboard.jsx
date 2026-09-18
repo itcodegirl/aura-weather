@@ -274,6 +274,10 @@ function WeatherDashboard({
               timeZone={weather?.meta?.timezone}
               style={CARD_STYLE_VARIABLES[4]}
               isRefreshing={isBackgroundLoading}
+              // The same array the alerts card reads, unfiltered: both
+              // surfaces apply `isAlertActive` themselves, on the same
+              // ticker, so they cannot disagree about which alerts exist.
+              alerts={weather?.alerts}
             />
           </Suspense>
         ) : (

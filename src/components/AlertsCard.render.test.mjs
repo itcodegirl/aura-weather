@@ -658,3 +658,113 @@ describe("AlertsCard hazard-end window", () => {
     assert.equal(container.querySelector(".alerts-card"), null);
   });
 });
+
+describe("AlertsCard timing phase", () => {
+  /*
+   * "Until 9:45 PM" alone reads the same for an alert that began an hour ago
+   * and one that begins tomorrow. The phase line says which — pending or in
+   * effect — beside the absolute time, which stays.
+   */
+  test("a future onset renders a pending bucket beside the Until line", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: inHours(7.5), endsAt: inHours(17.5) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    const phase = container.querySelector(".alerts-phase");
+    assert.ok(phase);
+    assert.equal(phase.textContent, "Starts within 12 hours");
+    assert.ok(container.querySelector(".alerts-window"), "the Until line must remain");
+  });
+
+  test("an onset that has passed renders In effect now", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: inHours(-2), endsAt: inHours(5) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-phase").textContent, "In effect now");
+  });
+
+  test("inside the last hour it renders Ends within the hour", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: inHours(-2), endsAt: inHours(0.5) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-phase").textContent, "Ends within the hour");
+  });
+
+  test("falls back to startsAt when the provider sent no onset", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: null, startsAt: inHours(3), endsAt: inHours(9) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-phase").textContent, "Starts in the next few hours");
+  });
+
+  test("the phrase never carries a remaining-time numeral", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: inHours(7.5), endsAt: inHours(17.5) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.doesNotMatch(container.querySelector(".alerts-phase").textContent, /\d+\s?min/);
+  });
+
+  /*
+   * Absence is silence. An alert with neither onset nor effective, or with an
+   * onset after its own end, renders the Until line alone — exactly what the
+   * card rendered before this change.
+   */
+  test("no onset and no effective renders the Until line alone, with no phase", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: null, startsAt: null, endsAt: inHours(3) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-phase"), null);
+    assert.ok(container.querySelector(".alerts-window"));
+  });
+
+  test("an onset after its own end — the malformed case — renders no phase", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: inHours(9), endsAt: inHours(3) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-phase"), null);
+    assert.ok(container.querySelector(".alerts-window"));
+    assert.equal(screen.queryByText(/invalid|malformed|unknown/i), null);
+  });
+
+  test("the phase is plain text — no live region, no role", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ onsetAt: inHours(7.5), endsAt: inHours(17.5) })],
+        alertsStatus: "ready",
+      })
+    );
+
+    const phase = container.querySelector(".alerts-phase");
+    assert.equal(phase.getAttribute("aria-live"), null);
+    assert.equal(phase.getAttribute("role"), null);
+    // And the card as a whole gained no live region from this change.
+    assert.equal(container.querySelectorAll("[aria-live]").length, 0);
+  });
+});

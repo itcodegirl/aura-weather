@@ -607,6 +607,98 @@ describe("Open-Meteo alert coverage helpers", () => {
     assert.equal(result.alerts[0].endsAt, null);
     assert.equal(result.alerts[0].expiresAt, "2026-09-19T15:00:00Z");
   });
+
+  /*
+   * CAP `onset` is the hazard start; `effective` is the message issue time.
+   * They differed on 169 of 243 live alerts. `onsetAt` is additive — the
+   * `startsAt` field every existing consumer reads is untouched.
+   */
+  test("normalises onset into onsetAt without disturbing startsAt", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "future-onset",
+                event: "Winter Storm Watch",
+                status: "Actual",
+                severity: "Moderate",
+                urgency: "Future",
+                effective: "2026-09-18T12:00:00Z",
+                onset: "2026-09-19T12:00:00Z",
+                expires: "2026-09-18T18:00:00Z",
+                ends: "2026-09-20T00:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].onsetAt, "2026-09-19T12:00:00Z");
+    assert.equal(result.alerts[0].startsAt, "2026-09-18T12:00:00Z");
+    assert.notEqual(result.alerts[0].onsetAt, result.alerts[0].startsAt);
+  });
+
+  test("an absent onset normalises to null, not to the effective time and not to undefined", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "no-onset",
+                event: "Hydrologic Outlook",
+                status: "Actual",
+                severity: "Unknown",
+                urgency: "Future",
+                effective: "2026-09-18T12:00:00Z",
+                expires: "2026-09-19T12:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    // The fallback to `effective` is the CALLER's, not the normaliser's:
+    // the model reports what the provider said.
+    assert.equal(result.alerts[0].onsetAt, null);
+    assert.equal(result.alerts[0].startsAt, "2026-09-18T12:00:00Z");
+  });
+
+  test("a JSON null onset does not become the string 'null'", async () => {
+    // The recorded Test Message carries `"onset": null` verbatim.
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "null-onset",
+                event: "Test Message",
+                status: "Actual",
+                severity: "Unknown",
+                urgency: "Unknown",
+                effective: "2026-09-18T02:33:09+00:00",
+                onset: null,
+                expires: "2026-09-19T02:33:09+00:00",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].onsetAt, null);
+  });
 });
 
 describe("fetchAirQuality", () => {

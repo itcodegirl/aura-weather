@@ -326,3 +326,17 @@
   font-weight: 700;
   letter-spacing: var(--track-default);
 }
+
+/*
+ * Timing phase — "Starts within 12 hours", "In effect now". Sits above the
+ * absolute "Until …" in the meta column, and outranks it: the reader's
+ * question is whether this is coming or here, and the clock time is the
+ * evidence. Same size and weight as the window line so the column reads as
+ * one unit, distinguished by colour rather than by shouting.
+ */
+.alerts-phase {
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}

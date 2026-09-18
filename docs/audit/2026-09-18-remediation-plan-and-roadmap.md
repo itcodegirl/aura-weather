@@ -298,7 +298,7 @@ Note on T-02: the audit's recommended resolution was to downgrade statuses in `b
 
 **Dependencies.** WP-0 (fixtures) must land first.
 
-**Implementation direction.** Extend the existing projection with the same `typeof === "string"` discipline the sibling fields use — malformed input normalises to `""` or `null`, never to a coerced value. Add two small pure domain modules: `alertResponse.js` (CAP `response` → user label) and `alertTiming.js` (`(onsetAt, startsAt, endsAt, nowMs) → { phase, phrase }`, injectable clock, matching the `analyzeNowcast` and `calculatePressureTrend` house pattern). Keep the card's existing structure; add elements, do not rearrange.
+**Implementation direction.** Extend the existing projection with the same `typeof === "string"` discipline the sibling fields use — malformed input normalises to `""` or `null`, never to a coerced value. Add two small pure domain modules: `alertResponse.js` (CAP `response` → user label) and `alertTiming.js` (`describeAlertTiming(onsetAt, endsAt, expiresAt, nowMs) → { phase, phrase }`, the caller resolving `onsetAt ?? startsAt`, injectable clock, matching the `analyzeNowcast` and `calculatePressureTrend` house pattern). Keep the card's existing structure; add elements, do not rearrange.
 
 Two evidence-driven design constraints, both from the live sample:
 
@@ -306,7 +306,7 @@ Two evidence-driven design constraints, both from the live sample:
 - When `instruction` is absent, say nothing about its absence. It is missing on 40% of alerts overall but 0% of `urgency: Immediate` `[live]`, so absence tracks low consequence. The project's own principle is that a missing answer is silence.
 
 **Testing.**
-- *Unit:* `status !== "Actual"` dropped; each new field normalises, including null/absent → `""`/`null` not `undefined`; `alertResponse` maps every CAP value and returns null for `None`/unknown; `alertTiming` covers each phase boundary, onset-absent fallback, and a malformed onset-after-expiry producing no negative countdown.
+- *Unit:* `status !== "Actual"` dropped; each new field normalises, including null/absent → `""`/`null` not `undefined`; `alertResponse` maps every CAP value and returns null for `None`/unknown; `alertTiming` covers each phase boundary, onset-absent fallback, and a malformed onset-after-`ends` producing no phrase (an `expires` before `onset` is normal, not malformed).
 - *Component:* instruction inline and un-truncated; absent instruction produces no absence copy; `description` present in DOM inside a closed `<details>`; chip carries `aria-label`; multi-line instruction yields multiple paragraphs.
 - *E2E:* one alert with all fields, one with neither, both render without error.
 - *axe:* dashboard scan clean with the disclosure present.
@@ -316,7 +316,7 @@ Two evidence-driven design constraints, both from the live sample:
 2. An alert carrying `instruction` shows it without interaction and without truncation.
 3. An alert without `instruction` shows no message about its absence.
 4. `description` is reachable in ≤2 interactions and not visible by default.
-5. A future-onset alert reads "Starts in …"; an in-progress one reads "In effect now".
+5. A future-onset alert reads a coarse lead bucket ("Starts within 12 hours"); an in-progress one reads "In effect now"; no phrase carries a remaining-time numeral.
 6. Missing onset *and* effective degrades to today's expiry-only render.
 7. No new live region; existing `role="status"` / `role="alert"` scoping unchanged.
 
@@ -596,20 +596,20 @@ Tickets for the next milestone only. Each is independently reviewable and testab
 
 **Files likely affected.** `src/api/openMeteo.js` *(risky file)*, `src/domain/alertTiming.js` (new), `src/components/AlertsCard.jsx`, tests.
 
-**Required change.** Normalise `onsetAt` from `properties.onset`, keeping `startsAt` for compatibility. Add a pure `alertTiming` module returning `{ phase, phrase }` from an injectable clock. Render "Starts in …" / "In effect now" / "Ends in …" beside the existing expiry. Bucket the lead time; do not render exact minutes.
+**Required change.** Normalise `onsetAt` from `properties.onset`, keeping `startsAt` for compatibility. Add a pure `alertTiming` module returning `{ phase, phrase }` from an injectable clock. Render a coarse lead bucket ("Starts within the hour" … "Starts in more than 2 days") / "In effect now" / "Ends within the hour" beside the existing expiry. Bucket the lead time; never render minutes, and no phrase carries a remaining-time numeral. Re-specified 2026-09-18: `describeAlertTiming(onsetAt, endsAt, expiresAt, nowMs)`; the malformed case is onset-after-`ends`, never onset-after-`expires`.
 
 **Must preserve.** Location-zone formatting of the absolute expiry; the minute-ticker recompute; no live region.
 
 **Dependencies.** AUD-002.
 
 **Acceptance criteria**
-- [ ] Future-onset alert reads "Starts in …" before its expiry clause
-- [ ] In-progress alert reads "In effect now"
-- [ ] Missing onset *and* effective degrades to expiry-only
-- [ ] A malformed onset-after-expiry produces no negative countdown
-- [ ] No new live region
-- [ ] Regression tests added
-- [ ] Existing relevant tests pass
+- [x] Future-onset alert reads a lead bucket ("Starts within 12 hours") before its expiry clause
+- [x] In-progress alert reads "In effect now"
+- [x] Missing onset *and* effective degrades to expiry-only
+- [x] A malformed onset-after-`ends` produces no phrase; onset-after-`expires` alone is not malformed
+- [x] No new live region
+- [x] Regression tests added
+- [x] Existing relevant tests pass
 
 **Testing.** Unit (phase boundaries, fallbacks, malformed input), component, e2e.
 **Risk.** Low-Medium. **Priority.** P1.
@@ -732,8 +732,8 @@ corrected here rather than left to be inferred from the git log.
 | 2 — AUD-001 drop non-actual alerts | **Shipped** | PR #230. `isActualAlert` filters `status !== "Actual"` before normalisation. An absent `status` deliberately keeps the alert — CAP requires the field, so absence means a malformed payload, and dropping a real warning is the false all-clear this app exists to prevent. |
 | 3 — AUD-002, the `instruction` and `description` halves | **Shipped** | PR #230. `instruction` normalised and rendered inline; `description` (AUD-021) rendered inside a closed disclosure; `src/domain/alertText.js` added for NWS paragraph handling. |
 | 3 — AUD-002, the `response` and `areaDesc` halves | Re-scoped as its own ticket | AUD-008 + AUD-009 on `feat/alerts-response-and-area`. The CAP `response` → label vocabulary was signed off 2026-09-18 (see below). |
-| 3b — AUD-023 hazard-end window | **Opened 2026-09-18, in review** | `fix/alerts-hazard-end`. Found while scouting AUD-003: both expiry filters keyed on CAP `expires` — the message-refresh deadline — so 8 of 136 future-onset alerts in the live sample were dropped while their hazard was still ahead. `endsAt` now carries CAP `ends`, `expiresAt` carries `expires`, and one shared `isAlertActive` resolves `endsAt ?? expiresAt` for both the render and restore paths. User-visible: the card's "Until" line now names the hazard end, which changed the shown time on 184 of 243 live alerts, almost all lengthening the window. Split out ahead of AUD-003 by decision. |
-| 4 — AUD-003 onset timing | Blocked on AUD-023 | `feat/alerts-onset-timing`. Re-specified 2026-09-18: `alertTiming` takes `(onsetAt, endsAt, expiresAt, nowMs)`; the malformed case is onset-after-**ends**, not onset-after-expires — `expires` before `onset` is normal (99 of 243 live alerts). Buckets bucketed, never minutes. Case-study screenshot (DoD item 10) deferred to the next live warning on the production deploy. |
+| 3b — AUD-023 hazard-end window | **Shipped** | PR #235, `fix/alerts-hazard-end`. Found while scouting AUD-003: both expiry filters keyed on CAP `expires` — the message-refresh deadline — so 8 of 136 future-onset alerts in the live sample were dropped while their hazard was still ahead. `endsAt` now carries CAP `ends`, `expiresAt` carries `expires`, and one shared `isAlertActive` resolves `endsAt ?? expiresAt` for both the render and restore paths. User-visible: the card's "Until" line now names the hazard end, which changed the shown time on 184 of 243 live alerts, almost all lengthening the window. Split out ahead of AUD-003 by decision. |
+| 4 — AUD-003 onset timing | **In review** | `feat/alerts-onset-timing`, opened 2026-09-18. `onsetAt` normalised from CAP `onset` (additive; `startsAt` untouched). `src/domain/alertTiming.js` — `describeAlertTiming(onsetAt, endsAt, expiresAt, nowMs)` → `{ phase, phrase }`, phases `pending` / `active` / `ended` / `invalid` / `unknown`. The malformed case is onset-after-**ends**, checked before any phase; `expires` before `onset` is normal (99 of 243 live alerts) and never takes part in the comparison, which reads `ends` alone — an alert with no `ends` (20 of 243) and a known future onset is `pending`, not malformed. Lead buckets are coarse and carry no remaining-time numeral — "Starts within the hour" / "in the next few hours" / "within 12 hours" / "within a day" / "within 2 days" / "in more than 2 days" — matching the nowcast register; "In effect now" and "Ends within the hour" for active. Rendered as plain text beside the existing "Until …", no live region. The card resolves `onsetAt ?? startsAt` before calling, so the fallback to `effective` (1 of 243) is the caller's. Case-study screenshot (DoD item 10) still deferred to the next live warning on the production deploy — left open. |
 | 5 — AUD-005 rung labels | **Resolved** | Signed off 2026-09-17, recorded in the milestone spec §4 "Signed-off labels". |
 
 **Why 2 and 3 ran early.** They shipped together in PR #230 as a direct

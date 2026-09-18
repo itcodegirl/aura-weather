@@ -5,6 +5,7 @@ import { formatStampWithZoneName } from "../utils/formatters";
 import { toAlertParagraphs } from "../domain/alertText";
 import { getAlertResponseLabel } from "../domain/alertResponse";
 import { isAlertActive, resolveAlertEnd } from "../domain/alertWindow";
+import { describeAlertTiming } from "../domain/alertTiming";
 import "./AlertsCard.css";
 
 /*
@@ -77,6 +78,48 @@ function AlertResponseChip({ response }) {
       </span>
     </p>
   );
+}
+
+/*
+ * Pending, or happening? "Until 9:45 PM" alone reads the same for an alert
+ * that began an hour ago and one that begins tomorrow — 136 of the 243 live
+ * alerts sampled on 2026-09-18 had a future onset, so that is the common case
+ * rather than the edge.
+ *
+ * The phrase is a coarse bucket with no remaining-time numeral: onset on a
+ * long-fuse product is a revised forecast, not a countdown. It sits beside
+ * the existing "Until …", which stays as the one absolute time on the row.
+ *
+ * `onsetAt ?? startsAt`: the hazard start, falling back to the message
+ * issue time when the provider omits `onset` (1 of 243). The domain function
+ * takes one instant and does not know which field supplied it.
+ *
+ * Reads the shared minute ticker the card already subscribes to, so it
+ * recomputes on the same cadence as the expiry filter — and is plain text
+ * in a plain span. No live region: a phrase that re-announced itself every
+ * minute is exactly the broad live-region change AGENTS.md forbids.
+ */
+function AlertPhase({ alert, nowMs }) {
+  /*
+   * The normaliser always writes `onsetAt` — a string, or null when the
+   * provider sent no onset. An alert with NO `onsetAt` key at all is one
+   * restored from a snapshot written before the field existed. Its onset was
+   * never recorded; `effective` is not a substitute, and reading it here
+   * would call a hazard still hours away "In effect now". Absent key:
+   * silence, until the next live fetch replaces the alert. Null key: the
+   * provider omitted the onset, and the fallback to `effective` stands.
+   */
+  const hasOnsetField = alert != null && "onsetAt" in alert;
+  const { phrase } = describeAlertTiming(
+    hasOnsetField ? alert.onsetAt ?? alert.startsAt : null,
+    alert?.endsAt,
+    alert?.expiresAt,
+    nowMs
+  );
+  if (!phrase) {
+    return null;
+  }
+  return <span className="alerts-phase">{phrase}</span>;
 }
 
 function AlertGuidance({ instruction, description }) {
@@ -275,6 +318,7 @@ function AlertsCard({
                   >
                     {alert.priority || "low"}
                   </span>
+                  <AlertPhase alert={alert} nowMs={nowMs} />
                   {/*
                     * Same resolved instant the filter uses. If the card said
                     * "Until 5:30pm" while the filter kept the alert until

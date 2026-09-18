@@ -60,6 +60,7 @@ Work necessary to correct or strengthen the existing application.
 | AUD-006 | One phrase, two probability thresholds | Internal contradiction in a consistency-first product |
 | AUD-008 | `areaDesc` normalised but unrendered | Dead field; same root cause as AUD-002 |
 | AUD-021 | `description` normalised but unread | Dead field; same root cause as AUD-002 |
+| AUD-023 | Expiry filters keyed on CAP `expires`, not `ends` | Future-onset alerts dropped while their hazard is still ahead |
 
 ### B. Roadmap — 11 findings
 
@@ -111,6 +112,7 @@ AUD-017 (non-US alerts), AUD-018 (moon/pollen/satellite/lightning/tropical/wildf
 | AUD-020 | No in-app motion/density control | IMPROVEMENT | OS-level only `[read: src/hooks/usePrefersReducedData.js]` | Per-site preference unavailable | **Low** | Preference toggle | AUD-011 (same panel) | Backlog |
 | AUD-021 | `description` normalised, never read | TECH DEBT | `[read: src/api/openMeteo.js:408]`; no consumer | Eng: dead field in a risky file | **Low** | Render behind disclosure | Executed inside AUD-002 | Current Milestone |
 | AUD-022 | Competitor web-UX claims unverified | DOCUMENTATION | weather.com 404 / accuweather.com 403 to automated fetch; disclosed in audit §3 and §"Open questions" | Reputational if quoted publicly | **Low** | Re-verify by hand before any public use | None | Backlog |
+| AUD-023 | Both expiry filters keyed on CAP `expires` (message-refresh deadline) as if it were the hazard end | **DEFECT** | `endsAt` normalised from `properties.expires` `[read: src/api/openMeteo.js:427]`; render filter `[read: src/components/AlertsCard.jsx:139-141]`; restore filter `[read: src/hooks/useWeatherData.js:139-142]`. Live 2026-09-18: `ends` ≠ `expires` on 184/243, `expires` before `onset` on 99/243, and **8 of 136 future-onset alerts dropped** while `ends` was still ahead `[live: api.weather.gov/alerts/active]` | User: an upcoming hazard vanishes from the card hours before it begins. Eng: two copies of one rule drifted together | **High** | Normalise `ends` → `endsAt`, `expires` → `expiresAt`; one shared `isAlertActive` keyed on `endsAt ?? expiresAt` | Found during AUD-003 scouting; blocks AUD-003 | Immediate Remediation |
 
 ---
 
@@ -204,6 +206,7 @@ Stated as sentences:
 | --- | --- | --- |
 | AUD-001 | Test alerts render as real | Incorrect critical weather information, in the highest-stakes surface |
 | AUD-002 | Protective-action text discarded | Incomplete critical weather information; the single most actionable string in the payload is dropped |
+| AUD-023 | Expiry filters keyed on `expires`, not `ends` | An upcoming hazard disappears from the card before it begins — a silent false all-clear on the highest-stakes surface. Found 2026-09-18 during AUD-003 scouting |
 
 Both are small. Neither requires a design decision. Together they are the entire P0 list — the register does not pad it.
 
@@ -698,6 +701,7 @@ Audit finding → root cause → priority → work package → ticket → test �
 | AUD-020 | — | P3 | — | — | — | Backlog (fold into AUD-011) |
 | AUD-021 | RC-1 | P1 | WP-1 | inside AUD-002 | Component: in DOM, collapsed | Milestone |
 | AUD-022 | — | P3 | — | — | — | Backlog — re-verify before public use (§8) |
+| AUD-023 | RC-1 | P0 | WP-1 | AUD-023 | Unit: fixture future-onset case kept past expiry; restore path + render path | Milestone (added 2026-09-18) |
 
 Prior-audit findings T-01 … T-07 and P-01 are recorded as **verified closed** in §8 with file:line evidence, so they are traceable but generate no work.
 
@@ -728,7 +732,8 @@ corrected here rather than left to be inferred from the git log.
 | 2 — AUD-001 drop non-actual alerts | **Shipped** | PR #230. `isActualAlert` filters `status !== "Actual"` before normalisation. An absent `status` deliberately keeps the alert — CAP requires the field, so absence means a malformed payload, and dropping a real warning is the false all-clear this app exists to prevent. |
 | 3 — AUD-002, the `instruction` and `description` halves | **Shipped** | PR #230. `instruction` normalised and rendered inline; `description` (AUD-021) rendered inside a closed disclosure; `src/domain/alertText.js` added for NWS paragraph handling. |
 | 3 — AUD-002, the `response` and `areaDesc` halves | Re-scoped as its own ticket | AUD-008 + AUD-009 on `feat/alerts-response-and-area`. The CAP `response` → label vocabulary was signed off 2026-09-18 (see below). |
-| 4 — AUD-003 onset timing | Not started | `feat/alerts-onset-timing`, unchanged. |
+| 3b — AUD-023 hazard-end window | **Opened 2026-09-18, in review** | `fix/alerts-hazard-end`. Found while scouting AUD-003: both expiry filters keyed on CAP `expires` — the message-refresh deadline — so 8 of 136 future-onset alerts in the live sample were dropped while their hazard was still ahead. `endsAt` now carries CAP `ends`, `expiresAt` carries `expires`, and one shared `isAlertActive` resolves `endsAt ?? expiresAt` for both the render and restore paths. User-visible: the card's "Until" line now names the hazard end, which changed the shown time on 184 of 243 live alerts, almost all lengthening the window. Split out ahead of AUD-003 by decision. |
+| 4 — AUD-003 onset timing | Blocked on AUD-023 | `feat/alerts-onset-timing`. Re-specified 2026-09-18: `alertTiming` takes `(onsetAt, endsAt, expiresAt, nowMs)`; the malformed case is onset-after-**ends**, not onset-after-expires — `expires` before `onset` is normal (99 of 243 live alerts). Buckets bucketed, never minutes. Case-study screenshot (DoD item 10) deferred to the next live warning on the production deploy. |
 | 5 — AUD-005 rung labels | **Resolved** | Signed off 2026-09-17, recorded in the milestone spec §4 "Signed-off labels". |
 
 **Why 2 and 3 ran early.** They shipped together in PR #230 as a direct

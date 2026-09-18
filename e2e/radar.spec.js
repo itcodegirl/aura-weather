@@ -26,7 +26,7 @@ const TRANSPARENT_PNG = Buffer.from(
 async function stubTiles(page) {
   for (const host of [
     "**/tilecache.rainviewer.com/**",
-    "**/basemaps.cartocdn.com/**",
+    "**/tile.openstreetmap.org/**",
   ]) {
     await page.route(host, (route) =>
       route.fulfill({ contentType: "image/png", body: TRANSPARENT_PNG })

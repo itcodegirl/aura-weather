@@ -97,6 +97,32 @@
   background: var(--surface-3);
 }
 
+/*
+ * The basemap is OpenStreetMap's standard raster — a road map, with green
+ * parks, red motorways and dense labels. Under RainViewer's blue-to-magenta
+ * echoes that competes for exactly the attention the precipitation needs, so
+ * it is desaturated and darkened to read as a calm canvas beneath them.
+ *
+ * This filters how the tile is DISPLAYED in the browser. Nothing is modified,
+ * stored or redistributed, and Leaflet's attribution control sits outside the
+ * filtered layer so the required credit keeps its own contrast.
+ *
+ * Scoped to the basemap's own layer, NOT to `.leaflet-tile-pane`: the radar
+ * frames live in that same pane, and `grayscale()` is destructive — a child
+ * filter cannot restore colour a parent has already removed, so washing the
+ * pane washes the echoes with it and no inverse brings them back.
+ */
+.radar-map .radar-basemap {
+  filter: grayscale(0.85) brightness(0.58) contrast(1.06);
+}
+
+@media (prefers-contrast: more) {
+  /* A washed basemap is the wrong trade when contrast is the ask. */
+  .radar-map .radar-basemap {
+    filter: grayscale(0.4) brightness(0.82);
+  }
+}
+
 .radar-map {
   height: 100%;
   width: 100%;

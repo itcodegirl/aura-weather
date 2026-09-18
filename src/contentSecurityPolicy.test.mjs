@@ -113,15 +113,17 @@ describe("Content-Security-Policy", () => {
 
   test("img-src covers the tile vendors, whose hosts arrive at runtime", () => {
     /*
-     * Neither tile host can be derived like the origins above. RainViewer's
-     * catalogue returns the tile host as a field, and the basemap URL is a
-     * template with an `{s}` subdomain placeholder — so both are wildcards in
-     * the policy by necessity, and this states the two vendors on purpose.
+     * RainViewer's catalogue returns its tile host as a runtime field, so it
+     * stays a wildcard by necessity. The basemap host is fixed and named
+     * exactly — it moved off CARTO after that vendor began serving an
+     * "API KEY REQUIRED" watermark as a valid 200 PNG (see domain/basemap.js),
+     * and a policy that still allowed the old host would let a stale build
+     * quietly render the watermark again.
      */
     const sources = directives.get("img-src") ?? [];
     for (const origin of [
       "https://tilecache.rainviewer.com",
-      "https://a.basemaps.cartocdn.com",
+      "https://tile.openstreetmap.org",
     ]) {
       assert.ok(
         allowedBy(sources, origin),

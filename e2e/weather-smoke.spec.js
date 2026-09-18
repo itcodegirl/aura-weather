@@ -612,10 +612,11 @@ test("does not query live providers in the missing-data portfolio demo", async (
       url.startsWith("https://api.weather.gov/") ||
       url.startsWith("https://api.bigdatacloud.net/") ||
       // Substring checks: RainViewer serves tiles from hosts announced at
-      // runtime, CARTO shards basemap tiles across subdomains, and each
-      // Supabase project gets its own *.supabase.co subdomain.
+      // runtime, and each Supabase project gets its own *.supabase.co
+      // subdomain. The basemap host is fixed but is matched the same way so
+      // this guard keeps noticing it if the map ever mounts on this route.
       url.includes("rainviewer.com") ||
-      url.includes("cartocdn.com") ||
+      url.includes("tile.openstreetmap.org") ||
       url.includes(".supabase.co")
     ) {
       providerRequests.push(url);

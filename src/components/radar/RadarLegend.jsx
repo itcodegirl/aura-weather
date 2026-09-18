@@ -42,14 +42,6 @@ function RadarLegend() {
         >
           OpenStreetMap
         </a>
-        ,{" "}
-        <a
-          href="https://carto.com/attributions"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          CARTO
-        </a>
       </p>
     </div>
   );

@@ -2,14 +2,8 @@ import { memo, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, CircleMarker, Pane, Polygon, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { radarTileUrlTemplate, RADAR_MAX_ZOOM } from "../../domain/radar.js";
+import { BASE_ATTRIBUTION, BASE_MAX_ZOOM, BASE_TILE_URL } from "../../domain/basemap.js";
 
-// Carto Positron raster — key-less, clean light basemap that reads as a
-// calm inset beneath Aura's dark glass shell. `{r}` lets Leaflet request
-// @2x tiles on high-DPI screens automatically.
-const BASE_TILE_URL =
-  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-const BASE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 const RADAR_ATTRIBUTION =
   'Radar &copy; <a href="https://www.rainviewer.com/">RainViewer</a>';
 
@@ -148,12 +142,23 @@ function RadarMap({ host, frames, activeIndex, center, retina = false, alertShap
       worldCopyJump
       attributionControl
     >
+      {/*
+       * The basemap. Its host, attribution and zoom ceiling live in
+       * domain/basemap.js — see that file for why this is OpenStreetMap and
+       * not CARTO, which began serving an "API KEY REQUIRED" watermark as a
+       * valid 200 PNG. No `subdomains`: the OSMF policy asks clients not to
+       * rotate across a/b/c hosts.
+       *
+       * `className` puts the CSS wash on THIS layer alone — the radar frames
+       * share the same tile pane and must keep their colour.
+       */}
       <TileLayer
         url={BASE_TILE_URL}
         attribution={BASE_ATTRIBUTION}
-        subdomains="abcd"
+        className="radar-basemap"
         minZoom={MIN_ZOOM}
         maxZoom={MAX_ZOOM}
+        maxNativeZoom={BASE_MAX_ZOOM}
       />
 
       {/*

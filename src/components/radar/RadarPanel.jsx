@@ -5,6 +5,8 @@ import { useRadarFrames } from "../../hooks/useRadarFrames.js";
 import { useRadarAnimation } from "../../hooks/useRadarAnimation.js";
 import { useTimeNow } from "../../hooks/useTimeNow.js";
 import { RADAR_FRAME_KIND, RADAR_STATUS } from "../../domain/radar.js";
+import { isAlertActive } from "../../domain/alertWindow.js";
+import { summariseAlertGeometry, undrawnAlertsNote } from "../../domain/alertGeometry.js";
 import { parseCoordinates } from "../../utils/weatherUnits.js";
 import RadarMap from "./RadarMap.jsx";
 import RadarTimeline from "./RadarTimeline.jsx";
@@ -76,7 +78,7 @@ function RadarStateBlock({ icon, title, copy, action }) {
   );
 }
 
-function RadarPanel({ location, timeZone, style, isRefreshing = false }) {
+function RadarPanel({ location, timeZone, style, isRefreshing = false, alerts }) {
   const titleId = useId();
   const { frames, host, status, refetch } = useRadarFrames();
   const nowMs = useTimeNow();
@@ -112,6 +114,22 @@ function RadarPanel({ location, timeZone, style, isRefreshing = false }) {
   );
 
   const retina = useRetinaTiles();
+
+  /*
+   * Filtered through the same `isAlertActive` the card uses, on the same
+   * minute ticker, so the map and the list can never describe different
+   * sets of alerts: a shape on the map always has a row beside it.
+   */
+  const activeAlerts = useMemo(() => {
+    if (!Array.isArray(alerts)) return [];
+    return alerts.filter((alert) => isAlertActive(alert, nowMs));
+  }, [alerts, nowMs]);
+
+  const alertGeometry = useMemo(
+    () => summariseAlertGeometry(activeAlerts),
+    [activeAlerts]
+  );
+  const undrawnNote = undrawnAlertsNote(alertGeometry);
 
   const locationName =
     typeof location?.name === "string" && location.name.trim()
@@ -187,8 +205,20 @@ function RadarPanel({ location, timeZone, style, isRefreshing = false }) {
             activeIndex={activeIndex}
             center={center}
             retina={retina}
+            alertShapes={alertGeometry.shapes}
           />
         </div>
+        {/*
+         * Why a shape is missing, when one is. NWS issues zone-based
+         * products (beach hazards, air quality) against whole counties with
+         * no outline to draw, so an alert listed on the card with nothing
+         * drawn here is the provider's scope, not a dropped shape. Said
+         * only when true — plain text, like the legend note, and no live
+         * region: the alerts card already announces the alert itself.
+         */}
+        {undrawnNote ? (
+          <p className="radar-alert-note">{undrawnNote}</p>
+        ) : null}
         <RadarTimeline
           frames={frames}
           activeIndex={activeIndex}

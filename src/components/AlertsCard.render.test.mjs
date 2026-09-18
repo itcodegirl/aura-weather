@@ -740,6 +740,21 @@ describe("AlertsCard timing phase", () => {
     assert.ok(container.querySelector(".alerts-window"));
   });
 
+  test("an alert restored from before onsetAt existed renders no phase, not one read from effective", () => {
+    // No `onsetAt` key at all — the shape a pre-field snapshot restores. Its
+    // `startsAt` (CAP `effective`) is two hours old, but the hazard could be
+    // ten hours away; "In effect now" here would be a false claim.
+    const restored = makeAlert({ startsAt: inHours(-2), endsAt: inHours(20) });
+    assert.equal("onsetAt" in restored, false);
+
+    const { container } = render(
+      React.createElement(AlertsCard, { alerts: [restored], alertsStatus: "ready" })
+    );
+
+    assert.equal(container.querySelector(".alerts-phase"), null);
+    assert.ok(container.querySelector(".alerts-window"));
+  });
+
   test("an onset after its own end — the malformed case — renders no phase", () => {
     const { container } = render(
       React.createElement(AlertsCard, {

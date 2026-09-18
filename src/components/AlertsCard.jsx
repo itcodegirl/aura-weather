@@ -100,8 +100,18 @@ function AlertResponseChip({ response }) {
  * minute is exactly the broad live-region change AGENTS.md forbids.
  */
 function AlertPhase({ alert, nowMs }) {
+  /*
+   * The normaliser always writes `onsetAt` — a string, or null when the
+   * provider sent no onset. An alert with NO `onsetAt` key at all is one
+   * restored from a snapshot written before the field existed. Its onset was
+   * never recorded; `effective` is not a substitute, and reading it here
+   * would call a hazard still hours away "In effect now". Absent key:
+   * silence, until the next live fetch replaces the alert. Null key: the
+   * provider omitted the onset, and the fallback to `effective` stands.
+   */
+  const hasOnsetField = alert != null && "onsetAt" in alert;
   const { phrase } = describeAlertTiming(
-    alert?.onsetAt ?? alert?.startsAt,
+    hasOnsetField ? alert.onsetAt ?? alert.startsAt : null,
     alert?.endsAt,
     alert?.expiresAt,
     nowMs

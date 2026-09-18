@@ -178,8 +178,11 @@ Every PR Claude Code opens uses this shape:
 **Scope**
 <Files / areas touched; confirm nothing else was.>
 
-**Verification**#
-<Checks run + results: build, lint, relevant tests/audits. This project is JavaScript, so there is no typecheck step.>
+**Verification**
+<Checks run + results. The repo's gates are `npm run lint`, `npm run typecheck`,
+`npm test`, `npm run test:render`, `npm run check:docs` and `npm run build`; name
+the ones you ran and what they returned, plus any Playwright or Lighthouse audit
+the change called for. Say plainly which you did not run and why.>
 
 **Out of scope**
 <What was deliberately not done; any follow-ups noted.>

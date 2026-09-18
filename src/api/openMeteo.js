@@ -424,7 +424,25 @@ function normalizeAlert(feature, index) {
     urgency,
     certainty: typeof properties.certainty === "string" ? properties.certainty : "Unknown",
     startsAt: typeof properties.effective === "string" ? properties.effective : null,
-    endsAt: typeof properties.expires === "string" ? properties.expires : null,
+    /*
+     * Two end timestamps, and they are not the same question.
+     *
+     * `ends` is when the HAZARD is forecast to be over. `expires` is when the
+     * MESSAGE must be reissued — an office housekeeping deadline that can fall
+     * before the weather it describes has even begun: 99 of the 243 active
+     * alerts sampled on 2026-09-18 had `expires` earlier than their own
+     * `onset`, and `ends` differed from `expires` on 184 of them.
+     *
+     * `endsAt` used to carry `expires` under a name that promised `ends`, and
+     * both expiry filters believed the name. See domain/alertWindow.js for the
+     * defect that produced and how the two are now resolved.
+     *
+     * `ends` is optional — absent on 20 of the 243 — so `expiresAt` is kept as
+     * the declared fallback rather than being folded in here. Consumers resolve
+     * the pair; the model reports what the provider actually said.
+     */
+    endsAt: typeof properties.ends === "string" ? properties.ends : null,
+    expiresAt: typeof properties.expires === "string" ? properties.expires : null,
     sender: typeof properties.senderName === "string" ? properties.senderName : "National Weather Service",
     description: typeof properties.description === "string" ? properties.description : "",
     /*

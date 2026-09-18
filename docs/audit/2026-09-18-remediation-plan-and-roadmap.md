@@ -716,3 +716,40 @@ Prior-audit findings T-01 … T-07 and P-01 are recorded as **verified closed** 
 5. **Put AUD-005's rung labels to a human decision, in parallel.** Propose a five-rung ladder mapped onto the existing `--risk-*` ramp, with the CAPE-band and rain-probability mappings, and stop there. Doing this while the milestone is in flight means Phase 3 is unblocked when it arrives instead of stalling at it.
 
 Actions 1–4 are strictly sequential. Action 5 runs alongside and blocks nothing in the milestone.
+
+### Status — updated 2026-09-18
+
+The milestone did not run in the order written above, and the record is
+corrected here rather than left to be inferred from the git log.
+
+| Action | State | Where |
+| --- | --- | --- |
+| 1 — AUD-000 fixtures | **Shipped** | PR #232. Recorded 2026-09-18T02:30Z. One deviation, accepted: the ticket asked for four instruction±geometry quadrants and only three exist — geometry-without-instruction was empty across two captures six hours apart (35/0 and 36/0), so it is asserted **absent** rather than faked. |
+| 2 — AUD-001 drop non-actual alerts | **Shipped** | PR #230. `isActualAlert` filters `status !== "Actual"` before normalisation. An absent `status` deliberately keeps the alert — CAP requires the field, so absence means a malformed payload, and dropping a real warning is the false all-clear this app exists to prevent. |
+| 3 — AUD-002, the `instruction` and `description` halves | **Shipped** | PR #230. `instruction` normalised and rendered inline; `description` (AUD-021) rendered inside a closed disclosure; `src/domain/alertText.js` added for NWS paragraph handling. |
+| 3 — AUD-002, the `response` and `areaDesc` halves | Re-scoped as its own ticket | AUD-008 + AUD-009 on `feat/alerts-response-and-area`. The CAP `response` → label vocabulary was signed off 2026-09-18 (see below). |
+| 4 — AUD-003 onset timing | Not started | `feat/alerts-onset-timing`, unchanged. |
+| 5 — AUD-005 rung labels | **Resolved** | Signed off 2026-09-17, recorded in the milestone spec §4 "Signed-off labels". |
+
+**Why 2 and 3 ran early.** They shipped together in PR #230 as a direct
+response to the two defects rather than through the ticket sequence, so
+AUD-000's safety net landed after the change it was meant to protect
+rather than before it. The fixtures still earn their place — they now
+cover a live `status: Test` transmission, which the synthetic tests in
+#230 could only approximate — but the ordering was not what this plan
+recommended, and saying so is cheaper than letting a future reader infer
+that the sequence was followed.
+
+**One correction #230 carried back into the spec.** The milestone spec
+said newlines in NWS prose should each start a paragraph. They should
+not: NWS hard-wraps at roughly 70 columns, so a single newline is a wrap
+and only a blank line is a paragraph break. Paragraph-per-line splits
+sentences mid-clause. `alertText.js` implements the corrected rule.
+
+**AUD-009 vocabulary, signed off 2026-09-18 by Jenna Zawaski.** CAP
+`response` maps to chip text: `Shelter` → "Take shelter", `Evacuate` →
+"Evacuate", `Prepare` → "Prepare", `Execute` → "Follow instructions",
+`Avoid` → "Avoid the area", `Monitor` → "Monitor conditions", `Assess` →
+"Assess the situation", `AllClear` → "All clear". `None` and any
+unrecognised value render **no chip**. The chip's `aria-label` is
+"Recommended response: &lt;chip text&gt;".

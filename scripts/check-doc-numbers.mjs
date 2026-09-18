@@ -138,31 +138,71 @@ for (const match of readme.matchAll(MARKER)) {
   claims.push({ key: match[1], value: Number(match[2].replace(/,/g, "")) });
 }
 
+/*
+ * Two different failures live here and they have different remedies, so they
+ * are tagged rather than flattened into one list of strings.
+ *
+ * `drift`  — a marked number no longer matches the repo. `--write` fixes it.
+ * `marker` — a marker was renamed, dropped, or names a figure this script does
+ *            not compute. No amount of recomputing helps; a human reconciles
+ *            the README and the key list.
+ */
 const failures = [];
 const unknown = claims.filter((c) => !(c.key in actual));
 for (const claim of unknown) {
-  failures.push(`  ${claim.key}: marked in README but not a known figure`);
+  failures.push({
+    kind: "marker",
+    text: `  ${claim.key}: marked in README but not a known figure`,
+  });
 }
 for (const key of Object.keys(actual)) {
   const forKey = claims.filter((c) => c.key === key);
   if (forKey.length === 0) {
-    failures.push(`  ${key}: no longer marked anywhere in the README`);
+    failures.push({
+      kind: "marker",
+      text: `  ${key}: no longer marked anywhere in the README`,
+    });
     continue;
   }
   for (const claim of forKey) {
     if (claim.value !== actual[key]) {
-      failures.push(
-        `  ${key}: README says ${claim.value}, actual is ${actual[key]}`
-      );
+      failures.push({
+        kind: "drift",
+        text: `  ${key}: README says ${claim.value}, actual is ${actual[key]}`,
+      });
     }
   }
 }
 
 if (failures.length > 0) {
+  /*
+   * This message used to end "Update README.md, or the marker, so the claim
+   * matches reality" -- which reads as an instruction to hand-edit, and is
+   * what people did, `--write` having existed since this guard was written.
+   * Hand-editing is also how two branches collide on the same counter line:
+   * each is green against its own base, and main is red once both land. So
+   * the remedy names the command.
+   */
+  const remedy = [];
+  if (failures.some((f) => f.kind === "drift")) {
+    remedy.push(
+      `Run \`npm run check:docs -- --write\` to rewrite the drifted numbers from`,
+      `the repo. Do not hand-edit them: two branches editing the same counter by`,
+      `hand each pass alone and fail together once both land on main.`
+    );
+  }
+  if (failures.some((f) => f.kind === "marker")) {
+    if (remedy.length > 0) remedy.push("");
+    remedy.push(
+      `A marker was renamed, dropped, or names a figure this script does not`,
+      `compute. \`--write\` cannot fix that -- reconcile README.md with the key`,
+      `list in this script so the two agree.`
+    );
+  }
   console.error(
-    `README states ${failures.length} number(s) that are no longer true:\n` +
-      `${failures.join("\n")}\n\n` +
-      `Update README.md, or the marker, so the claim matches reality.`
+    `README doc-number check failed (${failures.length}):\n` +
+      `${failures.map((f) => f.text).join("\n")}\n\n` +
+      `${remedy.join("\n")}`
   );
   process.exit(1);
 }

@@ -454,3 +454,127 @@ describe("AlertsCard full advisory disclosure", () => {
     assert.ok(detail.closest("details"));
   });
 });
+
+describe("AlertsCard recommended-response chip", () => {
+  test("renders the approved label for a CAP response value", () => {
+    render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ response: "Shelter" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.ok(screen.getByText("Take shelter"));
+  });
+
+  test("the chip names its dimension to assistive tech, not just the verb", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ response: "Avoid" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    const chip = container.querySelector(".alerts-response-chip");
+    assert.ok(chip);
+    assert.equal(
+      chip.getAttribute("aria-label"),
+      "Recommended response: Avoid the area"
+    );
+  });
+
+  /*
+   * A chip reading "None" would spend the row's most prominent slot saying
+   * nothing. Same rule the instruction follows: a missing answer is silence.
+   */
+  test("response None renders no chip at all", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ response: "None" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-response"), null);
+    assert.equal(screen.queryByText(/none/i), null);
+  });
+
+  test("an unrecognised response token renders no chip rather than showing it raw", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ response: "Mitigate" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-response"), null);
+    assert.equal(screen.queryByText("Mitigate"), null);
+  });
+
+  test("an alert with no response prop renders no chip", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert()],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-response"), null);
+  });
+
+  /*
+   * The chip says what to do; the priority badge says how bad it is. If they
+   * shared a class they would read as the same kind of value sitting in the
+   * same row, which is the confusion the severity-ladder work exists to stop.
+   */
+  test("the chip is not a severity badge", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ response: "Shelter", priority: "critical" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    const chip = container.querySelector(".alerts-response-chip");
+    assert.ok(chip);
+    assert.equal(chip.classList.contains("severity-badge"), false);
+    assert.equal(chip.classList.contains("alerts-priority"), false);
+  });
+});
+
+describe("AlertsCard alerted area", () => {
+  test("renders areaDesc so a county advisory is distinguishable from a regional one", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ area: "Cook, IL; DuPage, IL" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    const area = container.querySelector(".alerts-area");
+    assert.ok(area);
+    assert.equal(area.textContent, "Cook, IL; DuPage, IL");
+  });
+
+  test("an empty area renders no element rather than a blank line", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert({ area: "" })],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-area"), null);
+  });
+
+  test("an alert with no area prop renders no element", () => {
+    const { container } = render(
+      React.createElement(AlertsCard, {
+        alerts: [makeAlert()],
+        alertsStatus: "ready",
+      })
+    );
+
+    assert.equal(container.querySelector(".alerts-area"), null);
+  });
+});

@@ -1,5 +1,6 @@
 import { afterEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   ALERTS_STATUS,
@@ -440,6 +441,104 @@ describe("Open-Meteo alert coverage helpers", () => {
     const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
 
     assert.equal(result.alerts[0].instruction, "");
+  });
+
+  test("carries the CAP response token through to the normalised alert", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "with-response",
+                event: "Tornado Warning",
+                status: "Actual",
+                severity: "Severe",
+                urgency: "Immediate",
+                expires: "2026-09-19T15:00:00Z",
+                response: "Shelter",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    // Raw, not mapped: the vocabulary lives in domain/alertResponse.js so the
+    // API layer stays free of user-facing words.
+    assert.equal(result.alerts[0].response, "Shelter");
+  });
+
+  test("an absent response normalises to an empty string, not undefined", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "no-response",
+                event: "Hydrologic Outlook",
+                status: "Actual",
+                severity: "Unknown",
+                urgency: "Future",
+                expires: "2026-09-19T15:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].response, "");
+  });
+
+  /*
+   * Against the recorded payload rather than a hand-written one. The point of
+   * AUD-000's fixtures is that the normaliser is exercised on shapes NWS
+   * actually emits — a synthetic feature only proves the normaliser handles
+   * what we remembered to invent.
+   */
+  test("normalises every field the card reads from the recorded live payload", async () => {
+    const recorded = JSON.parse(
+      readFileSync(
+        new URL("./__fixtures__/nws-alerts-active.recorded.json", import.meta.url),
+        "utf8"
+      )
+    );
+
+    globalThis.fetch = async () =>
+      createJsonResponse(recorded, {
+        status: 200,
+        headers: { "Content-Type": "application/geo+json" },
+      });
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    // The Test transmission in the fixture is dropped; the rest survive.
+    assert.equal(
+      result.alerts.length,
+      recorded.features.filter((f) => f.properties.status === "Actual").length
+    );
+
+    for (const alert of result.alerts) {
+      for (const field of ["event", "headline", "area", "description", "instruction", "response"]) {
+        assert.equal(
+          typeof alert[field],
+          "string",
+          `${field} must be a string on every alert, never undefined`
+        );
+      }
+    }
+
+    // The fixture is asserted elsewhere to contain a response and an area on
+    // its live features; this proves they reach the model rather than being
+    // dropped between the payload and the card.
+    assert.ok(result.alerts.some((alert) => alert.response !== ""));
+    assert.ok(result.alerts.some((alert) => alert.area !== ""));
   });
 });
 

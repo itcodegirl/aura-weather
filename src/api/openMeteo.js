@@ -436,6 +436,15 @@ function normalizeAlert(feature, index) {
      * notices), so the card says nothing about it rather than apologising.
      */
     instruction: typeof properties.instruction === "string" ? properties.instruction : "",
+    /*
+     * The same question as `instruction`, answered as one enumerated token
+     * rather than prose: CAP `response` is Shelter / Evacuate / Prepare /
+     * Execute / Avoid / Monitor / Assess / AllClear / None. It was present on
+     * all 205 features sampled on 2026-09-17, so it survives the payloads
+     * where `instruction` does not. Kept raw here — mapping it to user-facing
+     * words is a vocabulary decision and lives in domain/alertResponse.js.
+     */
+    response: typeof properties.response === "string" ? properties.response : "",
     priority: getAlertPriority(alertScore, severityScore),
     priorityScore: alertScore,
   };

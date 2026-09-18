@@ -540,6 +540,73 @@ describe("Open-Meteo alert coverage helpers", () => {
     assert.ok(result.alerts.some((alert) => alert.response !== ""));
     assert.ok(result.alerts.some((alert) => alert.area !== ""));
   });
+
+  /*
+   * `ends` and `expires` are different questions — the hazard end and the
+   * message-refresh deadline — and `endsAt` used to carry the latter under
+   * the former's name. Both expiry filters believed the name. Driven by the
+   * recorded fixture so the values are the provider's.
+   */
+  test("normalises ends into endsAt and expires into expiresAt, as distinct fields", async () => {
+    const recorded = JSON.parse(
+      readFileSync(
+        new URL("./__fixtures__/nws-alerts-active.recorded.json", import.meta.url),
+        "utf8"
+      )
+    );
+
+    globalThis.fetch = async () =>
+      createJsonResponse(recorded, {
+        status: 200,
+        headers: { "Content-Type": "application/geo+json" },
+      });
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+    const byEvent = Object.fromEntries(result.alerts.map((a) => [a.event, a]));
+    const raw = Object.fromEntries(
+      recorded.features.map((f) => [f.properties.event, f.properties])
+    );
+
+    // The case the defect hid: ends is nine and a half hours after expires.
+    const beach = byEvent["Beach Hazards Statement"];
+    assert.ok(beach);
+    assert.equal(beach.endsAt, raw["Beach Hazards Statement"].ends);
+    assert.equal(beach.expiresAt, raw["Beach Hazards Statement"].expires);
+    assert.notEqual(beach.endsAt, beach.expiresAt);
+    assert.ok(Date.parse(beach.endsAt) > Date.parse(beach.expiresAt));
+
+    // No ends in the payload -> endsAt is null, never expires masquerading.
+    const statement = byEvent["Special Weather Statement"];
+    assert.ok(statement);
+    assert.equal(statement.endsAt, null);
+    assert.equal(statement.expiresAt, raw["Special Weather Statement"].expires);
+  });
+
+  test("an absent ends normalises to null, not to the expiry and not to undefined", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse(
+        {
+          features: [
+            {
+              properties: {
+                id: "no-ends",
+                event: "Special Weather Statement",
+                status: "Actual",
+                severity: "Moderate",
+                urgency: "Expected",
+                expires: "2026-09-19T15:00:00Z",
+              },
+            },
+          ],
+        },
+        { status: 200, headers: { "Content-Type": "application/geo+json" } }
+      );
+
+    const result = await fetchSevereWeatherAlerts(41.8781, -87.6298);
+
+    assert.equal(result.alerts[0].endsAt, null);
+    assert.equal(result.alerts[0].expiresAt, "2026-09-19T15:00:00Z");
+  });
 });
 
 describe("fetchAirQuality", () => {

@@ -11,6 +11,7 @@ import {
   parseCoordinates,
 } from "../utils/weatherUnits";
 import { toFiniteNumber } from "../utils/numbers";
+import { isAlertActive } from "../domain/alertWindow";
 import { useClimateComparison } from "./useClimateComparison";
 import {
   AUTO_REFRESH_POLL_INTERVAL_MS,
@@ -123,23 +124,25 @@ function buildFreshTrustMeta(fetchedAt) {
  * /alerts/active only ever returns currently-active alerts, so the guard
  * belongs here on the restore path.
  *
- * An alert carries its own expiry, so one still inside its window is
- * genuinely still in force and is kept. Anything past `endsAt` is dropped.
+ * An alert carries its own window, so one still inside it is genuinely
+ * still in force and is kept. The window ends at the HAZARD end (`ends`),
+ * falling back to the message expiry (`expires`) when the provider sends
+ * no `ends` — resolved through the same helper AlertsCard uses, so the
+ * restore path and the render path cannot disagree about which alerts are
+ * live. They previously carried this rule separately, keyed it on
+ * `expires` alone, and dropped alerts whose weather had not started yet.
  * If that empties a list that had entries, the channel reports
  * `unavailable` rather than falling through to AlertsCard's "No active
  * severe alerts" — silence would be a fresh claim we cannot back offline.
  * An alert with no parseable expiry is dropped for the same reason.
  */
-function revalidateRestoredAlerts(weather, nowMs = Date.now()) {
+export function revalidateRestoredAlerts(weather, nowMs = Date.now()) {
   const alerts = Array.isArray(weather?.alerts) ? weather.alerts : null;
   if (!alerts || alerts.length === 0) {
     return weather;
   }
 
-  const stillActive = alerts.filter((alert) => {
-    const expiresAt = Date.parse(alert?.endsAt);
-    return Number.isFinite(expiresAt) && expiresAt > nowMs;
-  });
+  const stillActive = alerts.filter((alert) => isAlertActive(alert, nowMs));
 
   if (stillActive.length === alerts.length) {
     return weather;

@@ -4,6 +4,7 @@ import { useTimeNow } from "../hooks/useTimeNow";
 import { formatStampWithZoneName } from "../utils/formatters";
 import { toAlertParagraphs } from "../domain/alertText";
 import { getAlertResponseLabel } from "../domain/alertResponse";
+import { isAlertActive, resolveAlertEnd } from "../domain/alertWindow";
 import "./AlertsCard.css";
 
 /*
@@ -126,19 +127,20 @@ function AlertsCard({
   // within a minute of it expiring while the page is open.
   const nowMs = useTimeNow();
   /*
-   * Defence in depth against showing an expired hazard as active. The
-   * restore path in useWeatherData already drops alerts past their
-   * `endsAt`, but this card is the surface where being wrong is most
-   * costly, so it refuses to render one regardless of how it arrived.
-   * Live NWS responses only contain active alerts, so this filters
-   * nothing on the happy path.
+   * Defence in depth against showing a finished hazard as active. The restore
+   * path in useWeatherData applies the same rule, through the same helper, so
+   * the two cannot drift — they previously carried the logic separately and
+   * drifted into the same defect together.
+   *
+   * The rule is the HAZARD end (`ends`), falling back to the message expiry
+   * (`expires`) when the provider sends no `ends`. Keying on `expires` alone
+   * dropped alerts whose weather had not started yet: measured on 2026-09-18,
+   * 8 of 136 future-onset alerts disappeared from this card while their `ends`
+   * was still hours away. See domain/alertWindow.js.
    */
   const activeAlerts = useMemo(() => {
     if (!Array.isArray(alerts)) return [];
-    return alerts.filter((alert) => {
-      const expiresAt = Date.parse(alert?.endsAt);
-      return Number.isFinite(expiresAt) && expiresAt > nowMs;
-    });
+    return alerts.filter((alert) => isAlertActive(alert, nowMs));
   }, [alerts, nowMs]);
   const totalAlertCount = activeAlerts.length;
   const visibleAlerts = useMemo(
@@ -273,8 +275,14 @@ function AlertsCard({
                   >
                     {alert.priority || "low"}
                   </span>
+                  {/*
+                    * Same resolved instant the filter uses. If the card said
+                    * "Until 5:30pm" while the filter kept the alert until
+                    * 3pm tomorrow, the two would be describing different
+                    * alerts. One resolution, read twice.
+                    */}
                   <span className="alerts-window">
-                    Until {formatAlertTime(alert.endsAt, timeZone)}
+                    Until {formatAlertTime(resolveAlertEnd(alert), timeZone)}
                   </span>
                 </div>
               </li>

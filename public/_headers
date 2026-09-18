@@ -24,6 +24,12 @@
 # img-src carries the two tile vendors the radar draws from, plus data: and
 # blob: (icons and the canvas the radar composites through).
 #
+# The basemap host is named exactly, not wildcarded: it is fixed in
+# domain/basemap.js. It moved off CARTO on 2026-09-18, after that vendor
+# began gating its raster basemaps behind an API key and serving an
+# "API KEY REQUIRED" watermark as a valid 200 PNG. Leaving the old host
+# allowed would let a stale build render that watermark again silently.
+#
 # rainviewer.com is allowed by wildcard rather than by the tilecache host it
 # resolves to today, because that host is not ours to pin: RainViewer's
 # catalogue response carries the tile host as a field, so the app fetches
@@ -33,7 +39,7 @@
 # cannot distinguish from "no rain".
 
 /*
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.rainviewer.com https://*.basemaps.cartocdn.com; connect-src 'self' https://api.open-meteo.com https://archive-api.open-meteo.com https://geocoding-api.open-meteo.com https://air-quality-api.open-meteo.com https://api.weather.gov https://api.bigdatacloud.net https://*.rainviewer.com https://*.supabase.co; worker-src 'self'; manifest-src 'self'
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.rainviewer.com https://tile.openstreetmap.org; connect-src 'self' https://api.open-meteo.com https://archive-api.open-meteo.com https://geocoding-api.open-meteo.com https://air-quality-api.open-meteo.com https://api.weather.gov https://api.bigdatacloud.net https://*.rainviewer.com https://*.supabase.co; worker-src 'self'; manifest-src 'self'
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin

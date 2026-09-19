@@ -10,13 +10,20 @@
   letter-spacing: 0.04em;
 }
 
+/* Squared with everything else. These name a source, a freshness state,
+   a result group, a sync state -- they are labels the modules sit
+   beside, so a capsule outline among hard-edged panels was the last
+   rounded thing left on the page. The two pills that stay round are
+   attached to controls: "/ search" is a keyboard affordance and
+   "Startup" marks an interactive saved-city chip, and a pill is the
+   conventional shape for both. */
 .data-source-badge {
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   min-height: 20px;
   padding: 2px 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   border: 1px solid rgba(111, 183, 242, 0.28);
   background: var(--bg-well);
   color: var(--text);

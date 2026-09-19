@@ -33,11 +33,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--section-title-lg-size);
-  font-weight: 650;
+  font-weight: 600;
   margin: 0;
-  letter-spacing: 0;
+  letter-spacing: var(--track-header);
+  text-transform: uppercase;
+}
+
+.storm-title svg {
+  width: 12px;
+  height: 12px;
 }
 
 .storm-lede {
@@ -289,6 +295,17 @@
   color: var(--text-dim);
 }
 
+/* The unit, sized and dimmed the way the data-grid cells set theirs, so
+   the number is what the eye lands on. J/kg is not a figure most people
+   can place, and it should not compete with the one that matters. */
+.cape-unit {
+  font-style: normal;
+  margin-left: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
 .cape-scale {
   position: relative;
   height: 7px;
@@ -296,24 +313,32 @@
   overflow: visible;
 }
 
+/* The ramp is the scale, not the reading. At full strength it painted a
+   calm-to-explosive alarm across a card whose headline was "All clear",
+   and the eye went to the gradient rather than to where the marker sat
+   on it. Quiet enough to read as a range; the marker below carries the
+   value, and both ends are labelled in text. */
 .cape-scale-track {
   position: absolute;
   inset: 0;
   border-radius: 0;
   background: linear-gradient(90deg, var(--accent-green) 0%, var(--accent-warm) 55%, #e2574a 100%);
-  opacity: 0.85;
+  opacity: 0.32;
 }
 
+/* A tick, not a thumb. A white glowing circle on a gradient rail is the
+   shape of a slider, and this is a readout -- it is aria-hidden and
+   nothing here is draggable. The mockup marks a scale with a 2px rule
+   through it, which also reads at a glance against the quieted ramp. */
 .cape-marker {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid var(--chart-outline);
+  width: 2px;
+  height: 13px;
+  border-radius: 0;
+  background: var(--ink);
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  box-shadow: none;
 }
 
 .cape-scale-ends {

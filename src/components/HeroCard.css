@@ -318,14 +318,15 @@
   padding: 0;
 }
 
+/* The mockup's condition chips: square hairline boxes, no fill. */
 .hero-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 11px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 243, 225, 0.12);
-  background: rgba(255, 243, 225, 0.07);
+  padding: 4px 9px;
+  border-radius: 0;
+  border: 1px solid var(--wire-rhythm);
+  background: none;
   color: var(--text);
   font-size: 12px;
   font-weight: 400;
@@ -374,10 +375,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Same correction the CAPE scale needed. The ramp is the scale, not the
+   reading: at full strength it shouted across a card whose UV is
+   usually low, and the eye went to the gradient rather than to where
+   the marker sat on it. */
 .hero-uv-track {
   position: relative;
   height: 6px;
-  border-radius: var(--radius-pill, 999px);
+  border-radius: 0;
+}
+
+/* The ramp is quieted on a layer of its own rather than on the track:
+   .hero-uv-marker is a child of the track, so fading the track faded
+   the one element that carries the reading. */
+.hero-uv-track::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: linear-gradient(
     90deg,
     var(--risk-low) 0%,
@@ -387,19 +401,21 @@
     var(--risk-severe) 78%,
     var(--risk-extreme) 100%
   );
-  opacity: 0.85;
+  opacity: 0.38;
 }
 
+/* A tick, not a thumb -- see .cape-marker. A white circle on a gradient
+   rail is the shape of a slider, and this is a readout. */
 .hero-uv-marker {
   position: absolute;
   top: 50%;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid rgba(11, 22, 38, 0.85);
+  width: 2px;
+  height: 12px;
+  border-radius: 0;
+  background: var(--ink);
+  border: 0;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+  box-shadow: none;
 }
 
 .hero-uv-line {
@@ -415,10 +431,10 @@
   align-items: center;
   gap: 6px;
   margin-top: 10px;
-  padding: 5px 11px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(255, 243, 225, 0.12);
-  background: rgba(255, 243, 225, 0.06);
+  padding: 4px 9px;
+  border-radius: 0;
+  border: 1px solid var(--wire-rhythm);
+  background: none;
   color: var(--text-muted);
   font-size: 11.5px;
   font-weight: 400;

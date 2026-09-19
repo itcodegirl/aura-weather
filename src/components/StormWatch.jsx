@@ -245,16 +245,28 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
           )}
 
           <div className="cape-row">
+            {/* One name on screen, both in the accessible name. The row
+                read "Storm fuel · CAPE", which gives a single measurement
+                two labels and asks the reader to work out they are the
+                same thing; the acronym and its expansion still reach
+                hover and assistive tech through the abbr. */}
             <span className="cape-label">
               <abbr
-                title="Convective available potential energy"
-                aria-label="CAPE, convective available potential energy"
+                title="Storm fuel — CAPE, convective available potential energy"
+                aria-label="Storm fuel, CAPE, convective available potential energy"
               >
-                Storm fuel · CAPE
+                Storm fuel
               </abbr>
             </span>
             <span className={`cape-value${hasCape ? "" : " is-missing"}`}>
-              {hasCape ? `${Math.round(cape)} J/kg` : MISSING_VALUE_PLACEHOLDER}
+              {hasCape ? (
+                <>
+                  {Math.round(cape)}
+                  <em className="cape-unit">J/kg</em>
+                </>
+              ) : (
+                MISSING_VALUE_PLACEHOLDER
+              )}
             </span>
             <InfoDrawer
               label="About CAPE storm energy"

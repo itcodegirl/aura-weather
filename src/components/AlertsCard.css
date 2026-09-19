@@ -18,12 +18,20 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--section-title-size);
-  font-weight: 650;
-  letter-spacing: 0;
+  font-weight: 600;
+  letter-spacing: var(--track-header);
+  text-transform: uppercase;
 }
 
+.alerts-title svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* A status word, not a capsule: its presence in the header is still
+   the alert signal, and the warn ink still says which rank. */
 .alerts-subtitle {
   font-family: var(--font-mono);
   /*
@@ -32,15 +40,12 @@
    */
   display: inline-flex;
   align-items: center;
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--severity-warn-border);
-  background: var(--severity-warn-bg);
   color: var(--severity-warn-fg);
-  font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-loose);
 }
 
 .alerts-empty {
@@ -53,7 +58,7 @@
 
 .alerts-empty-title {
   margin: 0;
-  color: var(--paper-dim);
+  color: var(--text-muted);
   font-size: 16px;
   font-weight: 700;
 }
@@ -86,19 +91,27 @@
   box-shadow: none;
 }
 
+/* Each row carried its own warm gradient on top of the severity tint --
+   two washes of the same hue over a dark panel, which is what made the
+   brown. The rank is stated by the word in the row and by a rule on the
+   leading edge, the way every other ranked thing in this direction
+   states it; the surface stays the quiet rung tint. */
 .alerts-item--critical {
   border-color: var(--severity-critical-border);
-  background: linear-gradient(165deg, rgba(225, 70, 70, 0.30), rgba(190, 55, 55, 0.20));
+  border-left: 3px solid var(--severity-critical-fg);
+  background: var(--severity-critical-bg);
 }
 
 .alerts-item--high {
   border-color: var(--severity-high-border);
-  background: linear-gradient(165deg, rgba(235, 130, 50, 0.28), rgba(200, 100, 35, 0.18));
+  border-left: 3px solid var(--severity-high-fg);
+  background: var(--severity-high-bg);
 }
 
 .alerts-item--moderate {
   border-color: var(--severity-warn-border);
-  background: linear-gradient(165deg, rgba(225, 175, 55, 0.26), rgba(195, 150, 40, 0.16));
+  border-left: 3px solid var(--severity-warn-fg);
+  background: var(--severity-warn-bg);
 }
 
 .alerts-item-main {
@@ -110,7 +123,7 @@
 
 .alerts-event {
   margin: 0;
-  color: var(--paper);
+  color: var(--text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -133,36 +146,27 @@
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-loose);
 }
 
 .alerts-priority--critical {
   color: var(--severity-critical-fg);
-  border: 1px solid var(--severity-critical-border);
-  background: var(--severity-critical-bg);
 }
 
 .alerts-priority--high {
   color: var(--severity-high-fg);
-  border: 1px solid var(--severity-high-border);
-  background: var(--severity-high-bg);
 }
 
 .alerts-priority--moderate {
   color: var(--severity-warn-fg);
-  border: 1px solid var(--severity-warn-border);
-  background: var(--severity-warn-bg);
 }
 
 .alerts-priority--low {
   color: var(--severity-ok-fg);
-  border: 1px solid var(--severity-ok-border);
-  background: var(--severity-ok-bg);
 }
 
 .alerts-window {
@@ -252,7 +256,7 @@
 
 .alerts-instruction-line {
   margin: 0;
-  color: var(--paper);
+  color: var(--text);
   font-size: 12px;
   line-height: 1.45;
   /* Outranks .alerts-headline: this is the sentence the reader acts on. */
@@ -323,7 +327,7 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--severity-info-border);
   background: transparent;
-  color: var(--paper);
+  color: var(--text);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: var(--track-default);
@@ -337,7 +341,7 @@
  * one unit, distinguished by colour rather than by shouting.
  */
 .alerts-phase {
-  color: var(--paper);
+  color: var(--text);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;

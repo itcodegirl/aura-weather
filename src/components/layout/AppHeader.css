@@ -429,7 +429,7 @@
   align-items: center;
   min-height: 22px;
   padding: 0 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   border: 1px solid rgba(178, 209, 252, 0.28);
   background: var(--bg-well);
   color: var(--text);

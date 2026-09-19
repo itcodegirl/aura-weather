@@ -624,3 +624,83 @@ describe("the light ground stays flat", () => {
     assert.match(SOURCE, LIGHT_BLOCK);
   });
 });
+
+/*
+ * Instrument 3b-ii — the module header row.
+ *
+ * A card's name is a 10px mono rule, and a status is a coloured word
+ * rather than a filled capsule. The rung modifiers on .severity-badge
+ * are deliberately left in the file with their border-color and
+ * background stripped, so re-filling a rung stays a one-line change;
+ * what must not come back silently is the capsule on the base rule,
+ * because that is what would make the header say its rank twice.
+ */
+describe("module headers — Instrument step 3b-ii", () => {
+  const BASE = APP_CSS.slice(0, APP_CSS.indexOf("@media"));
+
+  function rule(name) {
+    const match = APP_CSS.match(
+      new RegExp(`\\n\\${name} \\{([^}]*)\\}`)
+    );
+    assert.ok(match, `${name} is not in App.css`);
+    return match[1];
+  }
+
+  test("a card's name is drawn at the caption step, not as a heading", () => {
+    // Consumed only by the eight *-title rules, so this token is the
+    // whole statement of the header size.
+    assert.equal(declaredValue("--section-title-size"), "var(--fs-caption)");
+    assert.equal(
+      declaredValue("--section-title-lg-size"),
+      "var(--section-title-size)"
+    );
+  });
+
+  test("every card title takes the mono header treatment", () => {
+    const missing = [];
+    for (const file of cssFiles) {
+      const source = readFileSync(file, "utf8").replace(CSS_COMMENT, "");
+      for (const [, selector, body] of source.matchAll(
+        /\n(\.[a-z]+-title) \{([^}]*)\}/g
+      )) {
+        if (!/font-size:\s*var\(--section-title(?:-lg)?-size/.test(body)) continue;
+        const has =
+          /font-family:\s*var\(--font-mono\)/.test(body) &&
+          /text-transform:\s*uppercase/.test(body) &&
+          /letter-spacing:\s*var\(--track-header\)/.test(body);
+        if (!has) missing.push(`${relative(REPO_ROOT, file)}: ${selector}`);
+      }
+    }
+    assert.deepEqual(missing, []);
+  });
+
+  test("a status is a word, not a filled capsule", () => {
+    const body = rule(".severity-badge");
+    assert.match(body, /font-family:\s*var\(--font-mono\)/);
+    assert.match(body, /text-transform:\s*uppercase/);
+    assert.doesNotMatch(
+      body,
+      /border-radius:\s*var\(--radius-pill\)/,
+      "the status word grew a capsule back"
+    );
+    assert.match(body, /border:\s*0/);
+    assert.match(body, /background:\s*none/);
+  });
+
+  test("the scope chip is a square hairline, on the rhythm wire", () => {
+    const body = rule(".eyebrow-pill");
+    assert.doesNotMatch(body, /border-radius:\s*var\(--radius-pill\)/);
+    assert.match(body, /border:\s*1px solid var\(--wire-rhythm\)/);
+    assert.match(body, /background:\s*none/);
+  });
+
+  test("--track-header exists and is wider than the loose step", () => {
+    const header = Number.parseFloat(declaredValue("--track-header"));
+    const loose = Number.parseFloat(declaredValue("--track-loose"));
+    assert.ok(
+      header > loose,
+      `--track-header ${header}em should exceed --track-loose ${loose}em`
+    );
+    assert.ok(BASE.includes("--track-header"), "--track-header is not in :root");
+  });
+});

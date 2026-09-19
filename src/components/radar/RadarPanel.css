@@ -40,13 +40,16 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--section-title-size);
-  font-weight: 650;
-  letter-spacing: 0;
+  font-weight: 600;
+  letter-spacing: var(--track-header);
+  text-transform: uppercase;
 }
 
 .radar-title svg {
+  width: 12px;
+  height: 12px;
   color: var(--accent);
 }
 
@@ -179,8 +182,7 @@
   display: inline-flex;
   align-items: center;
   padding: var(--pill-padding-sm);
-  border-radius: var(--radius-pill);
-  border: 1px solid transparent;
+  border: 1px solid var(--wire-rhythm);
   font-size: var(--fs-caption);
   font-weight: 600;
   letter-spacing: var(--track-default);
@@ -190,13 +192,11 @@
 .radar-phase--observed {
   color: var(--glacier-light);
   border-color: rgba(111, 183, 242, 0.42);
-  background: rgba(111, 183, 242, 0.16);
 }
 
 .radar-phase--forecast {
   color: var(--amber-soft);
   border-color: var(--severity-warn-border);
-  background: var(--severity-warn-bg);
 }
 
 .radar-readout-time {
@@ -394,7 +394,7 @@
 .radar-legend-bar {
   flex: 1;
   height: 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   border: var(--border-soft);
   /* RainViewer Universal Blue intensity ramp (light → heavy). */
   background: linear-gradient(

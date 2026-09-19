@@ -271,10 +271,13 @@ function NowcastCard({
           <p className="nowcast-explainer">
             Rain chance over the next 2 hours.
           </p>
-          <span className={`severity-badge severity-badge--${nowcastRiskTone}`}>
-            {nowcastRiskLabel}
-          </span>
         </div>
+        {/* The risk word belongs on the header row, opposite the card's
+            name, the way every other module states its status. It used
+            to hang under the explainer on a line of its own. */}
+        <span className={`severity-badge severity-badge--${nowcastRiskTone}`}>
+          {nowcastRiskLabel}
+        </span>
       </header>
       <div className="nowcast-primary">
         <p className="nowcast-summary">{nowcast.summary}</p>

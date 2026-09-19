@@ -1,6 +1,6 @@
 # Instrument — direction brief
 
-**Status: steps 1 and 2 are merged; step 3 is open as a draft PR. Steps 4–5 are not authorised.**
+**Status: steps 1–3 are merged; step 4 (with step 5 folded in) is open as a draft PR. Step 3 shipped the palette only — see "What step 3 did not cover".**
 
 A working note, not a plan of record. It exists so this direction survives
 a context change with its constraints and its corrections intact, because
@@ -60,18 +60,29 @@ without trusting this table.
 
 ### Light
 
-| Role | Value | Contrast vs panel |
-|---|---|---|
-| `ground` | `#f1f4f8` | — |
-| `panel` | `#ffffff` | 1.10 vs ground |
-| `wire-structural` | `#8a909e` | **3.20** |
-| `wire-rhythm` | `#e2e6ec` | 1.25 |
-| `ink` | `#0d1420` | **18.45** |
-| `ink-dim` | `#55637a` | **6.08** |
-| `status-ok` | `#0a7551` | 5.71 |
-| `status-warn` | `#8a5300` | 6.33 |
-| `status-crit` | `#b4302a` | 6.18 |
-| `status-accent` | `#1a63a8` | 6.19 |
+Revised 2026-09-19 (Jenna): the panel is **not** white. The original
+table had `panel #ffffff` on `ground #f1f4f8`, and its `wire-structural
+#8a909e` measured **2.98** against the panel Jenna moved to and **2.90**
+against the table's own ground — under 3:1 both ways. The wire darkened
+to `#7b8292`. Every ratio below is re-measured against the new panel;
+the raised tile is the brief's original white, one tier up; the well is
+the ground, as in dark.
+
+| Role | Value | vs panel `#f5f7fa` | vs ground `#e4e9ef` |
+|---|---|---|---|
+| `ground` | `#e4e9ef` | 1.14 | — |
+| `panel` | `#f5f7fa` | — | 1.14 |
+| `panel-raised` | `#ffffff` | 1.07 | 1.21 |
+| `panel-well` | `#e4e9ef` | 1.14 | — |
+| `wire-structural` | `#7b8292` | **3.59** | **3.16** |
+| `wire-rhythm` | `#e2e6ec` | 1.17 | 1.03 |
+| `ink` | `#0d1420` | **17.19** | 15.11 |
+| `ink-muted` | `#313c4d` | 10.39 | 9.13 |
+| `ink-dim` | `#55637a` | **5.67** | 4.98 |
+| `status-ok` | `#0a7551` | 5.32 | 4.68 |
+| `status-warn` | `#8a5300` | 5.90 | 5.18 |
+| `status-crit` | `#b4302a` | 5.76 | 5.06 |
+| `status-accent` | `#1a63a8` | 5.77 | 5.07 |
 
 The two wire weights are not a stylistic choice. A single wire at the
 weight that reads as "quiet" measured 1.23:1 against the panel, and the
@@ -86,37 +97,91 @@ information). `wire-structural` carries the boundary and clears 3:1;
 |---|---|---|
 | 1 | Semantic token layer holding today's colours, zero visual change | **Merged — PR #239** |
 | 2 | Opaque surfaces; drop `backdrop-filter` | **Merged — PR #242.** |
-| 3 | The Instrument palette proper | **Open — draft PR.** The dark table above, into the roles. Three values the table does not name: `panel-raised` = `wire-rhythm` `#1b2536`, `panel-well` = `ground` `#070a10`, `ink-muted` = sRGB midpoint `#b2bfd0`. Wire boundary clears: 3.02 vs panel, 3.16 vs ground. |
-| 4 | Light palette, `prefers-color-scheme`, `color-scheme: light dark` | not authorised |
-| 5 | Contrast-budget test covering both themes | not authorised |
+| 3 | The Instrument palette proper | **Merged — PR #243.** The dark table into the roles, plus the component surface sweep. **Palette only** — the mockup's step 3 also names mono numerals, module headers, status words instead of badges, and rule-divided data grids; those are open as **3b** (below). |
+| 4 | Light palette, `prefers-color-scheme`, `color-scheme: light dark` | **Open — draft PR, with step 5 folded in.** System-following only; no sky in light (flat ground); the light table revised as above; the unnamed families derived (appendix). |
+| 5 | Contrast-budget test covering both themes | **Folded into step 4.** Ink on every surface, wire vs panel *and* ground, status on panel — both schemes — plus light severity text on its own tint. |
 
 Each step is its own PR and needs Jenna's go-ahead before it starts.
 Per `AGENTS.md`, subjective visual decisions are not an agent's to make;
 these steps are written down so they can be approved or rejected one at a
 time, not so they can be worked through unprompted.
 
-## What step 4 runs into
+## What step 4 did
 
-`index.html:17` declares `<meta name="color-scheme" content="dark only" />`,
-with this rationale beside it:
+`index.html` now declares `color-scheme: light dark` with a rewritten
+rationale, and `theme-color` per scheme (`#070a10` dark, `#e4e9ef`
+light). The light block is a second `:root` under
+`@media (prefers-color-scheme: light)` in `App.css`; there is no in-app
+toggle (decision: system-following only). The 23 hard-coded light-text
+literals in component stylesheets that would have vanished on a pale
+panel were mapped to the tokens the light block redefines.
 
-> Aura is dark-only by design: cards are frosted surfaces engineered to
-> sit on a colourful weather-scene gradient. Half-light support (light
-> body, dark cards) read as a UI bug per the design audit.
+## The one thing an agent should not decide — decided
 
-That is not stale — it describes the app as it is today. A light theme
-means that comment stops being true, which is exactly why step 2 (opaque
-surfaces) comes before step 4: the reason light mode read as a bug was the
-frosted glass, and the direction removes it. Step 4 changes the meta tag;
-until then it stands.
+The weather-scene gradient has **no light derivation**. Jenna's call,
+2026-09-19: light mode is a flat ground. `.app` drops its inline sky
+under `prefers-color-scheme: light`, and the atmospheric washes are off
+there. The dark gradient stays the signature.
 
-There is no `prefers-color-scheme` query anywhere in `src/` or
-`index.html` today. `theme-color` is `#0b1c3f` and will need to move with
-the palette.
+## What step 3 did not cover (3b — not authorised)
 
-## The one thing an agent should not decide
+The mockup this direction was approved from ("Instrument, Both Themes")
+lists step 3 as *mono numerals, the two wire weights, module headers,
+status words instead of badges*. This brief compressed that to "the
+palette", and #243 shipped the palette and the wires. Still open, each a
+decision:
 
-The weather-scene gradient's light derivation. The dark gradient is the
-app's signature and the light version of it is a judgment call about what
-Aura looks like, not a contrast calculation. It needs Jenna's eye before
-anyone writes a value.
+1. **Mono numerals and labels** — IBM Plex Mono for every number, unit,
+   eyebrow and label. Aura self-hosts one Inter Variable file; this adds
+   one subset woff2. Lighthouse sits at 99 against 85.
+2. **Module chrome** — flat, square, no shadow, a structural rule for the
+   boundary, and a header row (mono title · scope chip · status word).
+   `--card-radius` and `--card-shadow` are two token edits; the header
+   row is JSX in all ten blocks, three of them high-risk files.
+3. **Status words instead of badges** — the AUD-005 vocabulary stays;
+   the pill becomes a coloured mono word, and the alert row loses its
+   tinted background.
+4. **Data grids** — stat tiles become rule-divided cells, `label / value
+   / unit`, flat on the ground. The raised tile nearly disappears from
+   the system; the rhythm wire does its job.
+
+The mockup is a single column; D2 keeps the bento, so "module" means
+each block. Sequenced as three PRs: chrome + font, headers + status
+words, grids.
+
+## Light values the table does not name
+
+Derived, not chosen: same hue and saturation as the dark value,
+lightness solved so the light value hits the **same ratio against the
+light panel** that the dark value hits against the dark panel. Fills are
+the exception worth a look — at "same ratio" a 12:1 fill is near-black,
+so the risk ramp and chart series are shown both ways and the 3:1 fill
+variant is the alternative if the ramp reads muddy.
+
+| Token | Dark | vs dark panel | Light (shipped) | vs light panel | 3:1 fill alt |
+|---|---|---|---|---|---|
+| `--severity-critical-fg` | `#fecaca` | 13.11 | `#5f0202` | 13.11 | |
+| `--severity-high-fg` | `#fed7aa` | 14.01 | `#3b2001` | 14.09 | |
+| `--severity-warn-fg` | `#fde68a` | 15.22 | `#271f01` | 15.22 | |
+| `--severity-ok-fg` | `#bbf7d0` | 15.64 | `#04230f` | 15.56 | |
+| `--severity-info-fg` | `#dbeafe` | 15.54 | `#021d41` | 15.61 | |
+| `--status-ready-fg` | `#dcfce7` | 17.26 | `#021709` | 17.36 | |
+| `--severity-*-border` | rgba, 2.0–2.8 | | `#dda1a3` `#ea9d78` `#e49c4a` `#2bbe6f` `#7d98b6` | 2.0–2.8 | |
+| `--severity-*-bg` | rgba, 1.1–1.3 | | `#f4e2e5` `#eedfd9` `#e3dac1` `#dff4f0` `#e5ebf8` | 1.1–1.3 | |
+| `--risk-low` | `#22c55e` | 8.32 | `#0f5428` | 8.39 | `#1ca54f` |
+| `--risk-moderate` | `#a3e635` | 12.57 | `#223306` | 12.72 | `#6a9f14` |
+| `--risk-elevated` | `#eab308` | 9.89 | `#4f3c03` | 9.84 | `#b38906` |
+| `--risk-high` | `#f97316` | 6.76 | `#913e04` | 6.79 | `#ef6506` |
+| `--risk-severe` | `#ef4444` | 5.04 | `#d41212` | 5.02 | `#f15f5f` |
+| `--risk-extreme` | `#a855f7` | 4.79 | `#9631f5` | 4.82 | `#b56ff8` |
+| `--chart-rain-top` / `-bottom` | `#7fb6ef` / `#5391d8` | 8.88 / 5.79 | `#10467d` / `#2662a7` | 8.96 / 5.75 | `#4293e7` / `#5593d9` |
+| `--chart-good-top` / `-bottom` | `#9be7b4` / `#5fc88c` | 13.08 / 9.14 | `#0c3218` / `#1b4d30` | 13.19 / 9.06 | `#27a450` / `#38a265` |
+| `--chart-outline` | `#0d1b2e` | 1.10 | `#e6edf8` | 1.09 | |
+| `--chart-selected` | `#ffd591` | 13.70 | `#392300` | 13.82 | `#cb7d00` |
+| `--surface-1/2/3/strong` | rgba navies, ≈1.0 | | `#f4f6fb` `#f2f5fb` `#f3f6fc` `#f7f9fd` | ≈1.0 | |
+| `--paper` / `--paper-dim` | `#f8fbff` / `#edf5ff` | 18.27 / 17.25 | `#000d1e` / `#00142d` | 18.21 / 17.23 | |
+| `--accent-strong` | `#4a9fe0` | 6.62 | `#195c90` | 6.58 | |
+| `--glacier-mid/light/muted` | `#9cc9f2` `#bcdcfa` `#aecdf2` | 10.9 / 13.3 / 11.6 | `#0d3a62` `#062b4e` `#0f3460` | 10.9 / 13.3 / 11.6 | |
+| `--amber-soft` / `--green-good-light` | `#f5cd92` / `#a9e2bd` | 12.67 / 12.91 | `#422a06` / `#11341e` | 12.56 / 12.78 | |
+| `--focus-ring` / `--focus-outline` / `--hover-border-color` | accent @ .4 / .8 / .44 | | light accent, same alphas | | |
+| `--active-pill-bg` / `-color` | white gradient / `#021127` | 18.34 (text on pill) | `#000b16→#001e43` / `#ffffff` | 18.41 | |

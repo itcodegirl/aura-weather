@@ -87,7 +87,7 @@ AUD-009 is listed as roadmap by category but is **executed inside AUD-002's work
 
 AUD-017 (non-US alerts) and AUD-018 (moon/pollen/satellite/lightning/tropical/wildfire/aviation layers). Reasoning in §8.
 
-**AUD-019 (dark-only theme) is no longer no-action.** Its row reserved the decision to a human and said to reconsider if a theming pass ever happened. One is now in progress, so on 2026-09-19 it moved to **Open, sequenced** (§8). This section read **3 findings** when the plan was written.
+**AUD-019 (dark-only theme) is no longer no-action — it shipped.** Its row reserved the decision to a human and said to reconsider if a theming pass ever happened. One happened: Instrument step 4 adds a system-following light scheme (§8). This section read **3 findings** when the plan was written.
 
 ---
 
@@ -113,7 +113,7 @@ AUD-017 (non-US alerts) and AUD-018 (moon/pollen/satellite/lightning/tropical/wi
 | AUD-016 | No day-to-day comparison | ROADMAP OPPORTUNITY | `daily` carries the data `[read: src/api/types.js:70-81]` | "Is tomorrow better?" unanswered | **Low** | Comparison line in the 7-day | None | Roadmap (near-term) |
 | AUD-017 | Non-US severe alerts absent | NO ACTION | US-only by design, disclosed `[read: README.md Known Limitations]` | — | Low | Leave; keep disclosed | — | No Action |
 | AUD-018 | Missing competitor map layers, moon, pollen | NO ACTION | Competitive gap, not a defect | — | Low | Decline; documented in audit §10 | — | No Action |
-| AUD-019 | Dark-only theme | ACCESSIBILITY (deferred) | `color-scheme: dark only`, documented decision `[read: index.html:9-16]` | Removes choice for light-sensitivity users | **Low** | Monitor; document in case study | Design decision | **Open, sequenced** — reconsidered 2026-09-19; was No Action (documented) (§8) |
+| AUD-019 | Dark-only theme | ACCESSIBILITY (deferred) | `color-scheme: dark only`, documented decision `[read: index.html:9-16]` | Removes choice for light-sensitivity users | **Low** | Monitor; document in case study | Design decision | **Shipped** — light scheme, system-following, Instrument step 4 (§8); was No Action (documented) |
 | AUD-020 | No in-app motion/density control | IMPROVEMENT | OS-level only `[read: src/hooks/usePrefersReducedData.js]` | Per-site preference unavailable | **Low** | Preference toggle | AUD-011 (same panel) | Backlog |
 | AUD-021 | `description` normalised, never read | TECH DEBT | `[read: src/api/openMeteo.js:408]`; no consumer | Eng: dead field in a risky file | **Low** | Render behind disclosure | Executed inside AUD-002 | Current Milestone |
 | AUD-022 | Competitor web-UX claims unverified | DOCUMENTATION | weather.com 404 / accuweather.com 403 to automated fetch; disclosed in audit §3 and §"Open questions" | Reputational if quoted publicly | **Low** | Re-verify by hand before any public use | None | Backlog |
@@ -263,7 +263,7 @@ AUD-014 and AUD-015 are the audit's two strongest differentiators and sit in P3 
 
 **Reconsidered 2026-09-19 — the condition has been met; this finding is no longer No Action.** A theming pass is in progress. There is an approved visual direction (*Instrument*, specified in both dark and light) delivered as a five-step sequence, of which step 1 — a semantic colour-role layer in `src/App.css` holding today's exact colours at zero visual change — is open as PR #239, alongside the production captures the direction is drawn from on PR #240. Both were **open drafts, unmerged**, when this was written `[api: list_pull_requests, 2026-09-19]`, so nothing has landed yet and `index.html` still declares `color-scheme: dark only` `[read: index.html:17]`. Step 4 of that sequence — a light palette behind `prefers-color-scheme` — is the reversal this row reserved to a human.
 
-**What this status change does and does not authorise.** It records that the trigger fired, so a future prioritisation pass reads "open and sequenced" rather than "declined". It does **not** authorise the work: steps 2–5 are unauthorised, step 2 (opaque surfaces) must precede step 4 because the dark-only rationale above turns on the frosted cards that step 2 removes, and the light derivation of the weather-scene gradient is the owner's call, not an agent's. `index.html` is not to be edited on the strength of this row.
+**Shipped — Instrument step 4.** Steps 2 and 3 removed the frosted cards the dark-only rationale turned on (PRs #242, #243), and step 4 adds the light scheme: `index.html` declares `color-scheme: light dark` with `theme-color` per scheme; a second `:root` under `prefers-color-scheme: light` carries the light palette; there is no in-app toggle (system-following only, by decision); the weather-scene gradient has no light derivation (flat ground, by decision — the owner's call, made 2026-09-19). Contrast guards for both schemes live in `src/App.tokens.test.mjs`. The cost this row named — a choice removed from light-sensitivity users — is closed for users whose OS is set to light; an in-app override remains AUD-020's.
 
 ### Deferred
 
@@ -706,7 +706,7 @@ Audit finding → root cause → priority → work package → ticket → test �
 | AUD-016 | RC-4 | P2 | — | — | — | Roadmap, near-term |
 | AUD-017 | — | — | — | — | — | **No Action** — scope/risk exceeds benefit (§8) |
 | AUD-018 | — | — | — | — | — | **No Action** — competitive gap, not a defect (§8) |
-| AUD-019 | — | — | — | — | — | **Open, sequenced** — reconsidered 2026-09-19; theming pass in progress, the reversal sits at step 4 (§8) |
+| AUD-019 | — | — | — | — | — | **Shipped** — light scheme, system-following; Instrument step 4 (§8) |
 | AUD-020 | — | P3 | — | — | — | Backlog (fold into AUD-011) |
 | AUD-021 | RC-1 | P1 | WP-1 | inside AUD-002 | Component: in DOM, collapsed | Milestone |
 | AUD-022 | — | P3 | — | — | — | Backlog — re-verify before public use (§8) |

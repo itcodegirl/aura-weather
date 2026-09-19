@@ -153,12 +153,17 @@ words, grids.
 
 Derived, not chosen: same hue and saturation as the dark value,
 lightness solved so the light value hits the **same ratio against the
-light panel** that the dark value hits against the dark panel. Fills are
-the exception worth a look — at "same ratio" a 12:1 fill is near-black,
-so the risk ramp and chart series are shown both ways and the 3:1 fill
-variant is the alternative if the ramp reads muddy.
+light panel** that the dark value hits against the dark panel — for
+text. Fills are the exception: at "same ratio" a 12:1 fill is
+near-black, and the first light preview showed it. The risk ramp and
+chart series ship at **3:1 against the light panel** (WCAG 1.4.11 for
+graphical objects) since 2026-09-19; the same-ratio values are kept as
+the alternative. The two chart tokens that were also read as text point
+their text uses at the amber/green text tints instead (`--amber-soft`,
+`--green-good-light`), which are derived for text and sit within a few
+steps of the dark values they replace.
 
-| Token | Dark | vs dark panel | Light (shipped) | vs light panel | 3:1 fill alt |
+| Token | Dark | vs dark panel | Light (shipped) | vs light panel | Alternative |
 |---|---|---|---|---|---|
 | `--severity-critical-fg` | `#fecaca` | 13.11 | `#5f0202` | 13.11 | |
 | `--severity-high-fg` | `#fed7aa` | 14.01 | `#3b2001` | 14.09 | |
@@ -168,16 +173,16 @@ variant is the alternative if the ramp reads muddy.
 | `--status-ready-fg` | `#dcfce7` | 17.26 | `#021709` | 17.36 | |
 | `--severity-*-border` | rgba, 2.0–2.8 | | `#dda1a3` `#ea9d78` `#e49c4a` `#2bbe6f` `#7d98b6` | 2.0–2.8 | |
 | `--severity-*-bg` | rgba, 1.1–1.3 | | `#f4e2e5` `#eedfd9` `#e3dac1` `#dff4f0` `#e5ebf8` | 1.1–1.3 | |
-| `--risk-low` | `#22c55e` | 8.32 | `#0f5428` | 8.39 | `#1ca54f` |
-| `--risk-moderate` | `#a3e635` | 12.57 | `#223306` | 12.72 | `#6a9f14` |
-| `--risk-elevated` | `#eab308` | 9.89 | `#4f3c03` | 9.84 | `#b38906` |
-| `--risk-high` | `#f97316` | 6.76 | `#913e04` | 6.79 | `#ef6506` |
-| `--risk-severe` | `#ef4444` | 5.04 | `#d41212` | 5.02 | `#f15f5f` |
-| `--risk-extreme` | `#a855f7` | 4.79 | `#9631f5` | 4.82 | `#b56ff8` |
-| `--chart-rain-top` / `-bottom` | `#7fb6ef` / `#5391d8` | 8.88 / 5.79 | `#10467d` / `#2662a7` | 8.96 / 5.75 | `#4293e7` / `#5593d9` |
-| `--chart-good-top` / `-bottom` | `#9be7b4` / `#5fc88c` | 13.08 / 9.14 | `#0c3218` / `#1b4d30` | 13.19 / 9.06 | `#27a450` / `#38a265` |
+| `--risk-low` | `#22c55e` | 8.32 | **`#1ca54f`** | 3.00 | same-ratio `#0f5428` (8.39) |
+| `--risk-moderate` | `#a3e635` | 12.57 | **`#6a9f14`** | 2.99 | same-ratio `#223306` (12.72) |
+| `--risk-elevated` | `#eab308` | 9.89 | **`#b38906`** | 3.00 | same-ratio `#4f3c03` (9.84) |
+| `--risk-high` | `#f97316` | 6.76 | **`#ef6506`** | 2.99 | same-ratio `#913e04` (6.79) |
+| `--risk-severe` | `#ef4444` | 5.04 | **`#f15f5f`** | 2.98 | same-ratio `#d41212` (5.02) |
+| `--risk-extreme` | `#a855f7` | 4.79 | **`#b56ff8`** | 2.97 | same-ratio `#9631f5` (4.82) |
+| `--chart-rain-top` / `-bottom` | `#7fb6ef` / `#5391d8` | 8.88 / 5.79 | **`#4293e7` / `#5593d9`** | 2.98 / 3.00 | same-ratio `#10467d` / `#2662a7` |
+| `--chart-good-top` / `-bottom` | `#9be7b4` / `#5fc88c` | 13.08 / 9.14 | **`#27a450` / `#38a265`** | 3.01 / 3.00 | same-ratio `#0c3218` / `#1b4d30` |
 | `--chart-outline` | `#0d1b2e` | 1.10 | `#e6edf8` | 1.09 | |
-| `--chart-selected` | `#ffd591` | 13.70 | `#392300` | 13.82 | `#cb7d00` |
+| `--chart-selected` | `#ffd591` | 13.70 | **`#cb7d00`** | 3.01 | same-ratio `#392300` (13.82) |
 | `--surface-1/2/3/strong` | rgba navies, ≈1.0 | | `#f4f6fb` `#f2f5fb` `#f3f6fc` `#f7f9fd` | ≈1.0 | |
 | `--paper` / `--paper-dim` | `#f8fbff` / `#edf5ff` | 18.27 / 17.25 | `#000d1e` / `#00142d` | 18.21 / 17.23 | |
 | `--accent-strong` | `#4a9fe0` | 6.62 | `#195c90` | 6.58 | |

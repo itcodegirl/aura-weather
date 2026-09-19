@@ -2,18 +2,60 @@
   --font-sans: "Inter", "Segoe UI", sans-serif;
   --font-display: "Inter", sans-serif;
 
-  --text: #eef1f8;
+  /* ----------------------------------------------------------------
+   * Semantic layer
+   *
+   * The roles the interface is drawn from, each holding the colour it
+   * already had. Nothing below changes what the app renders: this is a
+   * move, and every token further down resolves to the same value it
+   * resolved to before.
+   *
+   * It exists because Aura's palette is currently ~40 literals scattered
+   * through this block, and a stylesheet asking for --bg-large-card is
+   * asking for "white at 11 percent" — a value, not a role. Re-theming
+   * means editing all of it in every component that restates it. Naming
+   * the role once, here, makes a palette change one edit; the tokens
+   * below keep their names and point at these, so no component file
+   * moves and no rule is rewritten.
+   *
+   *   ground  the page under everything, a vertical ramp
+   *   panel   a surface on the ground; the well is cut into it
+   *   wire    a drawn line — structural separates, rhythm paces
+   *   ink     text, at three emphases
+   *   status  the four meanings colour is allowed to carry
+   * ---------------------------------------------------------------- */
+  --ground-top: #0a1020;
+  --ground: #070c18;
+  --ground-bottom: #050812;
+
+  --panel: rgba(255, 255, 255, 0.11);
+  --panel-raised: rgba(255, 255, 255, 0.16);
+  --panel-well: rgba(0, 0, 0, 0.3);
+
+  --wire-structural: rgba(206, 222, 248, 0.3);
+  --wire-rhythm: rgba(196, 213, 241, 0.12);
+
+  --ink: #eef1f8;
   /*
    * Alphas are floored at the WCAG AA (4.5:1) threshold for small text
    * against the worst-case backdrop this app can paint: the lightest
    * sky gradient stop (#2e353f, Rime Fog) seen through the most opaque
-   * glass (--bg-tile, white @ 0.16), i.e. an effective rgb(79,85,94).
+   * glass (--panel-raised, white @ 0.16), i.e. an effective rgb(79,85,94).
    * Below ~0.742 alpha both tokens fail AA there. axe cannot catch this
    * because the backdrop is a gradient, so the floor is enforced here.
-   *   --text-muted -> 5.57:1    --text-dim -> 4.63:1
+   *   --ink-muted -> 5.57:1    --ink-dim -> 4.63:1
    */
-  --text-muted: rgba(238, 241, 248, 0.88);
-  --text-dim: rgba(238, 241, 248, 0.78);
+  --ink-muted: rgba(238, 241, 248, 0.88);
+  --ink-dim: rgba(238, 241, 248, 0.78);
+
+  --status-accent: #6fb7f2;
+  --status-ok: #7fd99a;
+  --status-warn: #f3b765;
+  --status-crit: #f1a0a8;
+
+  --text: var(--ink);
+  --text-muted: var(--ink-muted);
+  --text-dim: var(--ink-dim);
 
   --content-max-width: 1460px;
   --content-gutter: 2.4rem;
@@ -31,7 +73,7 @@
   --card-padding: 24px;
 
   --border: 1px solid rgba(211, 224, 246, 0.2);
-  --card-border: 1px solid rgba(206, 222, 248, 0.3);
+  --card-border: 1px solid var(--wire-structural);
   --shadow: 0 18px 44px rgba(3, 8, 25, 0.28);
   --card-shadow:
     0 22px 54px rgba(2, 8, 24, 0.34),
@@ -54,27 +96,29 @@
   /* Glacier glass pass: removed the dark-navy surface tokens --bg-card,
      --bg-card-hover, --panel, --panel-soft, and --subcard-bg. They have
      zero consumers — cards use --bg-large-card, hover/tiles --bg-tile,
-     and wells now reference --bg-well directly. */
+     and wells now reference --bg-well directly. (--panel is back at the
+     top of this file, but as the semantic role, not the old navy fill;
+     the others stay gone.) */
   --subcard-border: 1px solid rgba(196, 213, 241, 0.15);
   --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
 
-  --accent: #6fb7f2;
+  --accent: var(--status-accent);
   --accent-strong: #4a9fe0;
-  --accent-warm: #f3b765;
-  --accent-green: #7fd99a;
-  --accent-rose: #f1a0a8;
+  --accent-warm: var(--status-warn);
+  --accent-green: var(--status-ok);
+  --accent-rose: var(--status-crit);
   --atmo-lavender: rgba(168, 154, 214, 0.12);
   --atmo-sky: rgba(111, 172, 214, 0.14);
   --atmo-haze: rgba(215, 226, 241, 0.08);
 
   /* Glacier palette — brand accent + semantic secondaries */
-  --glacier: #6fb7f2;
+  --glacier: var(--status-accent);
   --glacier-mid: #9cc9f2;
   --glacier-light: #bcdcfa;
   --glacier-muted: #aecdf2;
-  --amber: #f3b765;
+  --amber: var(--status-warn);
   --amber-soft: #f5cd92;
-  --green-good: #7fd99a;
+  --green-good: var(--status-ok);
   --green-good-light: #a9e2bd;
 
   /* Card surface tiers — Glacier glass system.
@@ -83,10 +127,10 @@
      stats read recessed AND keep muted/dim text above AA 4.5:1 even on
      the brightest dusk — a .055 white well composited brighter than its
      card (raised, backwards from §1) and failed AA on bright conditions. */
-  --bg-tile: rgba(255, 255, 255, 0.16);
+  --bg-tile: var(--panel-raised);
   --bg-tile-border: rgba(255, 255, 255, 0.22);
-  --bg-large-card: rgba(255, 255, 255, 0.11);
-  --bg-well: rgba(0, 0, 0, 0.3);
+  --bg-large-card: var(--panel);
+  --bg-well: var(--panel-well);
   --bg-panel-outer: rgba(255, 255, 255, 0.04);
 
   --hero-unit-size: 28px;
@@ -155,7 +199,7 @@
   /* Border system */
   --border-base: 196, 213, 241;
   --border-default: 1px solid rgba(196, 213, 241, 0.18);
-  --border-soft: 1px solid rgba(196, 213, 241, 0.12);
+  --border-soft: 1px solid var(--wire-rhythm);
   --border-strong: 1px solid rgba(220, 232, 255, 0.34);
 
   /* Subcard spacing — default tile inset, lg for roomier prompt panels */
@@ -267,7 +311,7 @@ body {
   background:
     radial-gradient(1100px 700px at 14% -10%, rgba(61, 77, 138, 0.7) 0%, rgba(26, 37, 80, 0.46) 34%, transparent 70%),
     radial-gradient(900px 600px at 86% -14%, rgba(64, 86, 118, 0.62) 0%, rgba(20, 32, 58, 0.44) 35%, transparent 68%),
-    linear-gradient(180deg, #0a1020 0%, #070c18 58%, #050812 100%);
+    linear-gradient(180deg, var(--ground-top) 0%, var(--ground) 58%, var(--ground-bottom) 100%);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
   overflow-x: hidden;

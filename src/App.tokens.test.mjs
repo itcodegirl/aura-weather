@@ -557,3 +557,70 @@ describe("flat, square chrome — Instrument step 3b-i", () => {
     }
   });
 });
+
+/*
+ * "No sky in light" — the flat ground, and the two overrides that only
+ * work where they sit.
+ *
+ * A media query adds no specificity. A light-scheme rule that restates
+ * a property the base rule also declares therefore wins only by source
+ * order, and both of these corrections were written inside the light
+ * token block at the top of App.css first, where they silently did
+ * nothing: the page kept rendering rgb(211,218,226) for a `#e4e9ef`
+ * ground and the computed styles all read correct, because the dimming
+ * was a `filter` on a pseudo-element one layer down.
+ *
+ * The light block *can* still turn `.app::after` off from up there, and
+ * that is not an inconsistency: the base rule never declares `display`,
+ * so nothing competes. These two do compete, so they are tested for
+ * position, not just presence.
+ */
+describe("the light ground stays flat", () => {
+  // Comments stripped, so an example in prose cannot satisfy a check.
+  const SOURCE = readFileSync(join(REPO_ROOT, "src/App.css"), "utf8").replace(
+    CSS_COMMENT,
+    ""
+  );
+
+  function indexOfRule(pattern, label) {
+    const match = SOURCE.match(pattern);
+    assert.ok(match, `${label} is not in App.css`);
+    return match.index;
+  }
+
+  const LIGHT_BLOCK = /@media \(prefers-color-scheme: light\) \{/;
+
+  test("body drops the scene washes, after the rule that paints them", () => {
+    const base = indexOfRule(
+      /\nbody \{[^}]*radial-gradient[^}]*\}/,
+      "the base body background"
+    );
+    const override = indexOfRule(
+      /@media \(prefers-color-scheme: light\) \{\s*body \{\s*background: var\(--ground\);/,
+      "the light body background"
+    );
+    assert.ok(
+      override > base,
+      "the light body rule precedes the one it corrects, so source order discards it"
+    );
+  });
+
+  test(".app::before drops its filter, after the rule that sets one", () => {
+    const base = indexOfRule(
+      /\n\.app::before \{[^}]*filter:[^}]*\}/,
+      "the base .app::before filter"
+    );
+    const override = indexOfRule(
+      /@media \(prefers-color-scheme: light\) \{\s*\.app::before \{\s*filter: none;/,
+      "the light .app::before filter reset"
+    );
+    assert.ok(
+      override > base,
+      "the light filter reset precedes the filter it clears, so it is discarded"
+    );
+  });
+
+  test("the light scheme is declared at all", () => {
+    assert.match(SOURCE, LIGHT_BLOCK);
+  });
+});

@@ -424,6 +424,7 @@
   .app::after {
     display: none;
   }
+
 }
 
 @media (prefers-color-scheme: light) and (prefers-contrast: more) {
@@ -478,6 +479,23 @@ body {
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
   overflow-x: hidden;
+}
+
+/* No sky in light, on the body too. The ramp above re-derives from the
+   light roles, but the two radial washes over it are hard-coded rgba
+   and do not, so a dark sky stayed lit behind the flat ground .app
+   paints -- a blue-grey cast over the whole page, which is the one
+   thing "no sky in light" rules out.
+
+   This has to sit *after* the rule it corrects rather than inside the
+   light token block above: same specificity, so source order decides,
+   and the block above loses. That is also why .app needs !important up
+   there and this does not -- .app is overriding an inline style, this
+   is overriding a stylesheet rule it can simply follow. */
+@media (prefers-color-scheme: light) {
+  body {
+    background: var(--ground);
+  }
 }
 
 button {
@@ -576,6 +594,25 @@ a:focus-visible,
     radial-gradient(circle at 74% 82%, rgba(243, 183, 101, 0.07), transparent 42%),
     linear-gradient(180deg, rgba(222, 236, 255, 0.04) 0%, rgba(17, 26, 50, 0.04) 42%, rgba(5, 10, 23, 0.24) 100%);
   opacity: 0.84;
+}
+
+/* No sky in light, part two: .app::before deepens the scene gradient
+   with `saturate(.98) brightness(.94)`. Over a dark sky that is the
+   point. Over the flat light ground it is a 6% dim of the whole page —
+   the ground computes to #e4e9ef and rendered as rgb(211,218,226),
+   which is the blue-grey cast the light previews kept showing. The
+   panels were unaffected because they sit above this layer, so the
+   symptom read as "the ground is the wrong colour" rather than "a
+   filter", and the hunt went to the token first.
+
+   Like the body rule above, this has to follow the declaration it
+   corrects: same specificity, so source order decides. The light block
+   further up can still turn .app::after off from there, because the
+   base rule never declares `display` and so nothing competes. */
+@media (prefers-color-scheme: light) {
+  .app::before {
+    filter: none;
+  }
 }
 
 .app-inner {

@@ -1,6 +1,6 @@
 # Instrument — direction brief
 
-**Status: step 1 of five is open as a draft PR. Nothing else is authorised.**
+**Status: step 1 of five is merged; step 2 is open as a draft PR. Steps 3–5 are not authorised.**
 
 A working note, not a plan of record. It exists so this direction survives
 a context change with its constraints and its corrections intact, because
@@ -84,8 +84,8 @@ information). `wire-structural` carries the boundary and clears 3:1;
 
 | Step | What | State |
 |---|---|---|
-| 1 | Semantic token layer holding today's colours, zero visual change | **Open — draft PR, `chore/semantic-tokens`** |
-| 2 | Opaque surfaces; drop `backdrop-filter` | not authorised |
+| 1 | Semantic token layer holding today's colours, zero visual change | **Merged — PR #239** |
+| 2 | Opaque surfaces; drop `backdrop-filter` | **Open — draft PR.** Panels are today's alphas composited over `--ground` and frozen (`#222731` / `#2f333d` / `#181b23`); the ink floor is now fixed at 9.07 / 7.50 vs the raised tile; the wire boundary stays at 2.29 for step 3 to clear. |
 | 3 | The Instrument palette proper | not authorised |
 | 4 | Light palette, `prefers-color-scheme`, `color-scheme: light dark` | not authorised |
 | 5 | Contrast-budget test covering both themes | not authorised |

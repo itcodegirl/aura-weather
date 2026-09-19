@@ -205,9 +205,9 @@ export function analyzeNowcast(nowcast, options = {}) {
   // curve at those points instead of drawing a confident 0% over unknown data.
   const probabilitySeries = rows.map((row) => row.probability);
   // Parallel to probabilitySeries. The strip marks its hour anchors from
-  // these rather than from index arithmetic: the window starts at whatever
-  // quarter-hour is current, so it holds two or three on-the-hour points
-  // depending on the time of day.
+  // these rather than from index arithmetic: an eight-step window spans two
+  // hours and so always holds exactly two on-the-hour points, but which two
+  // moves with the clock.
   const probabilityTimes = rows.map((row) => row.time);
 
   // A dry verdict reached without any probability reading is weaker evidence

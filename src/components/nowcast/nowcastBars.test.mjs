@@ -1,5 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { buildNowcastBarGeometry } from "./nowcastBars.js";
 
 /*
@@ -68,8 +69,10 @@ describe("hour anchors", () => {
   ];
   const values = [10, 20, 30, 40, 50, 60, 70, 80];
 
-  test("a window opening on the hour holds three anchors", () => {
+  test("a window opening on the hour puts its two anchors first and fifth", () => {
     const geo = buildNowcastBarGeometry(values, AT_HOUR);
+    // Eight quarter-hour steps span two hours, so the count is always two;
+    // only their position moves with the clock.
     assert.equal(geo.anchorCount, 2, "10:00 and 11:00 are inside these eight");
     assert.deepEqual(
       geo.bars.map((b) => b.anchor),
@@ -77,7 +80,7 @@ describe("hour anchors", () => {
     );
   });
 
-  test("a window opening mid-hour holds two, in different places", () => {
+  test("a window opening mid-hour puts the same two anchors fourth and eighth", () => {
     const geo = buildNowcastBarGeometry(values, AT_QUARTER);
     assert.equal(geo.anchorCount, 2);
     assert.deepEqual(
@@ -123,5 +126,50 @@ describe("hour anchors", () => {
     );
     assert.equal(geo.dry[0].anchor, true);
     assert.equal(geo.gaps[0].anchor, false);
+  });
+});
+
+/*
+ * The strip is drawn with role tokens, never with colour literals.
+ *
+ * This is not style policing. Every mark on this chart carries a reading --
+ * a bar's stroke is the value on an outlined step, the dash is a reported
+ * 0%, the rule is the 50% threshold -- so each has to clear WCAG 1.4.11's
+ * 3:1 against the panel it sits on, in both schemes. A literal cannot: it
+ * is fixed while the panel inverts.
+ *
+ * Both failures this guards against had shipped. rgba(238,241,248,.30) for
+ * the dry dash composites to 1.02 against the light panel, so a reported
+ * zero was invisible and indistinguishable from a step the provider never
+ * returned. #7fd99a for the bars measured 1.59 there.
+ */
+describe("the strip draws with roles, not literals", () => {
+  const source = readFileSync(
+    new URL("../NowcastCard.jsx", import.meta.url),
+    "utf8"
+  );
+  // The chart's own markup, so an unrelated literal elsewhere in the card
+  // is not swept in.
+  const svg = source.slice(source.indexOf("<svg"), source.indexOf("</svg>"));
+
+  test("no colour literal appears in the chart markup", () => {
+    const literals = [
+      ...svg.matchAll(/(?:stroke|fill)=\{?"(#[0-9a-f]{3,8}|rgba?\([^)]*\))"/gi),
+    ].map((match) => match[1]);
+    assert.deepEqual(literals, []);
+  });
+
+  test("every stroke and fill names a custom property or none", () => {
+    const values = [
+      ...svg.matchAll(/(?:stroke|fill)=\{?"([^"]+)"/g),
+    ].map((match) => match[1]);
+    assert.ok(values.length > 0, "the chart markup should have been found");
+    for (const value of values) {
+      assert.match(
+        value,
+        /^(?:var\(--[a-z0-9-]+\)|none)$/,
+        `"${value}" is neither a role token nor none`
+      );
+    }
   });
 });

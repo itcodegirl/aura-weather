@@ -246,20 +246,27 @@ function NowcastCard({
               <line
                 x1="0" y1={barGeo.thresholdY.toFixed(1)}
                 x2={NC_SVG_W} y2={barGeo.thresholdY.toFixed(1)}
-                stroke="rgba(238,241,248,.22)"
+                stroke="var(--wire-structural)"
                 strokeWidth="1"
                 strokeDasharray="5 6"
                 vectorEffect="non-scaling-stroke"
               />
               {/* A step the provider did not report draws nothing at all --
                   no bar, no baseline -- so a gap in the strip reads as a
-                  gap and never as a dry quarter-hour. */}
+                  gap and never as a dry quarter-hour.
+
+                  The dash takes --ink-dim because it is a reading (a
+                  reported 0%), not a boundary. It was
+                  rgba(238,241,248,.30), which composites to 1.02 against
+                  the light panel: a reported zero was invisible there and
+                  so indistinguishable from a missing step, which is the
+                  one distinction this strip exists to draw. */}
               {barGeo.dry.map((d, i) => (
                 <line
                   key={`dry-${i}`}
                   x1={d.x.toFixed(1)} y1={barGeo.base.toFixed(1)}
                   x2={(d.x + d.width).toFixed(1)} y2={barGeo.base.toFixed(1)}
-                  stroke="rgba(238,241,248,.30)"
+                  stroke="var(--ink-dim)"
                   strokeWidth="2"
                   vectorEffect="non-scaling-stroke"
                 />
@@ -273,15 +280,18 @@ function NowcastCard({
                   dark panel) rather than being faded under the 3:1 floor
                   WCAG 1.4.11 sets for a graphical object. */}
               {barGeo.bars.map((b, i) => {
-                // Roles, not literals. The hard-coded #7fd99a this
-                // replaces measured 1.59 against the light panel --
-                // under WCAG 1.4.11's 3:1 for a graphical object, and
-                // load-bearing here because on an outlined bar the
-                // stroke is the reading. --status-ok clears it in both
-                // schemes (9.74 dark, 5.32 light).
-                const tone = b.likely
-                  ? "var(--status-ok)"
-                  : "var(--status-accent)";
+                // One tone for every bar. Colouring the likely ones
+                // green said "good" about a high chance of rain, which
+                // is the opposite of what the reading means. The dashed
+                // 50% rule and its "Rain likely" label carry that
+                // signal, and a bar crossing the rule is the statement.
+                //
+                // A role, not a literal: the hard-coded #7fd99a this
+                // replaces measured 1.59 against the light panel, under
+                // WCAG 1.4.11's 3:1 for a graphical object, and
+                // load-bearing because on an outlined bar the stroke is
+                // the reading. --status-accent is 8.79 dark, 5.77 light.
+                const tone = "var(--status-accent)";
                 return (
                   <rect
                     key={`bar-${i}`}

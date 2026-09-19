@@ -37,9 +37,11 @@ export const NC_LIKELY_THRESHOLD = 50;
  * distinction the outline draws is hourly-forecast versus interpolated.
  *
  * Anchors are found from the timestamps rather than by index, because the
- * window starts at whatever quarter-hour is current: a window beginning at
- * :00 holds three on-the-hour points, one beginning at :15, :30 or :45 holds
- * two.
+ * window starts at whatever quarter-hour is current. Eight quarter-hour
+ * steps span exactly two hours, so the window always holds exactly two
+ * on-the-hour points -- but *which* two moves with the clock: a window
+ * opening at :00 has them at steps 0 and 4, one opening at :15 at steps 3
+ * and 7. Index arithmetic would have pinned them to one of those.
  */
 function isHourAnchor(isoLocalTime) {
   if (typeof isoLocalTime !== "string") return false;

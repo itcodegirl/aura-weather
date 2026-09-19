@@ -132,10 +132,8 @@
 }
 
 .saved-city-chip-wrap.is-startup {
-  border-color: rgba(243, 183, 101, 0.34);
-  background:
-    linear-gradient(180deg, rgba(31, 30, 24, 0.56), rgba(15, 18, 31, 0.5)),
-    rgba(8, 17, 36, 0.54);
+  border-color: var(--severity-warn-border);
+  background: var(--severity-warn-bg);
 }
 
 .saved-city-chip {

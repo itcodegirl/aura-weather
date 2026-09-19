@@ -98,8 +98,9 @@ information). `wire-structural` carries the boundary and clears 3:1;
 | 1 | Semantic token layer holding today's colours, zero visual change | **Merged — PR #239** |
 | 2 | Opaque surfaces; drop `backdrop-filter` | **Merged — PR #242.** |
 | 3 | The Instrument palette proper | **Merged — PR #243.** The dark table into the roles, plus the component surface sweep. **Palette only** — the mockup's step 3 also names mono numerals, module headers, status words instead of badges, and rule-divided data grids; those are open as **3b** (below). |
-| 4 | Light palette, `prefers-color-scheme`, `color-scheme: light dark` | **Open — draft PR, with step 5 folded in.** System-following only; no sky in light (flat ground); the light table revised as above; the unnamed families derived (appendix). |
+| 4 | Light palette, `prefers-color-scheme`, `color-scheme: light dark` | **Merged — PR #244.** System-following only; no sky in light (flat ground); the light table revised as above; the unnamed families derived (appendix). |
 | 5 | Contrast-budget test covering both themes | **Folded into step 4.** Ink on every surface, wire vs panel *and* ground, status on panel — both schemes — plus light severity text on its own tint. |
+| 3b-i | Flat square chrome, and the mono face | **Open — draft PR.** See below. |
 
 Each step is its own PR and needs Jenna's go-ahead before it starts.
 Per `AGENTS.md`, subjective visual decisions are not an agent's to make;
@@ -132,22 +133,78 @@ palette", and #243 shipped the palette and the wires. Still open, each a
 decision:
 
 1. **Mono numerals and labels** — IBM Plex Mono for every number, unit,
-   eyebrow and label. Aura self-hosts one Inter Variable file; this adds
-   one subset woff2. Lighthouse sits at 99 against 85.
+   eyebrow and label. **Shipped in 3b-i.**
 2. **Module chrome** — flat, square, no shadow, a structural rule for the
    boundary, and a header row (mono title · scope chip · status word).
-   `--card-radius` and `--card-shadow` are two token edits; the header
-   row is JSX in all ten blocks, three of them high-risk files.
+   **The flat square part shipped in 3b-i**; the header row is JSX in all
+   ten blocks, three of them high-risk files, and is still open.
 3. **Status words instead of badges** — the AUD-005 vocabulary stays;
    the pill becomes a coloured mono word, and the alert row loses its
-   tinted background.
+   tinted background. **Open (3b-ii).**
 4. **Data grids** — stat tiles become rule-divided cells, `label / value
    / unit`, flat on the ground. The raised tile nearly disappears from
-   the system; the rhythm wire does its job.
+   the system; the rhythm wire does its job. **Open (3b-iii).**
 
 The mockup is a single column; D2 keeps the bento, so "module" means
 each block. Sequenced as three PRs: chrome + font, headers + status
 words, grids.
+
+## What 3b-i did
+
+**The face.** IBM Plex Mono, three static weights (400/500/600), subset
+from the upstream latin files and self-hosted beside Inter —
+23 KB for all three against Inter's 48 KB, and Lighthouse did not move
+(99/100/100/100). Only Medium is preloaded, because it is the weight the
+hero reading paints. The faces are in the offline shell, so a cached
+launch keeps its numerals; `sw.js` went to `v6` for that.
+
+The role is narrow on purpose: **measured values and their labels, never
+running prose.** In practice that is every rule already declaring
+`font-variant-numeric: tabular-nums` (it had already said it was a
+numeral) and every rule pairing `text-transform: uppercase` with a
+`letter-spacing` (the label idiom). 76 rules, mechanically selected by
+those two signals rather than by eye. Card titles and body copy stay
+Inter.
+
+Fifty of those rules asked for a weight the subset does not ship — the
+hero numeral at 200, labels at 700 — which leaves the result to font
+synthesis. They are clamped to the nearest shipped weight, so what the
+stylesheet says is what renders. The hero numeral is the one judgment
+call, set to 500 because the mockup names that weight for the big
+reading; it was Inter 200 before, and it is the most visible single
+change in this step.
+
+**The chrome.** The radius ramp is all zeros. The six names stay
+separate rather than collapsing to one, so the surface tier a rule
+belongs to is still readable and a future direction can put the ramp
+back in one place. `--radius-pill` is not in the ramp and still draws
+999px: dots, handles and avatar wells are circles, not rectangles.
+Thirty-six literal `px` radii that never went through the ramp were
+squared too.
+
+Every shadow token is `none`. Instrument carries elevation on the wire —
+a module is bounded by a rule clearing 3:1, so a drop shadow under it is
+a second boundary saying the same thing less legibly, and the inset
+bevel is a light source this direction does not have. The tokens stay
+declared because ~40 rules compose from them. A sweep then took the
+literal shadows out of 51 rules under one rule: **drop** inset
+top-highlight bevels and offset drop shadows; **keep** ring layers
+(`0 0 0 Npx`), marker glows, and solid offset bars. That carve-out is
+load-bearing — `#main-content:focus-visible` is drawn with
+`inset 4px 0 0`, and an earlier pass classified it as a bevel and
+deleted the focus indicator.
+
+**The trap.** `box-shadow` takes a comma-separated list, and `none` is
+not a legal member of one: `box-shadow: 0 0 0 3px rgba(…), none;` is
+discarded whole. Flattening the tokens turned every rule that composed
+`var(--shadow-raise-sm)` into a larger list into exactly that — two
+rules did, one of them the header's focus ring. There is now a guard
+for that shape, alongside guards for the ramp, the shadow values, the
+mono stack, and the three faces being declared, present on disk and in
+the offline shell.
+
+Marker glows on the charts and the pill shape on badges are deliberately
+untouched: they belong to 3b-ii and 3b-iii.
 
 ## Light values the table does not name
 

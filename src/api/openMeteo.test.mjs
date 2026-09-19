@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   ALERTS_STATUS,
   fetchAirQuality,
+  fetchAirQualityDetail,
   geocodeCity,
   fetchHistoricalTemperatureAverage,
   fetchWeather,
@@ -1078,5 +1079,82 @@ describe("request timeout budget", () => {
     ]);
 
     assert.equal(reading, null);
+  });
+});
+
+describe("fetchAirQualityDetail", () => {
+  test("asks the provider for the sub-indices rather than deriving them", async () => {
+    // The EPA breakpoint tables are four pollutants over two averaging
+    // periods and are revised by rule-making. A local copy would drift
+    // silently the first time one changed, so the sub-indices are asked for
+    // by name and the provider's arithmetic is the reading.
+    let requestedUrl = "";
+    globalThis.fetch = async (url) => {
+      requestedUrl = String(url);
+      return createJsonResponse({ current: { us_aqi: 40, us_aqi_pm2_5: 40 } });
+    };
+
+    await fetchAirQualityDetail(41.8781, -87.6298);
+
+    assert.match(requestedUrl, /us_aqi_pm2_5/);
+    assert.match(requestedUrl, /us_aqi_ozone/);
+    assert.match(requestedUrl, /us_aqi_nitrogen_dioxide/);
+  });
+
+  test("names the pollutant the overall index is actually made of", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse({
+        current: {
+          us_aqi: 62,
+          us_aqi_pm2_5: 31,
+          us_aqi_pm10: 12,
+          us_aqi_ozone: 62,
+          us_aqi_nitrogen_dioxide: 8,
+        },
+      });
+
+    const result = await fetchAirQualityDetail(41.8781, -87.6298);
+
+    assert.equal(result.aqi, 62);
+    assert.equal(result.driver.label, "Ozone");
+  });
+
+  test("names no driver when no sub-index accounts for the overall index", async () => {
+    // The US index is the maximum of its sub-indices. If none of them equals
+    // it, the provider is telling us something we cannot explain, and naming
+    // a pollutant anyway would be a guess dressed as a finding.
+    globalThis.fetch = async () =>
+      createJsonResponse({
+        current: { us_aqi: 70, us_aqi_pm2_5: 31, us_aqi_ozone: 44 },
+      });
+
+    const result = await fetchAirQualityDetail(41.8781, -87.6298);
+
+    assert.equal(result.aqi, 70);
+    assert.equal(result.driver, null);
+  });
+
+  test("a pollutant the provider omits stays missing and never becomes zero", async () => {
+    globalThis.fetch = async () =>
+      createJsonResponse({
+        current: { us_aqi: 40, us_aqi_pm2_5: 40, us_aqi_ozone: null },
+      });
+
+    const result = await fetchAirQualityDetail(41.8781, -87.6298);
+
+    const ozone = result.pollutants.find((p) => p.label === "Ozone");
+    const so2 = result.pollutants.find((p) => p.label === "SO2");
+    assert.equal(ozone.value, null, "an explicit null is missing, not clean air");
+    assert.equal(so2.value, null, "an absent field is missing, not clean air");
+  });
+
+  test("returns null rather than throwing when the provider fails", async () => {
+    globalThis.fetch = async () => createJsonResponse({}, { status: 500 });
+
+    const result = await fetchAirQualityDetail(41.8781, -87.6298, {
+      retryDelaysMs: [0],
+    });
+
+    assert.equal(result, null);
   });
 });

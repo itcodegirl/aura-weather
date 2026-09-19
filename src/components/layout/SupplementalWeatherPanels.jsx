@@ -1,5 +1,6 @@
 import { memo, Suspense } from "react";
 import NowcastCard from "../NowcastCard";
+import HealthCard from "../HealthCard";
 import ForecastCard from "../ForecastCard";
 import PanelErrorBoundary from "../PanelErrorBoundary";
 import { CardFallback } from "../ui";
@@ -159,6 +160,30 @@ function SupplementalWeatherPanels({
             isRefreshing={isBackgroundLoading}
           />
         </Suspense>
+      </PanelErrorBoundary>
+
+      {/* Health sits after the ambient tier: it is a reading to consult, not
+          one to act on in the next hour, and it is the last thing on the
+          page for the same reason Atmosphere recedes before it. */}
+      <h2
+        id="group-health"
+        className="bento-group-label"
+        data-tier="ambient"
+        style={groupLabelStyleVariables[4]}
+      >
+        Health
+        <span className="bento-group-scope">Air quality</span>
+      </h2>
+      <PanelErrorBoundary
+        label="Health"
+        className="bento-health"
+        style={cardStyleVariables[8]}
+      >
+        <HealthCard
+          weather={weather}
+          style={cardStyleVariables[8]}
+          isRefreshing={isBackgroundLoading}
+        />
       </PanelErrorBoundary>
     </>
   );

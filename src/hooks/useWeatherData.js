@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   ALERTS_STATUS,
   fetchWeather,
-  fetchAirQuality,
+  fetchAirQualityDetail,
   fetchSevereWeatherAlerts,
 } from "../api";
 import {
@@ -233,11 +233,15 @@ export function useWeatherData(location, options = {}) {
     weatherFetchedAt,
   }) => {
     const supplementalTasks = [
-      fetchAirQuality(coordinates.latitude, coordinates.longitude, {
+      // One request, two readings: the overall index the Atmosphere gauge
+      // has always drawn, and the per-pollutant sub-indices the health
+      // panel breaks down. Widening the existing call rather than adding a
+      // second keeps the request count where it was.
+      fetchAirQualityDetail(coordinates.latitude, coordinates.longitude, {
         signal: controller.signal,
-      }).then((aqi) => ({
+      }).then((detail) => ({
         kind: "aqi",
-        value: aqi,
+        value: detail,
       })),
       fetchSevereWeatherAlerts(coordinates.latitude, coordinates.longitude, {
         signal: controller.signal,
@@ -254,6 +258,7 @@ export function useWeatherData(location, options = {}) {
       }
 
       let nextAqi = null;
+      let nextAirQuality = null;
       let alertsPayload = null;
 
       for (const result of results) {
@@ -265,7 +270,10 @@ export function useWeatherData(location, options = {}) {
         }
 
         if (result.value.kind === "aqi") {
-          nextAqi = result.value.value;
+          // `aqi` stays the scalar every existing consumer reads; the
+          // breakdown rides alongside it under its own key.
+          nextAqi = result.value.value?.aqi ?? null;
+          nextAirQuality = result.value.value ?? null;
         }
 
         if (result.value.kind === "alerts") {
@@ -293,7 +301,7 @@ export function useWeatherData(location, options = {}) {
       // write must stay outside the setState updater: updaters have to
       // be pure — StrictMode invokes them twice — and a persistence
       // side effect inside one runs twice with them.
-      const nextWeather = { ...baseWeather, aqi: nextAqi };
+      const nextWeather = { ...baseWeather, aqi: nextAqi, airQuality: nextAirQuality };
 
       if (alertsPayload) {
         nextWeather.alerts = Array.isArray(alertsPayload?.alerts)

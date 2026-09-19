@@ -9,78 +9,16 @@ import {
 } from "./nowcast/analyzeNowcast.js";
 import { InfoDrawer } from "./ui";
 import "./NowcastCard.css";
+import {
+  buildNowcastBarGeometry,
+  NC_SVG_W,
+  NC_SVG_H,
+  NC_DOMAIN,
+  NC_LIKELY_THRESHOLD,
+} from "./nowcast/nowcastBars.js";
 
-const NC_SVG_W = 1000;
-const NC_SVG_H = 150;
-const NC_TOP_PAD = 20;
-const NC_BOT_PAD = 24;
-const NC_DOMAIN = 100; // full 0-100% range so high-rain windows slope instead of pegging flat at the cap
-// The "Rain likely" reference line. 50% is the app-wide "likely" cutoff —
-// RainCard and HourlyCard both draw their likely threshold at 50% — so the
-// same word means the same probability everywhere. (Previously 40%, which
-// disagreed with the rest of the dashboard.)
-const NC_LIKELY_THRESHOLD = 50;
 
-function buildNowcastChartGeometry(points) {
-  const n = points.length;
-  if (n < 2) return null;
-  const span = NC_SVG_H - NC_TOP_PAD - NC_BOT_PAD;
-  const xs = points.map((_, i) => (i / (n - 1)) * NC_SVG_W);
-  const isMissing = (v) => v === null || v === undefined;
-  const ys = points.map((v) =>
-    isMissing(v) ? null : NC_TOP_PAD + (1 - Math.min(v, NC_DOMAIN) / NC_DOMAIN) * span
-  );
 
-  // Split the window into contiguous runs of present points so a missing
-  // 15-minute slot breaks the curve into a visible gap instead of being
-  // drawn as a confident 0%. With no gaps this collapses to a single run
-  // whose path is identical to the previous single-segment geometry.
-  const segments = [];
-  let run = [];
-  for (let i = 0; i < n; i += 1) {
-    if (ys[i] === null) {
-      if (run.length) segments.push(run);
-      run = [];
-    } else {
-      run.push(i);
-    }
-  }
-  if (run.length) segments.push(run);
-  if (segments.length === 0) return null;
-
-  let strokeD = "";
-  let fillD = "";
-  for (const seg of segments) {
-    const first = seg[0];
-    const last = seg[seg.length - 1];
-    if (seg.length === 1) {
-      // Isolated present point: a round-capped zero-length subpath draws a dot.
-      strokeD += `M${xs[first].toFixed(1)},${ys[first].toFixed(1)} L${xs[first].toFixed(1)},${ys[first].toFixed(1)}`;
-      continue;
-    }
-    let core = "";
-    for (let k = 0; k < seg.length - 1; k += 1) {
-      const i = seg[k];
-      const j = seg[k + 1];
-      const xc = (xs[i] + xs[j]) / 2;
-      const yc = (ys[i] + ys[j]) / 2;
-      core += ` Q${xs[i].toFixed(1)},${ys[i].toFixed(1)} ${xc.toFixed(1)},${yc.toFixed(1)}`;
-    }
-    core += ` L${xs[last].toFixed(1)},${ys[last].toFixed(1)}`;
-    strokeD += `M${xs[first].toFixed(1)},${ys[first].toFixed(1)}${core}`;
-    // Fill under this run down to the baseline, closed within the run only.
-    fillD += `M${xs[first].toFixed(1)},${NC_SVG_H} L${xs[first].toFixed(1)},${ys[first].toFixed(1)}${core} L${xs[last].toFixed(1)},${NC_SVG_H} Z`;
-  }
-
-  const thresholdY = NC_TOP_PAD + (1 - NC_LIKELY_THRESHOLD / NC_DOMAIN) * span;
-  // Peak marker sits on the highest present point, ignoring gaps.
-  let peakIdx = -1;
-  for (let i = 0; i < n; i += 1) {
-    if (isMissing(points[i])) continue;
-    if (peakIdx === -1 || points[i] > points[peakIdx]) peakIdx = i;
-  }
-  return { strokeD, fillD, thresholdY, xs, ys, peakIdx };
-}
 
 // Spoken equivalent of the aria-hidden chart: the threshold crossing and the
 // shape of the curve, neither of which the chips (Start / Duration / Peak)
@@ -142,7 +80,6 @@ function NowcastCard({
   isRefreshing = false,
 }) {
   const titleId = useId();
-  const chartGradientId = `${titleId}-ncg`;
   const chartDescriptionId = `${titleId}-ncdesc`;
   const nowcast = useMemo(
     () => analyzeNowcast(weather?.nowcast, { timeZone: weather?.meta?.timezone }),
@@ -233,7 +170,14 @@ function NowcastCard({
     );
   }, [nowcast.hasData, nowcast.series]);
 
-  const chartGeo = useMemo(() => buildNowcastChartGeometry(chartPoints), [chartPoints]);
+  const chartTimes = useMemo(
+    () => (Array.isArray(nowcast.times) ? nowcast.times : []),
+    [nowcast.times]
+  );
+  const barGeo = useMemo(
+    () => buildNowcastBarGeometry(chartPoints, chartTimes),
+    [chartPoints, chartTimes]
+  );
   const chartDescription = useMemo(
     () => buildNowcastChartDescription(chartPoints, peakProbability),
     [chartPoints, peakProbability]
@@ -284,7 +228,7 @@ function NowcastCard({
         <p className="nowcast-details">{nowcast.details}</p>
       </div>
 
-      {chartGeo !== null && (
+      {barGeo !== null && (
         <div className="nowcast-chart">
           <div className="nowcast-chart-head">
             <span className="nowcast-chart-label">Rain chance · next 2h</span>
@@ -299,57 +243,70 @@ function NowcastCard({
               className="nowcast-svg"
               aria-hidden="true"
             >
-              <defs>
-                <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7fd99a" stopOpacity="0.34" />
-                  <stop offset="55%" stopColor="#7fd99a" stopOpacity="0.12" />
-                  <stop offset="100%" stopColor="#7fd99a" stopOpacity="0" />
-                </linearGradient>
-              </defs>
               <line
-                x1="0" y1={chartGeo.thresholdY.toFixed(1)}
-                x2={NC_SVG_W} y2={chartGeo.thresholdY.toFixed(1)}
-                stroke="rgba(238,241,248,.22)"
+                x1="0" y1={barGeo.thresholdY.toFixed(1)}
+                x2={NC_SVG_W} y2={barGeo.thresholdY.toFixed(1)}
+                stroke="var(--wire-structural)"
                 strokeWidth="1"
                 strokeDasharray="5 6"
                 vectorEffect="non-scaling-stroke"
               />
-              <line
-                x1="0" y1={NC_SVG_H - 1}
-                x2={NC_SVG_W} y2={NC_SVG_H - 1}
-                stroke="rgba(255,255,255,.08)"
-                strokeWidth="1"
-                vectorEffect="non-scaling-stroke"
-              />
-              <path d={chartGeo.fillD} fill={`url(#${chartGradientId})`} />
-              <path
-                d={chartGeo.strokeD}
-                fill="none"
-                stroke="#7fd99a"
-                strokeOpacity="0.22"
-                strokeWidth="6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-              <path
-                d={chartGeo.strokeD}
-                fill="none"
-                stroke="#7fd99a"
-                strokeWidth="2.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle
-                cx={chartGeo.xs[chartGeo.peakIdx].toFixed(1)}
-                cy={chartGeo.ys[chartGeo.peakIdx].toFixed(1)}
-                r="3.2"
-                fill="#0b1626"
-                stroke="#7fd99a"
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-              />
+              {/* A step the provider did not report draws nothing at all --
+                  no bar, no baseline -- so a gap in the strip reads as a
+                  gap and never as a dry quarter-hour.
+
+                  The dash takes --ink-dim because it is a reading (a
+                  reported 0%), not a boundary. It was
+                  rgba(238,241,248,.30), which composites to 1.02 against
+                  the light panel: a reported zero was invisible there and
+                  so indistinguishable from a missing step, which is the
+                  one distinction this strip exists to draw. */}
+              {barGeo.dry.map((d, i) => (
+                <line
+                  key={`dry-${i}`}
+                  x1={d.x.toFixed(1)} y1={barGeo.base.toFixed(1)}
+                  x2={(d.x + d.width).toFixed(1)} y2={barGeo.base.toFixed(1)}
+                  stroke="var(--ink-dim)"
+                  strokeWidth="2"
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+              {/* Solid where the series carries an on-the-hour forecast
+                  value; outlined where the point was interpolated between
+                  two of them. An outline rather than a lighter fill so the
+                  distinction survives at any background: the stroke is the
+                  thing carrying the information, and it holds full contrast
+                  (11.1 for the likely tone, 8.8 for the accent, against the
+                  dark panel) rather than being faded under the 3:1 floor
+                  WCAG 1.4.11 sets for a graphical object. */}
+              {barGeo.bars.map((b, i) => {
+                // One tone for every bar. Colouring the likely ones
+                // green said "good" about a high chance of rain, which
+                // is the opposite of what the reading means. The dashed
+                // 50% rule and its "Rain likely" label carry that
+                // signal, and a bar crossing the rule is the statement.
+                //
+                // A role, not a literal: the hard-coded #7fd99a this
+                // replaces measured 1.59 against the light panel, under
+                // WCAG 1.4.11's 3:1 for a graphical object, and
+                // load-bearing because on an outlined bar the stroke is
+                // the reading. --status-accent is 8.79 dark, 5.77 light.
+                const tone = "var(--status-accent)";
+                return (
+                  <rect
+                    key={`bar-${i}`}
+                    x={b.x.toFixed(1)}
+                    y={b.y.toFixed(1)}
+                    width={b.width.toFixed(1)}
+                    height={b.height.toFixed(1)}
+                    fill={b.anchor ? tone : "none"}
+                    opacity={b.anchor && !b.likely ? 0.72 : 1}
+                    stroke={b.anchor ? "none" : tone}
+                    strokeWidth={b.anchor ? 0 : 1.5}
+                    vectorEffect={b.anchor ? undefined : "non-scaling-stroke"}
+                  />
+                );
+              })}
             </svg>
             <span className="nowcast-chart-thresh-label" aria-hidden="true">Rain likely</span>
           </div>
@@ -360,6 +317,14 @@ function NowcastCard({
             <span>90m</span>
             <span>2h</span>
           </div>
+          {/* States what the series is. Not "measured": nothing here is an
+              observation -- the whole window is forecast -- and the
+              distinction the outlines draw is hourly-forecast against
+              interpolated. */}
+          <p className="nowcast-chart-note">
+            Solid bars are hourly forecast values; outlined bars are
+            interpolated between them.
+          </p>
         </div>
       )}
 

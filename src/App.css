@@ -5,10 +5,10 @@
   /* ----------------------------------------------------------------
    * Semantic layer
    *
-   * The roles the interface is drawn from, each holding the colour it
-   * already had. Nothing below changes what the app renders: this is a
-   * move, and every token further down resolves to the same value it
-   * resolved to before.
+   * The roles the interface is drawn from. The layer landed as a pure
+   * move — every token resolved to the value it had before — and then
+   * the surfaces went opaque in the Instrument sequence's step 2 (see the
+   * panel roles below). Everything else still holds the colour it had.
    *
    * It exists because Aura's palette is currently ~40 literals scattered
    * through this block, and a stylesheet asking for --bg-large-card is
@@ -28,22 +28,43 @@
   --ground: #070c18;
   --ground-bottom: #050812;
 
-  --panel: rgba(255, 255, 255, 0.11);
-  --panel-raised: rgba(255, 255, 255, 0.16);
-  --panel-well: rgba(0, 0, 0, 0.3);
+  /*
+   * Instrument step 2: opaque surfaces. These were white @ .11 / .16 and
+   * black @ .30 over whatever the sky happened to be, seen through a
+   * backdrop blur. Each is now that same alpha composited over --ground
+   * (#070c18) and frozen — a derivation, not a new colour, so the
+   * Instrument palette proper (step 3) is still the only place new values
+   * enter. The well is cut into the panel, so it composites over --panel
+   * rather than over the ground.
+   *   white @ .11 over --ground -> #222731
+   *   white @ .16 over --ground -> #2f333d
+   *   black @ .30 over --panel  -> #181b23
+   */
+  --panel: #222731;
+  --panel-raised: #2f333d;
+  --panel-well: #181b23;
 
   --wire-structural: rgba(206, 222, 248, 0.3);
   --wire-rhythm: rgba(196, 213, 241, 0.12);
 
   --ink: #eef1f8;
   /*
-   * Alphas are floored at the WCAG AA (4.5:1) threshold for small text
-   * against the worst-case backdrop this app can paint: the lightest
-   * sky gradient stop (#2e353f, Rime Fog) seen through the most opaque
-   * glass (--panel-raised, white @ 0.16), i.e. an effective rgb(79,85,94).
-   * Below ~0.742 alpha both tokens fail AA there. axe cannot catch this
-   * because the backdrop is a gradient, so the floor is enforced here.
-   *   --ink-muted -> 5.57:1    --ink-dim -> 4.63:1
+   * Alphas are floored at the WCAG AA (4.5:1) threshold for small text.
+   * Until step 2 the backdrop under text varied with the sky, and the
+   * floor was set against the lightest stop (#2e353f, Rime Fog) seen
+   * through the most opaque glass — roughly 5.6:1 muted and 4.7:1 dim.
+   * The panels are now opaque, so the backdrop is fixed and the ratios
+   * hold whatever the weather. Recomputed against --panel-raised
+   * (#2f333d), the lightest surface text sits on:
+   *   --ink-muted -> 9.07:1    --ink-dim -> 7.50:1
+   *   (vs --panel 10.58 / 8.63; vs --panel-well 11.98 / 9.64)
+   * Kept here rather than left to axe so the floor guards the token, not
+   * one page's rendering of it.
+   *
+   * Not fixed by step 2: --wire-structural against the panel measures
+   * 2.29:1 — it was 2.29 on a dark sky and 1.94 on a bright one — under
+   * WCAG 1.4.11's 3:1 for a module boundary. Step 3's two-wire system is
+   * what clears it; recorded so the number is not mistaken for new.
    */
   --ink-muted: rgba(238, 241, 248, 0.88);
   --ink-dim: rgba(238, 241, 248, 0.78);
@@ -83,7 +104,6 @@
     0 24px 58px rgba(3, 9, 24, 0.38),
     0 10px 26px rgba(80, 119, 150, 0.1),
     inset 0 1px 0 rgba(243, 248, 255, 0.12);
-  --card-backdrop-blur: 10px;
 
   /* Shadow recipe — every non-card surface composes from these four.
      Bevel = top inner highlight; raise = drop shadow by elevation. */
@@ -121,12 +141,14 @@
   --green-good: var(--status-ok);
   --green-good-light: #a9e2bd;
 
-  /* Card surface tiers — Glacier glass system.
-     Tile (+.16) and large card (+.11) are ADDITIVE white over the dusk
-     gradient. The inset WELL is SUBTRACTIVE (a dark overlay), so nested
-     stats read recessed AND keep muted/dim text above AA 4.5:1 even on
-     the brightest dusk — a .055 white well composited brighter than its
-     card (raised, backwards from §1) and failed AA on bright conditions. */
+  /* Card surface tiers. Tile sits above large card and the inset WELL
+     below both, so nested stats read recessed. They began as additive
+     white (+.16 / +.11) and a subtractive well (-.30) over the sky, seen
+     through glass; since Instrument step 2 they are those same three
+     steps frozen as opaque colours (the panel roles at the top). The
+     well stays darker than its card on purpose — a .055 white well once
+     composited brighter than its card (raised, backwards) and failed AA
+     on bright conditions. */
   --bg-tile: var(--panel-raised);
   --bg-tile-border: rgba(255, 255, 255, 0.22);
   --bg-large-card: var(--panel);
@@ -375,11 +397,6 @@ a:focus-visible,
 
 .skip-link:focus-visible {
   transform: translateY(0);
-}
-
-.glass {
-  backdrop-filter: blur(var(--card-backdrop-blur));
-  -webkit-backdrop-filter: blur(var(--card-backdrop-blur));
 }
 
 #main-content:focus-visible {
@@ -739,7 +756,6 @@ a:focus-visible,
 
 @media (max-width: 560px) {
   :root {
-    --card-backdrop-blur: 10px;
     --hero-unit-size: 22px;
     --card-padding: 20px;
   }
@@ -883,8 +899,6 @@ a:focus-visible,
     --card-shadow:
       0 12px 28px rgba(2, 8, 24, 0.28),
       inset 0 1px 0 rgba(229, 240, 255, 0.08);
-    /* Reduce backdrop blur — GPU-composite cost drops from blur(10) to blur(6) */
-    --card-backdrop-blur: 6px;
   }
 }
 

@@ -111,9 +111,10 @@
 }
 
 .global-update-state {
+  font-family: var(--font-mono);
   color: var(--text-dim);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
   padding: 0 6px;

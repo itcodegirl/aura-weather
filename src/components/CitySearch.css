@@ -17,9 +17,7 @@
   border-radius: var(--radius-sm);
   border: var(--border-strong);
   background: var(--bg-well);
-  box-shadow:
-    inset 0 1px 0 rgba(225, 240, 255, 0.12),
-    0 6px 18px rgba(4, 10, 24, 0.2);
+  box-shadow: none;
   transition:
     border-color var(--motion-subtle) var(--ease-standard),
     background var(--motion-subtle) var(--ease-standard),
@@ -29,9 +27,7 @@
 
 .city-search-input-wrap:hover {
   border-color: rgba(199, 222, 247, 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(225, 240, 255, 0.16),
-    0 10px 24px rgba(4, 10, 24, 0.28);
+  box-shadow: none;
 }
 
 .city-search-input-wrap:focus-within {
@@ -39,10 +35,7 @@
   background:
     linear-gradient(180deg, rgba(18, 35, 63, 0.9), rgba(11, 24, 45, 0.82)),
     rgba(9, 20, 44, 0.78);
-  box-shadow:
-    inset 0 1px 0 rgba(229, 244, 255, 0.2),
-    0 0 0 3px rgba(111, 183, 242, 0.14),
-    0 10px 26px rgba(4, 10, 24, 0.26);
+  box-shadow: 0 0 0 3px rgba(111, 183, 242, 0.14);
 }
 
 .city-search-icon {
@@ -94,6 +87,7 @@
 }
 
 .city-search-shortcut-badge {
+  font-family: var(--font-mono);
   margin-left: auto;
   padding: 4px 8px;
   border-radius: var(--radius-pill);
@@ -101,7 +95,7 @@
   background: var(--bg-well);
   color: var(--text);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -124,7 +118,7 @@
   border-radius: var(--radius-sm);
   border: var(--card-border);
   background: var(--bg-large-card);
-  box-shadow: 0 22px 44px rgba(2, 6, 19, 0.52);
+  box-shadow: none;
   transform-origin: top center;
   animation: dropdown-reveal var(--motion-subtle) var(--ease-standard);
 }
@@ -145,6 +139,7 @@
 }
 
 .city-search-group-label {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   min-height: 20px;
@@ -154,7 +149,7 @@
   background: var(--bg-well);
   color: var(--text);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }

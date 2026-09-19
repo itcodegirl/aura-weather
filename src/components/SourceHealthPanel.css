@@ -24,9 +24,10 @@
 }
 
 .source-health-kicker {
+  font-family: var(--font-mono);
   color: var(--text-muted);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -115,6 +116,7 @@
 }
 
 .source-health-pill {
+  font-family: var(--font-mono);
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -125,7 +127,7 @@
   background: var(--bg-tile);
   color: var(--paper-dim);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-tight);
   text-transform: uppercase;
   white-space: nowrap;

@@ -48,7 +48,7 @@
   flex-direction: column;
   gap: 7px;
   padding: 13px;
-  border-radius: 15px;
+  border-radius: 0;
   background: var(--bg-tile);
   border: var(--border-default);
 }
@@ -110,6 +110,7 @@
  * clears it at 5.19:1.
  */
 .atm-label {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -210,6 +211,7 @@
 
 /* Main numeric value */
 .atm-val {
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -325,7 +327,7 @@
 .atm-dewpoint-bar {
   position: relative;
   height: 8px;
-  border-radius: 5px;
+  border-radius: 0;
   background: linear-gradient(90deg, var(--accent), var(--accent-green), #f3d765, #e8745b);
   overflow: visible;
 }
@@ -336,7 +338,7 @@
   transform: translate(-50%, -50%);
   width: 4px;
   height: 14px;
-  border-radius: 2px;
+  border-radius: 0;
   background: #fff;
   box-shadow: 0 0 0 2px rgba(7, 15, 29, 0.5);
 }

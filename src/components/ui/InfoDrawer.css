@@ -76,17 +76,16 @@
   border-radius: var(--radius-xs);
   border: var(--border-default);
   background: rgba(34, 70, 108, 0.92);
-  box-shadow:
-    0 10px 22px rgba(3, 10, 24, 0.32),
-    inset 0 1px 0 rgba(229, 241, 255, 0.1);
+  box-shadow: none;
   text-align: left;
 }
 
 .info-drawer-title {
+  font-family: var(--font-mono);
   margin: 0 0 4px;
   color: var(--paper-dim);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-tight);
   text-transform: uppercase;
 }

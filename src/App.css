@@ -297,6 +297,131 @@
   --paper-dim: #edf5ff;
 }
 
+/* ------------------------------------------------------------------
+ * Instrument step 4 — the light scheme.
+ *
+ * System-following only (prefers-color-scheme); there is no in-app
+ * toggle. The light ground is flat: the weather-scene gradient is
+ * dark-only by decision (2026-09-19), so `.app` drops its inline sky
+ * below and the page is the ground. The panel is not white — moved to
+ * #f5f7fa with the ground at #e4e9ef (Jenna, 2026-09-19) — and the
+ * structural wire darkened to #7b8292 because the brief's #8a909e
+ * measured 2.98 against this panel and 2.90 against the brief's own
+ * ground, both under 1.4.11's 3:1. Every ratio below is against the
+ * new panel and guarded in App.tokens.test.mjs for both schemes.
+ *
+ *   ground #e4e9ef  panel #f5f7fa (1.14 vs ground)
+ *   raised #ffffff  (the brief's white, one tier up)   well = ground
+ *   wire-structural #7b8292  3.59 vs panel  3.16 vs ground
+ *   ink 17.19  muted 10.39  dim 5.67   ok 5.32  warn 5.90  crit 5.76  accent 5.77
+ *
+ * The families the brief never named — severity, risk, chart, surfaces,
+ * paper, the accent tints, the active pill — are derived, not chosen:
+ * same hue and saturation, lightness solved so each hits the same ratio
+ * against the light panel that its dark value hits against the dark one.
+ * The table is in docs/redesign/instrument/README.md.
+ * ------------------------------------------------------------------ */
+@media (prefers-color-scheme: light) {
+  :root {
+    --ground-top: #e4e9ef;
+    --ground: #e4e9ef;
+    --ground-bottom: #e4e9ef;
+
+    --panel: #f5f7fa;
+    --panel-raised: #ffffff;
+    --panel-well: #e4e9ef;
+
+    --wire-structural: #7b8292;
+    --wire-rhythm: #e2e6ec;
+
+    --ink: #0d1420;
+    --ink-muted: #313c4d;
+    --ink-dim: #55637a;
+
+    --status-accent: #1a63a8;
+    --status-ok: #0a7551;
+    --status-warn: #8a5300;
+    --status-crit: #b4302a;
+
+    /* derived — see the brief's "Light values the table does not name" */
+    --accent-strong: #195c90;
+    --glacier-mid: #0d3a62;
+    --glacier-light: #062b4e;
+    --glacier-muted: #0f3460;
+    --amber-soft: #422a06;
+    --green-good-light: #11341e;
+
+    --focus-ring: 0 0 0 4px rgba(26, 99, 168, 0.4);
+    --focus-outline: rgba(26, 99, 168, 0.8);
+    --hover-border-color: rgba(26, 99, 168, 0.44);
+
+    --surface-1: #f4f6fb;
+    --surface-2: #f2f5fb;
+    --surface-3: #f3f6fc;
+    --surface-strong: #f7f9fd;
+
+    --active-pill-bg: linear-gradient(145deg, #000b16, #001e43);
+    --active-pill-color: #ffffff;
+
+    --severity-critical-fg: #5f0202;
+    --severity-critical-border: #dda1a3;
+    --severity-critical-bg: #f4e2e5;
+    --severity-high-fg: #3b2001;
+    --severity-high-border: #ea9d78;
+    --severity-high-bg: #eedfd9;
+    --severity-warn-fg: #271f01;
+    --severity-warn-border: #e49c4a;
+    --severity-warn-bg: #e3dac1;
+    --severity-ok-fg: #04230f;
+    --severity-ok-border: #2bbe6f;
+    --severity-ok-bg: #dff4f0;
+    --severity-info-fg: #021d41;
+    --severity-info-border: #7d98b6;
+    --severity-info-bg: #e5ebf8;
+    --status-ready-fg: #021709;
+
+    --risk-low: #0f5428;
+    --risk-moderate: #223306;
+    --risk-elevated: #4f3c03;
+    --risk-high: #913e04;
+    --risk-severe: #d41212;
+    --risk-extreme: #9631f5;
+
+    --chart-rain-top: #10467d;
+    --chart-rain-bottom: #2662a7;
+    --chart-good-top: #0c3218;
+    --chart-good-bottom: #1b4d30;
+    --chart-outline: #e6edf8;
+    --chart-selected: #392300;
+
+    --paper: #000d1e;
+    --paper-dim: #00142d;
+  }
+
+  /* No sky in light: the scene gradient arrives as an inline style on
+     .app (AppShell.jsx), so this is the one place !important is earned. */
+  .app {
+    background: var(--ground) !important;
+  }
+
+  /* The atmospheric washes end in a dark ramp that greys a pale page. */
+  .app::after {
+    display: none;
+  }
+}
+
+@media (prefers-color-scheme: light) and (prefers-contrast: more) {
+  :root {
+    --text-muted: #0d1420;
+    --text-dim: #1a2534;
+    --border: 1px solid rgba(13, 20, 32, 0.6);
+  }
+
+  .city-search-dropdown {
+    background: #ffffff;
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

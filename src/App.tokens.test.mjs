@@ -447,3 +447,113 @@ describe("the Instrument palette — light scheme (step 4) and both-theme guards
     assert.deepEqual(failing(lightValue, pairs, 4.5), []);
   });
 });
+
+/*
+ * Instrument step 3b-i — flat, square chrome and the measuring face.
+ *
+ * Three of these guard values; the fourth guards a shape of CSS that is
+ * valid to write and silently fatal to ship.
+ *
+ * `box-shadow` takes a comma-separated list, and `none` is not a legal
+ * member of one: `box-shadow: 0 0 0 3px rgba(...), none;` is discarded
+ * whole, taking the focus ring with it. Flattening the shadow recipe to
+ * `none` turned every rule that composed `var(--shadow-raise-sm)` into
+ * a larger list into exactly that. Two rules did — one of them the
+ * header's focus ring. The values below are easy to re-check by eye;
+ * that composition is not, which is why it gets a test.
+ */
+describe("flat, square chrome — Instrument step 3b-i", () => {
+  const RAMP = [
+    "--radius",
+    "--card-radius",
+    "--radius-control",
+    "--radius-md",
+    "--radius-sm",
+    "--radius-xs",
+  ];
+
+  for (const token of RAMP) {
+    test(`${token} is square`, () => {
+      assert.equal(declaredValue(token), "0");
+    });
+  }
+
+  test("--radius-pill still draws circles", () => {
+    // Not part of the ramp: dots, handles and avatar wells are round
+    // because they are not rectangles, and squaring them would be a
+    // different claim than "Instrument squares its panels".
+    assert.equal(declaredValue("--radius-pill"), "999px");
+  });
+
+  const SHADOWS = [
+    "--shadow",
+    "--card-shadow",
+    "--card-shadow-hover",
+    "--shadow-bevel",
+    "--shadow-bevel-strong",
+    "--shadow-raise-sm",
+    "--shadow-raise",
+    "--shadow-raise-lg",
+    "--subcard-shadow",
+  ];
+
+  for (const token of SHADOWS) {
+    test(`${token} draws nothing`, () => {
+      assert.equal(declaredValue(token), "none");
+    });
+  }
+
+  test("no rule composes a shadow token into a multi-layer box-shadow", () => {
+    const offenders = [];
+    for (const file of cssFiles) {
+      const source = readFileSync(file, "utf8").replace(CSS_COMMENT, "");
+      const declarations = source.matchAll(/box-shadow:\s*([^;]+);/g);
+      for (const [, value] of declarations) {
+        const flat = value.replace(/\s+/g, " ").trim();
+        // Split on commas that are not inside rgba(...) / var(...).
+        const layers = flat.split(/,(?![^()]*\))/).map((l) => l.trim());
+        if (layers.length < 2) continue;
+        const composed = layers.filter((layer) =>
+          /^var\(--(?:shadow|card-shadow|subcard-shadow)/.test(layer)
+        );
+        if (composed.length > 0) {
+          offenders.push(`${relative(REPO_ROOT, file)}: ${flat}`);
+        }
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
+
+  test("--font-mono asks for the subset face first", () => {
+    const stack = declaredValue("--font-mono");
+    assert.ok(stack, "--font-mono is not declared");
+    assert.match(stack, /^"IBM Plex Mono"/);
+    // A generic monospace last, so a failed font load still lands on a
+    // fixed-advance face and the readouts keep their column.
+    assert.match(stack, /monospace$/);
+  });
+
+  test("every weight the mono stack is used at is declared and shipped", () => {
+    const html = readFileSync(join(REPO_ROOT, "index.html"), "utf8");
+    const serviceWorker = readFileSync(join(REPO_ROOT, "public/sw.js"), "utf8");
+    for (const [weight, file] of [
+      [400, "IBMPlexMono-Regular.woff2"],
+      [500, "IBMPlexMono-Medium.woff2"],
+      [600, "IBMPlexMono-SemiBold.woff2"],
+    ]) {
+      assert.match(
+        html,
+        new RegExp(
+          `font-weight: ${weight};[^}]*${file.replace(".", "\\.")}`,
+          "s"
+        ),
+        `index.html does not declare IBM Plex Mono ${weight}`
+      );
+      statSync(join(REPO_ROOT, "public/fonts", file));
+      assert.ok(
+        serviceWorker.includes(`/fonts/${file}`),
+        `${file} is missing from the offline shell, so the readouts lose their face offline`
+      );
+    }
+  });
+});

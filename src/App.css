@@ -1,6 +1,11 @@
 ﻿:root {
   --font-sans: "Inter", "Segoe UI", sans-serif;
   --font-display: "Inter", sans-serif;
+  /* Instrument's measuring face. Numerals, units, field keys, module
+     headers and status words — never running prose. Subset and
+     self-hosted; the faces and their licence are in public/fonts. */
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+    monospace;
 
   /* ----------------------------------------------------------------
    * Semantic layer
@@ -85,37 +90,43 @@
   --content-max-width: 1460px;
   --content-gutter: 2.4rem;
 
-  /* Radius ramp — one value per surface tier:
-     xs 6 (micro chips) / sm 10 (tiles) / md 12 (panels, inputs)
-     control 14 (buttons, toggles) / card 16 (cards) / 18 (outer shells) */
-  --radius: 18px;
-  --card-radius: 16px;
-  --radius-control: 14px;
-  --radius-md: 12px;
-  --radius-sm: 10px;
-  --radius-xs: 6px;
+  /* Radius ramp — Instrument squares every rectangle. The six tiers
+     below used to run 6/10/12/14/16/18px; they are all 0 now, and kept
+     as separate names rather than collapsed so the surface tier each
+     rule belongs to is still legible and a future direction can put the
+     ramp back in one place. --radius-pill is not part of the ramp: it
+     draws circles (status dots, the scrub handle, avatar wells), which
+     stay round because they are not rectangles. */
+  --radius: 0;
+  --card-radius: 0;
+  --radius-control: 0;
+  --radius-md: 0;
+  --radius-sm: 0;
+  --radius-xs: 0;
   --radius-pill: 999px;
   --card-padding: 24px;
 
   --border: 1px solid var(--wire-structural);
   --card-border: 1px solid var(--wire-structural);
-  --shadow: 0 18px 44px rgba(3, 8, 25, 0.28);
-  --card-shadow:
-    0 22px 54px rgba(2, 8, 24, 0.34),
-    0 4px 14px rgba(7, 20, 46, 0.2),
-    inset 0 1px 0 rgba(229, 240, 255, 0.1);
-  --card-shadow-hover:
-    0 24px 58px rgba(3, 9, 24, 0.38),
-    0 10px 26px rgba(80, 119, 150, 0.1),
-    inset 0 1px 0 rgba(243, 248, 255, 0.12);
+  /* Instrument carries elevation on the wire, not in the air: a module
+     is bounded by a rule that clears 3:1, so a drop shadow underneath it
+     is a second boundary saying the same thing less legibly, and the
+     inset bevel is a light source this direction does not have. Every
+     shadow token below is none. They stay declared because ~40 rules
+     compose from them, and a token that resolves to none is a smaller,
+     more reversible change than deleting forty box-shadow lines. */
+  --shadow: none;
+  --card-shadow: none;
+  --card-shadow-hover: none;
 
   /* Shadow recipe — every non-card surface composes from these four.
-     Bevel = top inner highlight; raise = drop shadow by elevation. */
-  --shadow-bevel: inset 0 1px 0 rgba(229, 240, 255, 0.08);
-  --shadow-bevel-strong: inset 0 1px 0 rgba(229, 240, 255, 0.14);
-  --shadow-raise-sm: 0 6px 16px rgba(3, 9, 24, 0.2);
-  --shadow-raise: 0 10px 22px rgba(3, 9, 24, 0.26);
-  --shadow-raise-lg: 0 18px 44px rgba(3, 9, 24, 0.32);
+     Bevel = top inner highlight; raise = drop shadow by elevation.
+     Both are none under Instrument; see the note above. */
+  --shadow-bevel: none;
+  --shadow-bevel-strong: none;
+  --shadow-raise-sm: none;
+  --shadow-raise: none;
+  --shadow-raise-lg: none;
 
   /* Glacier glass pass: removed the dark-navy surface tokens --bg-card,
      --bg-card-hover, --panel, --panel-soft, and --subcard-bg. They have
@@ -124,7 +135,7 @@
      top of this file, but as the semantic role, not the old navy fill;
      the others stay gone.) */
   --subcard-border: 1px solid var(--wire-rhythm);
-  --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
+  --subcard-shadow: none;
 
   --accent: var(--status-accent);
   --accent-strong: #4a9fe0;
@@ -602,14 +613,10 @@ a:focus-visible,
 @keyframes refreshing-chip-pulse {
   0%,
   100% {
-    box-shadow:
-      0 0 0 1px rgba(111, 183, 242, 0.24),
-      0 6px 12px rgba(6, 12, 28, 0.24);
+    box-shadow: 0 0 0 1px rgba(111, 183, 242, 0.24);
   }
   50% {
-    box-shadow:
-      0 0 0 1px rgba(111, 183, 242, 0.42),
-      0 8px 14px rgba(6, 12, 28, 0.3);
+    box-shadow: 0 0 0 1px rgba(111, 183, 242, 0.42);
   }
 }
 
@@ -684,10 +691,7 @@ a:focus-visible,
 .error-retry:focus-visible,
 .app-status-retry:focus-visible {
   border-color: rgba(111, 183, 242, 0.66);
-  box-shadow:
-    0 0 0 3px rgba(111, 183, 242, 0.2),
-    var(--shadow-raise-sm),
-    var(--shadow-bevel-strong);
+  box-shadow: 0 0 0 3px rgba(111, 183, 242, 0.2);
 }
 
 /*
@@ -699,11 +703,12 @@ a:focus-visible,
 .forecast-subtitle,
 .storm-subtitle,
 .rain-history-heading {
+  font-family: var(--font-mono);
   color: var(--text-dim);
   font-size: var(--fs-label-lg);
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0;
 }
 
@@ -720,6 +725,7 @@ a:focus-visible,
  * letter-spacing. Now they all reach for one rule.
  */
 .eyebrow-pill {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
@@ -728,7 +734,7 @@ a:focus-visible,
   background: var(--surface-1);
   color: rgba(224, 236, 255, 0.9);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
 }
@@ -741,6 +747,7 @@ a:focus-visible,
  * to read as a styled badge.
  */
 .severity-badge {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -751,7 +758,7 @@ a:focus-visible,
   background: var(--severity-info-bg);
   color: var(--severity-info-fg);
   font-size: var(--fs-caption);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -1024,11 +1031,11 @@ a:focus-visible,
   :root {
     --card-enter-duration: 340ms;
     --card-enter-stagger: 45ms;
-    /* Reduce triple-layer shadow to 2-layer — measurable FPS gain on
-       low-end Android when scrolling through many stacked cards */
-    --card-shadow:
-      0 12px 28px rgba(2, 8, 24, 0.28),
-      inset 0 1px 0 rgba(229, 240, 255, 0.08);
+    /* This block used to thin the card shadow from three layers to two
+       for scroll FPS on low-end Android. Instrument draws no card
+       shadow at all, on any device, so the override would now be the
+       one thing putting a shadow back. The animation timings above are
+       still worth having. */
   }
 }
 

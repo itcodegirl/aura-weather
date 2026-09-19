@@ -11,6 +11,7 @@
 }
 
 .data-source-badge {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   min-height: 20px;
@@ -20,7 +21,7 @@
   background: var(--bg-well);
   color: var(--text);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -30,9 +31,10 @@
 }
 
 .data-stale-warning {
+  font-family: var(--font-mono);
   color: var(--severity-critical-fg);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

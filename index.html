@@ -94,11 +94,22 @@
     <link rel="dns-prefetch" href="https://archive-api.open-meteo.com" />
     <link rel="dns-prefetch" href="https://api.bigdatacloud.net" />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/Inter-Variable.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/IBMPlexMono-Medium.woff2" crossorigin />
     <style>
-      /* Inter — variable (weights 100–900), latin. Primary UI typeface;
-         the hero's ultra-thin 84px numeral relies on weight 200 being
-         loadable from this single variable face. */
+      /* Inter — variable (weights 100–900), latin. Carries the prose:
+         conditions, readings, body copy, card titles. The hero numeral
+         used to rely on this face's weight 200; it is set in the mono
+         face now, so nothing left needs a weight below 400 — the range
+         stays declared because the variable file ships it either way. */
       @font-face { font-family: 'Inter'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('/fonts/Inter-Variable.woff2') format('woff2'); }
+      /* IBM Plex Mono — three static weights, subset (see
+         /fonts/LICENSES.md for the ranges and the OFL notice). Carries
+         measured values and their labels; prose stays in Inter. Only
+         Medium is preloaded: it is the weight the hero reading paints,
+         and 400/600 arrive before anything below the fold is read. */
+      @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2'); }
+      @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/IBMPlexMono-Medium.woff2') format('woff2'); }
+      @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/IBMPlexMono-SemiBold.woff2') format('woff2'); }
     </style>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

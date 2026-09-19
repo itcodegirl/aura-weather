@@ -155,6 +155,7 @@
 }
 
 .hero-high-low-label {
+  font-family: var(--font-mono);
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
@@ -163,7 +164,7 @@
 }
 
 .hero-high-low-value {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   color: var(--text);
   font-size: 20px;
   font-weight: 400;
@@ -194,9 +195,9 @@
 }
 
 .hero-temp {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   font-size: 84px;
-  font-weight: 200;
+  font-weight: 500;
   line-height: 0.82;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -367,6 +368,7 @@
 }
 
 .hero-uv-peak {
+  font-family: var(--font-mono);
   margin-left: auto;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
@@ -488,7 +490,7 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(198, 215, 242, 0.14);
   background: var(--bg-well);
-  box-shadow: var(--subcard-shadow);
+  box-shadow: none;
 }
 
 .hero-guidance-icon {
@@ -496,7 +498,7 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--paper-dim);
   background: rgba(160, 190, 240, 0.12);
 }
@@ -508,9 +510,10 @@
 }
 
 .hero-guidance-label {
+  font-family: var(--font-mono);
   color: var(--text-dim);
   font-size: 10px;
-  font-weight: 760;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -692,7 +695,7 @@
  * ------------------------------------------------------------------------- */
 .hero-card.glass {
   color: var(--text);
-  border-radius: 20px;
+  border-radius: 0;
 }
 
 .hero-high-low-item:first-child .hero-high-low-value {

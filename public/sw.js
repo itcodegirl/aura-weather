@@ -5,7 +5,7 @@
 // for two bumps after the constant had moved on (audit O-14). The constant
 // below is the only statement of the version, and the cache names derive
 // from it.
-const CACHE_VERSION = "aura-weather-v5";
+const CACHE_VERSION = "aura-weather-v6";
 const APP_SHELL_CACHE = `${CACHE_VERSION}-app-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 // CRITICAL_APP_SHELL_URLS must succeed for offline to be useful — if
@@ -20,6 +20,9 @@ const OPTIONAL_APP_SHELL_URLS = [
   "/apple-touch-icon.png",
   "/og-image.png",
   "/fonts/Inter-Variable.woff2",
+  "/fonts/IBMPlexMono-Regular.woff2",
+  "/fonts/IBMPlexMono-Medium.woff2",
+  "/fonts/IBMPlexMono-SemiBold.woff2",
 ];
 const RUNTIME_CACHE_MAX_ENTRIES = 80;
 const CACHEABLE_DESTINATIONS = new Set([

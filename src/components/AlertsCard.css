@@ -25,6 +25,7 @@
 }
 
 .alerts-subtitle {
+  font-family: var(--font-mono);
   /*
    * Alerts subtitle keeps a warm warn tint (vs the neutral .eyebrow-pill)
    * because its presence in the header IS the alert signal.
@@ -37,7 +38,7 @@
   background: var(--severity-warn-bg);
   color: var(--severity-warn-fg);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
@@ -47,7 +48,7 @@
   border-radius: var(--radius-sm);
   border: var(--subcard-border);
   background: var(--bg-well);
-  box-shadow: var(--subcard-shadow);
+  box-shadow: none;
 }
 
 .alerts-empty-title {
@@ -82,7 +83,7 @@
   border-radius: var(--radius-sm);
   border: var(--border-default);
   background: var(--bg-well);
-  box-shadow: var(--subcard-shadow);
+  box-shadow: none;
 }
 
 .alerts-item--critical {
@@ -129,12 +130,13 @@
 }
 
 .alerts-priority {
+  font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }

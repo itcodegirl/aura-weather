@@ -13,6 +13,7 @@
 }
 
 .bento-group-label {
+  font-family: var(--font-mono);
   grid-column: 1 / -1;
   position: relative;
   display: flex;
@@ -23,7 +24,7 @@
   padding-left: 14px;
   color: var(--text);
   font-size: var(--fs-label-lg);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
   opacity: 1;
@@ -135,7 +136,7 @@
   animation: card-slide-up var(--card-enter-duration) var(--ease-emphasis) forwards;
   animation-delay: calc(var(--i, 0) * var(--card-enter-stagger));
   background: var(--bg-large-card);
-  box-shadow: var(--card-shadow);
+  box-shadow: none;
   transition:
     transform var(--motion-medium) var(--ease-emphasis),
     border-color var(--motion-fast) var(--ease-standard),
@@ -168,13 +169,11 @@
 }
 
 .bento > section[data-refreshing="true"] {
-  box-shadow:
-    0 30px 72px rgba(2, 8, 24, 0.42),
-    0 6px 18px rgba(7, 20, 46, 0.24),
-    inset 0 0 0 1px rgba(156, 201, 242, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(156, 201, 242, 0.34);
 }
 
 .bento > section[data-refreshing="true"]::before {
+  font-family: var(--font-mono);
   content: "Refreshing";
   inset: auto 14px auto auto;
   top: 12px;
@@ -186,7 +185,7 @@
   background: var(--surface-strong);
   color: var(--text);
   font-size: var(--fs-caption);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
   transform: none;
@@ -196,10 +195,7 @@
 
 .bento > section:focus-within {
   border-color: rgba(156, 201, 242, 0.72);
-  box-shadow:
-    0 28px 62px rgba(3, 9, 24, 0.42),
-    0 0 0 2px rgba(156, 201, 242, 0.45),
-    inset 0 1px 0 rgba(243, 248, 255, 0.18);
+  box-shadow: 0 0 0 2px rgba(156, 201, 242, 0.45);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -207,7 +203,7 @@
     transform: translateY(-2px);
     border-color: rgba(198, 218, 243, 0.34);
     background: var(--bg-tile);
-    box-shadow: var(--card-shadow-hover);
+    box-shadow: none;
   }
 
   .bento > section:hover::before {
@@ -322,6 +318,7 @@
 }
 
 .data-status-summary {
+  font-family: var(--font-mono);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -330,7 +327,7 @@
   list-style: none;
   color: var(--text-muted);
   font-size: var(--fs-label-lg);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
   border-radius: inherit;

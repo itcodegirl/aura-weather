@@ -89,7 +89,7 @@
   border-radius: var(--radius-sm);
   border: var(--subcard-border);
   background: var(--bg-well);
-  box-shadow: var(--subcard-shadow);
+  box-shadow: none;
 }
 
 .nowcast-summary {
@@ -126,21 +126,23 @@
   border-radius: var(--radius-sm);
   border: var(--subcard-border);
   background: var(--bg-well);
-  box-shadow: var(--subcard-shadow);
+  box-shadow: none;
 }
 
 .nowcast-chip-label {
+  font-family: var(--font-mono);
   color: var(--text-dim);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
 }
 
 .nowcast-chip-value {
+  font-family: var(--font-mono);
   color: var(--green-good-light);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -269,6 +271,7 @@
 }
 
 .nowcast-chart-label {
+  font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -297,6 +300,7 @@
 }
 
 .nowcast-chart-thresh-label {
+  font-family: var(--font-mono);
   position: absolute;
   right: 0;
   top: 5%;

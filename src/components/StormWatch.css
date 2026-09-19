@@ -302,24 +302,32 @@
   overflow: visible;
 }
 
+/* The ramp is the scale, not the reading. At full strength it painted a
+   calm-to-explosive alarm across a card whose headline was "All clear",
+   and the eye went to the gradient rather than to where the marker sat
+   on it. Quiet enough to read as a range; the marker below carries the
+   value, and both ends are labelled in text. */
 .cape-scale-track {
   position: absolute;
   inset: 0;
   border-radius: 0;
   background: linear-gradient(90deg, var(--accent-green) 0%, var(--accent-warm) 55%, #e2574a 100%);
-  opacity: 0.85;
+  opacity: 0.32;
 }
 
+/* A tick, not a thumb. A white glowing circle on a gradient rail is the
+   shape of a slider, and this is a readout -- it is aria-hidden and
+   nothing here is draggable. The mockup marks a scale with a 2px rule
+   through it, which also reads at a glance against the quieted ramp. */
 .cape-marker {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid var(--chart-outline);
+  width: 2px;
+  height: 13px;
+  border-radius: 0;
+  background: var(--ink);
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  box-shadow: none;
 }
 
 .cape-scale-ends {

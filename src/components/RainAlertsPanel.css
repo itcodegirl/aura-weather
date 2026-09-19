@@ -140,7 +140,7 @@
 }
 
 .rain-alerts-note--ok {
-  color: var(--chart-good-top);
+  color: var(--green-good-light);
 }
 
 .rain-alerts-note--error {

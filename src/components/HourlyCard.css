@@ -363,7 +363,7 @@
 }
 
 .hourly-arrow.is-sel {
-  color: var(--chart-selected);
+  color: var(--amber-soft);
 }
 
 /* now marker */

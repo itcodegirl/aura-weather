@@ -380,19 +380,24 @@
     --severity-info-bg: #e5ebf8;
     --status-ready-fg: #021709;
 
-    --risk-low: #0f5428;
-    --risk-moderate: #223306;
-    --risk-elevated: #4f3c03;
-    --risk-high: #913e04;
-    --risk-severe: #d41212;
-    --risk-extreme: #9631f5;
+    /* Fills at 3:1 vs the light panel (WCAG 1.4.11 for graphical objects),
+       not at the dark values' text-grade ratios: a 12:1 fill is near-black,
+       and these are bars, arcs and track segments, never words. The two
+       chart tokens that were also read as text now point their text uses
+       at the amber/green text tints instead. Same-ratio values are in the brief. */
+    --risk-low: #1ca54f;
+    --risk-moderate: #6a9f14;
+    --risk-elevated: #b38906;
+    --risk-high: #ef6506;
+    --risk-severe: #f15f5f;
+    --risk-extreme: #b56ff8;
 
-    --chart-rain-top: #10467d;
-    --chart-rain-bottom: #2662a7;
-    --chart-good-top: #0c3218;
-    --chart-good-bottom: #1b4d30;
+    --chart-rain-top: #4293e7;
+    --chart-rain-bottom: #5593d9;
+    --chart-good-top: #27a450;
+    --chart-good-bottom: #38a265;
     --chart-outline: #e6edf8;
-    --chart-selected: #392300;
+    --chart-selected: #cb7d00;
 
     --paper: #000d1e;
     --paper-dim: #00142d;

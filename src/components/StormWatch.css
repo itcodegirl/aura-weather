@@ -358,7 +358,7 @@
   font-size: 13px;
   font-weight: 300;
   line-height: 1.5;
-  color: rgba(238, 241, 248, 0.82);
+  color: var(--text-muted);
 }
 
 @media (max-width: 560px) {

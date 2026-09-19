@@ -114,7 +114,7 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
-  color: rgba(244, 241, 234, 0.9);
+  color: var(--text);
   font-size: 16px;
   font-weight: 600;
 }
@@ -131,7 +131,7 @@
 }
 
 .hero-date {
-  color: rgba(244, 241, 234, 0.67);
+  color: var(--text-dim);
   font-size: 13px;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -155,7 +155,7 @@
 }
 
 .hero-high-low-label {
-  color: rgba(244, 241, 234, 0.75);
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -164,7 +164,7 @@
 
 .hero-high-low-value {
   font-family: var(--font-display);
-  color: #f6f2ea;
+  color: var(--text);
   font-size: 20px;
   font-weight: 400;
   letter-spacing: 0;
@@ -214,7 +214,7 @@
 .hero-temp-unit {
   margin-left: 6px;
   font-family: var(--font-display);
-  color: rgba(244, 241, 234, 0.72);
+  color: var(--text-muted);
   font-size: var(--hero-unit-size);
   font-weight: 400;
 }
@@ -227,7 +227,7 @@
 
 .hero-feels {
   margin-top: 0;
-  color: rgba(244, 241, 234, 0.75);
+  color: var(--text-muted);
   font-size: 15px;
   font-weight: 400;
 }
@@ -239,7 +239,7 @@
   border-radius: var(--radius-sm);
   background: rgba(255, 243, 225, 0.05);
   border: 1px solid rgba(255, 238, 214, 0.1);
-  color: rgba(245, 242, 235, 0.9);
+  color: var(--text);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -270,7 +270,7 @@
      palette. That is the "blue/green stays where it carries meaning"
      carve-out the brand-pass note describes. */
   border-left-color: rgba(255, 238, 214, 0.22);
-  color: rgba(245, 242, 235, 0.9);
+  color: var(--text);
   font-size: var(--fs-body-lg);
   line-height: 1.5;
   font-weight: 600;
@@ -325,14 +325,14 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 243, 225, 0.12);
   background: rgba(255, 243, 225, 0.07);
-  color: rgba(245, 242, 235, 0.92);
+  color: var(--text);
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
 }
 
 .hero-chip-icon {
-  color: #f3c98a;
+  color: var(--amber-soft);
   flex-shrink: 0;
 }
 
@@ -357,18 +357,18 @@
 }
 
 .hero-uv-icon {
-  color: #f3c98a;
+  color: var(--amber-soft);
   flex-shrink: 0;
 }
 
 .hero-uv-level {
   font-weight: 600;
-  color: rgba(245, 242, 235, 0.95);
+  color: var(--text);
 }
 
 .hero-uv-peak {
   margin-left: auto;
-  color: rgba(245, 242, 235, 0.62);
+  color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
 
@@ -404,7 +404,7 @@
   margin: 0;
   font-size: 12px;
   line-height: 1.35;
-  color: rgba(245, 242, 235, 0.72);
+  color: var(--text-muted);
 }
 
 /* Trust pill — freshness + confidence indicator */
@@ -417,7 +417,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 243, 225, 0.12);
   background: rgba(255, 243, 225, 0.06);
-  color: rgba(245, 242, 235, 0.82);
+  color: var(--text-muted);
   font-size: 11.5px;
   font-weight: 400;
 }
@@ -466,7 +466,7 @@
 .hero-valid-time {
   margin: 6px 0 0;
   font-size: 12px;
-  color: rgba(244, 241, 234, 0.67);
+  color: var(--text-dim);
 }
 
 /* Keep guidance items for the daily guidance that still shows on
@@ -487,7 +487,7 @@
   min-height: 96px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(198, 215, 242, 0.14);
-  background: rgba(11, 20, 38, 0.58);
+  background: var(--bg-well);
   box-shadow: var(--subcard-shadow);
 }
 
@@ -525,7 +525,7 @@
 
 .hero-guidance-detail {
   overflow-wrap: anywhere;
-  color: rgba(211, 226, 250, 0.78);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.35;
   font-weight: 620;
@@ -691,12 +691,12 @@
  * every merge kept whatever the cascade was already rendering.
  * ------------------------------------------------------------------------- */
 .hero-card.glass {
-  color: #f4f1ea;
+  color: var(--text);
   border-radius: 20px;
 }
 
 .hero-high-low-item:first-child .hero-high-low-value {
-  color: #f5d9a8;
+  color: var(--amber-soft);
 }
 
 .hero-high-low-item:last-child .hero-high-low-value {
@@ -726,6 +726,6 @@
 }
 
 .hero-condition-separator {
-  color: rgba(244, 241, 234, 0.4);
+  color: var(--text-dim);
 }
 

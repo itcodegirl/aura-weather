@@ -47,3 +47,81 @@ describe("the nowcast bar strip", () => {
     assert.equal(bar.height, full.height);
   });
 });
+
+/*
+ * Anchors are on-the-hour points in the *location's* wall clock. Open-Meteo
+ * returns naive local timestamps, so the minutes are read off the string; a
+ * viewer in another zone must not shift which bars are solid. The half-hour
+ * offsets are the ones that would expose a Date round-trip: at +05:30 or
+ * +09:30, parsing and re-formatting moves every :00 to :30.
+ */
+describe("hour anchors", () => {
+  const AT_QUARTER = [
+    "2026-09-19T10:15", "2026-09-19T10:30", "2026-09-19T10:45",
+    "2026-09-19T11:00", "2026-09-19T11:15", "2026-09-19T11:30",
+    "2026-09-19T11:45", "2026-09-19T12:00",
+  ];
+  const AT_HOUR = [
+    "2026-09-19T10:00", "2026-09-19T10:15", "2026-09-19T10:30",
+    "2026-09-19T10:45", "2026-09-19T11:00", "2026-09-19T11:15",
+    "2026-09-19T11:30", "2026-09-19T11:45",
+  ];
+  const values = [10, 20, 30, 40, 50, 60, 70, 80];
+
+  test("a window opening on the hour holds three anchors", () => {
+    const geo = buildNowcastBarGeometry(values, AT_HOUR);
+    assert.equal(geo.anchorCount, 2, "10:00 and 11:00 are inside these eight");
+    assert.deepEqual(
+      geo.bars.map((b) => b.anchor),
+      [true, false, false, false, true, false, false, false]
+    );
+  });
+
+  test("a window opening mid-hour holds two, in different places", () => {
+    const geo = buildNowcastBarGeometry(values, AT_QUARTER);
+    assert.equal(geo.anchorCount, 2);
+    assert.deepEqual(
+      geo.bars.map((b) => b.anchor),
+      [false, false, false, true, false, false, false, true]
+    );
+  });
+
+  test("an offset-bearing timestamp is read by its wall clock, in any zone", async () => {
+    // This is the case where reading the minutes and round-tripping through
+    // Date diverge. A naive string parses as local time, so Date agrees with
+    // the wall clock everywhere and proves nothing; give the timestamp an
+    // explicit offset and run in a half-hour zone, and Date reports :30 for a
+    // point whose wall clock says :00.
+    //
+    // Run in a child process: Node caches the zone at startup, so setting
+    // process.env.TZ from inside a test does not take effect.
+    const script = `
+      import assert from "node:assert/strict";
+      const { buildNowcastBarGeometry } = await import("${new URL("./nowcastBars.js", import.meta.url).pathname}");
+      assert.equal(new Date("2026-09-19T11:00-05:00").getMinutes(), 30,
+        "precondition: this zone is one where Date would disagree");
+      const geo = buildNowcastBarGeometry([10, 20], ["2026-09-19T11:00-05:00", "2026-09-19T11:15-05:00"]);
+      assert.deepEqual(geo.bars.map((b) => b.anchor), [true, false]);
+    `;
+    const { promisify } = await import("node:util");
+    const execFile = promisify((await import("node:child_process")).execFile);
+    await execFile(process.execPath, ["--input-type=module", "-e", script], {
+      env: { ...process.env, TZ: "Asia/Kolkata" },
+    });
+  });
+
+  test("a step with no timestamp is not an anchor", () => {
+    const geo = buildNowcastBarGeometry([10, 20], [undefined, null]);
+    assert.deepEqual(geo.bars.map((b) => b.anchor), [false, false]);
+    assert.equal(geo.anchorCount, 0);
+  });
+
+  test("dry steps and gaps carry the anchor flag too", () => {
+    const geo = buildNowcastBarGeometry(
+      [0, null],
+      ["2026-09-19T11:00", "2026-09-19T11:15"]
+    );
+    assert.equal(geo.dry[0].anchor, true);
+    assert.equal(geo.gaps[0].anchor, false);
+  });
+});

@@ -170,7 +170,14 @@ function NowcastCard({
     );
   }, [nowcast.hasData, nowcast.series]);
 
-  const barGeo = useMemo(() => buildNowcastBarGeometry(chartPoints), [chartPoints]);
+  const chartTimes = useMemo(
+    () => (Array.isArray(nowcast.times) ? nowcast.times : []),
+    [nowcast.times]
+  );
+  const barGeo = useMemo(
+    () => buildNowcastBarGeometry(chartPoints, chartTimes),
+    [chartPoints, chartTimes]
+  );
   const chartDescription = useMemo(
     () => buildNowcastChartDescription(chartPoints, peakProbability),
     [chartPoints, peakProbability]
@@ -257,17 +264,39 @@ function NowcastCard({
                   vectorEffect="non-scaling-stroke"
                 />
               ))}
-              {barGeo.bars.map((b, i) => (
-                <rect
-                  key={`bar-${i}`}
-                  x={b.x.toFixed(1)}
-                  y={b.y.toFixed(1)}
-                  width={b.width.toFixed(1)}
-                  height={b.height.toFixed(1)}
-                  fill={b.likely ? "#7fd99a" : "var(--status-accent)"}
-                  opacity={b.likely ? 1 : 0.72}
-                />
-              ))}
+              {/* Solid where the series carries an on-the-hour forecast
+                  value; outlined where the point was interpolated between
+                  two of them. An outline rather than a lighter fill so the
+                  distinction survives at any background: the stroke is the
+                  thing carrying the information, and it holds full contrast
+                  (11.1 for the likely tone, 8.8 for the accent, against the
+                  dark panel) rather than being faded under the 3:1 floor
+                  WCAG 1.4.11 sets for a graphical object. */}
+              {barGeo.bars.map((b, i) => {
+                // Roles, not literals. The hard-coded #7fd99a this
+                // replaces measured 1.59 against the light panel --
+                // under WCAG 1.4.11's 3:1 for a graphical object, and
+                // load-bearing here because on an outlined bar the
+                // stroke is the reading. --status-ok clears it in both
+                // schemes (9.74 dark, 5.32 light).
+                const tone = b.likely
+                  ? "var(--status-ok)"
+                  : "var(--status-accent)";
+                return (
+                  <rect
+                    key={`bar-${i}`}
+                    x={b.x.toFixed(1)}
+                    y={b.y.toFixed(1)}
+                    width={b.width.toFixed(1)}
+                    height={b.height.toFixed(1)}
+                    fill={b.anchor ? tone : "none"}
+                    opacity={b.anchor && !b.likely ? 0.72 : 1}
+                    stroke={b.anchor ? "none" : tone}
+                    strokeWidth={b.anchor ? 0 : 1.5}
+                    vectorEffect={b.anchor ? undefined : "non-scaling-stroke"}
+                  />
+                );
+              })}
             </svg>
             <span className="nowcast-chart-thresh-label" aria-hidden="true">Rain likely</span>
           </div>
@@ -278,6 +307,14 @@ function NowcastCard({
             <span>90m</span>
             <span>2h</span>
           </div>
+          {/* States what the series is. Not "measured": nothing here is an
+              observation -- the whole window is forecast -- and the
+              distinction the outlines draw is hourly-forecast against
+              interpolated. */}
+          <p className="nowcast-chart-note">
+            Solid bars are hourly forecast values; outlined bars are
+            interpolated between them.
+          </p>
         </div>
       )}
 

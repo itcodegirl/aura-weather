@@ -327,6 +327,15 @@
   overflow: visible;
 }
 
+/* The strip's provenance line. Prose, so Inter, and dim: it qualifies the
+   chart rather than competing with it. */
+.nowcast-chart-note {
+  margin: 6px 0 0;
+  color: var(--text-dim);
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+}
+
 .nowcast-chart-thresh-label {
   font-family: var(--font-mono);
   position: absolute;

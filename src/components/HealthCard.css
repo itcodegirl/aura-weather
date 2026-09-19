@@ -1,0 +1,152 @@
+/*
+ * Instrument's data grid, the same shape the nowcast cells use: rule-divided
+ * cells closed top and bottom, flat on the panel. Six sub-indices read as a
+ * row of readings rather than six raised boxes.
+ */
+.health-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.health-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.health-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--section-title-size);
+  font-weight: 600;
+  letter-spacing: var(--track-header);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.health-title svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* The EPA's own activity guidance, carried from domain/exposure. Prose, so
+   Inter, and the largest thing here: it is what a reader can act on. */
+.health-guidance {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--fs-body-lg);
+  line-height: 1.45;
+}
+
+.health-driver {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body);
+  line-height: 1.4;
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--wire-rhythm);
+  border-bottom: 1px solid var(--wire-rhythm);
+}
+
+.health-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px 8px;
+  border-right: 1px solid var(--wire-rhythm);
+}
+
+.health-cell:last-child {
+  border-right: 0;
+}
+
+.health-cell-label {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-default);
+  text-transform: uppercase;
+}
+
+/* The sub-index equal to the overall index is what the number is made of. */
+.health-cell-driver {
+  color: var(--status-accent);
+}
+
+.health-cell-value {
+  font-family: var(--font-mono);
+  color: var(--text);
+  font-size: var(--fs-heading-lg);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A pollutant the model did not return reads as absent, never as clean air. */
+.health-cell--missing .health-cell-value {
+  color: var(--text-dim);
+}
+
+/* Not decoration. These are model output, and a panel drawn like an
+   instrument has to say it is not one. */
+.health-provenance {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+}
+
+/* Shared responsive tiers: 980, 760, 480. Six cells across need the width;
+   below it they wrap to rows that still read label-left, value-right. */
+@media (max-width: 980px) {
+  .health-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .health-cell:nth-child(3n) {
+    border-right: 0;
+  }
+
+  .health-cell:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--wire-rhythm);
+  }
+}
+
+@media (max-width: 480px) {
+  .health-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-cell,
+  .health-cell:nth-child(3n),
+  .health-cell:nth-child(-n + 3) {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--wire-rhythm);
+  }
+
+  .health-cell:last-child {
+    border-bottom: 0;
+  }
+}

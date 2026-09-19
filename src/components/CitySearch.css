@@ -119,7 +119,6 @@
   position: absolute;
   inset: calc(100% + 10px) 0 auto;
   z-index: 50;
-  --card-backdrop-blur: 8px;
   max-height: min(320px, calc(100vh - 180px));
   overflow: hidden auto;
   overscroll-behavior: contain;

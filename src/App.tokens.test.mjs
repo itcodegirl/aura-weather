@@ -284,3 +284,41 @@ describe("the semantic token layer", () => {
     }
   });
 });
+
+describe("opaque surfaces — Instrument step 2", () => {
+  /*
+   * Step 2 replaced the frosted glass with flat panels. Two things must
+   * not quietly come back. A translucent panel role: the AA floor above
+   * the ink alphas was recomputed against a FIXED backdrop, and an alpha
+   * here would make that floor sky-dependent again without any test
+   * noticing. And a backdrop-filter anywhere: the blur token is gone, so a
+   * new one would be a fresh literal nobody budgeted for.
+   */
+  const OPAQUE = /^#[0-9a-f]{6}$|^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/i;
+  const PANEL_ROLES = ["--panel", "--panel-raised", "--panel-well"];
+
+  test("every panel role is an opaque colour", () => {
+    const translucent = PANEL_ROLES.map((name) => [name, declaredValue(name)]).filter(
+      ([, value]) => !OPAQUE.test(value ?? "")
+    );
+    assert.deepEqual(
+      translucent,
+      [],
+      `a panel role carries an alpha channel — the ink floor was computed against an opaque surface`
+    );
+  });
+
+  test("no stylesheet applies a backdrop-filter", () => {
+    const offenders = cssFiles
+      .filter((file) => /backdrop-filter\s*:/.test(readFileSync(file, "utf8").replace(CSS_COMMENT, "")))
+      .map((file) => relative(REPO_ROOT, file));
+    assert.deepEqual(offenders, [], `backdrop-filter is back`);
+  });
+
+  test("the blur token is not declared anywhere", () => {
+    assert.ok(
+      !defined.has("--card-backdrop-blur"),
+      `--card-backdrop-blur was re-declared; step 2 removed it with the blur it fed`
+    );
+  });
+});

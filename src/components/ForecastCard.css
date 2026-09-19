@@ -23,12 +23,18 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--section-title-size);
-  font-weight: 650;
+  font-weight: 600;
   margin: 0;
-  letter-spacing: 0;
+  letter-spacing: var(--track-header);
   color: var(--paper-dim);
+  text-transform: uppercase;
+}
+
+.forecast-title svg {
+  width: 12px;
+  height: 12px;
 }
 
 .forecast-summary {
@@ -159,15 +165,12 @@
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
-  min-height: 18px;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(191, 215, 252, 0.22);
-  background: var(--bg-well);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.11em;
   text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-loose);
 }
 
 .forecast-signal-chip--warm {

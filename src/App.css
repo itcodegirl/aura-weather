@@ -182,7 +182,11 @@
   --fs-display-sm: 26px;
   --fs-display: 30px;
   --fs-display-lg: 34px;
-  --section-title-size: clamp(18px, 1.2vw, 20px);
+  /* Instrument module headers: the mockup draws a card's name as a
+     10px mono rule, not a heading — the reading below it is the thing
+     with size. Both tokens are consumed only by the eight *-title
+     rules, so this is the whole change. */
+  --section-title-size: var(--fs-caption);
 
   /* Control sizing — sm inline actions / md standalone buttons / lg header */
   --control-height-sm: 36px;
@@ -252,6 +256,7 @@
   --track-tight: 0.04em;
   --track-default: 0.08em;
   --track-loose: 0.12em;
+  --track-header: 0.16em; /* module headers only */
 
   /* Severity palette — alerts, nowcast risk badges, storm watch */
   --severity-critical-fg: #fecaca;
@@ -761,17 +766,20 @@ a:focus-visible,
  * pattern with subtle differences in padding, border alpha, and
  * letter-spacing. Now they all reach for one rule.
  */
+/* The mockup's scope chip: a hairline box naming what the module is
+   showing ("Now", "Next 24 h"). Square, the rhythm wire, no fill --
+   it paces, it does not separate, so it stays under the 3:1 floor by
+   design. */
 .eyebrow-pill {
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
-  border: var(--border-default);
-  background: var(--surface-1);
-  color: rgba(224, 236, 255, 0.9);
-  font-size: 10px;
-  font-weight: 600;
+  padding: 1px 6px;
+  border: 1px solid var(--wire-rhythm);
+  background: none;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  font-weight: 500;
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
 }
@@ -783,53 +791,48 @@ a:focus-visible,
  * neutral/info default so a tone modifier is never required for the pill
  * to read as a styled badge.
  */
+/* Instrument states a status as a word in the module header, not as a
+   filled pill: the colour already carries the rank, and a tinted
+   capsule around it says the same thing twice while adding a surface
+   the flat direction does not otherwise have. The rung modifiers below
+   still set border-color and background; they resolve to transparent
+   here, and are left in place so a rung is one edit from a filled
+   treatment again if that is wanted. The AUD-005 vocabulary is
+   untouched -- this changes how a status is drawn, never its words. */
 .severity-badge {
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  min-height: 22px;
-  padding: var(--pill-padding);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--severity-info-border);
-  background: var(--severity-info-bg);
+  border: 0;
+  background: none;
   color: var(--severity-info-fg);
-  font-size: var(--fs-caption);
+  font-size: var(--fs-micro);
   font-weight: 600;
-  letter-spacing: var(--track-default);
+  letter-spacing: var(--track-loose);
   text-transform: uppercase;
 }
 
 .severity-badge--critical,
 .severity-badge--high {
-  border-color: var(--severity-critical-border);
-  background: var(--severity-critical-bg);
   color: var(--severity-critical-fg);
 }
 
 .severity-badge--moderate {
-  border-color: var(--severity-high-border);
-  background: var(--severity-high-bg);
   color: var(--severity-high-fg);
 }
 
 .severity-badge--low {
-  border-color: var(--severity-warn-border);
-  background: var(--severity-warn-bg);
   color: var(--severity-warn-fg);
 }
 
 .severity-badge--minimal {
-  border-color: var(--severity-ok-border);
-  background: var(--severity-ok-bg);
   color: var(--severity-ok-fg);
 }
 
 .severity-badge--partial,
 .severity-badge--missing {
   /* default = info; explicit so JSX modifier classes always win */
-  border-color: var(--severity-info-border);
-  background: var(--severity-info-bg);
   color: var(--severity-info-fg);
 }
 

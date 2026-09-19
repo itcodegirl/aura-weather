@@ -120,17 +120,14 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
-  padding: 0 8px;
-  border-radius: var(--radius-pill);
-  border: var(--border-default);
-  background: var(--bg-tile);
   color: var(--paper-dim);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--track-tight);
   text-transform: uppercase;
   white-space: nowrap;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-loose);
 }
 
 .source-health-detail {

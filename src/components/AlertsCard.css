@@ -18,12 +18,20 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--section-title-size);
-  font-weight: 650;
-  letter-spacing: 0;
+  font-weight: 600;
+  letter-spacing: var(--track-header);
+  text-transform: uppercase;
 }
 
+.alerts-title svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* A status word, not a capsule: its presence in the header is still
+   the alert signal, and the warn ink still says which rank. */
 .alerts-subtitle {
   font-family: var(--font-mono);
   /*
@@ -32,15 +40,13 @@
    */
   display: inline-flex;
   align-items: center;
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--severity-warn-border);
-  background: var(--severity-warn-bg);
   color: var(--severity-warn-fg);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-loose);
 }
 
 .alerts-empty {
@@ -133,12 +139,12 @@
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--track-default);
   text-transform: uppercase;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-loose);
 }
 
 .alerts-priority--critical {

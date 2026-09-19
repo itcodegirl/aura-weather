@@ -233,7 +233,18 @@ export async function installOpenMeteoMocks(page, { now } = {}) {
       contentType: "application/json",
       body: JSON.stringify({
         current: {
+          // The overall index and the sub-indices it is made of. The US AQI
+          // is the maximum of its sub-indices, so ozone at 42 is what the
+          // overall 42 is made of -- the fixture has to satisfy that
+          // relationship or the card would name a driver the provider's own
+          // arithmetic does not support. Sulphur dioxide is deliberately
+          // absent, to exercise the missing-pollutant path.
           us_aqi: 42,
+          us_aqi_pm2_5: 31,
+          us_aqi_pm10: 12,
+          us_aqi_ozone: 42,
+          us_aqi_nitrogen_dioxide: 8,
+          us_aqi_carbon_monoxide: 3,
         },
       }),
     });

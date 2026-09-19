@@ -24,7 +24,7 @@
 }
 
 .source-health-kicker {
-  color: rgba(205, 224, 253, 0.74);
+  color: var(--text-muted);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: var(--track-default);
@@ -44,12 +44,12 @@
 }
 
 .source-health-title svg {
-  color: #aecdf2;
+  color: var(--glacier-muted);
 }
 
 .source-health-summary {
   max-width: 320px;
-  color: rgba(215, 230, 251, 0.78);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.45;
   text-align: right;
@@ -81,7 +81,7 @@
 .source-health-icon {
   grid-area: icon;
   margin-top: 1px;
-  color: rgba(205, 232, 255, 0.86);
+  color: var(--text-muted);
 }
 
 .source-health-main {
@@ -100,7 +100,7 @@
 .source-health-provider {
   margin-top: 2px;
   overflow-wrap: anywhere;
-  color: rgba(209, 226, 249, 0.72);
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.3;
 }
@@ -133,7 +133,7 @@
 
 .source-health-detail {
   min-width: 0;
-  color: rgba(219, 233, 253, 0.74);
+  color: var(--text-muted);
   font-size: 11px;
   line-height: 1.3;
   text-align: right;
@@ -148,7 +148,7 @@
 .source-health-item--ready .source-health-pill {
   border-color: rgba(110, 231, 183, 0.34);
   background: rgba(16, 185, 129, 0.16);
-  color: #c8f8e7;
+  color: var(--severity-ok-fg);
 }
 
 .source-health-item--cached,
@@ -161,7 +161,7 @@
 .source-health-item--limited .source-health-pill {
   border-color: rgba(251, 191, 36, 0.36);
   background: rgba(251, 191, 36, 0.15);
-  color: #fdecc8;
+  color: var(--severity-warn-fg);
 }
 
 .source-health-item--unavailable {
@@ -172,7 +172,7 @@
 .source-health-item--unavailable .source-health-pill {
   border-color: rgba(248, 113, 113, 0.38);
   background: rgba(248, 113, 113, 0.14);
-  color: #fed7d7;
+  color: var(--severity-critical-fg);
 }
 
 .source-health-item--pending,

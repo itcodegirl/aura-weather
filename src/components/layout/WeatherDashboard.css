@@ -21,7 +21,7 @@
   min-height: 24px;
   margin: 2px 0 -4px;
   padding-left: 14px;
-  color: rgba(230, 238, 250, 0.92);
+  color: var(--text);
   font-size: var(--fs-label-lg);
   font-weight: 700;
   letter-spacing: var(--track-default);
@@ -63,7 +63,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(111, 183, 242, 0.28);
   background: rgba(111, 183, 242, 0.14);
-  color: #cfe6fb;
+  color: var(--glacier-light);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -79,7 +79,7 @@
 
 /* Act-now: imminent-rain sections get a warm, brighter header. */
 .bento-group-label[data-tier="act-now"] {
-  color: #fbeede;
+  color: var(--text);
 }
 
 .bento-group-label[data-tier="act-now"]::before {
@@ -183,8 +183,8 @@
   padding: 4px 9px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(156, 201, 242, 0.36);
-  background: rgba(10, 25, 52, 0.8);
-  color: rgba(237, 245, 255, 0.94);
+  background: var(--surface-strong);
+  color: var(--text);
   font-size: var(--fs-caption);
   font-weight: 700;
   letter-spacing: var(--track-default);
@@ -313,7 +313,7 @@
   margin-top: 8px;
   border-radius: var(--radius-sm);
   border: 1px dashed rgba(var(--border-base), 0.3);
-  background: rgba(8, 17, 36, 0.34);
+  background: var(--bg-well);
 }
 
 .data-status-disclosure[open] {

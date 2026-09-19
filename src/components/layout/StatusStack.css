@@ -92,7 +92,7 @@
 .permission-onboarding-kicker {
   grid-area: kicker;
   margin: 0;
-  color: rgba(206, 225, 252, 0.9);
+  color: var(--text);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: var(--track-default);
@@ -112,7 +112,7 @@
 .permission-onboarding-copy {
   grid-area: copy;
   margin: 0;
-  color: rgba(216, 230, 252, 0.92);
+  color: var(--text);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -145,7 +145,7 @@
   border-radius: var(--radius-pill);
   border: var(--border-strong);
   background: var(--surface-2);
-  color: #e3efff;
+  color: var(--text);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -240,7 +240,7 @@
 
 .app-status--update {
   border-color: rgba(156, 201, 242, 0.44);
-  color: #edf5ff;
+  color: var(--text);
 }
 
 .app-status--update::before {
@@ -260,7 +260,7 @@
 
 .app-status--install {
   border-color: rgba(196, 181, 253, 0.44);
-  color: #f0eaff;
+  color: var(--text);
 }
 
 .app-status--install::before {
@@ -278,7 +278,7 @@
 .app-status-action {
   border: var(--border-strong);
   background: var(--surface-1);
-  color: #e3efff;
+  color: var(--text);
   border-radius: var(--radius-pill);
   padding: 5px 10px;
   min-height: 30px;
@@ -310,7 +310,7 @@
   margin-left: auto;
   border: 1px solid rgba(248, 228, 228, 0.55);
   background: rgba(254, 242, 242, 0.16);
-  color: #fee2e2;
+  color: var(--severity-critical-fg);
   border-radius: var(--radius-pill);
   padding: 5px 10px;
   min-height: 30px;

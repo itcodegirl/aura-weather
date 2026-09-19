@@ -82,9 +82,9 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(224, 237, 255, 0.82);
+  color: var(--text-muted);
   border: 1px solid rgba(181, 210, 252, 0.22);
-  background: rgba(7, 16, 35, 0.4);
+  background: var(--bg-well);
   cursor: pointer;
   transition:
     color var(--motion-fast, 0.15s) ease,
@@ -93,7 +93,7 @@
 }
 
 .rain-alerts-toggle.is-on {
-  color: #06210f;
+  color: var(--bg-large-card);
   background: var(--accent-green);
   border-color: var(--accent-green);
 }
@@ -122,7 +122,7 @@
 }
 
 .rain-alerts-btn--primary {
-  color: #06210f;
+  color: var(--bg-large-card);
   background: var(--accent-green);
   border-color: var(--accent-green);
 }
@@ -136,7 +136,7 @@
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
-  color: rgba(238, 241, 248, 0.7);
+  color: var(--text-muted);
 }
 
 .rain-alerts-note--ok {
@@ -144,7 +144,7 @@
 }
 
 .rain-alerts-note--error {
-  color: #fda4af;
+  color: var(--severity-critical-fg);
 }
 
 @media (prefers-reduced-motion: reduce) {

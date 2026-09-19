@@ -19,7 +19,7 @@
   border-radius: 50%;
   border: var(--border-strong);
   background: var(--surface-3);
-  color: rgba(218, 233, 255, 0.96);
+  color: var(--text);
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
@@ -93,7 +93,7 @@
 
 .info-drawer-copy {
   margin: 0;
-  color: rgba(214, 228, 252, 0.92);
+  color: var(--text);
   font-size: 12px;
   line-height: 1.35;
 }

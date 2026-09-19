@@ -57,18 +57,22 @@
 /* Time-horizon chip on the rain sections (now / next 2h / rest of today),
    so the overlapping rain surfaces read as a single timeline instead of
    feeling redundant. Sits between the section name and the trailing line. */
+/* The mockup's scope chip: a hairline box naming what the section is
+   showing. It was a tinted blue capsule, which put a filled surface and
+   a rounded corner next to a squared, flat module. */
 .bento-group-scope {
   flex-shrink: 0;
   margin-left: 10px;
-  padding: 2px 9px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(111, 183, 242, 0.28);
-  background: rgba(111, 183, 242, 0.14);
-  color: var(--glacier-light);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: none;
+  padding: 1px 6px;
+  border-radius: 0;
+  border: 1px solid var(--wire-rhythm);
+  background: none;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: var(--track-loose);
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -180,7 +184,7 @@
   width: auto;
   height: auto;
   padding: 4px 9px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   border: 1px solid rgba(156, 201, 242, 0.36);
   background: var(--surface-strong);
   color: var(--text);

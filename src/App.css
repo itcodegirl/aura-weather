@@ -244,9 +244,15 @@
   --subcard-padding-lg: 12px 14px;
 
   /* Active pill — shared across unit-toggle, rain-mode, status chips */
-  --active-pill-bg: linear-gradient(145deg, #f9fcff, #d9eaff);
-  --active-pill-color: #021127;
-  --active-pill-shadow: 0 6px 14px rgba(4, 12, 28, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.52);
+  /* The selected segment of a toggle. A near-white knockout was the
+     loudest thing on the page once the panels went near-black and the
+     corners went square -- it read as a spotlight rather than as "this
+     one is on". The mockup marks a selected tab by raising the cell one
+     step and giving it full ink, which is what these do now. The light
+     scheme keeps its own pair below. */
+  --active-pill-bg: var(--panel-raised);
+  --active-pill-color: var(--ink);
+  --active-pill-shadow: none;
 
   /* Micro-interactions */
   --lift-1: -1px;
@@ -261,25 +267,33 @@
   /* Severity palette — alerts, nowcast risk badges, storm watch */
   --severity-critical-fg: #fecaca;
   --severity-critical-border: rgba(225, 70, 70, 0.52);
-  --severity-critical-bg: rgba(127, 29, 29, 0.38);
+  /* Opaque, and much quieter than they were. These were the last
+     alpha-over-gradient surfaces step 2 left behind: a warm hue at
+     ~37% over a near-black panel composites to brown (#37161a,
+     #321e16, #302815), which is why a Flood Watch row read as mud
+     rather than as a ranked alert. Each is now its own rung's hue at
+     10% over the panel, frozen -- the same move step 2 made for every
+     other surface, and the tint is a cue that a row is ranked, not the
+     thing that states the rank. The word and the rule do that. */
+  --severity-critical-bg: #231a1f;
 
   --severity-high-fg: #fed7aa;
   --severity-high-border: rgba(234, 88, 12, 0.48);
-  --severity-high-bg: rgba(120, 53, 18, 0.36);
+  --severity-high-bg: #211c1b;
 
   --severity-warn-fg: #fde68a;
   --severity-warn-border: rgba(217, 119, 6, 0.46);
-  --severity-warn-bg: rgba(113, 82, 17, 0.36);
+  --severity-warn-bg: #23211d;
 
   --severity-ok-fg: #bbf7d0;
   --severity-ok-border: rgba(34, 197, 94, 0.40);
-  --severity-ok-bg: rgba(5, 46, 22, 0.34);
+  --severity-ok-bg: #0f2426;
 
   /* Neutral/info rung — default tone for the shared .severity-badge
      (e.g. nowcast minimal/partial/missing risk states). */
   --severity-info-fg: #dbeafe;
   --severity-info-border: rgba(147, 197, 253, 0.42);
-  --severity-info-bg: rgba(30, 64, 175, 0.22);
+  --severity-info-bg: #15222e;
 
   /* Risk ramp — the saturated ladder shared by the hero UV track, the
      Storm Watch severity bar and the exposure-alert priority chips.
@@ -376,8 +390,12 @@
     --surface-3: #f3f6fc;
     --surface-strong: #f7f9fd;
 
-    --active-pill-bg: linear-gradient(145deg, #000b16, #001e43);
-    --active-pill-color: #ffffff;
+    /* Light inverts rather than raises: the raised tier here is #ffffff
+       against a #f5f7fa panel, which is too small a step to read as
+       "on". A solid ink segment with panel-coloured text is the same
+       statement the dark scheme makes, the other way up. */
+    --active-pill-bg: var(--ink);
+    --active-pill-color: var(--panel);
 
     --severity-critical-fg: #5f0202;
     --severity-critical-border: #dda1a3;

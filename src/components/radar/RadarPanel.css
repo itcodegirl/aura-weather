@@ -192,13 +192,11 @@
 .radar-phase--observed {
   color: var(--glacier-light);
   border-color: rgba(111, 183, 242, 0.42);
-  background: rgba(111, 183, 242, 0.16);
 }
 
 .radar-phase--forecast {
   color: var(--amber-soft);
   border-color: var(--severity-warn-border);
-  background: var(--severity-warn-bg);
 }
 
 .radar-readout-time {
@@ -396,7 +394,7 @@
 .radar-legend-bar {
   flex: 1;
   height: 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   border: var(--border-soft);
   /* RainViewer Universal Blue intensity ramp (light → heavy). */
   background: linear-gradient(

@@ -573,7 +573,7 @@
 }
 
 .hourly-touch-sample.is-selected {
-  background: rgba(243, 183, 101, 0.14);
+  background: var(--panel-raised);
   border-color: rgba(243, 183, 101, 0.42);
   opacity: 1;
 }

@@ -121,7 +121,6 @@
   display: inline-flex;
   align-items: center;
   color: var(--paper-dim);
-  font-size: 10px;
   font-weight: 600;
   letter-spacing: var(--track-tight);
   text-transform: uppercase;

@@ -165,7 +165,6 @@
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -174,28 +173,22 @@
 }
 
 .forecast-signal-chip--warm {
-  border-color: rgba(250, 195, 111, 0.36);
   color: var(--amber-soft);
 }
 
 .forecast-signal-chip--cool {
-  border-color: rgba(142, 198, 255, 0.34);
   color: var(--glacier-light);
 }
 
 .forecast-signal-chip--wet {
-  border-color: rgba(156, 201, 242, 0.4);
   color: var(--glacier-light);
 }
 
 .forecast-signal-chip--limited {
   color: var(--text-dim);
-  border: 1px dashed rgba(176, 200, 235, 0.34);
-  background: var(--bg-well);
 }
 
 .forecast-signal-chip--steady {
-  border-color: rgba(186, 211, 249, 0.25);
   color: var(--text);
 }
 

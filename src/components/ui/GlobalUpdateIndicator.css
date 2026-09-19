@@ -118,7 +118,7 @@
   letter-spacing: var(--track-loose);
   text-transform: uppercase;
   padding: 0 6px;
-  border-radius: var(--radius-pill);
+  border-radius: 0;
   border: var(--border-soft);
   background: var(--surface-2);
 }

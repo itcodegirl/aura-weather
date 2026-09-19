@@ -295,6 +295,17 @@
   color: var(--text-dim);
 }
 
+/* The unit, sized and dimmed the way the data-grid cells set theirs, so
+   the number is what the eye lands on. J/kg is not a figure most people
+   can place, and it should not compete with the one that matters. */
+.cape-unit {
+  font-style: normal;
+  margin-left: 4px;
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
 .cape-scale {
   position: relative;
   height: 7px;

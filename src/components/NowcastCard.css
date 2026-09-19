@@ -18,7 +18,7 @@
 
 .nowcast-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
@@ -87,14 +87,16 @@
  * `<span class="severity-badge severity-badge--high">` directly.
  */
 
+/* The card's reading. It was a filled well inside a panel -- a surface
+   on a surface, which Instrument does not do. Flat now, with a
+   structural rule on the leading edge doing the separating. */
 .nowcast-primary {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: var(--subcard-padding);
-  border-radius: var(--radius-sm);
-  border: var(--subcard-border);
-  background: var(--bg-well);
+  padding: 0 0 0 12px;
+  border-left: 2px solid var(--wire-structural);
+  background: none;
   box-shadow: none;
 }
 
@@ -115,24 +117,34 @@
   line-height: 1.35;
 }
 
+/* A data grid, not three tiles: cells divided by the rhythm wire and
+   closed by a rule top and bottom. Three raised boxes on a flat panel
+   were three more surfaces to read before reaching the numbers, and at
+   the 980px tier they fell 2-over-1, which reads as a broken row
+   rather than a deliberate one. */
 .nowcast-chips {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0;
   list-style: none;
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--wire-rhythm);
+  border-bottom: 1px solid var(--wire-rhythm);
 }
 
 .nowcast-chip {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: var(--subcard-padding);
-  border-radius: var(--radius-sm);
-  border: var(--subcard-border);
-  background: var(--bg-well);
+  gap: 3px;
+  padding: 9px 11px 8px;
+  border-right: 1px solid var(--wire-rhythm);
+  background: none;
   box-shadow: none;
+}
+
+.nowcast-chip:last-child {
+  border-right: 0;
 }
 
 .nowcast-chip-label {
@@ -164,9 +176,10 @@
     font-size: 20px;
   }
 
+  /* Stays three across: the cells are rules now, not boxes, so they
+     fit far narrower than the padded tiles did. */
   .nowcast-chips {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -184,7 +197,6 @@
    */
   .nowcast-chips {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
   }
 
   .nowcast-summary {
@@ -194,7 +206,7 @@
 
 @media (max-width: 640px) {
   .nowcast-primary {
-    padding: 10px 11px;
+    padding: 0 0 0 10px;
   }
 
   .nowcast-summary {
@@ -207,15 +219,25 @@
 }
 
 @media (max-width: 480px) {
-  /* At 480px the 3 chips are ~96px each — too narrow for multi-word labels.
-     Switch to 2-column grid with the 3rd chip spanning full width. */
+  /* At 480px three cells are ~96px each, too narrow for "Peak chance".
+     One cell per row, label left and value right, divided by the rhythm
+     wire -- the 2-over-1 this replaced read as a row that had broken
+     rather than one drawn that way. */
   .nowcast-chips {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: 1fr;
+  }
+
+  .nowcast-chip {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--wire-rhythm);
   }
 
   .nowcast-chip:last-child {
-    grid-column: span 2;
+    border-bottom: 0;
   }
 }
 
@@ -226,7 +248,7 @@
 
 
   .nowcast-primary {
-    padding: 9px 10px;
+    padding: 0 0 0 9px;
   }
 
   .nowcast-summary {

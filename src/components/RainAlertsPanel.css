@@ -43,8 +43,8 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--bg-tile);
+  border: var(--border-default);
 }
 
 .rain-alerts-type-icon {
@@ -117,7 +117,7 @@
   font-weight: 600;
   color: var(--text);
   border: 1px solid rgba(181, 210, 252, 0.24);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-tile);
   cursor: pointer;
 }
 

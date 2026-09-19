@@ -124,8 +124,8 @@
   overscroll-behavior: contain;
   list-style: none;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(193, 217, 255, 0.25);
-  background: linear-gradient(180deg, rgba(8, 15, 30, 0.96), rgba(6, 11, 24, 0.96));
+  border: var(--card-border);
+  background: var(--bg-large-card);
   box-shadow: 0 22px 44px rgba(2, 6, 19, 0.52);
   transform-origin: top center;
   animation: dropdown-reveal var(--motion-subtle) var(--ease-standard);

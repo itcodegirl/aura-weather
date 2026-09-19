@@ -49,15 +49,15 @@
   gap: 7px;
   padding: 13px;
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--bg-tile);
+  border: var(--border-default);
 }
 
 /* Missing data variant */
 .atm-tile--missing {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-well);
   border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--wire-structural);
 }
 
 /* Wide tiles span 2 columns */

@@ -122,7 +122,7 @@
   padding: 0 8px;
   border-radius: var(--radius-pill);
   border: var(--border-default);
-  background: rgba(210, 223, 246, 0.12);
+  background: var(--bg-tile);
   color: var(--paper-dim);
   font-size: 10px;
   font-weight: 700;
@@ -141,8 +141,8 @@
 }
 
 .source-health-item--ready {
-  border-color: rgba(110, 231, 183, 0.26);
-  background: linear-gradient(160deg, rgba(110, 220, 170, 0.20), rgba(255, 255, 255, 0.10));
+  border-color: var(--severity-ok-border);
+  background: var(--severity-ok-bg);
 }
 
 .source-health-item--ready .source-health-pill {
@@ -153,8 +153,8 @@
 
 .source-health-item--cached,
 .source-health-item--limited {
-  border-color: rgba(251, 191, 36, 0.28);
-  background: linear-gradient(160deg, rgba(245, 200, 90, 0.20), rgba(255, 255, 255, 0.10));
+  border-color: var(--severity-warn-border);
+  background: var(--severity-warn-bg);
 }
 
 .source-health-item--cached .source-health-pill,
@@ -165,8 +165,8 @@
 }
 
 .source-health-item--unavailable {
-  border-color: rgba(248, 113, 113, 0.3);
-  background: linear-gradient(160deg, rgba(245, 120, 110, 0.22), rgba(255, 255, 255, 0.10));
+  border-color: var(--severity-critical-border);
+  background: var(--severity-critical-bg);
 }
 
 .source-health-item--unavailable .source-health-pill {

@@ -322,3 +322,53 @@ describe("opaque surfaces — Instrument step 2", () => {
     );
   });
 });
+
+describe("the Instrument palette — step 3", () => {
+  /*
+   * The palette's accessibility claims are numbers computed from the
+   * hexes in the block, so the block can prove them itself. Text must
+   * clear WCAG AA (4.5:1) on every surface it sits on; the structural
+   * wire must clear 1.4.11's 3:1 against both sides of the boundary it
+   * draws; status colours must clear AA on the panel they are read on.
+   * A palette edit that breaks any of these fails here, not in review.
+   */
+  const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const channel = (c) => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  const contrast = (a, b) => {
+    const [hi, lo] = [luminance(rgb(a)), luminance(rgb(b))].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const value = (name) => {
+    const v = declaredValue(name);
+    assert.match(v ?? "", /^#[0-9a-f]{6}$/i, `${name} must be a six-digit hex to be measured`);
+    return v;
+  };
+
+  const failing = (pairs, floor) =>
+    pairs
+      .map(([fg, bg]) => [fg, bg, contrast(value(fg), value(bg))])
+      .filter(([, , ratio]) => ratio < floor)
+      .map(([fg, bg, ratio]) => `${fg} on ${bg}: ${ratio.toFixed(2)} < ${floor}`);
+
+  test("every ink emphasis clears AA on every surface", () => {
+    const pairs = [];
+    for (const ink of ["--ink", "--ink-muted", "--ink-dim"])
+      for (const surface of ["--panel", "--panel-raised", "--panel-well"]) pairs.push([ink, surface]);
+    assert.deepEqual(failing(pairs, 4.5), []);
+  });
+
+  test("the structural wire clears 3:1 on both sides of the boundary", () => {
+    assert.deepEqual(
+      failing([["--wire-structural", "--panel"], ["--wire-structural", "--ground"]], 3),
+      []
+    );
+  });
+
+  test("every status colour clears AA on the panel", () => {
+    const pairs = ["--status-ok", "--status-warn", "--status-crit", "--status-accent"].map(
+      (s) => [s, "--panel"]
+    );
+    assert.deepEqual(failing(pairs, 4.5), []);
+  });
+});

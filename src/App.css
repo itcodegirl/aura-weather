@@ -5,10 +5,11 @@
   /* ----------------------------------------------------------------
    * Semantic layer
    *
-   * The roles the interface is drawn from. The layer landed as a pure
-   * move — every token resolved to the value it had before — and then
-   * the surfaces went opaque in the Instrument sequence's step 2 (see the
-   * panel roles below). Everything else still holds the colour it had.
+   * The roles the interface is drawn from, holding the Instrument dark
+   * palette (docs/redesign/instrument/README.md). The layer landed as a
+   * pure move, the surfaces went opaque in step 2, and step 3 put the
+   * palette proper into the roles — this block is the only place it
+   * lives. Every ratio quoted below is computed from the hexes beside it.
    *
    * It exists because Aura's palette is currently ~40 literals scattered
    * through this block, and a stylesheet asking for --bg-large-card is
@@ -24,55 +25,58 @@
    *   ink     text, at three emphases
    *   status  the four meanings colour is allowed to carry
    * ---------------------------------------------------------------- */
-  --ground-top: #0a1020;
-  --ground: #070c18;
-  --ground-bottom: #050812;
+  /* The spec names one ground; the body ramp keeps the offsets it had
+     around the old mid so the page still darkens gently top to bottom. */
+  --ground-top: #0a0e18;
+  --ground: #070a10;
+  --ground-bottom: #05060a;
 
   /*
-   * Instrument step 2: opaque surfaces. These were white @ .11 / .16 and
-   * black @ .30 over whatever the sky happened to be, seen through a
-   * backdrop blur. Each is now that same alpha composited over --ground
-   * (#070c18) and frozen — a derivation, not a new colour, so the
-   * Instrument palette proper (step 3) is still the only place new values
-   * enter. The well is cut into the panel, so it composites over --panel
-   * rather than over the ground.
-   *   white @ .11 over --ground -> #222731
-   *   white @ .16 over --ground -> #2f333d
-   *   black @ .30 over --panel  -> #181b23
+   * Opaque since step 2; the Instrument values since step 3. The spec
+   * names only `panel`, so the other two tiers reuse spec values rather
+   * than invent any: the raised tile is the spec's wire-rhythm tone (the
+   * one "inside a module" colour it defines) and the well, cut into the
+   * panel, is the ground beneath it.
+   *   panel vs ground 1.04 — the boundary is carried by wire-structural,
+   *   not by the surfaces (see the wires below).
    */
-  --panel: #222731;
-  --panel-raised: #2f333d;
-  --panel-well: #181b23;
+  --panel: #0b1118;
+  --panel-raised: #1b2536;
+  --panel-well: #070a10;
 
-  --wire-structural: rgba(206, 222, 248, 0.3);
-  --wire-rhythm: rgba(196, 213, 241, 0.12);
-
-  --ink: #eef1f8;
   /*
-   * Alphas are floored at the WCAG AA (4.5:1) threshold for small text.
-   * Until step 2 the backdrop under text varied with the sky, and the
-   * floor was set against the lightest stop (#2e353f, Rime Fog) seen
-   * through the most opaque glass — roughly 5.6:1 muted and 4.7:1 dim.
-   * The panels are now opaque, so the backdrop is fixed and the ratios
-   * hold whatever the weather. Recomputed against --panel-raised
-   * (#2f333d), the lightest surface text sits on:
-   *   --ink-muted -> 9.07:1    --ink-dim -> 7.50:1
-   *   (vs --panel 10.58 / 8.63; vs --panel-well 11.98 / 9.64)
-   * Kept here rather than left to axe so the floor guards the token, not
-   * one page's rendering of it.
-   *
-   * Not fixed by step 2: --wire-structural against the panel measures
-   * 2.29:1 — it was 2.29 on a dark sky and 1.94 on a bright one — under
-   * WCAG 1.4.11's 3:1 for a module boundary. Step 3's two-wire system is
-   * what clears it; recorded so the number is not mistaken for new.
+   * Two weights, and it is not a stylistic choice. A single wire at the
+   * weight that reads as quiet measured 1.23:1 against the panel, with
+   * the panel itself 1.04:1 against the ground, so module boundaries were
+   * effectively invisible — under WCAG 1.4.11's 3:1 for non-text
+   * information. Structural carries the boundary and clears it (3.02 vs
+   * panel, 3.16 vs ground); rhythm paces the inside of a module and has
+   * no floor. This is the P6 finding and the step-2 debt (2.29) paid.
    */
-  --ink-muted: rgba(238, 241, 248, 0.88);
-  --ink-dim: rgba(238, 241, 248, 0.78);
+  --wire-structural: #58616e;
+  --wire-rhythm: #1b2536;
 
+  /*
+   * Solids now, not alphas — with opaque surfaces there is nothing for
+   * an alpha to pick up. The spec names ink and ink-dim; muted is their
+   * sRGB midpoint, the one derived value in this block. Floors: AA 4.5:1
+   * for text, checked against the lightest surface text sits on
+   * (--panel-raised) and guarded in App.tokens.test.mjs.
+   *            vs raised   vs panel   vs well
+   *   ink        11.77      14.50     15.16
+   *   muted       8.21      10.12     10.57
+   *   dim         5.44       6.70      7.00
+   */
+  --ink: #d9e2ee;
+  --ink-muted: #b2bfd0;
+  --ink-dim: #8b9bb1;
+
+  /* Colour is reserved for these four meanings. vs panel: ok 9.74,
+     warn 10.65, crit 6.79, accent 8.79. */
   --status-accent: #6fb7f2;
-  --status-ok: #7fd99a;
-  --status-warn: #f3b765;
-  --status-crit: #f1a0a8;
+  --status-ok: #37d19f;
+  --status-warn: #ffb347;
+  --status-crit: #ff6b60;
 
   --text: var(--ink);
   --text-muted: var(--ink-muted);
@@ -93,7 +97,7 @@
   --radius-pill: 999px;
   --card-padding: 24px;
 
-  --border: 1px solid rgba(211, 224, 246, 0.2);
+  --border: 1px solid var(--wire-structural);
   --card-border: 1px solid var(--wire-structural);
   --shadow: 0 18px 44px rgba(3, 8, 25, 0.28);
   --card-shadow:
@@ -119,7 +123,7 @@
      and wells now reference --bg-well directly. (--panel is back at the
      top of this file, but as the semantic role, not the old navy fill;
      the others stay gone.) */
-  --subcard-border: 1px solid rgba(196, 213, 241, 0.15);
+  --subcard-border: 1px solid var(--wire-rhythm);
   --subcard-shadow: inset 0 1px 0 rgba(235, 243, 255, 0.06);
 
   --accent: var(--status-accent);
@@ -127,9 +131,6 @@
   --accent-warm: var(--status-warn);
   --accent-green: var(--status-ok);
   --accent-rose: var(--status-crit);
-  --atmo-lavender: rgba(168, 154, 214, 0.12);
-  --atmo-sky: rgba(111, 172, 214, 0.14);
-  --atmo-haze: rgba(215, 226, 241, 0.08);
 
   /* Glacier palette — brand accent + semantic secondaries */
   --glacier: var(--status-accent);
@@ -150,10 +151,9 @@
      composited brighter than its card (raised, backwards) and failed AA
      on bright conditions. */
   --bg-tile: var(--panel-raised);
-  --bg-tile-border: rgba(255, 255, 255, 0.22);
   --bg-large-card: var(--panel);
   --bg-well: var(--panel-well);
-  --bg-panel-outer: rgba(255, 255, 255, 0.04);
+  --bg-panel-outer: var(--panel);
 
   --hero-unit-size: 28px;
 
@@ -220,9 +220,9 @@
 
   /* Border system */
   --border-base: 196, 213, 241;
-  --border-default: 1px solid rgba(196, 213, 241, 0.18);
+  --border-default: 1px solid var(--wire-rhythm);
   --border-soft: 1px solid var(--wire-rhythm);
-  --border-strong: 1px solid rgba(220, 232, 255, 0.34);
+  --border-strong: 1px solid var(--wire-structural);
 
   /* Subcard spacing — default tile inset, lg for roomier prompt panels */
   --subcard-padding: 10px 12px;

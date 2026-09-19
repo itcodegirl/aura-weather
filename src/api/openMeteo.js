@@ -630,6 +630,76 @@ export async function fetchHistoricalTemperatureAverage(
  * Fetches air quality data (European AQI scale).
  * Non-critical: returns null on failure instead of throwing.
  */
+/*
+ * The overall index plus the per-pollutant sub-indices, in one request.
+ *
+ * The sub-indices are asked for by name rather than derived here: Open-Meteo
+ * publishes `us_aqi_pm2_5` and friends already converted to the EPA scale, and
+ * re-deriving them from the ug/m3 concentrations would mean carrying a copy of
+ * the EPA breakpoint tables -- four pollutants, two averaging periods, revised
+ * by rule-making -- that would drift silently the moment the EPA revised one.
+ * The provider's own numbers are the reading.
+ *
+ * The US index is the maximum of its sub-indices, so the sub-index equal to
+ * the overall value names the pollutant driving it.
+ */
+export const AQI_FIELDS = [
+  "us_aqi",
+  "us_aqi_pm2_5",
+  "us_aqi_pm10",
+  "us_aqi_ozone",
+  "us_aqi_nitrogen_dioxide",
+  "us_aqi_sulphur_dioxide",
+  "us_aqi_carbon_monoxide",
+];
+
+/** Sub-index field -> the label the card shows. Order is display order. */
+export const AQI_POLLUTANTS = [
+  { key: "us_aqi_pm2_5", label: "PM2.5" },
+  { key: "us_aqi_pm10", label: "PM10" },
+  { key: "us_aqi_ozone", label: "Ozone" },
+  { key: "us_aqi_nitrogen_dioxide", label: "NO2" },
+  { key: "us_aqi_sulphur_dioxide", label: "SO2" },
+  { key: "us_aqi_carbon_monoxide", label: "CO" },
+];
+
+/**
+ * The same response as fetchAirQuality, kept whole.
+ *
+ * Non-critical like its sibling: returns null on failure rather than throwing,
+ * and every reading goes through toFiniteNumber, so a pollutant the provider
+ * omits stays null and renders as unavailable instead of as a clean zero.
+ */
+export async function fetchAirQualityDetail(lat, lon, options = {}) {
+  const coordinates = validateCoordinates(lat, lon);
+  try {
+    const data = await fetchJsonWithRetry(
+      `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=${AQI_FIELDS.join(",")}`,
+      { signal: options.signal, ...requestTiming(options) }
+    );
+    const current = data?.current ?? null;
+    if (current === null) return null;
+    const aqi = toFiniteNumber(current.us_aqi);
+    const pollutants = AQI_POLLUTANTS.map(({ key, label }) => ({
+      key,
+      label,
+      value: toFiniteNumber(current[key]),
+    }));
+    // The driver is the sub-index that equals the overall index. Null when the
+    // overall reading is missing, or when no sub-index matches it -- naming a
+    // pollutant the provider's own arithmetic does not support would be a
+    // guess dressed as a finding.
+    const driver =
+      aqi === null ? null : (pollutants.find((p) => p.value === aqi) ?? null);
+    return { aqi, pollutants, driver, observedAt: current.time ?? null };
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+    return null;
+  }
+}
+
 export async function fetchAirQuality(lat, lon, options = {}) {
   const coordinates = validateCoordinates(lat, lon);
   try {
@@ -643,7 +713,7 @@ export async function fetchAirQuality(lat, lon, options = {}) {
     // app: a European 65 ("Poor") rendered as "Moderate", 13% along a gauge it
     // should have filled two-thirds of.
     const data = await fetchJsonWithRetry(
-      `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=us_aqi`,
+      `${ENDPOINTS.aqi}?latitude=${coordinates.latitude}&longitude=${coordinates.longitude}&current=${AQI_FIELDS.join(",")}`,
       { signal: options.signal, ...requestTiming(options) }
     );
     // toFiniteNumber returns null for nullish/empty inputs; the legacy

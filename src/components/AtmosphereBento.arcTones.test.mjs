@@ -56,7 +56,15 @@ function resolve(value, ramp) {
 }
 
 const strokes = readArcStrokes(BENTO_CSS);
-const ramp = readRamp(APP_CSS);
+// The ramp is read from the base :root only. App.css declares a second
+// :root under prefers-color-scheme: light (Instrument step 4) with its
+// own --risk-* values; a whole-file scan would let those last-declared
+// values overwrite the dark ones this test pins.
+const BASE_ROOT = APP_CSS.slice(
+  APP_CSS.indexOf(":root {"),
+  APP_CSS.indexOf("\n}\n", APP_CSS.indexOf(":root {"))
+);
+const ramp = readRamp(BASE_ROOT);
 
 const AQI_SAMPLES = [25, 75, 125, 175, 250, 400];
 const UV_SAMPLES = [1, 4, 6.5, 9, 11];

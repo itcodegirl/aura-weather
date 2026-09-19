@@ -372,3 +372,78 @@ describe("the Instrument palette — step 3", () => {
     assert.deepEqual(failing(pairs, 4.5), []);
   });
 });
+
+describe("the Instrument palette — light scheme (step 4) and both-theme guards (step 5)", () => {
+  /*
+   * The light block is a second :root under prefers-color-scheme: light.
+   * The same claims hold there, measured against the light panel, plus
+   * the two this step added: the structural wire clears 3:1 against the
+   * ground as well as the panel (the brief's #8a909e measured 2.90 vs
+   * its own ground), and every severity rung's text clears AA on that
+   * rung's own background — badges are read on their tint, not on the
+   * panel.
+   */
+  const LIGHT_BLOCK = APP_CSS.match(
+    /@media \(prefers-color-scheme: light\)\s*\{\s*:root\s*\{([\s\S]*?)\n\s*\}/
+  );
+  const lightValue = (name) => {
+    const m = (LIGHT_BLOCK?.[1] ?? "").match(new RegExp(`(?:^|[;{\\s])${name}\\s*:\\s*([^;]+);`));
+    return m ? m[1].trim().replace(/\s+/g, " ") : null;
+  };
+  const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const channel = (c) => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  const contrast = (a, b) => {
+    const [hi, lo] = [luminance(rgb(a)), luminance(rgb(b))].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const themes = { dark: declaredValue, light: lightValue };
+  const hexOf = (read, name) => {
+    const v = read(name);
+    assert.match(v ?? "", /^#[0-9a-f]{6}$/i, `${name} must be a six-digit hex to be measured`);
+    return v;
+  };
+  const failing = (read, pairs, floor) =>
+    pairs
+      .map(([fg, bg]) => [fg, bg, contrast(hexOf(read, fg), hexOf(read, bg))])
+      .filter(([, , r]) => r < floor)
+      .map(([fg, bg, r]) => `${fg} on ${bg}: ${r.toFixed(2)} < ${floor}`);
+
+  test("the light block exists and declares every role", () => {
+    assert.ok(LIGHT_BLOCK, "no @media (prefers-color-scheme: light) { :root { … } } block in App.css");
+    const missing = SEMANTIC_ROLES.filter((name) => lightValue(name) === null);
+    assert.deepEqual(missing, [], "roles with no light declaration");
+  });
+
+  for (const [theme, read] of Object.entries(themes)) {
+    test(`${theme}: every ink emphasis clears AA on every surface`, () => {
+      const pairs = [];
+      for (const ink of ["--ink", "--ink-muted", "--ink-dim"])
+        for (const surface of ["--panel", "--panel-raised", "--panel-well"]) pairs.push([ink, surface]);
+      assert.deepEqual(failing(read, pairs, 4.5), []);
+    });
+
+    test(`${theme}: the structural wire clears 3:1 against the panel AND the ground`, () => {
+      assert.deepEqual(
+        failing(read, [["--wire-structural", "--panel"], ["--wire-structural", "--ground"]], 3),
+        []
+      );
+    });
+
+    test(`${theme}: every status colour clears AA on the panel`, () => {
+      const pairs = ["--status-ok", "--status-warn", "--status-crit", "--status-accent"].map((s) => [s, "--panel"]);
+      assert.deepEqual(failing(read, pairs, 4.5), []);
+    });
+  }
+
+  test("light: every severity rung's text clears AA on its own background", () => {
+    // Dark rungs use translucent backgrounds and are measured in the
+    // rendered suite; the light rungs are opaque hexes and can be
+    // measured here.
+    const pairs = ["critical", "high", "warn", "ok", "info"].map((r) => [
+      `--severity-${r}-fg`,
+      `--severity-${r}-bg`,
+    ]);
+    assert.deepEqual(failing(lightValue, pairs, 4.5), []);
+  });
+});

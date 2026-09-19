@@ -453,7 +453,7 @@
 .hero-trust-pill.hero-trust-pill--unavailable {
   border-color: rgba(148, 163, 184, 0.4);
   background: rgba(148, 163, 184, 0.14);
-  color: #cbd5e1;
+  color: var(--text-dim);
 }
 
 .hero-trust-pill--unavailable .hero-trust-dot {
@@ -533,7 +533,7 @@
 
 .hero-guidance-item--calm {
   border-color: rgba(139, 220, 168, 0.26);
-  background: linear-gradient(160deg, rgba(16, 48, 40, 0.3), rgba(11, 20, 38, 0.48));
+  background: var(--severity-ok-bg);
 }
 
 .hero-guidance-item--notice {
@@ -700,7 +700,7 @@
 }
 
 .hero-high-low-item:last-child .hero-high-low-value {
-  color: #bcd2f0;
+  color: var(--glacier-light);
 }
 
 /* ── Hero refinements: sun placement, daylight strip, feels-like ─────────────

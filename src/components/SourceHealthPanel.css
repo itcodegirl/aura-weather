@@ -44,7 +44,7 @@
 }
 
 .source-health-title svg {
-  color: #aecdf2;
+  color: var(--glacier-muted);
 }
 
 .source-health-summary {
@@ -148,7 +148,7 @@
 .source-health-item--ready .source-health-pill {
   border-color: rgba(110, 231, 183, 0.34);
   background: rgba(16, 185, 129, 0.16);
-  color: #c8f8e7;
+  color: var(--severity-ok-fg);
 }
 
 .source-health-item--cached,

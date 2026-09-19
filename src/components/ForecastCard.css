@@ -63,8 +63,8 @@
   position: relative;
   padding: 13px 14px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(165deg, rgba(12, 23, 45, 0.66), rgba(7, 14, 31, 0.54));
-  border: 1px solid rgba(188, 212, 252, 0.22);
+  background: var(--bg-well);
+  border: var(--border-default);
   box-shadow:
     inset 0 1px 0 rgba(236, 244, 255, 0.08),
     0 10px 20px rgba(3, 8, 22, 0.2);
@@ -86,8 +86,8 @@
 }
 
 .forecast-row:first-child {
-  border-color: rgba(156, 201, 242, 0.4);
-  background: linear-gradient(162deg, rgba(16, 32, 63, 0.78), rgba(9, 18, 39, 0.62));
+  border-color: var(--wire-structural);
+  background: var(--bg-tile);
   box-shadow:
     inset 0 1px 0 rgba(236, 244, 255, 0.14),
     0 12px 24px rgba(4, 10, 24, 0.24);
@@ -188,7 +188,7 @@
 
 .forecast-signal-chip--wet {
   border-color: rgba(156, 201, 242, 0.4);
-  color: #bcdcfa;
+  color: var(--glacier-light);
 }
 
 .forecast-signal-chip--limited {
@@ -283,14 +283,14 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(181, 220, 255, 0.28);
   background: var(--bg-well);
-  color: #9cc9f2;
+  color: var(--glacier-mid);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
 
 .forecast-precip-value {
-  color: #bcdcfa;
+  color: var(--glacier-light);
   font-variant-numeric: tabular-nums;
 }
 

@@ -140,7 +140,7 @@
   top: 0;
   z-index: 1;
   padding: 10px 14px 8px;
-  background: linear-gradient(180deg, rgba(8, 15, 30, 0.98), rgba(8, 15, 30, 0.92));
+  background: var(--bg-well);
   border-bottom: 1px solid rgba(173, 198, 242, 0.12);
 }
 
@@ -240,7 +240,7 @@
 
 .city-search-result-icon {
   flex-shrink: 0;
-  color: #cce1ff;
+  color: var(--glacier-light);
   transition:
     color var(--motion-fast) var(--ease-standard),
     transform var(--motion-fast) var(--ease-standard);

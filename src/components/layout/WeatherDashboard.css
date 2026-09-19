@@ -63,7 +63,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid rgba(111, 183, 242, 0.28);
   background: rgba(111, 183, 242, 0.14);
-  color: #cfe6fb;
+  color: var(--glacier-light);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.02em;

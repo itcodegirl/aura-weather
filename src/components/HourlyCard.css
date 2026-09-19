@@ -274,14 +274,14 @@
   text-align: center;
   font-size: 10.5px;
   font-weight: 600;
-  color: #cfe3fb;
+  color: var(--glacier-light);
   pointer-events: none;
   text-shadow: 0 1px 3px rgba(6, 13, 28, 0.7);
   font-variant-numeric: tabular-nums;
 }
 
 .hourly-col.is-sel .hourly-wval {
-  color: #fff;
+  color: var(--text);
 }
 
 .hourly-col.is-sel .hourly-wbar {
@@ -553,7 +553,7 @@
 }
 
 .hourly-touch-sample.is-now strong {
-  color: #fff;
+  color: var(--text);
 }
 
 .hourly-touch-sample.is-selected {

@@ -54,7 +54,7 @@
 
 .tagline {
   grid-area: tag;
-  color: rgba(205, 218, 239, 0.88);
+  color: var(--text);
   font-size: 10px;
   font-weight: 700;
   line-height: 1.1;
@@ -128,7 +128,7 @@
   padding: 2px 3px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(181, 210, 252, 0.26);
-  background: rgba(8, 17, 36, 0.5);
+  background: var(--bg-well);
 }
 
 .saved-city-chip-wrap.is-startup {
@@ -150,7 +150,7 @@
   white-space: nowrap;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
-  color: rgba(224, 237, 255, 0.92);
+  color: var(--text);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -192,16 +192,16 @@
 .saved-city-startup-badge {
   display: inline-flex;
   align-items: center;
-  color: #ffe1a8;
+  color: var(--amber-soft);
   border: 1px solid rgba(243, 183, 101, 0.3);
   background: rgba(61, 44, 11, 0.34);
 }
 
 .saved-city-startup {
   position: relative;
-  color: rgba(224, 237, 255, 0.8);
+  color: var(--text-muted);
   border: 1px solid rgba(181, 210, 252, 0.18);
-  background: rgba(7, 16, 35, 0.34);
+  background: var(--bg-well);
   transition:
     color var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard),
@@ -233,7 +233,7 @@
   width: 20px;
   height: 24px;
   border-radius: var(--radius-pill);
-  color: rgba(206, 226, 255, 0.78);
+  color: var(--text-muted);
   font-size: 14px;
   line-height: 1;
   transition:
@@ -262,7 +262,7 @@
 }
 
 .saved-city-move[aria-disabled="true"] {
-  color: rgba(206, 226, 255, 0.28);
+  color: var(--text-dim);
   cursor: default;
 }
 
@@ -275,7 +275,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  color: rgba(237, 201, 201, 0.9);
+  color: var(--severity-critical-fg);
   font-size: 14px;
   line-height: 1;
   transition:
@@ -295,7 +295,7 @@
 }
 
 .saved-city-remove:hover {
-  color: #fca5a5;
+  color: var(--severity-critical-fg);
   background: rgba(127, 29, 29, 0.3);
 }
 
@@ -316,7 +316,7 @@
   padding: 4px 6px 4px 12px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(181, 210, 252, 0.26);
-  background: rgba(8, 17, 36, 0.6);
+  background: var(--bg-well);
   box-shadow: inset 0 1px 0 rgba(228, 240, 255, 0.08);
   animation: settings-reveal var(--motion-medium) var(--ease-emphasis) both;
 }
@@ -367,7 +367,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  color: rgba(214, 230, 252, 0.86);
+  color: var(--text-muted);
   font-size: 16px;
   line-height: 1;
   transition:
@@ -404,7 +404,7 @@
   gap: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(185, 211, 250, 0.24);
-  background: rgba(7, 16, 35, 0.48);
+  background: var(--bg-well);
   box-shadow: inset 0 1px 0 rgba(228, 240, 255, 0.08);
   text-align: left;
   transition:
@@ -432,8 +432,8 @@
   padding: 0 8px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(178, 209, 252, 0.28);
-  background: rgba(8, 18, 39, 0.62);
-  color: rgba(210, 227, 252, 0.9);
+  background: var(--bg-well);
+  color: var(--text);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -441,7 +441,7 @@
 }
 
 .sync-account-toggle-icon {
-  color: rgba(214, 230, 252, 0.86);
+  color: var(--text-muted);
   transition: transform var(--motion-fast) var(--ease-standard);
 }
 
@@ -456,7 +456,7 @@
   padding: 10px 11px;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(185, 211, 250, 0.24);
-  background: rgba(7, 16, 35, 0.56);
+  background: var(--bg-well);
   box-shadow: inset 0 1px 0 rgba(228, 240, 255, 0.08);
 }
 
@@ -465,7 +465,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: rgba(212, 227, 252, 0.92);
+  color: var(--text);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.11em;
@@ -474,21 +474,21 @@
 
 .sync-account-status {
   margin: 0;
-  color: #e3efff;
+  color: var(--text);
   font-size: 12px;
   font-weight: 600;
 }
 
 .sync-account-note {
   margin: 0;
-  color: rgba(205, 221, 247, 0.88);
+  color: var(--text);
   font-size: 11px;
   line-height: 1.4;
 }
 
 .sync-account-meta {
   margin: 0;
-  color: rgba(184, 208, 245, 0.88);
+  color: var(--text);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -509,8 +509,8 @@
   padding: 0 10px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(186, 214, 252, 0.28);
-  background: rgba(8, 17, 38, 0.58);
-  color: #e3efff;
+  background: var(--bg-well);
+  color: var(--text);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -534,8 +534,8 @@
 }
 
 .sync-account-btn--subtle {
-  color: rgba(212, 226, 248, 0.92);
-  background: rgba(8, 17, 37, 0.44);
+  color: var(--text);
+  background: var(--bg-well);
 }
 
 
@@ -558,7 +558,7 @@
 .header-control-label {
   margin: 0;
   padding-inline-start: 4px;
-  color: rgba(205, 221, 251, 0.9);
+  color: var(--text);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -628,7 +628,7 @@
   border-color: transparent;
   background: transparent;
   box-shadow: none;
-  color: rgba(252, 195, 195, 0.88);
+  color: var(--severity-critical-fg);
   letter-spacing: 0.03em;
   text-transform: none;
   text-decoration: underline;
@@ -779,7 +779,7 @@
     padding: 0 14px;
     border-radius: 14px;
     border: 1px solid rgba(198, 218, 255, 0.24);
-    background: rgba(8, 17, 38, 0.56);
+    background: var(--bg-well);
     box-shadow: inset 0 1px 0 rgba(226, 238, 255, 0.08);
     color: var(--text-muted);
     font-size: 12px;

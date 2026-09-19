@@ -100,7 +100,8 @@ information). `wire-structural` carries the boundary and clears 3:1;
 | 3 | The Instrument palette proper | **Merged — PR #243.** The dark table into the roles, plus the component surface sweep. **Palette only** — the mockup's step 3 also names mono numerals, module headers, status words instead of badges, and rule-divided data grids; those are open as **3b** (below). |
 | 4 | Light palette, `prefers-color-scheme`, `color-scheme: light dark` | **Merged — PR #244.** System-following only; no sky in light (flat ground); the light table revised as above; the unnamed families derived (appendix). |
 | 5 | Contrast-budget test covering both themes | **Folded into step 4.** Ink on every surface, wire vs panel *and* ground, status on panel — both schemes — plus light severity text on its own tint. |
-| 3b-i | Flat square chrome, and the mono face | **Open — draft PR.** See below. |
+| 3b-i | Flat square chrome, and the mono face | **Merged — PR #246.** |
+| 3b-ii | Module header rows and status words | **Open — draft PR.** See below. |
 
 Each step is its own PR and needs Jenna's go-ahead before it starts.
 Per `AGENTS.md`, subjective visual decisions are not an agent's to make;
@@ -136,11 +137,13 @@ decision:
    eyebrow and label. **Shipped in 3b-i.**
 2. **Module chrome** — flat, square, no shadow, a structural rule for the
    boundary, and a header row (mono title · scope chip · status word).
-   **The flat square part shipped in 3b-i**; the header row is JSX in all
-   ten blocks, three of them high-risk files, and is still open.
+   **The flat square part shipped in 3b-i, the header row in 3b-ii** —
+   and it needed no JSX after all: every card already had a title row
+   with its badge pushed right, so the row existed and only its
+   treatment was wrong.
 3. **Status words instead of badges** — the AUD-005 vocabulary stays;
    the pill becomes a coloured mono word, and the alert row loses its
-   tinted background. **Open (3b-ii).**
+   tinted background. **Shipped in 3b-ii.**
 4. **Data grids** — stat tiles become rule-divided cells, `label / value
    / unit`, flat on the ground. The raised tile nearly disappears from
    the system; the rhythm wire does its job. **Open (3b-iii).**
@@ -205,6 +208,51 @@ the offline shell.
 
 Marker glows on the charts and the pill shape on badges are deliberately
 untouched: they belong to 3b-ii and 3b-iii.
+
+## What 3b-ii did
+
+The header row turned out to be there already. Every card renders a
+`<h2>`/`<h3>` title with a badge pushed to the right of the same row, so
+nothing needed restructuring — the row's *treatment* was the change, and
+no JSX moved.
+
+**Names.** `--section-title-size` went from `clamp(18px, 1.2vw, 20px)` to
+`--fs-caption` (10px), and the eight `*-title` rules took mono, weight
+600, `--track-header` (0.16em, a new step above `--track-loose`) and
+uppercase. Both size tokens are consumed only by those eight rules, so
+the token edit is the whole statement of the header size. The lucide
+icons beside each title are sized to 12px in CSS, which wins over the
+`width`/`height` attributes lucide emits.
+
+This is the step where a card stops announcing itself. A reading is the
+largest thing in its module now, and the module's name is a rule above
+it — which is the point of the direction, and also the single most
+reversible line in it if it reads too quiet at bento width.
+
+**Status.** A status is a coloured mono word, not a filled capsule: the
+colour already carries the rank, and a tinted capsule around it says so
+twice while adding a surface this direction otherwise does not have.
+`.severity-badge`, `.alerts-subtitle`, `.alerts-priority`,
+`.source-health-pill` and `.forecast-signal-chip` lose their pill;
+`.eyebrow-pill` and `.radar-phase` become the mockup's scope chip — a
+square hairline box on the rhythm wire, deliberately under 3:1 because
+it paces rather than separates. The `--severity-*` rung modifiers keep
+their (now stripped) shape so re-filling a rung is one line.
+
+**The AUD-005 vocabulary is untouched.** This changes how a status is
+drawn, never which word it uses.
+
+### Still pills — a decision, not an oversight
+
+Seven uppercase pills remain, and they are app chrome rather than module
+headers: `.data-source-badge`, `.global-update-state`,
+`.city-search-shortcut-badge`, `.city-search-group-label`,
+`.saved-city-startup-badge`, `.sync-account-toggle-hint`, and the
+`data-refreshing` chip. The mockup gives the top bar its own idiom and
+says nothing about these, so squaring them would be an agent's taste,
+not the direction. They are visible as rounded chips above squared
+cards in the light preview, which is the argument for doing them — but
+that argument is Jenna's to accept.
 
 ## Light values the table does not name
 

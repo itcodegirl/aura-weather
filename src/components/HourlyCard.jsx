@@ -2,7 +2,7 @@
 //
 // Glacier hourly module — three views in one card:
 //   • Temp & Rain (combo): amber temperature line + node dots over
-//     intensity-coloured rain-chance bars (green when rain ≥ 50%).
+//     rain-chance bars, with the dashed 50% rule marking "likely".
 //   • Precipitation: rain-chance bars with a 50% "likely" threshold line.
 //   • Wind: sustained-speed bars with a translucent gust extension + cap,
 //     the mph value printed on every bar, and a direction arrow per hour.
@@ -66,13 +66,6 @@ const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 function compass(deg) {
   if (deg === null || deg === undefined || !Number.isFinite(deg)) return null;
   return COMPASS[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
-}
-
-function rainTier(p) {
-  if (p === null) return "na";
-  if (p >= 50) return "hi"; // rain likely
-  if (p >= 30) return "mid";
-  return "lo";
 }
 
 function rainWord(p) {
@@ -231,15 +224,21 @@ function detailText(hour, tab, unit) {
   };
 }
 
+/*
+ * No "Likely >50%" swatch any more. The bars are one tone, and the dashed
+ * 50% rule -- which renders on both the tr and precip tabs and carries its
+ * own inline "50% · likely" label -- is what marks the threshold. A second
+ * encoding of the same crossing, in green, said "good" about a high chance
+ * of rain.
+ */
 const LEGENDS = {
   tr: [
     { type: "line", label: "Temperature" },
-    { type: "bar", cls: "b-mid", label: "Rain chance" },
-    { type: "bar", cls: "b-hi", label: "Likely >50%" },
+    { type: "bar", cls: "b-rain", label: "Rain chance" },
+    { type: "dash", label: "50% line" },
   ],
   precip: [
-    { type: "bar", cls: "b-mid", label: "Chance of rain" },
-    { type: "bar", cls: "b-hi", label: "Likely >50%" },
+    { type: "bar", cls: "b-rain", label: "Chance of rain" },
     { type: "dash", label: "50% line" },
   ],
   wind: [
@@ -396,7 +395,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
         return `Temperature ${lo}°–${hi}°. Rain chance isn't available for these hours.`;
       }
       const peak = Math.round(Math.max(...rains));
-      return `Temperature ${lo}°–${hi}° with rain chance peaking at ${peak}% — green bars flag the hours rain is likely.`;
+      return `Temperature ${lo}°–${hi}° with rain chance peaking at ${peak}% — bars above the dashed 50% line mark when rain is likely.`;
     }
     if (tab === "precip")
       return `Rain chance ranges ${lo}–${hi}%. Bars above the dashed 50% line mark when rain is likely.`;
@@ -559,7 +558,7 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                     >
                       {hour.rain !== null && (
                         <span
-                          className={`hourly-bar b-${rainTier(hour.rain)}`}
+                          className="hourly-bar"
                           style={{ height: `${h}px` }}
                         />
                       )}

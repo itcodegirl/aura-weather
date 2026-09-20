@@ -154,7 +154,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-artifacts
-          path: .lighthouseci/
+          # The reports land in lhci-reports/; .lighthouseci/ only ever holds
+          # the ephemeral Chrome profile, which the script removes in its
+          # finally block -- so a budget failure used to upload an empty
+          # artifact and arrive with nothing to diagnose it.
+          path: lhci-reports/
           if-no-files-found: ignore
           retention-days: 14
 

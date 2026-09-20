@@ -969,3 +969,52 @@ describe("component colour literals are a closed set", () => {
     }
   });
 });
+
+/*
+ * The installed-PWA chrome has to agree with the app it opens.
+ *
+ * index.html declares theme-color per scheme (#070a10 dark / #e4e9ef light,
+ * the two --ground values), but a web manifest carries a single colour for
+ * both. The manifest kept the static #0b1c3f the page used before the light
+ * scheme landed, and background_color kept an #081225 that has never been a
+ * token at all -- so an installed app painted a navy splash and a navy
+ * toolbar and then revealed the real ground underneath. Against the light
+ * ground #0b1c3f measures 14.32:1: maximum discord rather than a near-miss.
+ *
+ * Nothing covered this, and the drift ran for two weeks between the icon
+ * commit and the light-scheme commit. Anchored to index.html rather than to
+ * a literal so the two cannot separate again.
+ */
+describe("the manifest agrees with the page it installs", () => {
+  const manifest = JSON.parse(
+    readFileSync(join(REPO_ROOT, "public/manifest.webmanifest"), "utf8")
+  );
+  const indexHtml = readFileSync(join(REPO_ROOT, "index.html"), "utf8");
+
+  function themeColorFor(scheme) {
+    const pattern = new RegExp(
+      `<meta[^>]*name="theme-color"[^>]*prefers-color-scheme:\\s*${scheme}\\s*\\)"[^>]*content="([^"]+)"`
+    );
+    const match = pattern.exec(indexHtml);
+    assert.ok(match !== null, `index.html should declare a ${scheme} theme-color`);
+    return match[1].toLowerCase();
+  }
+
+  test("theme_color is the page's own dark theme-color", () => {
+    assert.equal(
+      manifest.theme_color.toLowerCase(),
+      themeColorFor("dark"),
+      "the installed toolbar colour must be one the app actually uses"
+    );
+  });
+
+  test("background_color is a declared ground, not an invented navy", () => {
+    const grounds = [themeColorFor("dark"), themeColorFor("light")];
+    assert.ok(
+      grounds.includes(manifest.background_color.toLowerCase()),
+      `background_color ${manifest.background_color} is not one of the ` +
+        `declared grounds (${grounds.join(", ")}); the splash would reveal a ` +
+        "different colour than it painted"
+    );
+  });
+});

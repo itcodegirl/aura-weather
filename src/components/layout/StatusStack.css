@@ -171,9 +171,15 @@
   transform: translateY(var(--lift-1));
 }
 
-.location-setup-btn--primary:hover {
-  background: linear-gradient(145deg, #ffffff, var(--severity-info-fg));
-}
+/*
+ * No background override on hover. The base rule above pairs
+ * --active-pill-bg with --active-pill-color; repainting only the
+ * background near-white left the label at 1.31 dark and 1.07 light
+ * against it, so the button went blank under the cursor in both
+ * schemes. `.location-setup-btn:hover` already carries the affordance
+ * (border colour plus the lift), which is what the secondary and
+ * tertiary buttons in the same ladder use.
+ */
 
 
 .location-setup-btn:disabled,
@@ -298,9 +304,8 @@
   transform: translateY(var(--lift-1));
 }
 
-.app-status-action--primary:hover {
-  background: linear-gradient(145deg, #ffffff, var(--severity-info-fg));
-}
+/* Same hover repaint, same failure, same reason as the setup button above.
+   `.app-status-action:hover` keeps the border and lift. */
 
 .app-status-retry {
   margin-left: auto;

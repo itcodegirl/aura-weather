@@ -704,3 +704,99 @@ describe("module headers — Instrument step 3b-ii", () => {
     assert.ok(BASE.includes("--track-header"), "--track-header is not in :root");
   });
 });
+
+/*
+ * --active-pill-bg and --active-pill-color are a pair: each scheme declares
+ * both so the pressed state inverts as a unit. Taking only the colour and
+ * painting the background from some other token breaks that, and it broke
+ * silently -- CSS has no way to say "these two go together".
+ *
+ * It shipped that way. `.unit-btn.is-active` kept `color:
+ * var(--active-pill-color)` while painting `linear-gradient(145deg,
+ * var(--paper), var(--severity-info-fg))`. All three tokens invert with the
+ * scheme, so in dark the text went light at the same time the background
+ * did: 1.26 against --paper and 1.07 against --severity-info-fg, on the
+ * always-visible °F/°C and climate-context toggles. The two StatusStack
+ * primaries did the same on :hover with a literal #ffffff -- 1.31 dark,
+ * 1.07 light.
+ *
+ * So: any rule that sets --active-pill-color must take --active-pill-bg for
+ * its background, and must not repaint that background in a :hover.
+ */
+describe("the active-pill pair stays a pair", () => {
+  const FILES = [
+    "src/components/layout/AppHeader.css",
+    "src/components/layout/StatusStack.css",
+  ];
+
+  // A rule is `selectors { body }`; the body has no nested braces in these
+  // files outside at-rules, which this split leaves intact inside the body.
+  function rules(source) {
+    const found = [];
+    const re = /([^{}]+)\{([^{}]*)\}/g;
+    let m;
+    while ((m = re.exec(source)) !== null) {
+      found.push({ selector: m[1].trim(), body: m[2] });
+    }
+    return found;
+  }
+
+  test("a rule that takes the pill colour takes the pill background", () => {
+    const offenders = [];
+    for (const relPath of FILES) {
+      const source = readFileSync(join(REPO_ROOT, relPath), "utf8").replace(
+        CSS_COMMENT,
+        ""
+      );
+      for (const { selector, body } of rules(source)) {
+        if (!/color:\s*var\(--active-pill-color\)/.test(body)) continue;
+        const background = body.match(/\bbackground(?:-color)?:\s*([^;]+)/);
+        if (!background) continue;
+        if (!/var\(--active-pill-bg\)/.test(background[1])) {
+          offenders.push(`${relPath}: ${selector} -> ${background[1].trim()}`);
+        }
+      }
+    }
+    assert.deepEqual(
+      offenders,
+      [],
+      `these paint a background the pressed colour was not measured against:\n${offenders.join("\n")}`
+    );
+  });
+
+  test("no hover repaints an active-pill background", () => {
+    const offenders = [];
+    for (const relPath of FILES) {
+      const source = readFileSync(join(REPO_ROOT, relPath), "utf8").replace(
+        CSS_COMMENT,
+        ""
+      );
+      for (const { selector, body } of rules(source)) {
+        if (!/--primary:hover|\.is-active:hover/.test(selector)) continue;
+        const background = body.match(/\bbackground(?:-color)?:\s*([^;]+)/);
+        if (background) {
+          offenders.push(`${relPath}: ${selector} -> ${background[1].trim()}`);
+        }
+      }
+    }
+    assert.deepEqual(
+      offenders,
+      [],
+      `a primary's hover repaints its background while the label stays --active-pill-color:\n${offenders.join("\n")}`
+    );
+  });
+
+  test("the near-white gradient is gone from both files", () => {
+    for (const relPath of FILES) {
+      const source = readFileSync(join(REPO_ROOT, relPath), "utf8").replace(
+        CSS_COMMENT,
+        ""
+      );
+      assert.doesNotMatch(
+        source,
+        /linear-gradient\(145deg,\s*(#ffffff|var\(--paper\))/i,
+        `${relPath} still paints a control with the near-white gradient`
+      );
+    }
+  });
+});

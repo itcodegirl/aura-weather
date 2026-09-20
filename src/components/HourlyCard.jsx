@@ -580,10 +580,22 @@ function HourlyCard({ weather, unit, style, isRefreshing = false }) {
                       <stop offset="100%" stopColor="#f3b765" stopOpacity="0" />
                     </linearGradient>
                   </defs>
+                  {/* Stroked from CSS, not from a literal: #f3b765 is the
+                      dark-scheme warm accent and does not answer
+                      prefers-color-scheme, so in light mode the trend line
+                      rendered at 1.66:1 against the card -- under 1.4.11's
+                      3:1 floor, on the only mark that carries the trend
+                      (.hourly-col holds no text node, so no per-hour
+                      temperature is printed). --accent-warm is the same
+                      role and is already what this line's own dot and its
+                      legend key use, so the three finally agree: 5.90:1
+                      light, 10.65:1 dark. The gradient stops above stay
+                      literal -- at 0.18 to 0 opacity they are decorative
+                      fill, which 1.4.11 exempts. */}
                   <path
+                    className="hourly-temp-line"
                     d={tempPath}
                     fill="none"
-                    stroke="#f3b765"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"

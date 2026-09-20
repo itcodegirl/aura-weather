@@ -101,7 +101,7 @@ export function isMissingMockEnabled(search = "") {
   }
 }
 
-export function buildMissingDashboardState({ now = Date.now() } = {}) {
+export function buildMissingDashboardState() {
   return {
     weather: buildMissingWeatherModel(),
     location: { ...MISSING_MOCK_LOCATION },
@@ -121,7 +121,17 @@ export function buildMissingDashboardState({ now = Date.now() } = {}) {
     background: null,
     weatherInfo: null,
     trustMeta: {
-      weatherFetchedAt: now,
+      // No forecast request was made on this route either, so there is no
+      // time at which one returned -- the same reading the alerts note
+      // below already applies. Stamping Date.now() here made the demo
+      // claim its own freshness: the indicator classifies a present
+      // fetched-at as "live", so a reload of ?mock=missing with the
+      // browser offline rendered "Updated just now / LIVE" over data no
+      // provider had supplied. A null stamp sends GlobalUpdateIndicator
+      // to its layout-preserving placeholder instead, and
+      // DataTrustFooter drops its updated-at line, so nothing dates a
+      // read that never happened.
+      weatherFetchedAt: null,
       aqiFetchedAt: null,
       aqiStatus: "unavailable",
       climateFetchedAt: null,
@@ -130,7 +140,15 @@ export function buildMissingDashboardState({ now = Date.now() } = {}) {
        // returned. See the status note above.
       alertsFetchedAt: null,
       alertsStatus: "unavailable",
-      forecastStatus: "ready",
+      // "unavailable", for the same reason as the three statuses above: no
+      // request was made. It read "ready" alongside a null fetched-at, and
+      // SourceHealthPanel resolves that pair to "Pending / Waiting for
+      // current conditions" -- telling the reader on the trust-contract
+      // demo route that a live forecast request is in flight and will
+      // arrive. None is, and none ever will, so the label could never
+      // resolve. That is a different false claim from the "LIVE" one this
+      // file used to make, not an improvement on it.
+      forecastStatus: "unavailable",
       cacheStatus: "idle",
       cacheCapturedAt: null,
       cacheRestoredAt: null,

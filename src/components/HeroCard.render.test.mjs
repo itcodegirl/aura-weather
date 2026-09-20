@@ -316,6 +316,35 @@ describe("HeroCard trust pill confidence", () => {
     assert.match(pill.textContent, /High confidence/);
   });
 
+  /*
+   * An unavailable state must label itself even with no fetch stamp.
+   *
+   * The pill used to be gated on the age label, and formatAge returns null
+   * without a stamp -- so a route that queries no provider rendered no pill
+   * at all. That is the ?mock=missing demo, whose entire purpose is showing
+   * the trust contract, and AGENTS.md requires unavailable states stay
+   * visibly labelled. The regression was invisible here because every other
+   * test in this describe passes a stamp.
+   */
+  test("labels an unavailable reading even with no fetch stamp", () => {
+    const { container } = render(
+      React.createElement(HeroCard, {
+        weather: buildWeather({ current: { temperature: null } }),
+        location: baseLocation,
+        unit: "F",
+        trustMeta: { weatherFetchedAt: null },
+      })
+    );
+
+    const pill = container.querySelector(".hero-trust-pill");
+    assert.ok(pill, "the unavailable state must still render its pill");
+    assert.ok(pill.classList.contains("hero-trust-pill--unavailable"));
+    assert.match(pill.textContent, /Current data unavailable/);
+    // No stamp means no age, and inventing one would be the fabrication
+    // this whole contract exists to prevent.
+    assert.doesNotMatch(pill.textContent, /just now|min ago|·/);
+  });
+
   test("does not claim 'High confidence' for a forecast restored from cache", () => {
     const { container } = render(
       React.createElement(HeroCard, {

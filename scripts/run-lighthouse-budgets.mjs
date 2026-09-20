@@ -105,6 +105,15 @@ async function run() {
   const categoryBudgets = budgetConfig?.categories || {};
   const categories = Object.keys(categoryBudgets);
 
+  // Metric ceilings, read from lhr.audits[id].numericValue. Category scores
+  // alone cannot express these: a category is a weighted blend, so a metric
+  // can regress a long way without moving the blend past its minimum. The
+  // performance category sat at 99/100 while nothing at all asserted a
+  // layout-shift number, which meant a green lighthouse-budget check was
+  // never evidence that CLS was inside its threshold.
+  const auditBudgets = budgetConfig?.audits || {};
+  const audits = Object.keys(auditBudgets);
+
   if (!categories.length) {
     throw new Error("No Lighthouse category budgets were defined.");
   }
@@ -159,6 +168,34 @@ async function run() {
       if (score < minimum) {
         failedCategories.push(
           `${categoryId}: ${formatScore(score)} is below budget ${formatScore(minimum)}`
+        );
+      }
+    }
+
+    for (const auditId of audits) {
+      const audit = runResult.lhr.audits?.[auditId];
+      const value = audit?.numericValue;
+      const maximum = Number(auditBudgets[auditId]);
+      // A non-numeric ceiling makes every comparison below false, so the
+      // gate would report green while asserting nothing -- the same shape of
+      // silent pass this metric section was added to remove.
+      if (!Number.isFinite(maximum)) {
+        failedCategories.push(
+          `${auditId}: budget ${JSON.stringify(auditBudgets[auditId])} is not a number`
+        );
+        continue;
+      }
+      if (!Number.isFinite(value)) {
+        failedCategories.push(`${auditId}: missing numericValue`);
+        continue;
+      }
+
+      console.log(
+        `[lighthouse] ${auditId}: ${value.toFixed(4)} (budget <= ${maximum})`
+      );
+      if (value > maximum) {
+        failedCategories.push(
+          `${auditId}: ${value.toFixed(4)} exceeds budget ${maximum}`
         );
       }
     }

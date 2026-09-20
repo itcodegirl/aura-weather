@@ -306,11 +306,22 @@
   --risk-severe: #ef4444;
   --risk-extreme: #a855f7;
 
-  /* Chart series — the bar gradients shared by HourlyCard and RainCard. */
-  --chart-rain-top: #7fb6ef;
-  --chart-rain-bottom: #5391d8;
-  --chart-good-top: #9be7b4;
-  --chart-good-bottom: #5fc88c;
+  /*
+   * Chart marks. The four gradient stops that used to sit here
+   * (--chart-rain-top/-bottom, --chart-good-top/-bottom) are gone: every
+   * bar that used them now takes --status-accent, because all four
+   * measured 2.62-2.64:1 against --panel-well in the light scheme, under
+   * the 3:1 WCAG 1.4.11 sets for a graphical object, and the good- pair
+   * was green -- which said "good" about a high chance of rain. They were
+   * left defined after their last consumer went, which is how the wind
+   * bars kept reaching for them. Deleted so they cannot be reached for
+   * again; --status-accent is the token for a chart mark.
+   *
+   * These two remain because they still have live consumers and both
+   * clear: --chart-selected is 13.70:1 dark / 3.02:1 light against
+   * --panel, and --chart-outline is a 1.5-2px separator around the amber
+   * dot rather than an information-bearing mark.
+   */
   --chart-outline: #0d1b2e;
   --chart-selected: #ffd591;
 
@@ -426,10 +437,6 @@
     --risk-severe: #f15f5f;
     --risk-extreme: #b56ff8;
 
-    --chart-rain-top: #4293e7;
-    --chart-rain-bottom: #5593d9;
-    --chart-good-top: #27a450;
-    --chart-good-bottom: #38a265;
     --chart-outline: #e6edf8;
     --chart-selected: #cb7d00;
 
@@ -968,7 +975,22 @@ a:focus-visible,
   }
 }
 
-@media (prefers-contrast: more) {
+/*
+ * High-contrast, DARK scheme only.
+ *
+ * These are near-white inks and a near-black dropdown -- dark-scheme values.
+ * The query used to carry no scheme condition, so it matched in light mode
+ * too and, sitting later in the file than the light + high-contrast block
+ * above at equal specificity, it won: a light-mode user who asked the OS for
+ * MORE contrast got --text-muted #eef5ff on a white tile, measured 1.10:1.
+ * The people most dependent on the contrast work were the only ones getting
+ * the inverted palette.
+ *
+ * Scoped to dark, light + high-contrast now falls through to the
+ * light-and-high-contrast block above, which darkens the same tokens to
+ * #0d1420 -- 18.45:1 on the same tile.
+ */
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
   :root {
     --text-muted: #eef5ff;
     --text-dim: #dce8ff;

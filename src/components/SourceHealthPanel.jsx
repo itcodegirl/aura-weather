@@ -48,7 +48,15 @@ function getForecastSource(trustMeta, nowMs) {
     provider: "Open-Meteo",
     status: forecastStatus === "unavailable" ? "unavailable" : "pending",
     label: forecastStatus === "unavailable" ? "Issue" : "Pending",
-    detail: "Waiting for current conditions",
+    // "Waiting" is only true of the pending branch. An unavailable forecast
+    // is not on its way, so saying it is waiting promises a resolution that
+    // never comes -- visible today on ?mock=missing, which queries no
+    // provider at all. The real hook only ever emits idle/ready/cached, so
+    // this branch is reached from that route.
+    detail:
+      forecastStatus === "unavailable"
+        ? "No forecast reading available"
+        : "Waiting for current conditions",
   };
 }
 

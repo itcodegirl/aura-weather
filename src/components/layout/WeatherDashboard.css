@@ -261,14 +261,53 @@
   }
 
   /* Defer paint for cards that are reliably below the fold on mobile.
-     contain-intrinsic-block-size hints keep scrollbar proportions stable. */
+     contain-intrinsic-block-size hints keep scrollbar proportions stable.
+
+     Every hint below is the card's measured content-box height at a 390px
+     viewport with real forecast data, not an estimate. They had drifted far
+     enough to stop doing their job: .bento-forecast reserved 520px for a
+     card that renders 1150px, and .bento-source-health 220px for 489px. A
+     hint only bites the first time a card is skipped before it has ever
+     rendered -- Chromium applies last-remembered-size after that -- so a
+     wrong one is a first-reveal shift and a wrong scrollbar, which is
+     exactly what it exists to prevent. Re-measure before editing. */
   .bento-nowcast    { content-visibility: auto; contain-intrinsic-block-size: 540px; }
-  .bento-chart      { content-visibility: auto; contain-intrinsic-block-size: 320px; }
-  .bento-forecast   { content-visibility: auto; contain-intrinsic-block-size: 520px; }
-  .bento-alerts     { content-visibility: auto; contain-intrinsic-block-size: 280px; }
-  .bento-storm      { content-visibility: auto; contain-intrinsic-block-size: 440px; }
+  .bento-chart      { content-visibility: auto; contain-intrinsic-block-size: 522px; }
+  .bento-forecast   { content-visibility: auto; contain-intrinsic-block-size: 1150px; }
+  /* .bento-alerts deliberately absent. It used to defer paint here, but the
+     severe-alert banner renders as the FIRST child of main.bento, above the
+     h2 and the hero -- it is never below the fold, which is the premise the
+     comment above states. Skipping it laid the card out at the hint, then
+     re-laid it at its real height a frame later, and because everything
+     below shifts with it that cost more layout shift than the deferral
+     could ever save: measured 0.1987 -> 0.0677 on mobile with it removed. */
+  .bento-storm      { content-visibility: auto; contain-intrinsic-block-size: 382px; }
+  /* 220px is deliberate and deliberately imperfect. This panel's height is
+     bimodal across the band this query covers -- measured content box 506px
+     at 320px wide, 489px at 360-390px, then 242px from 480px to 640px -- so
+     no single value fits, and 220px is the closest of any to the wide half.
+     It does not much matter either way: the panel is gated on
+     hasOpenedSourceHealth and only mounts once the user opens its
+     <details>, and a shift within 500ms of an interaction is excluded from
+     CLS by definition, so this hint costs nothing measurable whatever it
+     says. Raised to 489px in an earlier pass on a single 390px reading;
+     that made the 480-640px half worse by 247px, a bigger error than the
+     one it fixed. Measure both halves before touching it again. */
   .bento-source-health { content-visibility: auto; contain-intrinsic-block-size: 220px; }
-  .bento-health     { content-visibility: auto; contain-intrinsic-block-size: 300px; }
+  /* .bento-health is not listed: no element carries that class. HealthCard
+     renders <section className="card health-card">, and "bento-health" is
+     only ever passed to PanelErrorBoundary, which applies it in its error
+     branch alone -- querySelectorAll('.bento-health') returns nothing on
+     both the live and ?mock=missing routes. The rule that used to sit here
+     deferred nothing. Removed rather than wired up: giving the card the
+     class would newly defer a card that has never deferred, which is a
+     paint-behaviour change to measure on its own, not a side effect of a
+     CLS fix. Its measured content box is 392px if that is ever wanted. */
+  /* .bento-radar's 560px is left alone deliberately. It measures 336px here,
+     but only in its unavailable state -- RainViewer is unreachable from the
+     sandbox, so a working map was never measured, and .radar-map-shell is
+     pinned by a clamp() that a live map would fill differently. Changing it
+     on the strength of the failure state would be guessing. */
   .bento-radar      { content-visibility: auto; contain-intrinsic-block-size: 560px; }
 }
 
@@ -284,7 +323,14 @@
   }
 }
 
-@media (prefers-contrast: more) {
+/* Dark scheme only: this is a near-black card. Unscoped, it painted every
+   card near-black in LIGHT mode for anyone who asked for more contrast,
+   while the tiles inside stayed white and the page ground stayed light --
+   so the marks that are correct on a light card landed on a dark one. The
+   hourly temperature line measured 2.54:1 there against 5.90:1 on the
+   normal light card. Light + high-contrast keeps the light card, where the
+   light tokens are the ones that were measured. */
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
   .bento > section {
     background: rgba(4, 11, 25, 0.9);
   }

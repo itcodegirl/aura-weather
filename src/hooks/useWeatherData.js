@@ -44,6 +44,31 @@ const DEFAULT_TRUST_META = {
 // Two days is the ceiling: beyond that a forecast is misinformation.
 const DEGRADED_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
+/*
+ * How long a cold start may show nothing before a saved forecast is
+ * hydrated behind the loading state.
+ *
+ * The two restore paths either side of this one both need the network to
+ * have already declared itself: the pre-fetch restore below is gated on
+ * isBrowserOffline(), and readDegradedSnapshot() runs only from the catch,
+ * which cannot fire until fetchJsonWithRetry burns its whole
+ * TOTAL_TIMEOUT_MS budget. A network that stalls rather than failing --
+ * captive portal, dead Wi-Fi association, carrier dead zone -- satisfies
+ * neither, and ../utils/network.js says why in its own comment:
+ * navigator.onLine "says nothing about reachability". Measured, that left
+ * a valid saved forecast sitting in localStorage while the screen showed
+ * an unlabelled skeleton for 15.2s.
+ *
+ * 2s sits past the fetch layer's own retry backoff (250ms + 700ms), so a
+ * retry that was going to succeed quickly already has, and well short of
+ * the 10s per-attempt timeout -- a healthy cold start resolves long before
+ * this fires, and the success path and `finally` both clear it. When it
+ * does fire, `loading` stays true: the scene becomes isBackgroundLoading,
+ * so the saved reading renders under its own Saved labels beside the
+ * updating status, never as an unlabelled current one.
+ */
+const CACHE_HYDRATE_AFTER_MS = 2000;
+
 // Forecast data is always fetched in Fahrenheit / inch units and converted
 // client-side. Switching units in the UI must not trigger a refetch.
 const WEATHER_SOURCE_UNIT = "F";
@@ -196,6 +221,9 @@ export function useWeatherData(location, options = {}) {
   // (different city → clear, so users never see Tokyo's name above
   // Chicago's numbers) or keep it visible during a same-city refresh.
   const lastFetchedCoordsRef = useRef(null);
+  // Pending hydrate of a saved forecast for a cold start whose network has
+  // gone quiet rather than failed. See CACHE_HYDRATE_AFTER_MS.
+  const cacheHydrateTimerRef = useRef(null);
 
   const {
     climateComparison,
@@ -213,7 +241,19 @@ export function useWeatherData(location, options = {}) {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (cacheHydrateTimerRef.current !== null) {
+        clearTimeout(cacheHydrateTimerRef.current);
+        cacheHydrateTimerRef.current = null;
+      }
     };
+  }, []);
+
+  const clearCacheHydrateTimer = useCallback(() => {
+    if (cacheHydrateTimerRef.current === null) {
+      return;
+    }
+    clearTimeout(cacheHydrateTimerRef.current);
+    cacheHydrateTimerRef.current = null;
   }, []);
 
   const abortInFlightRequest = useCallback(() => {
@@ -335,6 +375,7 @@ export function useWeatherData(location, options = {}) {
       // check inside the setWeather updater.
       requestIdRef.current += 1;
       abortInFlightRequest();
+      clearCacheHydrateTimer();
       resetClimateComparison();
       lastFetchedCoordsRef.current = null;
       setWeather(null);
@@ -350,6 +391,13 @@ export function useWeatherData(location, options = {}) {
       if (typeof locationLat === "number" || typeof locationLon === "number") {
         setError("Invalid location coordinates");
       }
+      // The one exit that bumps neither requestIdRef nor the in-flight
+      // controller, so an already-armed hydrate would still match its own
+      // requestId and fire a couple of seconds later -- painting the
+      // previous location's saved forecast onto an invalid-location state,
+      // with loading false and the error banner up. Every other exit clears
+      // it by way of the request-start clear below.
+      clearCacheHydrateTimer();
       setLoading(false);
       return;
     }
@@ -369,6 +417,7 @@ export function useWeatherData(location, options = {}) {
       });
 
     abortInFlightRequest();
+    clearCacheHydrateTimer();
     resetClimateComparison();
 
     if (isBrowserOffline()) {
@@ -406,6 +455,45 @@ export function useWeatherData(location, options = {}) {
     if (!isSameLocation) {
       setWeather(null);
       setTrustMeta(DEFAULT_TRUST_META);
+
+      // Nothing is on screen now, so this is the window the stalled-network
+      // case leaves empty. Arm the saved forecast behind the loader rather
+      // than waiting for the request to declare failure -- see
+      // CACHE_HYDRATE_AFTER_MS. Deliberately the strict <=12h snapshot, not
+      // readDegradedSnapshot(): a two-day-old forecast is worth showing once
+      // the network has actually failed, but not while it may still answer.
+      // The hydrate claims the screen it paints, exactly as the offline
+      // restore and the catch restore do. lastFetchedCoordsRef has one
+      // reader -- the isSameLocation test above -- and one job: answering
+      // "whose numbers are currently on screen", so that a city change
+      // clears them and a same-city refresh does not.
+      //
+      // This was briefly left unset, on the theory that the ref tracks real
+      // responses and a hydrate is not one. That theory was wrong twice
+      // over. It is not what the ref means: the two restore paths either
+      // side of this one both set it for data that is equally not a live
+      // response, and what IS a live response is already carried by
+      // cacheStatus. And it broke the thing the ref exists to prevent --
+      // measured, switching cities during a stall put one city's entire
+      // snapshot (hero, hourly, 7-day, alerts) under another city's name
+      // for 15s, wearing a "Saved forecast" badge, which is worse than the
+      // blank screen this feature removes because the badge invites trust.
+      // It also let a visibilitychange mid-stall blank the whole app back
+      // to the full-screen loader, since the clear decision saw no owner.
+      if (cachedSnapshot) {
+        cacheHydrateTimerRef.current = setTimeout(() => {
+          cacheHydrateTimerRef.current = null;
+          if (requestId !== requestIdRef.current || !isMountedRef.current) {
+            return;
+          }
+          setWeather(revalidateRestoredAlerts(cachedSnapshot.weather));
+          setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
+          lastFetchedCoordsRef.current = {
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+          };
+        }, CACHE_HYDRATE_AFTER_MS);
+      }
     }
 
     setLoading(true);
@@ -492,6 +580,9 @@ export function useWeatherData(location, options = {}) {
         }
       }
     } finally {
+      if (requestId === requestIdRef.current) {
+        clearCacheHydrateTimer();
+      }
       if (requestId === requestIdRef.current && isMountedRef.current) {
         setLoading(false);
       }
@@ -502,6 +593,7 @@ export function useWeatherData(location, options = {}) {
   }, [
     abortInFlightRequest,
     applySupplementalData,
+    clearCacheHydrateTimer,
     enabled,
     locationLat,
     locationLon,

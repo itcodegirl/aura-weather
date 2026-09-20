@@ -800,3 +800,359 @@ describe("the active-pill pair stays a pair", () => {
     }
   });
 });
+
+/*
+ * Component-level colour literals.
+ *
+ * The token guards above cover App.css. Nothing covered the components, and
+ * the gap had already cost something: commit 2558b5b moved `.hourly-bar` off
+ * the --chart-* gradients for exactly this reason and left `.hourly-wspd`
+ * thirty lines below the comment explaining why, still on them, at 2.52:1
+ * against the track it has to be read against. Four more scheme-blind
+ * literals were found the same way -- a gust reading at 1.13:1 in light, a
+ * compass cardinal at 1.10:1, the wind needle and visibility meter at
+ * 2.16:1, and the sun bead at 1.78:1 -- every one of them a dark-scheme
+ * value frozen into JSX where prefers-color-scheme cannot reach it.
+ *
+ * So this is a ledger, not a pattern match. Every literal that survives is
+ * listed with the reason it is allowed, and both adding one and removing one
+ * fail the test: an addition has to be justified here, and a removal has to
+ * be struck off. A guard that silently accepts new entries would not have
+ * caught the case that motivated it.
+ */
+describe("component colour literals are a closed set", () => {
+  // A literal is allowed only where it cannot carry information: a gradient
+  // stop that fades to nothing, or a track/halo whose reading is printed as
+  // adjacent text. Ratios are measured against the surface each one sits on.
+  const ALLOWED = [
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(111,183,242,.08)",
+      count: 1,
+      why: "compass dial ground, 1.06:1 light -- a tint behind the needle, not a mark",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(255,255,255,.2)",
+      count: 1,
+      why: "compass ring; track family, 1.00:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(255,255,255,.16)",
+      count: 2,
+      why: "arc gauge + sun horizon track; track family, 1.00:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(255,255,255,.1)",
+      count: 1,
+      why: "arc gauge track, MISSING state (dashed); 1.02:1 light -- same open decision. The narrower detector this guard used to run never saw this one at all.",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(243,183,101,.5)",
+      count: 1,
+      why: "sun path arc; the track the bead travels, 1.33:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(243,183,101,.35)",
+      count: 1,
+      why: "sun bead halo, 1.22:1 light -- ornament around a bead that clears at 6.33:1",
+    },
+    {
+      file: "src/components/HourlyCard.jsx",
+      value: "#f3b765",
+      count: 2,
+      why: "temp area gradient stops at 0.18 and 0 opacity -- decorative fill, 1.4.11 exempt",
+    },
+    // Leaflet vector options. These paint over a map basemap, which is not
+    // one of the app's themed surfaces and does not answer
+    // prefers-color-scheme, so a fixed value is the correct choice rather
+    // than a drifted one -- RadarMap's own comment says "amber against a
+    // light basemap".
+    { file: "src/components/radar/RadarMap.jsx", value: "#6fb7f2", count: 3, why: "location halo/dot over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#f8fafc", count: 1, why: "location dot ring over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#f2a33c", count: 2, why: "alert boundary over the map basemap" },
+    // WeatherIcon's condition palette: 29 frozen dark-scheme values, 13 of
+    // 16 distinct hues under 3:1 against --bg-well in light, four of them
+    // effectively invisible (1.00-1.22:1). Listed rather than fixed because
+    // the two ways out -- author 29 light values, or drop the inline style
+    // so the glyph inherits a themed ink and the hue coding goes with it --
+    // are materially different products. This is an OPEN defect, parked
+    // here so it stays visible; it is not an exemption on the merits.
+    ...Object.entries({
+      "#0ea5e9": 1, "#2563eb": 2, "#38bdf8": 1, "#3b82f6": 4,
+      "#60a5fa": 4, "#6d28d9": 1, "#7dd3fc": 4, "#8b5cf6": 1,
+      "#94a3b8": 1, "#a78bfa": 1, "#bae6fd": 1, "#cbd5e1": 3,
+      "#dbeafe": 1, "#e0f2fe": 1, "#f8fafc": 1, "#fbbf24": 2,
+    }).map(([value, count]) => ({
+      file: "src/components/WeatherIcon.jsx",
+      value,
+      count,
+      why: "dark-only condition palette -- open design decision, see PR #257",
+    })),
+  ];
+
+  // Any colour literal at all, anywhere in a .jsx file, after comments are
+  // stripped. Two narrower detectors were tried and both were false
+  // promises against this block's own claim of a closed set: matching only
+  // the JSX attribute form (fill="#abc") walked past object literals, and
+  // adding colour-named properties (color: "#abc") still walked past
+  // WeatherIcon's palette, which is keyed by weather code -- `0: "#fbbf24"`.
+  // A literal cannot answer prefers-color-scheme whatever syntax holds it,
+  // so the detector keys on the value, not on its surroundings.
+  const ATTR = /(#[0-9a-fA-F]{3,8}\b|rgba?\([0-9.,\s/%]+\))/g;
+
+  const jsxFiles = collectFiles(join(REPO_ROOT, "src"), [".jsx"]);
+
+  function foundLiterals() {
+    const out = [];
+    for (const file of jsxFiles) {
+      const relPath = relative(REPO_ROOT, file).split("\\").join("/");
+      // Strip block and line comments first: several of these files quote
+      // old literals in prose explaining why they were removed, and a guard
+      // that trips on its own changelog is noise.
+      const source = readFileSync(file, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/[^\n]*/g, "");
+      for (const match of source.matchAll(ATTR)) {
+        out.push({ file: relPath, value: match[1].trim() });
+      }
+    }
+    return out;
+  }
+
+  test("every surviving literal is one that cannot carry information", () => {
+    const key = (x) => `${x.file} :: ${x.value}`;
+
+    // Counted, not just listed. Keying on file+value alone let an
+    // already-allowed hex be reused on a NEW element and pass in silence,
+    // quietly extending a reason measured for one specific mark ("sun bead
+    // halo") to whatever else happened to pick the same value.
+    const tally = (rows, weight) =>
+      rows.reduce((acc, row) => {
+        acc[key(row)] = (acc[key(row)] ?? 0) + weight(row);
+        return acc;
+      }, {});
+
+    const found = tally(foundLiterals(), () => 1);
+    const allowed = tally(ALLOWED, (row) => row.count ?? 1);
+
+    const drift = [];
+    for (const k of new Set([...Object.keys(found), ...Object.keys(allowed)])) {
+      const have = found[k] ?? 0;
+      const want = allowed[k] ?? 0;
+      if (have !== want) drift.push(`${k} — found ${have}, allowed ${want}`);
+    }
+
+    assert.deepEqual(
+      drift.sort(),
+      [],
+      "a colour literal in a .jsx file cannot answer prefers-color-scheme, " +
+        "so it renders one scheme's value in both. Route it through a token, " +
+        "or record it in ALLOWED with the measured reason it carries no " +
+        "information and the number of places it appears. A count that no " +
+        "longer matches means a literal was added, removed or reused"
+    );
+  });
+
+  test("marks that carry a reading stay on their tokens", () => {
+    const hourlyCss = readFileSync(
+      join(REPO_ROOT, "src/components/HourlyCard.css"),
+      "utf8"
+    );
+    const atmCss = readFileSync(
+      join(REPO_ROOT, "src/components/AtmosphereBento.css"),
+      "utf8"
+    );
+
+    // EVERY block for the selector, not the first. A light-scheme or
+    // high-contrast override is exactly how a third value slips in behind a
+    // guard that only reads the base rule, and this test's whole claim is
+    // that naming the token stops that.
+    const rules = (css, selector) => {
+      const pattern = new RegExp(
+        `${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`,
+        "g"
+      );
+      const bodies = [...css.matchAll(pattern)].map((m) => m[1]);
+      assert.ok(bodies.length > 0, `${selector} should still have a rule`);
+      return bodies;
+    };
+    const assertEvery = (css, selector, expected) => {
+      for (const body of rules(css, selector)) {
+        assert.match(
+          body,
+          expected,
+          `${selector} has a block that does not use the expected token`
+        );
+      }
+    };
+
+    // The sustained-wind fill and the legend key that stands for it. These
+    // are the two that were left behind; the assertion names the token
+    // rather than merely forbidding the old one, so a third value cannot
+    // slip in either.
+    assertEvery(hourlyCss, ".hourly-wspd", /background:\s*var\(--status-accent\)/);
+    assertEvery(hourlyCss, ".lg-bar.b-mid", /background:\s*var\(--status-accent\)/);
+    assertEvery(hourlyCss, ".hourly-temp-line", /stroke:\s*var\(--accent-warm\)/);
+    assertEvery(atmCss, ".atm-gust-value", /color:\s*var\(--text\)/);
+    assertEvery(atmCss, ".atm-needle", /stroke:\s*var\(--status-accent\)/);
+    assertEvery(atmCss, ".atm-needle-head", /fill:\s*var\(--status-accent\)/);
+    assertEvery(atmCss, ".atm-compass-cardinal", /fill:\s*var\(--text-muted\)/);
+    assertEvery(atmCss, ".atm-vis-bar--filled", /fill:\s*var\(--status-accent\)/);
+    assertEvery(atmCss, ".atm-sun-bead", /fill:\s*var\(--accent-warm\)/);
+  });
+
+  test("the retired chart gradients stay retired", () => {
+    // They outlived their last consumer, which is how the wind bars kept
+    // reaching for them. All four measured 2.62-2.64:1 against --panel-well
+    // in light, and the good- pair was green, which the rain-scale decision
+    // bans outright.
+    const retired = [
+      "--chart-rain-top",
+      "--chart-rain-bottom",
+      "--chart-good-top",
+      "--chart-good-bottom",
+    ];
+    const cssFiles = collectFiles(join(REPO_ROOT, "src"), [".css"]);
+    const sources = [...cssFiles, ...jsxFiles].map((file) => ({
+      relPath: relative(REPO_ROOT, file).split("\\").join("/"),
+      text: readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, ""),
+    }));
+
+    for (const token of retired) {
+      for (const { relPath, text } of sources) {
+        assert.ok(
+          !text.includes(`var(${token})`),
+          `${relPath} references ${token}, which was retired for failing ` +
+            "WCAG 1.4.11 in the light scheme"
+        );
+        assert.ok(
+          !new RegExp(`^\\s*${token}\\s*:`, "m").test(text),
+          `${relPath} redefines ${token}; it was deleted so it could not be ` +
+            "reached for again"
+        );
+      }
+    }
+  });
+});
+
+/*
+ * The installed-PWA chrome has to agree with the app it opens.
+ *
+ * index.html declares theme-color per scheme (#070a10 dark / #e4e9ef light,
+ * the two --ground values), but a web manifest carries a single colour for
+ * both. The manifest kept the static #0b1c3f the page used before the light
+ * scheme landed, and background_color kept an #081225 that has never been a
+ * token at all -- so an installed app painted a navy splash and a navy
+ * toolbar and then revealed the real ground underneath. Against the light
+ * ground #0b1c3f measures 14.32:1: maximum discord rather than a near-miss.
+ *
+ * Nothing covered this, and the drift ran for two weeks between the icon
+ * commit and the light-scheme commit. Anchored to index.html rather than to
+ * a literal so the two cannot separate again.
+ */
+describe("the manifest agrees with the page it installs", () => {
+  const manifest = JSON.parse(
+    readFileSync(join(REPO_ROOT, "public/manifest.webmanifest"), "utf8")
+  );
+  const indexHtml = readFileSync(join(REPO_ROOT, "index.html"), "utf8");
+
+  function themeColorFor(scheme) {
+    const pattern = new RegExp(
+      `<meta[^>]*name="theme-color"[^>]*prefers-color-scheme:\\s*${scheme}\\s*\\)"[^>]*content="([^"]+)"`
+    );
+    const match = pattern.exec(indexHtml);
+    assert.ok(match !== null, `index.html should declare a ${scheme} theme-color`);
+    return match[1].toLowerCase();
+  }
+
+  test("theme_color is the page's own dark theme-color", () => {
+    assert.equal(
+      manifest.theme_color.toLowerCase(),
+      themeColorFor("dark"),
+      "the installed toolbar colour must be one the app actually uses"
+    );
+  });
+
+  test("background_color is a declared ground, not an invented navy", () => {
+    const grounds = [themeColorFor("dark"), themeColorFor("light")];
+    assert.ok(
+      grounds.includes(manifest.background_color.toLowerCase()),
+      `background_color ${manifest.background_color} is not one of the ` +
+        `declared grounds (${grounds.join(", ")}); the splash would reveal a ` +
+        "different colour than it painted"
+    );
+  });
+});
+
+/*
+ * A high-contrast preference must not swap the colour scheme.
+ *
+ * Three blocks carried dark-scheme values under a bare
+ * `@media (prefers-contrast: more)`: near-white inks in App.css, and
+ * near-black backgrounds for the bento cards and the header. With no scheme
+ * condition they matched in light mode too, and because they sit later in
+ * their files than the light + high-contrast block at equal specificity,
+ * they won. A light-mode user who asked the OS for MORE contrast therefore
+ * got the dark palette's inks on light surfaces: the compass cardinal
+ * measured 1.10:1 on a white tile, and the hourly temperature line 2.54:1
+ * against a card that had turned near-black underneath it while the tiles
+ * inside it stayed white.
+ *
+ * The people who set that preference are the ones the contrast work is for,
+ * so they were the only ones getting the inverted palette. This guard keeps
+ * a contrast preference from carrying a scheme with it.
+ */
+describe("a contrast preference does not imply a colour scheme", () => {
+  const cssFiles = collectFiles(join(REPO_ROOT, "src"), [".css"]);
+
+  // A colour-valued declaration: a background/colour/fill/stroke/border, or
+  // a custom property whose value is a colour. A filter or an opacity is
+  // scheme-neutral and is deliberately not caught.
+  const COLOUR_DECL =
+    /(?:^|[;{\s])(?:background(?:-color)?|color|fill|stroke|border(?:-color)?|--[\w-]+)\s*:\s*[^;]*(#[0-9a-fA-F]{3,8}\b|rgba?\([0-9.,\s/%]+\))/;
+
+  test("no bare prefers-contrast block carries a scheme-specific colour", () => {
+    const offenders = [];
+
+    for (const file of cssFiles) {
+      const relPath = relative(REPO_ROOT, file).split("\\").join("/");
+      const source = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+      const media = /@media([^{]*)\{/g;
+      let match;
+      while ((match = media.exec(source)) !== null) {
+        const condition = match[1];
+        if (!/prefers-contrast:\s*more/.test(condition)) continue;
+        if (/prefers-color-scheme/.test(condition)) continue;
+
+        // Walk to the matching brace so nested rules are included.
+        let depth = 1;
+        let i = media.lastIndex;
+        while (i < source.length && depth > 0) {
+          if (source[i] === "{") depth += 1;
+          else if (source[i] === "}") depth -= 1;
+          i += 1;
+        }
+        const body = source.slice(media.lastIndex, i - 1);
+        const colour = COLOUR_DECL.exec(body);
+        if (colour) {
+          offenders.push(`${relPath}: @media${condition.trim()} sets ${colour[1]}`);
+        }
+      }
+    }
+
+    assert.deepEqual(
+      offenders,
+      [],
+      "a prefers-contrast block with no prefers-color-scheme condition " +
+        "applies in BOTH schemes, so a colour in it is right in one and " +
+        "inverted in the other. Add the scheme condition, and a counterpart " +
+        "for the other scheme if that scheme also needs the treatment"
+    );
+  });
+});

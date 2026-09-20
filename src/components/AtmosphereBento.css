@@ -278,6 +278,60 @@
 }
 
 /* Secondary / label text */
+/*
+ * Marks and readings inside the tiles, taken off scheme-blind literals.
+ *
+ * All four sites below hard-coded a dark-scheme value that does not answer
+ * prefers-color-scheme, so each rendered against a white tile in light mode
+ * at, measured: the gust figure 1.13:1, the compass cardinal 1.10:1, and
+ * the wind needle and filled visibility bars 2.16:1. #6fb7f2 is literally
+ * the dark value of --status-accent and #eef1f8 the dark value of --ink,
+ * so these were the right roles all along, just frozen to one scheme.
+ *
+ * The first two are text, so 1.4.3 applies at 4.5:1, not 1.4.11's 3:1 --
+ * the gust span wraps an actual weather reading. After: gust 18.45 light /
+ * 11.77 dark, cardinal 11.15 / 8.25, needle and bars 6.19 / 7.13.
+ *
+ * The unfilled visibility bar keeps its value on purpose. White-alpha on a
+ * white tile composites to 1.00:1, which it shares with the arc-gauge and
+ * sun-arc tracks -- and no existing token clears 3:1 against --panel-raised
+ * in both schemes without reading louder than the fill in front of it. That
+ * is a design decision, reported rather than guessed at.
+ */
+.atm-gust-value {
+  color: var(--text);
+}
+
+.atm-compass-cardinal {
+  fill: var(--text-muted);
+}
+
+.atm-needle {
+  stroke: var(--status-accent);
+}
+
+.atm-needle-head {
+  fill: var(--status-accent);
+}
+
+.atm-vis-bar {
+  fill: rgba(255, 255, 255, 0.12);
+}
+
+.atm-vis-bar--filled {
+  fill: var(--status-accent);
+}
+
+/* The sun's position on its arc, which is the tile's reading. Same
+   dark-only #f3b765 the hourly trend line carried, and the same role, so
+   it takes the same token: 1.78:1 against the tile in light before,
+   6.33:1 after (8.64:1 dark). The dashed arc and the bead's halo stay as
+   they are -- they are the track this bead travels along, and belong with
+   the other white-alpha tracks that need a design decision, not a guess. */
+.atm-sun-bead {
+  fill: var(--accent-warm);
+}
+
 .atm-sub {
   font-size: 12.5px;
   color: var(--text-muted);

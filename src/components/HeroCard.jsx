@@ -445,10 +445,20 @@ function HeroCard({
             * GlobalUpdateIndicator is the correct pattern: render the age
             * plainly, and announce only on a genuine refresh event.
             */}
-          {ageLabel && (
+          {/* The age is a suffix, not the gate. formatAge returns null
+              without a fetch stamp, so gating the whole pill on it meant an
+              unavailable state with no timestamp rendered no label at all --
+              which is precisely the state the Data Trust Contract says must
+              stay visibly labelled. It surfaced on ?mock=missing, where no
+              provider is queried so there is no stamp to have: the route
+              built to demonstrate the contract was the one route that
+              dropped its own "Current data unavailable" pill. Near-inert on
+              the real route, where a stamp exists whenever weather does. */}
+          {(ageLabel || trustState === "unavailable") && (
             <div className={`hero-trust-pill hero-trust-pill--${trustState}`}>
               <span className="hero-trust-dot" aria-hidden="true" />
-              {trustLabel} · {ageLabel}
+              {trustLabel}
+              {ageLabel ? ` · ${ageLabel}` : ""}
             </div>
           )}
           {/*

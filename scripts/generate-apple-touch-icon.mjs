@@ -22,9 +22,20 @@ const OUT_PATH = resolve(__dirname, "..", "public", "apple-touch-icon.png");
 const SIZE = 180;
 const CENTER = SIZE / 2;
 
-// Background gradient stops: matches the dark navy used by the
-// existing theme-color fallback so the icon reads as the same brand
-// even on the OS home screen.
+// Background gradient stops.
+//
+// These no longer match anything else in the app, and the comment that used
+// to sit here said they matched "the existing theme-color fallback" -- a
+// static theme-color of #0b1c3f that index.html replaced with a per-scheme
+// pair (#070a10 dark / #e4e9ef light) when the light scheme landed. No CSS
+// token is #0b1c3f or #050c22 any more.
+//
+// They are deliberately left as they are. An iOS home-screen icon is
+// scheme-blind -- one bitmap, shown on whatever wallpaper the user has --
+// so it has no light variant to drift from, and restyling a brand mark is
+// a design decision rather than a token fix. The manifest's theme_color
+// and background_color, which DO get composited against the app's own
+// ground, were the real drift and are now #070a10.
 const BG_TOP = [11, 28, 63]; // #0b1c3f
 const BG_BOTTOM = [5, 12, 34]; // deeper navy
 const RING_OUTER = [188, 214, 255];

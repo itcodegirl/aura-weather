@@ -455,8 +455,24 @@ export function useWeatherData(location, options = {}) {
       // CACHE_HYDRATE_AFTER_MS. Deliberately the strict <=12h snapshot, not
       // readDegradedSnapshot(): a two-day-old forecast is worth showing once
       // the network has actually failed, but not while it may still answer.
-      // lastFetchedCoordsRef is left alone on purpose -- it tracks real
-      // responses, and a hydrate is not one.
+      // The hydrate claims the screen it paints, exactly as the offline
+      // restore and the catch restore do. lastFetchedCoordsRef has one
+      // reader -- the isSameLocation test above -- and one job: answering
+      // "whose numbers are currently on screen", so that a city change
+      // clears them and a same-city refresh does not.
+      //
+      // This was briefly left unset, on the theory that the ref tracks real
+      // responses and a hydrate is not one. That theory was wrong twice
+      // over. It is not what the ref means: the two restore paths either
+      // side of this one both set it for data that is equally not a live
+      // response, and what IS a live response is already carried by
+      // cacheStatus. And it broke the thing the ref exists to prevent --
+      // measured, switching cities during a stall put one city's entire
+      // snapshot (hero, hourly, 7-day, alerts) under another city's name
+      // for 15s, wearing a "Saved forecast" badge, which is worse than the
+      // blank screen this feature removes because the badge invites trust.
+      // It also let a visibilitychange mid-stall blank the whole app back
+      // to the full-screen loader, since the clear decision saw no owner.
       if (cachedSnapshot) {
         cacheHydrateTimerRef.current = setTimeout(() => {
           cacheHydrateTimerRef.current = null;
@@ -465,6 +481,10 @@ export function useWeatherData(location, options = {}) {
           }
           setWeather(revalidateRestoredAlerts(cachedSnapshot.weather));
           setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
+          lastFetchedCoordsRef.current = {
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+          };
         }, CACHE_HYDRATE_AFTER_MS);
       }
     }

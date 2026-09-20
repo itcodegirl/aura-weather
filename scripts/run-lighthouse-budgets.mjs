@@ -176,6 +176,15 @@ async function run() {
       const audit = runResult.lhr.audits?.[auditId];
       const value = audit?.numericValue;
       const maximum = Number(auditBudgets[auditId]);
+      // A non-numeric ceiling makes every comparison below false, so the
+      // gate would report green while asserting nothing -- the same shape of
+      // silent pass this metric section was added to remove.
+      if (!Number.isFinite(maximum)) {
+        failedCategories.push(
+          `${auditId}: budget ${JSON.stringify(auditBudgets[auditId])} is not a number`
+        );
+        continue;
+      }
       if (!Number.isFinite(value)) {
         failedCategories.push(`${auditId}: missing numericValue`);
         continue;

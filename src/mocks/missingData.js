@@ -140,7 +140,15 @@ export function buildMissingDashboardState() {
        // returned. See the status note above.
       alertsFetchedAt: null,
       alertsStatus: "unavailable",
-      forecastStatus: "ready",
+      // "unavailable", for the same reason as the three statuses above: no
+      // request was made. It read "ready" alongside a null fetched-at, and
+      // SourceHealthPanel resolves that pair to "Pending / Waiting for
+      // current conditions" -- telling the reader on the trust-contract
+      // demo route that a live forecast request is in flight and will
+      // arrive. None is, and none ever will, so the label could never
+      // resolve. That is a different false claim from the "LIVE" one this
+      // file used to make, not an improvement on it.
+      forecastStatus: "unavailable",
       cacheStatus: "idle",
       cacheCapturedAt: null,
       cacheRestoredAt: null,

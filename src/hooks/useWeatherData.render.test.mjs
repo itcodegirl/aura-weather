@@ -345,6 +345,117 @@ describe("useWeatherData stalled-network hydrate", () => {
   });
 });
 
+/*
+ * A hydrated snapshot must not follow the user to another city.
+ *
+ * The hydrate is a setWeather, so it has to claim lastFetchedCoordsRef the
+ * way every other restore path does. Briefly it did not, and the result was
+ * the precise failure that ref exists to prevent: switching cities during a
+ * stall left the previous city's entire snapshot -- hero, hourly, 7-day,
+ * alerts -- rendered under the new city's name, wearing a "Saved forecast"
+ * badge, until the new city's own request exhausted its 15s budget. A
+ * correct freshness label on the wrong city's numbers is worse than a blank
+ * screen, because the badge invites the reader to trust it.
+ *
+ * The stalled-network test above renders one location and never switches,
+ * which is why the whole suite stayed green with this present.
+ */
+describe("useWeatherData hydrate ownership across a city switch", () => {
+  test("does not leave one city's hydrated snapshot under another city's name", async () => {
+    window.localStorage.clear();
+
+    const OTHER = { lat: 35.6762, lon: 139.6503, name: "Tokyo" };
+    const capturedAt = Date.now() - 30 * 60 * 1000;
+
+    // OTHER is the only city with a snapshot, and it carries a marker that
+    // could only come from OTHER.
+    writeCachedWeatherSnapshot({
+      coordinates: { latitude: OTHER.lat, longitude: OTHER.lon },
+      weather: { meta: { latitude: OTHER.lat }, alerts: [], aqi: 4242 },
+      trustMeta: {
+        weatherFetchedAt: capturedAt,
+        forecastStatus: "ready",
+        cacheStatus: "idle",
+      },
+      cachedAt: capturedAt,
+    });
+
+    // Phase 1: PROBE_LOCATION answers, so it owns the screen.
+    let stalled = false;
+    const live = installImmediateFetch();
+    const immediate = globalThis.fetch;
+    globalThis.fetch = (input) =>
+      stalled ? new Promise(() => {}) : immediate(input);
+    void live;
+
+    let latest = null;
+    let view = null;
+    await act(async () => {
+      view = render(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+    await waitFor(
+      () => {
+        assert.ok(latest?.weather, "the first city should load live");
+        assert.equal(latest.trustMeta.cacheStatus, "idle");
+      },
+      { timeout: 6000 }
+    );
+
+    // Phase 2: the network stalls and the user switches to OTHER, which
+    // hydrates its own saved snapshot behind the loader.
+    stalled = true;
+    await act(async () => {
+      view.rerender(
+        React.createElement(WeatherDataProbe, {
+          location: OTHER,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+    await waitFor(
+      () => {
+        assert.equal(latest?.weather?.aqi, 4242, "OTHER should hydrate");
+      },
+      { timeout: 8000 }
+    );
+
+    // Phase 3: back to the first city while OTHER's request is still open.
+    // The clear decision asks whose numbers are on screen; if the hydrate
+    // did not claim them, it still answers "the first city" and keeps
+    // OTHER's snapshot rendered under the first city's name.
+    await act(async () => {
+      view.rerender(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+
+    await waitFor(
+      () => {
+        assert.notEqual(
+          latest?.weather?.aqi,
+          4242,
+          "the other city's snapshot must not render under this city's name"
+        );
+      },
+      { timeout: 4000 }
+    );
+  });
+});
+
 describe("useWeatherData auto-refresh listener stability", () => {
   test("does not re-register online/visibilitychange listeners on location change", async () => {
     installImmediateFetch();

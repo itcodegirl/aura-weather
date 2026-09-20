@@ -838,7 +838,12 @@ describe("component colour literals are a closed set", () => {
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(255,255,255,.16)",
-      why: "sun horizon rule; track family, 1.00:1 light -- open design decision",
+      why: "arc gauge + sun horizon track; track family, 1.00:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(255,255,255,.1)",
+      why: "arc gauge track, MISSING state (dashed); 1.02:1 light -- same open decision. The narrower detector this guard used to run never saw this one at all.",
     },
     {
       file: "src/components/AtmosphereBento.jsx",
@@ -855,11 +860,41 @@ describe("component colour literals are a closed set", () => {
       value: "#f3b765",
       why: "temp area gradient stops at 0.18 and 0 opacity -- decorative fill, 1.4.11 exempt",
     },
+    // Leaflet vector options. These paint over a map basemap, which is not
+    // one of the app's themed surfaces and does not answer
+    // prefers-color-scheme, so a fixed value is the correct choice rather
+    // than a drifted one -- RadarMap's own comment says "amber against a
+    // light basemap".
+    { file: "src/components/radar/RadarMap.jsx", value: "#6fb7f2", why: "location halo/dot over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#f8fafc", why: "location dot ring over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#f2a33c", why: "alert boundary over the map basemap" },
+    // WeatherIcon's condition palette: 29 frozen dark-scheme values, 13 of
+    // 16 distinct hues under 3:1 against --bg-well in light, four of them
+    // effectively invisible (1.00-1.22:1). Listed rather than fixed because
+    // the two ways out -- author 29 light values, or drop the inline style
+    // so the glyph inherits a themed ink and the hue coding goes with it --
+    // are materially different products. This is an OPEN defect, parked
+    // here so it stays visible; it is not an exemption on the merits.
+    ...[
+      "#0ea5e9", "#2563eb", "#38bdf8", "#3b82f6", "#60a5fa", "#6d28d9",
+      "#7dd3fc", "#8b5cf6", "#94a3b8", "#a78bfa", "#bae6fd", "#cbd5e1",
+      "#dbeafe", "#e0f2fe", "#f8fafc", "#fbbf24",
+    ].map((value) => ({
+      file: "src/components/WeatherIcon.jsx",
+      value,
+      why: "dark-only condition palette -- open design decision, see PR #257",
+    })),
   ];
 
-  // SVG presentation attributes and inline style colours -- the places a
-  // literal actually paints something, as opposed to appearing in prose.
-  const ATTR = /(?:stroke|fill|stopColor|color)=["{][^"}]*?(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))/g;
+  // Any colour literal at all, anywhere in a .jsx file, after comments are
+  // stripped. Two narrower detectors were tried and both were false
+  // promises against this block's own claim of a closed set: matching only
+  // the JSX attribute form (fill="#abc") walked past object literals, and
+  // adding colour-named properties (color: "#abc") still walked past
+  // WeatherIcon's palette, which is keyed by weather code -- `0: "#fbbf24"`.
+  // A literal cannot answer prefers-color-scheme whatever syntax holds it,
+  // so the detector keys on the value, not on its surroundings.
+  const ATTR = /(#[0-9a-fA-F]{3,8}\b|rgba?\([0-9.,\s/%]+\))/g;
 
   const jsxFiles = collectFiles(join(REPO_ROOT, "src"), [".jsx"]);
 
@@ -874,7 +909,7 @@ describe("component colour literals are a closed set", () => {
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/\/\/[^\n]*/g, "");
       for (const match of source.matchAll(ATTR)) {
-        out.push({ file: relPath, value: match[1] });
+        out.push({ file: relPath, value: match[1].trim() });
       }
     }
     return out;
@@ -915,25 +950,42 @@ describe("component colour literals are a closed set", () => {
       "utf8"
     );
 
-    const rule = (css, selector) => {
-      const match = new RegExp(
-        `${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`
-      ).exec(css);
-      assert.ok(match !== null, `${selector} should still have a rule`);
-      return match[1];
+    // EVERY block for the selector, not the first. A light-scheme or
+    // high-contrast override is exactly how a third value slips in behind a
+    // guard that only reads the base rule, and this test's whole claim is
+    // that naming the token stops that.
+    const rules = (css, selector) => {
+      const pattern = new RegExp(
+        `${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`,
+        "g"
+      );
+      const bodies = [...css.matchAll(pattern)].map((m) => m[1]);
+      assert.ok(bodies.length > 0, `${selector} should still have a rule`);
+      return bodies;
+    };
+    const assertEvery = (css, selector, expected) => {
+      for (const body of rules(css, selector)) {
+        assert.match(
+          body,
+          expected,
+          `${selector} has a block that does not use the expected token`
+        );
+      }
     };
 
     // The sustained-wind fill and the legend key that stands for it. These
     // are the two that were left behind; the assertion names the token
     // rather than merely forbidding the old one, so a third value cannot
     // slip in either.
-    assert.match(rule(hourlyCss, ".hourly-wspd"), /background:\s*var\(--status-accent\)/);
-    assert.match(rule(hourlyCss, ".lg-bar.b-mid"), /background:\s*var\(--status-accent\)/);
-    assert.match(rule(hourlyCss, ".hourly-temp-line"), /stroke:\s*var\(--accent-warm\)/);
-    assert.match(rule(atmCss, ".atm-gust-value"), /color:\s*var\(--text\)/);
-    assert.match(rule(atmCss, ".atm-needle"), /stroke:\s*var\(--status-accent\)/);
-    assert.match(rule(atmCss, ".atm-vis-bar--filled"), /fill:\s*var\(--status-accent\)/);
-    assert.match(rule(atmCss, ".atm-sun-bead"), /fill:\s*var\(--accent-warm\)/);
+    assertEvery(hourlyCss, ".hourly-wspd", /background:\s*var\(--status-accent\)/);
+    assertEvery(hourlyCss, ".lg-bar.b-mid", /background:\s*var\(--status-accent\)/);
+    assertEvery(hourlyCss, ".hourly-temp-line", /stroke:\s*var\(--accent-warm\)/);
+    assertEvery(atmCss, ".atm-gust-value", /color:\s*var\(--text\)/);
+    assertEvery(atmCss, ".atm-needle", /stroke:\s*var\(--status-accent\)/);
+    assertEvery(atmCss, ".atm-needle-head", /fill:\s*var\(--status-accent\)/);
+    assertEvery(atmCss, ".atm-compass-cardinal", /fill:\s*var\(--text-muted\)/);
+    assertEvery(atmCss, ".atm-vis-bar--filled", /fill:\s*var\(--status-accent\)/);
+    assertEvery(atmCss, ".atm-sun-bead", /fill:\s*var\(--accent-warm\)/);
   });
 
   test("the retired chart gradients stay retired", () => {
@@ -1015,6 +1067,74 @@ describe("the manifest agrees with the page it installs", () => {
       `background_color ${manifest.background_color} is not one of the ` +
         `declared grounds (${grounds.join(", ")}); the splash would reveal a ` +
         "different colour than it painted"
+    );
+  });
+});
+
+/*
+ * A high-contrast preference must not swap the colour scheme.
+ *
+ * Three blocks carried dark-scheme values under a bare
+ * `@media (prefers-contrast: more)`: near-white inks in App.css, and
+ * near-black backgrounds for the bento cards and the header. With no scheme
+ * condition they matched in light mode too, and because they sit later in
+ * their files than the light + high-contrast block at equal specificity,
+ * they won. A light-mode user who asked the OS for MORE contrast therefore
+ * got the dark palette's inks on light surfaces: the compass cardinal
+ * measured 1.10:1 on a white tile, and the hourly temperature line 2.54:1
+ * against a card that had turned near-black underneath it while the tiles
+ * inside it stayed white.
+ *
+ * The people who set that preference are the ones the contrast work is for,
+ * so they were the only ones getting the inverted palette. This guard keeps
+ * a contrast preference from carrying a scheme with it.
+ */
+describe("a contrast preference does not imply a colour scheme", () => {
+  const cssFiles = collectFiles(join(REPO_ROOT, "src"), [".css"]);
+
+  // A colour-valued declaration: a background/colour/fill/stroke/border, or
+  // a custom property whose value is a colour. A filter or an opacity is
+  // scheme-neutral and is deliberately not caught.
+  const COLOUR_DECL =
+    /(?:^|[;{\s])(?:background(?:-color)?|color|fill|stroke|border(?:-color)?|--[\w-]+)\s*:\s*[^;]*(#[0-9a-fA-F]{3,8}\b|rgba?\([0-9.,\s/%]+\))/;
+
+  test("no bare prefers-contrast block carries a scheme-specific colour", () => {
+    const offenders = [];
+
+    for (const file of cssFiles) {
+      const relPath = relative(REPO_ROOT, file).split("\\").join("/");
+      const source = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+      const media = /@media([^{]*)\{/g;
+      let match;
+      while ((match = media.exec(source)) !== null) {
+        const condition = match[1];
+        if (!/prefers-contrast:\s*more/.test(condition)) continue;
+        if (/prefers-color-scheme/.test(condition)) continue;
+
+        // Walk to the matching brace so nested rules are included.
+        let depth = 1;
+        let i = media.lastIndex;
+        while (i < source.length && depth > 0) {
+          if (source[i] === "{") depth += 1;
+          else if (source[i] === "}") depth -= 1;
+          i += 1;
+        }
+        const body = source.slice(media.lastIndex, i - 1);
+        const colour = COLOUR_DECL.exec(body);
+        if (colour) {
+          offenders.push(`${relPath}: @media${condition.trim()} sets ${colour[1]}`);
+        }
+      }
+    }
+
+    assert.deepEqual(
+      offenders,
+      [],
+      "a prefers-contrast block with no prefers-color-scheme condition " +
+        "applies in BOTH schemes, so a colour in it is right in one and " +
+        "inverted in the other. Add the scheme condition, and a counterpart " +
+        "for the other scheme if that scheme also needs the treatment"
     );
   });
 });

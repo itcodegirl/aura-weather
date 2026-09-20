@@ -1008,7 +1008,10 @@
   }
 }
 
-@media (prefers-contrast: more) {
+/* Dark scheme only -- same reason as the bento cards: a near-black header
+   under a light page inverted the header's own ink for high-contrast users
+   in light mode. */
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
   .app-header {
     background: rgba(4, 11, 25, 0.9);
   }

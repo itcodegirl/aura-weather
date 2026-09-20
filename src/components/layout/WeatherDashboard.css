@@ -323,7 +323,14 @@
   }
 }
 
-@media (prefers-contrast: more) {
+/* Dark scheme only: this is a near-black card. Unscoped, it painted every
+   card near-black in LIGHT mode for anyone who asked for more contrast,
+   while the tiles inside stayed white and the page ground stayed light --
+   so the marks that are correct on a light card landed on a dark one. The
+   hourly temperature line measured 2.54:1 there against 5.90:1 on the
+   normal light card. Light + high-contrast keeps the light card, where the
+   light tokens are the ones that were measured. */
+@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
   .bento > section {
     background: rgba(4, 11, 25, 0.9);
   }

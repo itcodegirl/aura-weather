@@ -125,13 +125,23 @@ function TileLabel({ icon: Icon, help, dim = false, children }) {
   );
 }
 
+/*
+ * One source for the band, so the word under the gauge and the colour of
+ * the gauge cannot disagree. The thresholds are the ones this tile already
+ * printed; only the tone is new.
+ */
+const HUMIDITY_BANDS = [
+  { min: 70, tone: "high", label: "High" },
+  { min: 40, tone: "moderate", label: "Moderate" },
+  { min: 0, tone: "low", label: "Low" },
+];
+
 function HumidityTile({ humidity }) {
   const h = toFiniteNumber(humidity);
   const hasDat = h !== null;
   const fraction = hasDat ? Math.max(0, Math.min(1, h / 100)) : null;
-  const label = hasDat
-    ? h >= 70 ? "High" : h >= 40 ? "Moderate" : "Low"
-    : "Unavailable";
+  const band = hasDat ? HUMIDITY_BANDS.find((b) => h >= b.min) : null;
+  const label = band ? band.label : "Unavailable";
   return (
     <div className={`atm-tile${hasDat ? "" : " atm-tile--missing"}`}>
       <TileLabel icon={Droplets} help={TILE_HELP.humidity}>
@@ -139,6 +149,8 @@ function HumidityTile({ humidity }) {
       </TileLabel>
       <ArcGauge
         fraction={fraction}
+        scale="humidity"
+        tone={band?.tone}
         missing={!hasDat}
         ariaLabel={hasDat ? `Humidity ${Math.round(h)} percent ${label}` : "Humidity unavailable"}
       />

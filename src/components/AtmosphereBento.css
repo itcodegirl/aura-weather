@@ -163,6 +163,41 @@
  * Both scales are keyed because each has a "moderate" tone; they happen to
  * agree today, and nothing here requires them to keep agreeing.
  */
+
+/*
+ * The fallback, and it is load-bearing rather than tidiness. Every rule
+ * below is keyed on BOTH data-scale and data-tone, so a gauge that passes
+ * neither matched nothing and the fill path resolved to SVG's default
+ * `stroke: none` -- it drew nothing at all. That is what happened to the
+ * humidity and pressure arcs: they used to pass a `color` prop ArcGauge
+ * never declared, it was deleted as dead, and no scale/tone replaced it.
+ * Both have been rendering an empty grey track ever since, which reads as
+ * a low reading rather than as a missing one -- 98% humidity looked like
+ * an empty gauge.
+ *
+ * Pressure keeps this accent deliberately. It has no band ladder anywhere
+ * in the app, and inventing a risk ramp for millibars would be asserting
+ * meteorology the codebase does not have. An accent says "this is a
+ * reading" without claiming it is good or bad.
+ */
+.atm-arc-fill {
+  stroke: var(--status-accent);
+}
+
+/* Humidity's own Low/Moderate/High ladder -- the same thresholds the word
+   under the gauge has always printed, now carried by the colour too. */
+.atm-arc-fill[data-scale="humidity"][data-tone="low"] {
+  stroke: var(--risk-low);
+}
+
+.atm-arc-fill[data-scale="humidity"][data-tone="moderate"] {
+  stroke: var(--risk-elevated);
+}
+
+.atm-arc-fill[data-scale="humidity"][data-tone="high"] {
+  stroke: var(--risk-high);
+}
+
 .atm-arc-fill[data-scale="aqi"][data-tone="good"] {
   stroke: var(--risk-low);
 }

@@ -5,6 +5,7 @@ import {
   calculatePressureTrend,
   classifyComfort,
   classifyStormRisk,
+  findConvectiveAlert,
 } from "./meteorology.js";
 import { classifyWind, windDirectionName } from "./wind.js";
 
@@ -331,5 +332,88 @@ describe("classifyComfort returns no presentation colour", () => {
       level: "Unknown",
       position: 50,
     });
+  });
+});
+
+/*
+ * The case this exists for: Palos Hills, 2026-09-20. Open-Meteo returned
+ * CAPE 50 J/kg and weather code 3 (Overcast) while it was thundering hard
+ * enough to hear, and an NWS Flood Watch for flash flooding was live and
+ * rendered at the top of the same page. classifyStormRisk saw the model's
+ * numbers, correctly returned Minimal, and the card printed "All clear".
+ *
+ * The classification was right. Letting it speak last was not.
+ */
+describe("findConvectiveAlert", () => {
+  const alert = (event, priorityScore = 3, extra = {}) => ({
+    event,
+    priorityScore,
+    priority: "moderate",
+    ...extra,
+  });
+
+  test("no list, or a list with nothing convective, is null", () => {
+    assert.equal(findConvectiveAlert(undefined), null);
+    assert.equal(findConvectiveAlert(null), null);
+    assert.equal(findConvectiveAlert([]), null);
+    assert.equal(
+      findConvectiveAlert([alert("Beach Hazards Statement"), alert("Freeze Warning")]),
+      null
+    );
+  });
+
+  test("the convective and flood vocabulary is matched", () => {
+    for (const event of [
+      "Severe Thunderstorm Warning",
+      "Tornado Watch",
+      "Flash Flood Warning",
+      "Flood Watch",
+      "Severe Weather Statement",
+    ]) {
+      assert.equal(
+        findConvectiveAlert([alert(event)])?.event,
+        event,
+        `${event} should count as convective`
+      );
+    }
+  });
+
+  test("the most urgent one wins, not the first", () => {
+    const found = findConvectiveAlert([
+      alert("Flood Watch", 2),
+      alert("Tornado Warning", 6),
+      alert("Flash Flood Warning", 4),
+    ]);
+    assert.equal(found.event, "Tornado Warning");
+  });
+
+  test("a missing score sorts last but is still returned when alone", () => {
+    // The key is absent, not undefined: passing undefined to the helper
+    // above would trigger its default parameter and score it 3, which is
+    // how the first version of this test passed against a broken premise.
+    const scoreless = { event: "Flood Watch", priority: "moderate" };
+    // Never 0: a scoreless alert must not outrank a real Minor one.
+    assert.equal(
+      findConvectiveAlert([scoreless, alert("Tornado Watch", 1)])?.event,
+      "Tornado Watch"
+    );
+    assert.equal(findConvectiveAlert([scoreless])?.event, "Flood Watch");
+  });
+
+  test("a malformed entry cannot throw or match", () => {
+    assert.equal(findConvectiveAlert([null, undefined, {}, { event: 7 }]), null);
+  });
+
+  test("the live case: a Flood Watch outranks a Minimal model reading", () => {
+    // classifyStormRisk still says Minimal — that part was never wrong.
+    assert.deepEqual(classifyStormRisk(50, 3), { level: "Minimal", score: 0 });
+    // But the card now has something that stops it saying "All clear".
+    assert.equal(
+      findConvectiveAlert([
+        alert("Beach Hazards Statement", 2),
+        alert("Flood Watch", 4, { priority: "high" }),
+      ])?.priority,
+      "high"
+    );
   });
 });

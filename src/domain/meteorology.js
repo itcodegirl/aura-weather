@@ -44,6 +44,50 @@ export function classifyStormRisk(cape, weatherCode) {
   return { level: "Minimal", score: 0 };
 }
 
+/*
+ * NWS products describing convection, or the flooding convection causes --
+ * the hazards Storm Watch claims to speak for.
+ *
+ * Matched on the event name because CAP carries no machine-readable category
+ * for "convective": `severity`, `urgency` and `certainty` say how bad and how
+ * soon, never what kind. NWS publishes its event names as a closed
+ * vocabulary, so a match over that list is stable in a way a guess at the
+ * free-text `headline` would not be.
+ */
+const CONVECTIVE_EVENT = /thunderstorm|tornado|flood|severe weather/i;
+
+/**
+ * The most urgent convective or flood alert in a list, or null when none is.
+ *
+ * Storm Watch exists to answer "is it going to storm", and it had one input:
+ * the forecast model's CAPE and weather code. When the model disagrees with
+ * the sky -- 50 J/kg and "Overcast" during an actual thunderstorm -- the card
+ * said "All clear" directly beneath an NWS Flood Watch rendered on the same
+ * page. A government warning outranks a model's convective energy estimate,
+ * so the card has to see it before it is allowed to say all clear.
+ *
+ * @param {Array|undefined|null} alerts
+ * @returns {object|null}
+ */
+export function findConvectiveAlert(alerts) {
+  if (!Array.isArray(alerts)) return null;
+  let best = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+  for (const alert of alerts) {
+    const event = typeof alert?.event === "string" ? alert.event : "";
+    if (!CONVECTIVE_EVENT.test(event)) continue;
+    // An absent score sorts last rather than becoming 0, so it can never
+    // outrank a real one -- but the first match is still kept, so a list of
+    // unscored alerts returns an alert instead of null.
+    const score = toFiniteNumber(alert?.priorityScore) ?? Number.NEGATIVE_INFINITY;
+    if (best === null || score > bestScore) {
+      best = alert;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 /**
  * @typedef {"ok" | "empty" | "stale"} PressureTrendStatus
  *

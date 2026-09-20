@@ -42,70 +42,6 @@
  * `<span class="severity-badge severity-badge--{tone}">`.
  */
 
-.rain-mode-toggle {
-  display: flex;
-  gap: 3px;
-  padding: 3px;
-  /* Match the header unit/time toggles (14px shell / 11px buttons) so a
-     single-character label like "%" reads as a segmented control rather
-     than a stark circle. The 44x44 hit target below is unchanged. */
-  border-radius: 0;
-  background: var(--surface-3);
-  border: var(--border-soft);
-  transition:
-    border-color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-subtle) var(--ease-standard);
-}
-
-.rain-mode-toggle:focus-within {
-  border-color: rgba(156, 201, 242, 0.6);
-  box-shadow: 0 0 0 3px rgba(111, 183, 242, 0.16);
-}
-
-.rain-mode-btn {
-  /*
-   * Min 44x44 hit target. The visual chip is smaller (driven by the
-   * font + padding inside) but the actual click area meets WCAG 2.5.5.
-   * Earlier the button was 42x40 (and 38x36 on mobile), which fails
-   * the standard especially on touch.
-   */
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 8px;
-  border-radius: 0;
-  border: 1px solid transparent;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  display: grid;
-  place-items: center;
-  transition:
-    background var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard),
-    transform var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-subtle-slow) var(--ease-standard);
-}
-
-.rain-mode-btn.is-active,
-.rain-mode-btn[aria-pressed="true"] {
-  color: var(--active-pill-color);
-  background: var(--active-pill-bg);
-  box-shadow: var(--active-pill-shadow);
-}
-
-.rain-mode-btn:hover {
-  transform: translateY(var(--lift-1));
-}
-
-.rain-mode-btn:focus-visible {
-  border-color: rgba(111, 183, 242, 0.8);
-  box-shadow: 0 0 0 2px rgba(111, 183, 242, 0.22);
-}
-
-.rain-mode-btn:active {
-  transform: scale(var(--press-scale-firm));
-}
-
 .rain-primary {
   display: flex;
   flex-direction: column;
@@ -351,17 +287,6 @@
     font-size: 16px;
   }
 
-
-  .rain-mode-toggle {
-    gap: 2px;
-    padding: 2px;
-  }
-  /*
-   * .rain-mode-btn keeps its 44x44 hit target on mobile by design —
-   * not overridden here. The visible chip stays compact via its font
-   * and padding, but the actual touch surface is a friendly 44x44.
-   */
-
   .rain-primary {
     padding: 10px;
   }
@@ -406,24 +331,27 @@
    a positive outline-offset so it never lands on the bar's own fill,
    where a Glacier ring measured 1.04:1 against --chart-good-bottom. */
 
+/*
+ * One tone for every bar. The three-tier hue ramp it replaces encoded the
+ * same amount/peak ratio the bar's own height already draws, and its top
+ * tier was green -- which said "good" about the heaviest rain of the day,
+ * the same inversion already corrected in the nowcast.
+ *
+ * It is --status-accent rather than a --chart-* token because every one of
+ * those fails WCAG 1.4.11 in the light scheme, measured against
+ * --panel-well: rain-top 2.62, rain-bottom 2.62, good-top 2.64,
+ * good-bottom 2.64, all under the 3:1 floor for a graphical object.
+ * --status-accent is 9.18 dark and 5.07 light.
+ *
+ * The glow went with the green. Instrument flattened every other shadow to
+ * none, so it was a leftover as well as a green one.
+ */
 .rain-bar-fill {
   width: 100%;
   min-height: 2px;
   border-radius: 0;
+  background: var(--status-accent);
   transition: filter var(--motion-subtle) var(--ease-standard);
-}
-
-.rain-bar-fill.b-lo {
-  background: linear-gradient(180deg, rgba(176, 193, 214, 0.34), rgba(176, 193, 214, 0.16));
-}
-
-.rain-bar-fill.b-mid {
-  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
-}
-
-.rain-bar-fill.b-hi {
-  background: linear-gradient(180deg, var(--chart-good-top), var(--chart-good-bottom));
-  box-shadow: 0 0 10px rgba(127, 217, 154, 0.3);
 }
 
 .rain-bar-fill.is-peak {
@@ -442,26 +370,6 @@
     rgba(191, 219, 254, 0.34) 0 4px,
     rgba(191, 219, 254, 0.08) 4px 7px
   );
-}
-
-.rain-thresh {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 50%;
-  border-top: 1.5px dashed rgba(255, 255, 255, 0.3);
-  pointer-events: none;
-}
-
-.rain-thresh span {
-  position: absolute;
-  right: 0;
-  top: -8px;
-  font-size: var(--fs-label);
-  color: var(--text-dim);
-  background: var(--bg-well);
-  padding: 0 4px;
-  border-radius: 0;
 }
 
 .rain-detail {
@@ -506,13 +414,6 @@
 
 .rain-touch-explorer {
   display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rain-mode-btn:hover,
-  .rain-mode-btn:active {
-    transform: none;
-  }
 }
 
 @media (max-width: 640px) {

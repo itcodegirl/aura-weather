@@ -131,21 +131,19 @@ describe("RainCard touch-sample announcement contract (mirrors HourlyCard)", () 
     );
   });
 
-  test("chart mode toggle correctly keeps aria-pressed (it IS a toggle)", () => {
-    // Sanity check: the mode toggle buttons (% vs in/mm) genuinely toggle
-    // a state, so aria-pressed is the right semantic there \u2014 unlike the
-    // touch samples which "show" a value rather than "toggle on".
+  test("there is no chart-mode toggle: the strip plots accumulation only", () => {
+    // The %/in toggle is gone. The chance view duplicated HourlyCard's
+    // Precipitation tab, and its "total so far" readout sat beside the
+    // card's own backward-looking "Modeled so far today" with no way to
+    // tell the two windows apart.
     const { container } = renderWithRainyHours();
-    const modeButtons = container.querySelectorAll(".rain-mode-btn");
-    assert.equal(modeButtons.length, 2);
-    const pressedCount = Array.from(modeButtons).filter(
-      (button) => button.getAttribute("aria-pressed") === "true"
-    ).length;
-    assert.equal(
-      pressedCount,
-      1,
-      "exactly one mode toggle button reports aria-pressed=true at any moment"
-    );
+    assert.equal(container.querySelectorAll(".rain-mode-btn").length, 0);
+    assert.equal(container.querySelectorAll(".rain-mode-toggle").length, 0);
+    // The dashed 50% marker belonged to the probability axis and has no
+    // meaning over an accumulation series.
+    assert.equal(container.querySelectorAll(".rain-thresh").length, 0);
+    // And the strip still plots something: amount bars, not an empty rail.
+    assert.ok(container.querySelectorAll(".rain-bar").length > 0);
   });
 });
 
@@ -164,10 +162,7 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
         dataUnit: "F",
       })
     );
-    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
-      (b) => b.textContent.trim() === "in"
-    );
-    fireEvent.click(inBtn);
+    // No mode switch: the card renders accumulation by default now.
     return view;
   }
 
@@ -199,18 +194,27 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
 
     fireEvent.click(samples[0]);
     assert.equal(headline(), "0.05 in", "headline is the per-hour amount");
+    assert.equal(
+      context(),
+      "",
+      "the first hour carries no running total: it would restate the " +
+        "per-hour amount already printed beside it"
+    );
+
+    fireEvent.click(samples[1]);
     assert.match(
       context(),
-      /total so far/,
-      "secondary line labels the running total as 'total so far'"
+      /from now/,
+      "the secondary line names its direction, so it cannot be read as " +
+        "the backward-looking 'Modeled so far today'"
     );
-    assert.match(context(), /0\.05 in total so far/, "running total is shown as context");
+    assert.match(context(), /0\.10 in from now/, "running total is shown as context");
 
     fireEvent.click(samples[3]);
     assert.equal(headline(), "0.05 in", "per-hour amount stays constant across hours");
     assert.match(
       context(),
-      /0\.20 in total so far/,
+      /0\.20 in from now/,
       "running-total context grows for later hours"
     );
   });
@@ -228,7 +232,7 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
 
     assert.match(
       context,
-      new RegExp(`${projected.replace(/\./g, "\\.")} total so far`),
+      new RegExp(`${projected.replace(/\./g, "\\.")} from now`),
       `final running total context "${context}" should include projected total "${projected}"`
     );
   });
@@ -243,10 +247,7 @@ describe("RainCard rain-total provenance qualifiers", () => {
         dataUnit: "F",
       })
     );
-    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
-      (b) => b.textContent.trim() === "in"
-    );
-    fireEvent.click(inBtn);
+    // No mode switch: the card renders accumulation by default now.
     return view;
   }
 
@@ -268,16 +269,16 @@ describe("RainCard rain-total provenance qualifiers", () => {
 
     // Hours 0,1,3,4,5 contribute 0.05 each = 0.25, with the gap folded as 0.
     fireEvent.click(samples[5]);
-    assert.equal(context(), "≥ 0.25 in total so far");
+    assert.equal(context(), "≥ 0.25 in from now");
     assert.match(
       samples[5].getAttribute("aria-label") || "",
-      /at least 0\.25 in total so far/,
+      /at least 0\.25 in from now/,
       "aria mirror of a gapped running total must say 'at least'"
     );
 
     // Before the gap the sum is complete, so no qualifier applies.
     fireEvent.click(samples[1]);
-    assert.equal(context(), "0.10 in total so far");
+    assert.equal(context(), "0.10 in from now");
     assert.doesNotMatch(
       samples[1].getAttribute("aria-label") || "",
       /at least/,

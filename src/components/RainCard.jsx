@@ -13,24 +13,17 @@ import "./RainCard.css";
 const MISSING_PLACEHOLDER = "\u2014";
 
 /*
- * One ladder for every rain-chance word this card says. 50% is the
- * app-wide "likely" cutoff — NowcastCard's NC_LIKELY_THRESHOLD and
- * HourlyCard's rainWord both draw it there, and this card draws its own
- * dashed reference line at 50%. The headline, though, used to hard-code
- * "Rain likely" for whatever hour `nextRain` resolved to, and that hour is
- * selected at probability >= 40% OR any modelled amount at all. So a 22%
- * hour was announced as "Rain likely (22% chance)" directly above this
- * card's own 50% line, while the same hour's chip read "slight chance".
+ * The rain-chance cutoff for this card's headline. 50% is the app-wide
+ * "likely" threshold — NowcastCard's NC_LIKELY_THRESHOLD and HourlyCard's
+ * rainWord both draw it there. The headline used to hard-code "Rain likely"
+ * for whatever hour `nextRain` resolved to, and that hour is selected at
+ * probability >= 40% OR any modelled amount at all, so a 22% hour was
+ * announced as "Rain likely (22% chance)".
+ *
+ * The card's own dashed 50% line is gone with the chance chart: this strip
+ * now plots accumulation, where a probability threshold has nothing to mark.
  */
 const RAIN_LIKELY_PROBABILITY = 50;
-
-function describeRainChance(probability) {
-  if (probability === null) return "data unavailable";
-  if (probability >= RAIN_LIKELY_PROBABILITY) return "showers likely";
-  if (probability >= 30) return "scattered chance";
-  if (probability >= 15) return "slight chance";
-  return "mostly dry";
-}
 
 function buildNextRainLabel(nextRain) {
   const probability = nextRain?.probability ?? null;
@@ -92,7 +85,6 @@ function RainCard({
   const titleId = `${timelineId}-title`;
   const timelineSummaryId = `${timelineId}-summary`;
   const timelineDetailsId = `${timelineId}-details`;
-  const [mode, setMode] = useState("chance");
   const [selectedSampleKey, setSelectedSampleKey] = useState(null);
   const rainAnalysis = useRainAnalysis(weather?.hourly, weather?.meta?.timezone);
   const {
@@ -163,7 +155,7 @@ function RainCard({
     const safeNextRainTimeLabel = nextRain ? formatHour(nextRain.time) : "";
     const safePeakAmount = toFiniteNumber(peakAmount);
     // Running rainfall accumulation across the window, shown as secondary
-    // "total so far" context beneath each hour's own amount. (Leading with
+    // "from now" context beneath each hour's own amount. (Leading with
     // the cumulative total made every hour after the rain stopped display an
     // identical plateaued value — e.g. "0.42 in" repeated for 20+ hours —
     // which read as stuck/duplicated data rather than a per-hour forecast.)
@@ -192,88 +184,69 @@ function RainCard({
       };
     });
     const bars = hours.map((hour, index) => {
-      const value = mode === "chance" ? hour.probability : hour.amount;
-      const isMissing = value === null;
+      const isMissing = hour.amount === null;
       const cumulative = cumulativeTotals[index];
       const heightPct =
         isMissing
           ? 14
-          : mode === "chance"
-            ? Math.max(hour.probability, 3)
-            : safePeakAmount > 0
-              ? Math.max((hour.amount / safePeakAmount) * 100, 3)
-              : 3;
-
-      const opacity =
-        isMissing
-          ? 0.45
-          : mode === "chance"
-          ? 0.25 + (hour.probability / 100) * 0.75
           : safePeakAmount > 0
-            ? 0.25 + (hour.amount / safePeakAmount) * 0.75
-            : 0.25;
+            ? Math.max((hour.amount / safePeakAmount) * 100, 3)
+            : 3;
 
       const tooltip =
         isMissing
           ? `${formatHour(hour.time)} \u2014 data unavailable`
-          : mode === "chance"
-          ? `${formatHour(hour.time)} \u2014 ${hour.probability}%`
           : `${formatHour(hour.time)} \u2014 ${formatPrecipitation(hour.amount, unit, dataUnit)}`;
       const valueLabel =
         isMissing
           ? MISSING_PLACEHOLDER
-          : mode === "chance"
-            ? `${hour.probability}%`
-            : formatPrecipitation(hour.amount, unit, dataUnit);
+          : formatPrecipitation(hour.amount, unit, dataUnit);
       const timeLabel = formatHour(hour.time);
-      const prob = isMissing ? null : hour.probability;
-      const tier = isMissing
-        ? "na"
-        : mode === "chance"
-          ? prob >= 50 ? "hi" : prob >= 30 ? "mid" : "lo"
-          : safePeakAmount > 0
-            ? hour.amount >= safePeakAmount * 0.66
-              ? "hi"
-              : hour.amount >= safePeakAmount * 0.33
-                ? "mid"
-                : "lo"
-            : "lo";
       const isPeak =
         peak?.time instanceof Date &&
         hour.time instanceof Date &&
         hour.time.getTime() === peak.time.getTime();
-      // The sample strip and its readout are the "rain tracker": in amount
-      // mode each chip leads with that hour's own precipitation, with the
-      // running accumulation ("total so far") as the secondary line. This
-      // keeps every hour distinct — leading with the cumulative total made
-      // all the post-rain hours show one identical plateaued value. The
-      // chart bars above stay per-hour intensity (tooltip/valueLabel too).
+      // The sample strip and its readout are the "rain tracker": each chip
+      // leads with that hour's own precipitation, with the running
+      // accumulation as the secondary line. This keeps every hour distinct
+      // — leading with the cumulative total made all the post-rain hours
+      // show one identical plateaued value. The chart bars above stay
+      // per-hour intensity (tooltip/valueLabel too).
       const trackValueLabel = valueLabel;
-      const chanceMeta = describeRainChance(prob);
+      /*
+       * "from now", not "total so far". The card prints "Modeled so far
+       * today" three rows above, which reads BACKWARD from midnight; this
+       * one reads FORWARD from the first hour of the window. One phrase
+       * over two opposite windows put 1.63 in and 0.00 in side by side as
+       * if they measured the same thing.
+       *
+       * And nothing at all on the first chip: there the running total is
+       * by definition that hour's own amount, so the line restated the
+       * value already printed beside it ("0.00 in — 0.00 in from now").
+       */
+      const isFirstHour = index === 0;
       const trackMeta = isMissing
         ? "data unavailable"
-        : mode === "chance"
-          ? chanceMeta
-          : `${cumulative.display} total so far`;
+        : isFirstHour
+          ? null
+          : `${cumulative.display} from now`;
       const sampleAnnounce = isMissing
         ? `${timeLabel} — data unavailable`
-        : mode === "chance"
-          ? `${timeLabel} — ${hour.probability}%`
-          : `${timeLabel} — ${valueLabel} this hour, ${cumulative.announce} total so far`;
+        : isFirstHour
+          ? `${timeLabel} — ${valueLabel} this hour`
+          : `${timeLabel} — ${valueLabel} this hour, ${cumulative.announce} from now`;
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
           ? String(hour.time.getTime())
           : tooltip,
         heightPct,
-        opacity,
         tooltip,
         timeLabel,
         trackValueLabel,
         trackMeta,
         sampleAnnounce,
         isMissing,
-        tier,
         isPeak,
       };
     });
@@ -307,7 +280,6 @@ function RainCard({
     nextRain,
     peakAmount,
     hours,
-    mode,
     total,
     soFarToday,
     past12h,
@@ -368,25 +340,6 @@ function RainCard({
           </span>
         }
       />
-      <div className="rain-mode-toggle" role="group" aria-label="Chart mode">
-          <button
-            onClick={() => setMode("chance")}
-            className={`rain-mode-btn ${mode === "chance" ? "is-active" : ""}`}
-            aria-pressed={mode === "chance"}
-            aria-label="Show hourly rain chance"
-          >
-            %
-          </button>
-          <button
-            onClick={() => setMode("inches")}
-            className={`rain-mode-btn ${mode === "inches" ? "is-active" : ""}`}
-            aria-pressed={mode === "inches"}
-            aria-label="Show hourly rain accumulation"
-          >
-            {unit === "C" ? "mm" : "in"}
-          </button>
-        </div>
-
       {!hasData ? (
         <div className="card-empty" role="status">
           <div className="card-empty__icon">
@@ -485,18 +438,9 @@ function RainCard({
           className="rain-timeline"
           role="group"
           onKeyDown={onBarsKeyDown}
-          aria-label={
-            mode === "chance"
-              ? "Hourly rain chance over the next 24 hours \u2014 tap an hour to inspect"
-              : `Hourly rain amount in ${getPrecipUnitLabel(unit)} over the next 24 hours \u2014 tap an hour to inspect`
-          }
+          aria-label={`Hourly rain amount in ${getPrecipUnitLabel(unit)} over the next 24 hours \u2014 tap an hour to inspect`}
           aria-describedby={`${timelineSummaryId} ${timelineDetailsId}`}
         >
-          {mode === "chance" ? (
-            <div className="rain-thresh" aria-hidden="true">
-              <span>50%</span>
-            </div>
-          ) : null}
           {timelineBars.map((bar) => (
             <button
               type="button"
@@ -509,7 +453,7 @@ function RainCard({
               onClick={() => setSelectedSampleKey(bar.key)}
             >
               <span
-                className={`rain-bar-fill b-${bar.tier}${bar.isMissing ? " rain-bar--missing" : ""}${bar.isPeak ? " is-peak" : ""}`}
+                className={`rain-bar-fill${bar.isMissing ? " rain-bar--missing" : ""}${bar.isPeak ? " is-peak" : ""}`}
                 style={{ height: `${bar.heightPct}%` }}
               />
             </button>
@@ -519,7 +463,9 @@ function RainCard({
           <p className="rain-detail">
             <span className="rain-detail-time">{selectedSample.timeLabel}</span>
             <strong className="rain-detail-value">{selectedSample.trackValueLabel}</strong>
-            <span className="rain-detail-meta">{selectedSample.trackMeta}</span>
+            {selectedSample.trackMeta ? (
+              <span className="rain-detail-meta">{selectedSample.trackMeta}</span>
+            ) : null}
           </p>
         ) : null}
         <p id={timelineSummaryId} className="rain-timeline-summary">{timelineSummary}</p>
@@ -551,11 +497,9 @@ function RainCard({
               <p className="rain-selected-sample">
                 <span>{selectedSample.timeLabel}</span>
                 <strong>{selectedSample.trackValueLabel}</strong>
-                <span>
-                  {mode === "chance"
-                    ? "Rain confidence"
-                    : selectedSample.trackMeta}
-                </span>
+                {selectedSample.trackMeta ? (
+                  <span>{selectedSample.trackMeta}</span>
+                ) : null}
               </p>
             ) : null}
             <div

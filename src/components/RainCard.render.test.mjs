@@ -131,21 +131,19 @@ describe("RainCard touch-sample announcement contract (mirrors HourlyCard)", () 
     );
   });
 
-  test("chart mode toggle correctly keeps aria-pressed (it IS a toggle)", () => {
-    // Sanity check: the mode toggle buttons (% vs in/mm) genuinely toggle
-    // a state, so aria-pressed is the right semantic there \u2014 unlike the
-    // touch samples which "show" a value rather than "toggle on".
+  test("there is no chart-mode toggle: the strip plots accumulation only", () => {
+    // The %/in toggle is gone. The chance view duplicated HourlyCard's
+    // Precipitation tab, and its "total so far" readout sat beside the
+    // card's own backward-looking "Modeled so far today" with no way to
+    // tell the two windows apart.
     const { container } = renderWithRainyHours();
-    const modeButtons = container.querySelectorAll(".rain-mode-btn");
-    assert.equal(modeButtons.length, 2);
-    const pressedCount = Array.from(modeButtons).filter(
-      (button) => button.getAttribute("aria-pressed") === "true"
-    ).length;
-    assert.equal(
-      pressedCount,
-      1,
-      "exactly one mode toggle button reports aria-pressed=true at any moment"
-    );
+    assert.equal(container.querySelectorAll(".rain-mode-btn").length, 0);
+    assert.equal(container.querySelectorAll(".rain-mode-toggle").length, 0);
+    // The dashed 50% marker belonged to the probability axis and has no
+    // meaning over an accumulation series.
+    assert.equal(container.querySelectorAll(".rain-thresh").length, 0);
+    // And the strip still plots something: amount bars, not an empty rail.
+    assert.ok(container.querySelectorAll(".rain-bar").length > 0);
   });
 });
 
@@ -164,10 +162,7 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
         dataUnit: "F",
       })
     );
-    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
-      (b) => b.textContent.trim() === "in"
-    );
-    fireEvent.click(inBtn);
+    // No mode switch: the card renders accumulation by default now.
     return view;
   }
 
@@ -243,10 +238,7 @@ describe("RainCard rain-total provenance qualifiers", () => {
         dataUnit: "F",
       })
     );
-    const inBtn = [...view.container.querySelectorAll(".rain-mode-btn")].find(
-      (b) => b.textContent.trim() === "in"
-    );
-    fireEvent.click(inBtn);
+    // No mode switch: the card renders accumulation by default now.
     return view;
   }
 

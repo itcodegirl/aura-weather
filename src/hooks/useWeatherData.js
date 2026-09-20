@@ -391,6 +391,13 @@ export function useWeatherData(location, options = {}) {
       if (typeof locationLat === "number" || typeof locationLon === "number") {
         setError("Invalid location coordinates");
       }
+      // The one exit that bumps neither requestIdRef nor the in-flight
+      // controller, so an already-armed hydrate would still match its own
+      // requestId and fire a couple of seconds later -- painting the
+      // previous location's saved forecast onto an invalid-location state,
+      // with loading false and the error banner up. Every other exit clears
+      // it by way of the request-start clear below.
+      clearCacheHydrateTimer();
       setLoading(false);
       return;
     }

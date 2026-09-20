@@ -828,36 +828,43 @@ describe("component colour literals are a closed set", () => {
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(111,183,242,.08)",
+      count: 1,
       why: "compass dial ground, 1.06:1 light -- a tint behind the needle, not a mark",
     },
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(255,255,255,.2)",
+      count: 1,
       why: "compass ring; track family, 1.00:1 light -- open design decision",
     },
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(255,255,255,.16)",
+      count: 2,
       why: "arc gauge + sun horizon track; track family, 1.00:1 light -- open design decision",
     },
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(255,255,255,.1)",
+      count: 1,
       why: "arc gauge track, MISSING state (dashed); 1.02:1 light -- same open decision. The narrower detector this guard used to run never saw this one at all.",
     },
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(243,183,101,.5)",
+      count: 1,
       why: "sun path arc; the track the bead travels, 1.33:1 light -- open design decision",
     },
     {
       file: "src/components/AtmosphereBento.jsx",
       value: "rgba(243,183,101,.35)",
+      count: 1,
       why: "sun bead halo, 1.22:1 light -- ornament around a bead that clears at 6.33:1",
     },
     {
       file: "src/components/HourlyCard.jsx",
       value: "#f3b765",
+      count: 2,
       why: "temp area gradient stops at 0.18 and 0 opacity -- decorative fill, 1.4.11 exempt",
     },
     // Leaflet vector options. These paint over a map basemap, which is not
@@ -865,9 +872,9 @@ describe("component colour literals are a closed set", () => {
     // prefers-color-scheme, so a fixed value is the correct choice rather
     // than a drifted one -- RadarMap's own comment says "amber against a
     // light basemap".
-    { file: "src/components/radar/RadarMap.jsx", value: "#6fb7f2", why: "location halo/dot over the map basemap" },
-    { file: "src/components/radar/RadarMap.jsx", value: "#f8fafc", why: "location dot ring over the map basemap" },
-    { file: "src/components/radar/RadarMap.jsx", value: "#f2a33c", why: "alert boundary over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#6fb7f2", count: 3, why: "location halo/dot over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#f8fafc", count: 1, why: "location dot ring over the map basemap" },
+    { file: "src/components/radar/RadarMap.jsx", value: "#f2a33c", count: 2, why: "alert boundary over the map basemap" },
     // WeatherIcon's condition palette: 29 frozen dark-scheme values, 13 of
     // 16 distinct hues under 3:1 against --bg-well in light, four of them
     // effectively invisible (1.00-1.22:1). Listed rather than fixed because
@@ -875,13 +882,15 @@ describe("component colour literals are a closed set", () => {
     // so the glyph inherits a themed ink and the hue coding goes with it --
     // are materially different products. This is an OPEN defect, parked
     // here so it stays visible; it is not an exemption on the merits.
-    ...[
-      "#0ea5e9", "#2563eb", "#38bdf8", "#3b82f6", "#60a5fa", "#6d28d9",
-      "#7dd3fc", "#8b5cf6", "#94a3b8", "#a78bfa", "#bae6fd", "#cbd5e1",
-      "#dbeafe", "#e0f2fe", "#f8fafc", "#fbbf24",
-    ].map((value) => ({
+    ...Object.entries({
+      "#0ea5e9": 1, "#2563eb": 2, "#38bdf8": 1, "#3b82f6": 4,
+      "#60a5fa": 4, "#6d28d9": 1, "#7dd3fc": 4, "#8b5cf6": 1,
+      "#94a3b8": 1, "#a78bfa": 1, "#bae6fd": 1, "#cbd5e1": 3,
+      "#dbeafe": 1, "#e0f2fe": 1, "#f8fafc": 1, "#fbbf24": 2,
+    }).map(([value, count]) => ({
       file: "src/components/WeatherIcon.jsx",
       value,
+      count,
       why: "dark-only condition palette -- open design decision, see PR #257",
     })),
   ];
@@ -916,27 +925,36 @@ describe("component colour literals are a closed set", () => {
   }
 
   test("every surviving literal is one that cannot carry information", () => {
-    const found = foundLiterals();
     const key = (x) => `${x.file} :: ${x.value}`;
-    const allowed = new Set(ALLOWED.map(key));
 
-    const unexpected = found.filter((x) => !allowed.has(key(x)));
-    assert.deepEqual(
-      unexpected.map(key),
-      [],
-      "a colour literal in a JSX paint attribute cannot answer " +
-        "prefers-color-scheme, so it renders one scheme's value in both. " +
-        "Either route it through a token, or add it to ALLOWED with the " +
-        "measured reason it carries no information"
-    );
+    // Counted, not just listed. Keying on file+value alone let an
+    // already-allowed hex be reused on a NEW element and pass in silence,
+    // quietly extending a reason measured for one specific mark ("sun bead
+    // halo") to whatever else happened to pick the same value.
+    const tally = (rows, weight) =>
+      rows.reduce((acc, row) => {
+        acc[key(row)] = (acc[key(row)] ?? 0) + weight(row);
+        return acc;
+      }, {});
 
-    const foundKeys = new Set(found.map(key));
-    const struckOff = [...allowed].filter((k) => !foundKeys.has(k));
+    const found = tally(foundLiterals(), () => 1);
+    const allowed = tally(ALLOWED, (row) => row.count ?? 1);
+
+    const drift = [];
+    for (const k of new Set([...Object.keys(found), ...Object.keys(allowed)])) {
+      const have = found[k] ?? 0;
+      const want = allowed[k] ?? 0;
+      if (have !== want) drift.push(`${k} — found ${have}, allowed ${want}`);
+    }
+
     assert.deepEqual(
-      struckOff,
+      drift.sort(),
       [],
-      "these are listed as allowed but no longer exist -- strike them off " +
-        "ALLOWED so the ledger keeps matching the code"
+      "a colour literal in a .jsx file cannot answer prefers-color-scheme, " +
+        "so it renders one scheme's value in both. Route it through a token, " +
+        "or record it in ALLOWED with the measured reason it carries no " +
+        "information and the number of places it appears. A count that no " +
+        "longer matches means a literal was added, removed or reused"
     );
   });
 

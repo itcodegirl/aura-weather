@@ -331,24 +331,27 @@
    a positive outline-offset so it never lands on the bar's own fill,
    where a Glacier ring measured 1.04:1 against --chart-good-bottom. */
 
+/*
+ * One tone for every bar. The three-tier hue ramp it replaces encoded the
+ * same amount/peak ratio the bar's own height already draws, and its top
+ * tier was green -- which said "good" about the heaviest rain of the day,
+ * the same inversion already corrected in the nowcast.
+ *
+ * It is --status-accent rather than a --chart-* token because every one of
+ * those fails WCAG 1.4.11 in the light scheme, measured against
+ * --panel-well: rain-top 2.62, rain-bottom 2.62, good-top 2.64,
+ * good-bottom 2.64, all under the 3:1 floor for a graphical object.
+ * --status-accent is 9.18 dark and 5.07 light.
+ *
+ * The glow went with the green. Instrument flattened every other shadow to
+ * none, so it was a leftover as well as a green one.
+ */
 .rain-bar-fill {
   width: 100%;
   min-height: 2px;
   border-radius: 0;
+  background: var(--status-accent);
   transition: filter var(--motion-subtle) var(--ease-standard);
-}
-
-.rain-bar-fill.b-lo {
-  background: linear-gradient(180deg, rgba(176, 193, 214, 0.34), rgba(176, 193, 214, 0.16));
-}
-
-.rain-bar-fill.b-mid {
-  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
-}
-
-.rain-bar-fill.b-hi {
-  background: linear-gradient(180deg, var(--chart-good-top), var(--chart-good-bottom));
-  box-shadow: 0 0 10px rgba(127, 217, 154, 0.3);
 }
 
 .rain-bar-fill.is-peak {

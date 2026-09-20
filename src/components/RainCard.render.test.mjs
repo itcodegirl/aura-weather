@@ -194,18 +194,27 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
 
     fireEvent.click(samples[0]);
     assert.equal(headline(), "0.05 in", "headline is the per-hour amount");
+    assert.equal(
+      context(),
+      "",
+      "the first hour carries no running total: it would restate the " +
+        "per-hour amount already printed beside it"
+    );
+
+    fireEvent.click(samples[1]);
     assert.match(
       context(),
-      /total so far/,
-      "secondary line labels the running total as 'total so far'"
+      /from now/,
+      "the secondary line names its direction, so it cannot be read as " +
+        "the backward-looking 'Modeled so far today'"
     );
-    assert.match(context(), /0\.05 in total so far/, "running total is shown as context");
+    assert.match(context(), /0\.10 in from now/, "running total is shown as context");
 
     fireEvent.click(samples[3]);
     assert.equal(headline(), "0.05 in", "per-hour amount stays constant across hours");
     assert.match(
       context(),
-      /0\.20 in total so far/,
+      /0\.20 in from now/,
       "running-total context grows for later hours"
     );
   });
@@ -223,7 +232,7 @@ describe("RainCard amount-mode per-hour readout (with running total as context)"
 
     assert.match(
       context,
-      new RegExp(`${projected.replace(/\./g, "\\.")} total so far`),
+      new RegExp(`${projected.replace(/\./g, "\\.")} from now`),
       `final running total context "${context}" should include projected total "${projected}"`
     );
   });
@@ -260,16 +269,16 @@ describe("RainCard rain-total provenance qualifiers", () => {
 
     // Hours 0,1,3,4,5 contribute 0.05 each = 0.25, with the gap folded as 0.
     fireEvent.click(samples[5]);
-    assert.equal(context(), "≥ 0.25 in total so far");
+    assert.equal(context(), "≥ 0.25 in from now");
     assert.match(
       samples[5].getAttribute("aria-label") || "",
-      /at least 0\.25 in total so far/,
+      /at least 0\.25 in from now/,
       "aria mirror of a gapped running total must say 'at least'"
     );
 
     // Before the gap the sum is complete, so no qualifier applies.
     fireEvent.click(samples[1]);
-    assert.equal(context(), "0.10 in total so far");
+    assert.equal(context(), "0.10 in from now");
     assert.doesNotMatch(
       samples[1].getAttribute("aria-label") || "",
       /at least/,

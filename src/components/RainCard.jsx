@@ -155,7 +155,7 @@ function RainCard({
     const safeNextRainTimeLabel = nextRain ? formatHour(nextRain.time) : "";
     const safePeakAmount = toFiniteNumber(peakAmount);
     // Running rainfall accumulation across the window, shown as secondary
-    // "total so far" context beneath each hour's own amount. (Leading with
+    // "from now" context beneath each hour's own amount. (Leading with
     // the cumulative total made every hour after the rain stopped display an
     // identical plateaued value — e.g. "0.42 in" repeated for 20+ hours —
     // which read as stuck/duplicated data rather than a per-hour forecast.)
@@ -193,13 +193,6 @@ function RainCard({
             ? Math.max((hour.amount / safePeakAmount) * 100, 3)
             : 3;
 
-      const opacity =
-        isMissing
-          ? 0.45
-          : safePeakAmount > 0
-            ? 0.25 + (hour.amount / safePeakAmount) * 0.75
-            : 0.25;
-
       const tooltip =
         isMissing
           ? `${formatHour(hour.time)} \u2014 data unavailable`
@@ -209,15 +202,6 @@ function RainCard({
           ? MISSING_PLACEHOLDER
           : formatPrecipitation(hour.amount, unit, dataUnit);
       const timeLabel = formatHour(hour.time);
-      const tier = isMissing
-        ? "na"
-        : safePeakAmount > 0
-          ? hour.amount >= safePeakAmount * 0.66
-            ? "hi"
-            : hour.amount >= safePeakAmount * 0.33
-              ? "mid"
-              : "lo"
-          : "lo";
       const isPeak =
         peak?.time instanceof Date &&
         hour.time instanceof Date &&
@@ -229,26 +213,40 @@ function RainCard({
       // show one identical plateaued value. The chart bars above stay
       // per-hour intensity (tooltip/valueLabel too).
       const trackValueLabel = valueLabel;
+      /*
+       * "from now", not "total so far". The card prints "Modeled so far
+       * today" three rows above, which reads BACKWARD from midnight; this
+       * one reads FORWARD from the first hour of the window. One phrase
+       * over two opposite windows put 1.63 in and 0.00 in side by side as
+       * if they measured the same thing.
+       *
+       * And nothing at all on the first chip: there the running total is
+       * by definition that hour's own amount, so the line restated the
+       * value already printed beside it ("0.00 in — 0.00 in from now").
+       */
+      const isFirstHour = index === 0;
       const trackMeta = isMissing
         ? "data unavailable"
-        : `${cumulative.display} total so far`;
+        : isFirstHour
+          ? null
+          : `${cumulative.display} from now`;
       const sampleAnnounce = isMissing
         ? `${timeLabel} — data unavailable`
-        : `${timeLabel} — ${valueLabel} this hour, ${cumulative.announce} total so far`;
+        : isFirstHour
+          ? `${timeLabel} — ${valueLabel} this hour`
+          : `${timeLabel} — ${valueLabel} this hour, ${cumulative.announce} from now`;
 
       return {
         key: Number.isFinite(hour.time?.getTime?.())
           ? String(hour.time.getTime())
           : tooltip,
         heightPct,
-        opacity,
         tooltip,
         timeLabel,
         trackValueLabel,
         trackMeta,
         sampleAnnounce,
         isMissing,
-        tier,
         isPeak,
       };
     });
@@ -455,7 +453,7 @@ function RainCard({
               onClick={() => setSelectedSampleKey(bar.key)}
             >
               <span
-                className={`rain-bar-fill b-${bar.tier}${bar.isMissing ? " rain-bar--missing" : ""}${bar.isPeak ? " is-peak" : ""}`}
+                className={`rain-bar-fill${bar.isMissing ? " rain-bar--missing" : ""}${bar.isPeak ? " is-peak" : ""}`}
                 style={{ height: `${bar.heightPct}%` }}
               />
             </button>
@@ -465,7 +463,9 @@ function RainCard({
           <p className="rain-detail">
             <span className="rain-detail-time">{selectedSample.timeLabel}</span>
             <strong className="rain-detail-value">{selectedSample.trackValueLabel}</strong>
-            <span className="rain-detail-meta">{selectedSample.trackMeta}</span>
+            {selectedSample.trackMeta ? (
+              <span className="rain-detail-meta">{selectedSample.trackMeta}</span>
+            ) : null}
           </p>
         ) : null}
         <p id={timelineSummaryId} className="rain-timeline-summary">{timelineSummary}</p>
@@ -497,7 +497,9 @@ function RainCard({
               <p className="rain-selected-sample">
                 <span>{selectedSample.timeLabel}</span>
                 <strong>{selectedSample.trackValueLabel}</strong>
-                <span>{selectedSample.trackMeta}</span>
+                {selectedSample.trackMeta ? (
+                  <span>{selectedSample.trackMeta}</span>
+                ) : null}
               </p>
             ) : null}
             <div

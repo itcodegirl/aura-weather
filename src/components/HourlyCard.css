@@ -141,8 +141,14 @@
   border-radius: 0;
 }
 
+/* Matches the wind bars it stands for, for the same reason b-rain does
+   below. Left on --chart-rain-* when its bars moved, which made the key
+   and the bars disagree as well as fail. b-rain never shares a legend
+   with this key -- b-mid appears only in the wind legend, b-rain only in
+   the temp/precip ones -- and against b-gust, the key it does sit beside,
+   this measures 4.75:1 in both schemes. */
 .lg-bar.b-mid {
-  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
+  background: var(--status-accent);
 }
 
 /* Matches the bars it stands for. */
@@ -258,13 +264,43 @@
   background: rgba(127, 182, 239, 0.26);
 }
 
+/* The sustained-wind fill inside the gust envelope. The note above
+   .hourly-bar explains why a --chart-* token cannot carry a mark, and
+   that rule was moved off them -- this one, thirty lines below the same
+   comment, was not, and it and its legend key were the last two consumers
+   left. Measured on the boundary that matters, the fill against the
+   composited .hourly-wbar track it sits inside: 2.52:1 in light, against
+   1.4.11's 3:1 floor for a graphical object. --status-accent takes it to
+   4.87:1 light / 5.25:1 dark.
+
+   Strictly this is a legibility fix rather than a 1.4.11 violation, and
+   the distinction is worth keeping straight: unlike the temperature line,
+   whose column holds no text node at all, .hourly-wval prints the
+   sustained speed above every wind bar and the gust appears in the detail
+   strip -- so the reading does have a text equivalent, which 1.4.11
+   exempts. It is fixed anyway on three grounds that do not depend on that:
+   the fill was illegible in light, the legend key had drifted to a
+   different colour from the bars it stands for, and it was the last thing
+   holding a token retired for failing.
+
+   The track itself stays as it is on purpose: it measures 1.18:1 against
+   the card in light, but darkening it to --wire-structural would drop the
+   fill/track boundary to 1.61:1 and break the reading this fix restores.
+   No existing token clears 3:1 on both boundaries, so that one is a design
+   decision and is reported rather than guessed at. */
 .hourly-wspd {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   border-radius: 0;
-  background: linear-gradient(180deg, var(--chart-rain-top), var(--chart-rain-bottom));
+  background: var(--status-accent);
+}
+
+/* The temperature trend line. Paired with .hourly-dot and .lg-line, which
+   already take this token. */
+.hourly-temp-line {
+  stroke: var(--accent-warm);
 }
 
 .hourly-wcap {

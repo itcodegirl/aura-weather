@@ -331,11 +331,11 @@ function WindTile({ weather, unit }) {
           aria-label={dir !== null ? `Wind from ${dirName}` : "Wind direction unavailable"}
         >
           <circle cx="40" cy="40" r="31" fill="rgba(111,183,242,.08)" stroke="rgba(255,255,255,.2)" strokeWidth="1.4" />
-          <text x="40" y="14" fill="rgba(238, 241, 248, 0.78)" fontSize="9" textAnchor="middle" fontFamily="Inter">N</text>
+          <text x="40" y="14" className="atm-compass-cardinal" fontSize="9" textAnchor="middle" fontFamily="Inter">N</text>
           {dir !== null && (
             <g transform={`rotate(${compassRotation} 40 40)`}>
-              <line x1="40" y1="23" x2="40" y2="57" stroke="#6fb7f2" strokeWidth="2.6" strokeLinecap="round" />
-              <path d="M40 21 l-5 9 l10 0 z" fill="#6fb7f2" />
+              <line x1="40" y1="23" x2="40" y2="57" className="atm-needle" strokeWidth="2.6" strokeLinecap="round" />
+              <path d="M40 21 l-5 9 l10 0 z" className="atm-needle-head" />
             </g>
           )}
         </svg>
@@ -346,7 +346,7 @@ function WindTile({ weather, unit }) {
           </div>
           <div className="atm-sub atm-wind-gust">
             {"Gusts to "}
-            <span style={{ color: "#eef1f8" }}>{gustDisplay}</span>
+            <span className="atm-gust-value">{gustDisplay}</span>
           </div>
         </div>
       </div>
@@ -404,7 +404,7 @@ function SunTile({ sunrise, sunset, timeZone, nowMs }) {
         <path d="M14 58 Q140 -8 266 58" fill="none" stroke="rgba(243,183,101,.5)" strokeWidth="1.6" strokeDasharray="3 3" />
         {showSun && (
           <>
-            <circle cx={sunCx.toFixed(1)} cy={sunCy.toFixed(1)} r="8" fill="#f3b765" />
+            <circle cx={sunCx.toFixed(1)} cy={sunCy.toFixed(1)} r="8" className="atm-sun-bead" />
             <circle cx={sunCx.toFixed(1)} cy={sunCy.toFixed(1)} r="13" fill="none" stroke="rgba(243,183,101,.35)" strokeWidth="1.6" />
           </>
         )}
@@ -499,7 +499,7 @@ function VisibilityTile({ visibility, unit }) {
             width="8"
             height={VIS_BAR_HEIGHTS[i]}
             rx="2"
-            fill={i < filledBars ? "#6fb7f2" : "rgba(255,255,255,.12)"}
+            className={`atm-vis-bar${i < filledBars ? " atm-vis-bar--filled" : ""}`}
           />
         ))}
       </svg>

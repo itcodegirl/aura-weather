@@ -800,3 +800,172 @@ describe("the active-pill pair stays a pair", () => {
     }
   });
 });
+
+/*
+ * Component-level colour literals.
+ *
+ * The token guards above cover App.css. Nothing covered the components, and
+ * the gap had already cost something: commit 2558b5b moved `.hourly-bar` off
+ * the --chart-* gradients for exactly this reason and left `.hourly-wspd`
+ * thirty lines below the comment explaining why, still on them, at 2.52:1
+ * against the track it has to be read against. Four more scheme-blind
+ * literals were found the same way -- a gust reading at 1.13:1 in light, a
+ * compass cardinal at 1.10:1, the wind needle and visibility meter at
+ * 2.16:1, and the sun bead at 1.78:1 -- every one of them a dark-scheme
+ * value frozen into JSX where prefers-color-scheme cannot reach it.
+ *
+ * So this is a ledger, not a pattern match. Every literal that survives is
+ * listed with the reason it is allowed, and both adding one and removing one
+ * fail the test: an addition has to be justified here, and a removal has to
+ * be struck off. A guard that silently accepts new entries would not have
+ * caught the case that motivated it.
+ */
+describe("component colour literals are a closed set", () => {
+  // A literal is allowed only where it cannot carry information: a gradient
+  // stop that fades to nothing, or a track/halo whose reading is printed as
+  // adjacent text. Ratios are measured against the surface each one sits on.
+  const ALLOWED = [
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(111,183,242,.08)",
+      why: "compass dial ground, 1.06:1 light -- a tint behind the needle, not a mark",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(255,255,255,.2)",
+      why: "compass ring; track family, 1.00:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(255,255,255,.16)",
+      why: "sun horizon rule; track family, 1.00:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(243,183,101,.5)",
+      why: "sun path arc; the track the bead travels, 1.33:1 light -- open design decision",
+    },
+    {
+      file: "src/components/AtmosphereBento.jsx",
+      value: "rgba(243,183,101,.35)",
+      why: "sun bead halo, 1.22:1 light -- ornament around a bead that clears at 6.33:1",
+    },
+    {
+      file: "src/components/HourlyCard.jsx",
+      value: "#f3b765",
+      why: "temp area gradient stops at 0.18 and 0 opacity -- decorative fill, 1.4.11 exempt",
+    },
+  ];
+
+  // SVG presentation attributes and inline style colours -- the places a
+  // literal actually paints something, as opposed to appearing in prose.
+  const ATTR = /(?:stroke|fill|stopColor|color)=["{][^"}]*?(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))/g;
+
+  const jsxFiles = collectFiles(join(REPO_ROOT, "src"), [".jsx"]);
+
+  function foundLiterals() {
+    const out = [];
+    for (const file of jsxFiles) {
+      const relPath = relative(REPO_ROOT, file).split("\\").join("/");
+      // Strip block and line comments first: several of these files quote
+      // old literals in prose explaining why they were removed, and a guard
+      // that trips on its own changelog is noise.
+      const source = readFileSync(file, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/[^\n]*/g, "");
+      for (const match of source.matchAll(ATTR)) {
+        out.push({ file: relPath, value: match[1] });
+      }
+    }
+    return out;
+  }
+
+  test("every surviving literal is one that cannot carry information", () => {
+    const found = foundLiterals();
+    const key = (x) => `${x.file} :: ${x.value}`;
+    const allowed = new Set(ALLOWED.map(key));
+
+    const unexpected = found.filter((x) => !allowed.has(key(x)));
+    assert.deepEqual(
+      unexpected.map(key),
+      [],
+      "a colour literal in a JSX paint attribute cannot answer " +
+        "prefers-color-scheme, so it renders one scheme's value in both. " +
+        "Either route it through a token, or add it to ALLOWED with the " +
+        "measured reason it carries no information"
+    );
+
+    const foundKeys = new Set(found.map(key));
+    const struckOff = [...allowed].filter((k) => !foundKeys.has(k));
+    assert.deepEqual(
+      struckOff,
+      [],
+      "these are listed as allowed but no longer exist -- strike them off " +
+        "ALLOWED so the ledger keeps matching the code"
+    );
+  });
+
+  test("marks that carry a reading stay on their tokens", () => {
+    const hourlyCss = readFileSync(
+      join(REPO_ROOT, "src/components/HourlyCard.css"),
+      "utf8"
+    );
+    const atmCss = readFileSync(
+      join(REPO_ROOT, "src/components/AtmosphereBento.css"),
+      "utf8"
+    );
+
+    const rule = (css, selector) => {
+      const match = new RegExp(
+        `${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{([^}]*)\\}`
+      ).exec(css);
+      assert.ok(match !== null, `${selector} should still have a rule`);
+      return match[1];
+    };
+
+    // The sustained-wind fill and the legend key that stands for it. These
+    // are the two that were left behind; the assertion names the token
+    // rather than merely forbidding the old one, so a third value cannot
+    // slip in either.
+    assert.match(rule(hourlyCss, ".hourly-wspd"), /background:\s*var\(--status-accent\)/);
+    assert.match(rule(hourlyCss, ".lg-bar.b-mid"), /background:\s*var\(--status-accent\)/);
+    assert.match(rule(hourlyCss, ".hourly-temp-line"), /stroke:\s*var\(--accent-warm\)/);
+    assert.match(rule(atmCss, ".atm-gust-value"), /color:\s*var\(--text\)/);
+    assert.match(rule(atmCss, ".atm-needle"), /stroke:\s*var\(--status-accent\)/);
+    assert.match(rule(atmCss, ".atm-vis-bar--filled"), /fill:\s*var\(--status-accent\)/);
+    assert.match(rule(atmCss, ".atm-sun-bead"), /fill:\s*var\(--accent-warm\)/);
+  });
+
+  test("the retired chart gradients stay retired", () => {
+    // They outlived their last consumer, which is how the wind bars kept
+    // reaching for them. All four measured 2.62-2.64:1 against --panel-well
+    // in light, and the good- pair was green, which the rain-scale decision
+    // bans outright.
+    const retired = [
+      "--chart-rain-top",
+      "--chart-rain-bottom",
+      "--chart-good-top",
+      "--chart-good-bottom",
+    ];
+    const cssFiles = collectFiles(join(REPO_ROOT, "src"), [".css"]);
+    const sources = [...cssFiles, ...jsxFiles].map((file) => ({
+      relPath: relative(REPO_ROOT, file).split("\\").join("/"),
+      text: readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\//g, ""),
+    }));
+
+    for (const token of retired) {
+      for (const { relPath, text } of sources) {
+        assert.ok(
+          !text.includes(`var(${token})`),
+          `${relPath} references ${token}, which was retired for failing ` +
+            "WCAG 1.4.11 in the light scheme"
+        );
+        assert.ok(
+          !new RegExp(`^\\s*${token}\\s*:`, "m").test(text),
+          `${relPath} redefines ${token}; it was deleted so it could not be ` +
+            "reached for again"
+        );
+      }
+    }
+  });
+});

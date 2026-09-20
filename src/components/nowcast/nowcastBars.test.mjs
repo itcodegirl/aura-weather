@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildNowcastBarGeometry } from "./nowcastBars.js";
+import { buildNowcastBarGeometry, NC_SVG_H } from "./nowcastBars.js";
 
 /*
  * The strip's trust contract. A 15-minute slot the provider did not report
@@ -171,5 +171,66 @@ describe("the strip draws with roles, not literals", () => {
         `"${value}" is neither a role token nor none`
       );
     }
+  });
+});
+
+/*
+ * The strip's vertical scale.
+ *
+ * The svg fills .nowcast-chart-box and carries preserveAspectRatio="none",
+ * so that box's height is the only thing setting how tall a reading draws.
+ * Nothing tied the two together: the box said 84px against a 150-unit
+ * viewBox, which is a 0.56 vertical scale, and the result was a strip that
+ * could not show its own data. The whole 0-100% domain rendered into 59px,
+ * so a 12-point spread between two quarter-hours came out 7px apart, and
+ * the `Math.max(..., 1.5)` floor below -- a pixel floor, which is the only
+ * reading under which 1.5 makes sense -- landed at 0.84px, under a device
+ * pixel.
+ *
+ * Pinning the box to NC_SVG_H makes the scale 1:1, so the numbers in this
+ * module are the numbers on screen. That is also what lets the card publish
+ * thresholdY to CSS as plain pixels for the "Rain likely" label, so this
+ * guard is load-bearing for the label's position too.
+ *
+ * Horizontal scale is deliberately left alone: x is time and y is percent,
+ * so a shared scale would not mean anything, and every stroke in the chart
+ * already sets vector-effect="non-scaling-stroke".
+ */
+describe("the strip's vertical scale is 1:1 with the viewBox", () => {
+  const css = readFileSync(
+    new URL("../NowcastCard.css", import.meta.url),
+    "utf8"
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  test(".nowcast-chart-box is exactly as tall as the viewBox", () => {
+    const rule = /\.nowcast-chart-box\s*\{([^}]*)\}/.exec(css);
+    assert.ok(rule !== null, ".nowcast-chart-box should have a rule");
+    const height = /height:\s*([\d.]+)px/.exec(rule[1]);
+    assert.ok(height !== null, ".nowcast-chart-box should set a px height");
+    assert.equal(
+      Number(height[1]),
+      NC_SVG_H,
+      `the box is ${height[1]}px against a ${NC_SVG_H}-unit viewBox, a ` +
+        `${(Number(height[1]) / NC_SVG_H).toFixed(2)} vertical scale; a ` +
+        "reading no longer draws at the height this module computes"
+    );
+  });
+
+  test("a 12-point spread is drawn at least 12px apart", () => {
+    const geo = buildNowcastBarGeometry([40, 52]);
+    const [low, high] = geo.bars;
+    // 1:1, so user units are px and this is a claim about the screen.
+    assert.ok(
+      low.y - high.y >= 12,
+      `12 points of probability drew ${(low.y - high.y).toFixed(1)}px apart`
+    );
+  });
+
+  test("the minimum bar height survives as a real pixel", () => {
+    const [bar] = buildNowcastBarGeometry([0.4]).bars;
+    assert.ok(
+      bar.height >= 1.5,
+      `a trace reading drew ${bar.height.toFixed(2)}px tall`
+    );
   });
 });

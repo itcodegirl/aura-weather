@@ -316,9 +316,27 @@
   font-weight: 500;
 }
 
+/* The box's height alone sets the chart's vertical scale, because the svg
+   fills it and carries preserveAspectRatio="none". Pinning it to the
+   viewBox's own height makes that scale exactly 1:1, so a viewBox unit is a
+   CSS pixel and the geometry module's numbers mean on screen what they say
+   in source.
+
+   At the previous 84px the scale was 0.56 and the strip could not show its
+   own data: the full 0-100% domain got 59px, so a 12-point spread in real
+   readings rendered as 7px, and the module's `Math.max(..., 1.5)` minimum
+   bar height -- authored as a pixel floor, which is the only reading under
+   which 1.5 makes sense -- composited to 0.84px, under one device pixel.
+
+   X still stretches with the card (0.27 at a 320px viewport, 1.41 at
+   1600px). That non-uniformity is deliberate and is now one-sided, which is
+   the point: the axes carry different units -- x is time, y is percent -- so
+   there is nothing for a shared scale to mean. Every stroke in the chart
+   already sets vector-effect="non-scaling-stroke", so x moves the bars'
+   width and nothing else, and a stretched rectangle is still a rectangle. */
 .nowcast-chart-box {
   position: relative;
-  height: 84px;
+  height: 150px; /* = NC_SVG_H. Guarded in nowcastBars.test.mjs. */
 }
 
 .nowcast-svg {

@@ -79,10 +79,17 @@
     box-shadow var(--motion-subtle) var(--ease-standard);
 }
 
+/*
+ * Five columns for five children: day, icon, temps, precip, details. The
+ * sixth was the week-range bar -- dropping the element without dropping its
+ * track would have shifted precip and details left by one and left an empty
+ * column at the end. The flexible minmax(0, 1fr) moves onto precip, which
+ * is justify-self: end, so it still sits hard right.
+ */
 .forecast-row-trigger {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(88px, 116px) 38px minmax(164px, 186px) minmax(0, 1fr) minmax(72px, 86px) auto;
+  grid-template-columns: minmax(88px, 116px) 38px minmax(164px, 186px) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   color: inherit;
@@ -320,35 +327,6 @@
   transform: rotate(180deg);
 }
 
-.forecast-range {
-  position: relative;
-  height: 9px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: rgba(177, 200, 241, 0.25);
-  border: 1px solid rgba(188, 211, 248, 0.22);
-  box-shadow: none;
-}
-
-.forecast-range-bar {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: inherit;
-  transition:
-    left var(--motion-medium) var(--ease-standard),
-    width var(--motion-medium) var(--ease-standard);
-}
-
-.forecast-range--missing::after {
-  content: "";
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 50%;
-  border-top: 1px dashed rgba(220, 233, 255, 0.45);
-  transform: translateY(-50%);
-}
-
 .forecast-detail-panel {
   margin-top: 12px;
   padding-top: 12px;
@@ -412,7 +390,7 @@
 /* Shared responsive tiers: 1200, 980, 860, 760, 640, 560, 420. */
 @media (max-width: 980px) {
   .forecast-row-trigger {
-    grid-template-columns: minmax(82px, 1fr) 36px minmax(152px, 178px) minmax(0, 1fr) minmax(66px, 82px) auto;
+    grid-template-columns: minmax(82px, 1fr) 36px minmax(152px, 178px) minmax(0, 1fr) auto;
     gap: 10px;
   }
 
@@ -439,7 +417,7 @@
     grid-template-columns: minmax(76px, 1fr) 34px 1fr auto;
     grid-template-areas:
       "day icon temps precip"
-      "range range details details";
+      "details details details details";
     gap: 10px;
   }
 
@@ -456,11 +434,6 @@
 
   .forecast-temps {
     grid-area: temps;
-  }
-
-  .forecast-range {
-    grid-area: range;
-    align-self: center;
   }
 
   .forecast-precip {
@@ -585,7 +558,6 @@
     grid-template-areas:
       "day icon precip"
       "temps temps temps"
-      "range range range"
       "details details details";
     gap: 7px;
   }

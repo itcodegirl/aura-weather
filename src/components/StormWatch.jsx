@@ -11,6 +11,7 @@ import { memo, useId, useMemo } from "react";
 import { Zap, Clock } from "lucide-react";
 import {
   classifyStormRisk,
+  findConvectiveAlert,
   calculatePressureTrend,
   classifyComfort,
   classifyWind,
@@ -158,6 +159,18 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
     () => classifyStormRisk(hasCape ? cape : 0, conditionCode),
     [hasCape, cape, conditionCode]
   );
+  /*
+   * A government warning outranks a model's energy estimate. CAPE and the
+   * weather code are Open-Meteo's opinion of the air mass; an NWS product is
+   * a forecaster's. When they disagree the card must not print the model's
+   * side as fact -- it said "All clear / No thunderstorm signal in the air
+   * mass" during a real thunderstorm, directly under a Flood Watch rendered
+   * on the same page.
+   */
+  const convectiveAlert = useMemo(
+    () => findConvectiveAlert(weather?.alerts),
+    [weather?.alerts]
+  );
   const active = hasCape && risk.score > 0;
   const stormTone = STORM_RISK_SEVERITY_TONE[risk.score] ?? "minimal";
 
@@ -174,7 +187,9 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
     ? "Reading unavailable"
     : active
       ? risk.level
-      : "All clear";
+      : convectiveAlert
+        ? convectiveAlert.event
+        : "All clear";
   /*
    * The headline tone is the same vocabulary the badge beside it already
    * speaks, so the two can never disagree about the same reading. It used
@@ -188,13 +203,33 @@ function StormWatch({ weather, unit, style, isRefreshing = false }) {
    * risk rose. The --severity-*-fg rungs are the palette's text
    * foregrounds; every state now lands at 8.29:1 or better.
    */
-  const headlineTone = !hasCape ? "unavailable" : stormTone;
+  const headlineTone = !hasCape
+    ? "unavailable"
+    : !active && convectiveAlert
+      ? // NWS's own severity, already normalised to this card's vocabulary
+        // by getAlertPriority. The card relays a rank rather than inventing
+        // one for someone else's warning.
+        (convectiveAlert.priority ?? "moderate")
+      : stormTone;
+  /*
+   * The model gets named. "No thunderstorm signal in the air mass" is a
+   * claim about the sky, and Aura cannot see the sky -- it can see what one
+   * forecast model returned. Saying so is the difference between being wrong
+   * and being dishonest when the model misses a storm that is audibly
+   * overhead.
+   */
   const summary = !hasCape
     ? "Live storm energy reading unavailable"
     : active
       ? `${risk.level} storm risk from live storm energy`
-      : "No thunderstorm signal in the air mass";
-  const eyebrow = !hasCape ? "Storm watch" : "All clear";
+      : convectiveAlert
+        ? `NWS has a ${convectiveAlert.event} out for this area — see Severe alerts`
+        : "The forecast model shows no thunderstorm signal in this air mass";
+  const eyebrow = !hasCape
+    ? "Storm watch"
+    : !active && convectiveAlert
+      ? "Alert in effect"
+      : "All clear";
 
   return (
     <section

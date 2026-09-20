@@ -228,3 +228,78 @@ describe("ArcGauge's call sites pass only props it declares", () => {
     );
   });
 });
+
+/*
+ * The header above says a tone with no rule leaves the fill at SVG's default
+ * `stroke: none`. It happened, to two gauges, and went unnoticed for as long
+ * as it did because the keyed rules were all anyone checked: humidity and
+ * pressure pass no scale at all, so no keyed rule could ever match them and
+ * the test above had nothing to catch. The arcs drew an empty grey track,
+ * which reads as a low reading rather than a broken one.
+ *
+ * So the guard is the unkeyed case, not just the keyed ones.
+ */
+describe("no arc can silently render with stroke: none", () => {
+  const BENTO = readFileSync(
+    `${REPO_ROOT}/src/components/AtmosphereBento.jsx`,
+    "utf8"
+  );
+
+  // The bare `.atm-arc-fill { ... }` rule, not one of the keyed variants.
+  function baseStroke(css) {
+    const match = /(?:^|\n)\.atm-arc-fill\s*\{([^}]*)\}/.exec(css);
+    if (!match) return null;
+    const stroke = /(?:^|;)\s*stroke:\s*([^;}]+)/.exec(match[1]);
+    return stroke ? stroke[1].trim() : null;
+  }
+
+  test("the detector distinguishes the base rule from a keyed one", () => {
+    // Positive control: a file with only keyed rules must read as no base.
+    assert.equal(
+      baseStroke('.atm-arc-fill[data-scale="uv"][data-tone="low"] { stroke: red; }'),
+      null
+    );
+    assert.equal(baseStroke(".atm-arc-fill {\n  stroke: blue;\n}"), "blue");
+  });
+
+  test("an arc that matches no keyed rule still strokes", () => {
+    const base = baseStroke(BENTO_CSS);
+    assert.ok(
+      base,
+      "`.atm-arc-fill` has no unkeyed stroke, so any gauge passing no " +
+        "data-scale draws nothing — which is how humidity and pressure " +
+        "went blank."
+    );
+    assert.notEqual(base, "none");
+  });
+
+  test("every humidity band the tile can produce has a stroke rule", () => {
+    const table = /const HUMIDITY_BANDS = \[([\s\S]*?)\];/.exec(BENTO);
+    assert.ok(table, "HUMIDITY_BANDS moved — update this pattern");
+    const tones = [...table[1].matchAll(/tone:\s*"([a-z-]+)"/g)].map((m) => m[1]);
+    assert.ok(tones.length >= 3, `expected the real table, saw ${tones.length} bands`);
+    for (const tone of tones) {
+      assert.ok(
+        strokes.has(`humidity:${tone}`),
+        `humidity band "${tone}" has no CSS rule`
+      );
+    }
+  });
+
+  test("the humidity ladder rides the --risk-* ramp, like AQI", () => {
+    assert.deepEqual(
+      [
+        strokes.get("humidity:low"),
+        strokes.get("humidity:moderate"),
+        strokes.get("humidity:high"),
+      ],
+      ["var(--risk-low)", "var(--risk-elevated)", "var(--risk-high)"]
+    );
+    const distinct = new Set(
+      ["low", "moderate", "high"].map((tone) =>
+        resolve(strokes.get(`humidity:${tone}`), ramp)
+      )
+    );
+    assert.equal(distinct.size, 3, "three distinct humidity band colours");
+  });
+});

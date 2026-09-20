@@ -18,10 +18,6 @@ import { CardHeader } from "./ui";
 import WeatherIcon from "./WeatherIcon";
 import "./ForecastCard.css";
 
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
 /*
  * Converts a missing reading to NaN so this file's Number.isFinite guards
  * read naturally, and nothing else.
@@ -171,13 +167,6 @@ function buildForecastDays(weatherDaily, timeZone, todayIsoOverride) {
   return (upcomingDays.length > 0 ? upcomingDays : validDays).slice(0, 7);
 }
 
-function getForecastRangeGradient(weekMin, weekMax) {
-  const rangeGradientStart = weekMin <= 40 ? "#60a5fa" : "#f59e0b";
-  const rangeGradientEnd =
-    weekMax >= 95 ? "#ef4444" : weekMax >= 82 ? "#f97316" : "#fbbf24";
-  return `linear-gradient(to right, ${rangeGradientStart}, ${rangeGradientEnd})`;
-}
-
 function formatUvIndex(value) {
   if (!Number.isFinite(value)) {
     return MISSING_VALUE_PLACEHOLDER;
@@ -250,7 +239,6 @@ function DayRow({
   unit,
   timeZone,
   todayIso,
-  rangeGradient,
   isExpanded,
   onToggle,
   isToday,
@@ -271,16 +259,6 @@ function DayRow({
       ? "rain chance unavailable"
       : "low rain chance";
   const daySignal = getDaySignal(day, weekMin, weekMax);
-  const hasTemperatureRange =
-    Number.isFinite(day.temperatureMin) && Number.isFinite(day.temperatureMax);
-
-  const weekRange = weekMax - weekMin || 1;
-  const startPct = Number.isFinite(day.temperatureMin)
-    ? clamp(((day.temperatureMin - weekMin) / weekRange) * 100, 0, 100)
-    : 0;
-  const endPct = Number.isFinite(day.temperatureMax)
-    ? clamp(((day.temperatureMax - weekMin) / weekRange) * 100, 0, 100)
-    : 0;
   const detailPanelId = `forecast-detail-${day.date}`;
   const windSummary = formatWindSummary(day, unit);
   const sunriseLabel = formatSunClock(day.sunrise);
@@ -360,22 +338,6 @@ function DayRow({
               {low.text}
             </span>
           </div>
-        </div>
-
-        <div
-          className={`forecast-range ${hasTemperatureRange ? "" : "forecast-range--missing"}`.trim()}
-          aria-hidden="true"
-        >
-          {hasTemperatureRange ? (
-            <div
-              className="forecast-range-bar"
-              style={{
-                left: `${startPct}%`,
-                width: `${Math.max(endPct - startPct, 3)}%`,
-                background: rangeGradient,
-              }}
-            />
-          ) : null}
         </div>
 
         <div className="forecast-precip">
@@ -556,10 +518,6 @@ function ForecastCard({
       weekMax: nextWeekMax,
     };
   }, [days]);
-  const rangeGradient = useMemo(
-    () => getForecastRangeGradient(weekMin, weekMax),
-    [weekMin, weekMax]
-  );
   const weekSummary = useMemo(
     () => buildWeekSummary(days, weekMin, weekMax, unit, timeZone, todayIso),
     [days, weekMin, weekMax, unit, timeZone, todayIso]
@@ -633,7 +591,6 @@ function ForecastCard({
             unit={unit}
             timeZone={timeZone}
             todayIso={todayIso}
-            rangeGradient={rangeGradient}
             isExpanded={expandedDate === day.date}
             onToggle={handleToggleDay}
             isToday={day.date === todayIso || (!hasTodayEntry && index === 0)}
@@ -652,7 +609,6 @@ const MemoizedDayRow = memo(
     prevProps.todayIso === nextProps.todayIso &&
     prevProps.weekMin === nextProps.weekMin &&
     prevProps.weekMax === nextProps.weekMax &&
-    prevProps.rangeGradient === nextProps.rangeGradient &&
     prevProps.isExpanded === nextProps.isExpanded &&
     prevProps.onToggle === nextProps.onToggle &&
     prevProps.day.date === nextProps.day.date &&

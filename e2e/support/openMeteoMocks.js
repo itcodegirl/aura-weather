@@ -115,8 +115,15 @@ function buildWeatherPayload(latitude, longitude, base) {
   });
 
   const nowcastSize = 12;
+  // Open-Meteo's minutely_15 grid is aligned to the quarter hour -- :00, :15,
+  // :30, :45 -- never to whatever minute it happens to be. Building the mock
+  // off a raw `now` produced timestamps the provider never emits, which meant
+  // no point in the window ever fell on the hour and the strip could not show
+  // an hour anchor at all.
+  const nowcastStart = new Date(now.getTime());
+  nowcastStart.setUTCMinutes(Math.floor(nowcastStart.getUTCMinutes() / 15) * 15, 0, 0);
   const nowcastTime = Array.from({ length: nowcastSize }, (_, index) =>
-    toIsoMinute(toDateAtOffset(now, index * 15))
+    toIsoMinute(toDateAtOffset(nowcastStart, index * 15))
   );
   const nowcastRainChance = [8, 14, 18, 26, 34, 48, 62, 52, 44, 28, 18, 10];
   const nowcastRainAmount = [0, 0, 0, 0.01, 0.03, 0.08, 0.13, 0.1, 0.06, 0.02, 0, 0];

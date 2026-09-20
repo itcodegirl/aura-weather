@@ -156,9 +156,12 @@
   text-transform: uppercase;
 }
 
+/* Accent, not green. A high chance of rain is not a good outcome, and
+   green says "good" everywhere else in this direction. The reading is
+   the reading; the 50% rule is what calls it likely. */
 .nowcast-chip-value {
   font-family: var(--font-mono);
-  color: var(--green-good-light);
+  color: var(--status-accent);
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0;
@@ -309,7 +312,7 @@
 
 .nowcast-chart-peak {
   font-size: 11.5px;
-  color: var(--green-good-light);
+  color: var(--status-accent);
   font-weight: 500;
 }
 
@@ -325,6 +328,15 @@
   height: 100%;
   display: block;
   overflow: visible;
+}
+
+/* The strip's provenance line. Prose, so Inter, and dim: it qualifies the
+   chart rather than competing with it. */
+.nowcast-chart-note {
+  margin: 6px 0 0;
+  color: var(--text-dim);
+  font-size: var(--fs-caption);
+  line-height: 1.45;
 }
 
 .nowcast-chart-thresh-label {

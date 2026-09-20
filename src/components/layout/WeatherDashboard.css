@@ -282,7 +282,18 @@
      below shifts with it that cost more layout shift than the deferral
      could ever save: measured 0.1987 -> 0.0677 on mobile with it removed. */
   .bento-storm      { content-visibility: auto; contain-intrinsic-block-size: 382px; }
-  .bento-source-health { content-visibility: auto; contain-intrinsic-block-size: 489px; }
+  /* 220px is deliberate and deliberately imperfect. This panel's height is
+     bimodal across the band this query covers -- measured content box 506px
+     at 320px wide, 489px at 360-390px, then 242px from 480px to 640px -- so
+     no single value fits, and 220px is the closest of any to the wide half.
+     It does not much matter either way: the panel is gated on
+     hasOpenedSourceHealth and only mounts once the user opens its
+     <details>, and a shift within 500ms of an interaction is excluded from
+     CLS by definition, so this hint costs nothing measurable whatever it
+     says. Raised to 489px in an earlier pass on a single 390px reading;
+     that made the 480-640px half worse by 247px, a bigger error than the
+     one it fixed. Measure both halves before touching it again. */
+  .bento-source-health { content-visibility: auto; contain-intrinsic-block-size: 220px; }
   /* .bento-health is not listed: no element carries that class. HealthCard
      renders <section className="card health-card">, and "bento-health" is
      only ever passed to PanelErrorBoundary, which applies it in its error

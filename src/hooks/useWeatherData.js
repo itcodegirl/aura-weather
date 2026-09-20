@@ -44,6 +44,31 @@ const DEFAULT_TRUST_META = {
 // Two days is the ceiling: beyond that a forecast is misinformation.
 const DEGRADED_SNAPSHOT_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
+/*
+ * How long a cold start may show nothing before a saved forecast is
+ * hydrated behind the loading state.
+ *
+ * The two restore paths either side of this one both need the network to
+ * have already declared itself: the pre-fetch restore below is gated on
+ * isBrowserOffline(), and readDegradedSnapshot() runs only from the catch,
+ * which cannot fire until fetchJsonWithRetry burns its whole
+ * TOTAL_TIMEOUT_MS budget. A network that stalls rather than failing --
+ * captive portal, dead Wi-Fi association, carrier dead zone -- satisfies
+ * neither, and ../utils/network.js says why in its own comment:
+ * navigator.onLine "says nothing about reachability". Measured, that left
+ * a valid saved forecast sitting in localStorage while the screen showed
+ * an unlabelled skeleton for 15.2s.
+ *
+ * 2s sits past the fetch layer's own retry backoff (250ms + 700ms), so a
+ * retry that was going to succeed quickly already has, and well short of
+ * the 10s per-attempt timeout -- a healthy cold start resolves long before
+ * this fires, and the success path and `finally` both clear it. When it
+ * does fire, `loading` stays true: the scene becomes isBackgroundLoading,
+ * so the saved reading renders under its own Saved labels beside the
+ * updating status, never as an unlabelled current one.
+ */
+const CACHE_HYDRATE_AFTER_MS = 2000;
+
 // Forecast data is always fetched in Fahrenheit / inch units and converted
 // client-side. Switching units in the UI must not trigger a refetch.
 const WEATHER_SOURCE_UNIT = "F";
@@ -196,6 +221,9 @@ export function useWeatherData(location, options = {}) {
   // (different city → clear, so users never see Tokyo's name above
   // Chicago's numbers) or keep it visible during a same-city refresh.
   const lastFetchedCoordsRef = useRef(null);
+  // Pending hydrate of a saved forecast for a cold start whose network has
+  // gone quiet rather than failed. See CACHE_HYDRATE_AFTER_MS.
+  const cacheHydrateTimerRef = useRef(null);
 
   const {
     climateComparison,
@@ -213,7 +241,19 @@ export function useWeatherData(location, options = {}) {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (cacheHydrateTimerRef.current !== null) {
+        clearTimeout(cacheHydrateTimerRef.current);
+        cacheHydrateTimerRef.current = null;
+      }
     };
+  }, []);
+
+  const clearCacheHydrateTimer = useCallback(() => {
+    if (cacheHydrateTimerRef.current === null) {
+      return;
+    }
+    clearTimeout(cacheHydrateTimerRef.current);
+    cacheHydrateTimerRef.current = null;
   }, []);
 
   const abortInFlightRequest = useCallback(() => {
@@ -335,6 +375,7 @@ export function useWeatherData(location, options = {}) {
       // check inside the setWeather updater.
       requestIdRef.current += 1;
       abortInFlightRequest();
+      clearCacheHydrateTimer();
       resetClimateComparison();
       lastFetchedCoordsRef.current = null;
       setWeather(null);
@@ -369,6 +410,7 @@ export function useWeatherData(location, options = {}) {
       });
 
     abortInFlightRequest();
+    clearCacheHydrateTimer();
     resetClimateComparison();
 
     if (isBrowserOffline()) {
@@ -406,6 +448,25 @@ export function useWeatherData(location, options = {}) {
     if (!isSameLocation) {
       setWeather(null);
       setTrustMeta(DEFAULT_TRUST_META);
+
+      // Nothing is on screen now, so this is the window the stalled-network
+      // case leaves empty. Arm the saved forecast behind the loader rather
+      // than waiting for the request to declare failure -- see
+      // CACHE_HYDRATE_AFTER_MS. Deliberately the strict <=12h snapshot, not
+      // readDegradedSnapshot(): a two-day-old forecast is worth showing once
+      // the network has actually failed, but not while it may still answer.
+      // lastFetchedCoordsRef is left alone on purpose -- it tracks real
+      // responses, and a hydrate is not one.
+      if (cachedSnapshot) {
+        cacheHydrateTimerRef.current = setTimeout(() => {
+          cacheHydrateTimerRef.current = null;
+          if (requestId !== requestIdRef.current || !isMountedRef.current) {
+            return;
+          }
+          setWeather(revalidateRestoredAlerts(cachedSnapshot.weather));
+          setTrustMeta(buildCachedTrustMeta(cachedSnapshot));
+        }, CACHE_HYDRATE_AFTER_MS);
+      }
     }
 
     setLoading(true);
@@ -492,6 +553,9 @@ export function useWeatherData(location, options = {}) {
         }
       }
     } finally {
+      if (requestId === requestIdRef.current) {
+        clearCacheHydrateTimer();
+      }
       if (requestId === requestIdRef.current && isMountedRef.current) {
         setLoading(false);
       }
@@ -502,6 +566,7 @@ export function useWeatherData(location, options = {}) {
   }, [
     abortInFlightRequest,
     applySupplementalData,
+    clearCacheHydrateTimer,
     enabled,
     locationLat,
     locationLon,

@@ -48,11 +48,30 @@ describe("missingData mock", () => {
       null,
       "a fetch that never happened has no time at which it returned"
     );
-    // The forecast is genuinely synthesised and shown, so its own stamp
-    // stays — this must not become "null everything".
-    assert.ok(
+    /*
+     * This assertion used to be its inverse, guarding a deliberate earlier
+     * decision: "The forecast is genuinely synthesised and shown, so its
+     * own stamp stays -- this must not become 'null everything'."
+     *
+     * That reading is reversed here, and the reason is evidence the earlier
+     * decision did not have. weatherFetchedAt is not read as "when was this
+     * model built"; GlobalUpdateIndicator reads a present, non-cached stamp
+     * as LIVE (GlobalUpdateIndicator.jsx:91-97). So reloading ?mock=missing
+     * with the browser offline rendered "Updated just now / LIVE" over data
+     * no provider had ever supplied -- measured at 3s, 8s, 15s and 25s
+     * after the reload, with no offline/cached/stale wording anywhere in
+     * the DOM. That is a fabricated freshness claim on the one route whose
+     * entire purpose is demonstrating that this app does not fabricate.
+     *
+     * The earlier concern still holds and is still guarded: this is NOT
+     * "null everything". The demo's synthesised forecast is still built and
+     * still rendered, and the tests above still assert its shape. Only the
+     * provider-freshness stamp goes, because no provider was read.
+     */
+    assert.equal(
       trustMeta.weatherFetchedAt,
-      "the demo does render a forecast, so its stamp is real"
+      null,
+      "no provider was queried on this route, so nothing may date it as live"
     );
   });
 
@@ -76,12 +95,44 @@ describe("missingData mock", () => {
   });
 
   test("buildMissingDashboardState provides a usable demo wrapper", () => {
-    const state = buildMissingDashboardState({ now: 1_700_000_000_000 });
+    const state = buildMissingDashboardState();
     assert.equal(state.weather.aqi, null);
     assert.equal(state.location.name, "Sample City");
     assert.match(state.locationNotice, /Portfolio demo/);
     assert.equal(state.showGlobalLoading, false);
-    assert.equal(state.trustMeta.weatherFetchedAt, 1_700_000_000_000);
     assert.equal(state.trustMeta.climateStatus, "unavailable");
+  });
+
+  /*
+   * The demo route queries no provider -- its own notice says so. It used
+   * to stamp trustMeta.weatherFetchedAt with Date.now() anyway, which is
+   * the fabricated-freshness case this app exists to avoid: a present
+   * fetched-at is what GlobalUpdateIndicator reads as "live", so
+   * reloading ?mock=missing with the browser offline rendered
+   * "Updated just now / LIVE" over data that had never been fetched --
+   * measured at 3s, 8s, 15s and 25s after the reload, with no offline,
+   * cached or stale wording anywhere in the DOM.
+   *
+   * The route is the one e2e/pwa-offline.spec.js reloads offline and the
+   * one README publishes as the demo, so it is the surface most likely to
+   * be seen making the claim.
+   */
+  test("the demo dates no read, because it makes none", () => {
+    const { trustMeta } = buildMissingDashboardState();
+    for (const key of [
+      "weatherFetchedAt",
+      "aqiFetchedAt",
+      "climateFetchedAt",
+      "alertsFetchedAt",
+      "cacheCapturedAt",
+      "cacheRestoredAt",
+    ]) {
+      assert.equal(
+        trustMeta[key],
+        null,
+        `${key} should be null: no request was made on this route, so there ` +
+          "is no time at which one returned"
+      );
+    }
   });
 });

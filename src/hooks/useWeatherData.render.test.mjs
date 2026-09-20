@@ -268,6 +268,83 @@ describe("useWeatherData degraded snapshot restore", () => {
   });
 });
 
+/*
+ * A stalling network is not a failing one, and the difference was worth
+ * 15.2 seconds of blank screen.
+ *
+ * Both of the hook's other restore paths need the network to have already
+ * declared itself: the pre-fetch restore is gated on isBrowserOffline(),
+ * and readDegradedSnapshot() runs only from the catch, which cannot fire
+ * until the fetch layer burns its whole TOTAL_TIMEOUT_MS budget. A captive
+ * portal or a dead Wi-Fi association satisfies neither -- navigator.onLine
+ * stays true and the request neither resolves nor rejects -- so a valid
+ * saved forecast sat in localStorage while the screen showed an
+ * unlabelled skeleton for the full 15s.
+ *
+ * The suite could not see this, which is why it shipped: the degraded test
+ * above rejects immediately, so it exercises the catch and never the stall.
+ * This one uses a fetch that never settles, which is the actual failure.
+ */
+describe("useWeatherData stalled-network hydrate", () => {
+  test("shows the saved forecast, labelled, without waiting for the timeout", async () => {
+    window.localStorage.clear();
+
+    // Inside the 12h fresh window on purpose: the hydrate deliberately uses
+    // the strict snapshot, not the 48h degraded one. A two-day-old forecast
+    // is worth showing once the network has actually failed, but not while
+    // it may still answer.
+    const capturedAt = Date.now() - 30 * 60 * 1000;
+    writeCachedWeatherSnapshot({
+      coordinates: {
+        latitude: PROBE_LOCATION.lat,
+        longitude: PROBE_LOCATION.lon,
+      },
+      weather: { meta: { latitude: PROBE_LOCATION.lat }, alerts: [], aqi: 17 },
+      trustMeta: {
+        weatherFetchedAt: capturedAt,
+        forecastStatus: "ready",
+        cacheStatus: "idle",
+      },
+      cachedAt: capturedAt,
+    });
+
+    // Never resolves, never rejects -- the stall itself.
+    globalThis.fetch = () => new Promise(() => {});
+
+    let latest = null;
+    await act(async () => {
+      render(
+        React.createElement(WeatherDataProbe, {
+          location: PROBE_LOCATION,
+          onState: (api) => {
+            latest = api;
+          },
+        })
+      );
+    });
+
+    // Well inside the 15s the request would otherwise hold the screen for,
+    // and comfortably past CACHE_HYDRATE_AFTER_MS.
+    await waitFor(
+      () => {
+        assert.ok(latest?.weather, "the saved forecast should be on screen");
+        assert.equal(
+          latest.trustMeta.cacheStatus,
+          "restored",
+          "it must be labelled saved, never presented as a current reading"
+        );
+      },
+      { timeout: 8000 }
+    );
+
+    assert.equal(latest.trustMeta.cacheCapturedAt, capturedAt);
+    assert.equal(latest.trustMeta.forecastStatus, "cached");
+    // Still fetching, so the scene stays isBackgroundLoading and the saved
+    // labels render beside the updating status rather than replacing it.
+    assert.equal(latest.loading, true, "the request is still in flight");
+  });
+});
+
 describe("useWeatherData auto-refresh listener stability", () => {
   test("does not re-register online/visibilitychange listeners on location change", async () => {
     installImmediateFetch();

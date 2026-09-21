@@ -254,6 +254,43 @@
   --active-pill-color: var(--ink);
   --active-pill-shadow: none;
 
+  /*
+   * Weather-condition icon colours. WeatherIcon carried these as 29
+   * hard-coded hex literals in JSX -- the largest remaining block of
+   * load-bearing colour outside CSS, and unreachable from a scheme
+   * override, so the same 29 values rendered in light as in dark.
+   *
+   * The values below are the literals unchanged: this is the move into
+   * CSS, not a repalette. Nothing renders differently today.
+   *
+   * DELIBERATELY NO LIGHT OVERRIDE YET. Darkening each value in-hue to
+   * the 3:1 non-text floor against the light card was measured and
+   * collapses the palette: #e0f2fe, #bae6fd and #0ea5e9 all land within
+   * a few points of the same blue, so snow, heavier snow and freezing
+   * rain stop being distinguishable, and the near-white #f8fafc becomes
+   * a mid blue-grey it never was. Picking the light values is a design
+   * decision, not a derivation, and it is open. Until it is taken these
+   * tokens resolve to the dark values in both schemes -- exactly what
+   * shipped before -- so this block is a refactor that makes the
+   * decision a one-place edit instead of 29.
+   */
+  --wx-clear: #fbbf24;
+  --wx-cloud-light: #f8fafc;
+  --wx-cloud: #cbd5e1;
+  --wx-precip-light: #7dd3fc;
+  --wx-precip: #60a5fa;
+  --wx-precip-heavy: #3b82f6;
+  --wx-precip-extreme: #2563eb;
+  --wx-freezing-light: #38bdf8;
+  --wx-freezing: #0ea5e9;
+  --wx-snow-light: #e0f2fe;
+  --wx-snow: #bae6fd;
+  --wx-snow-grains: #dbeafe;
+  --wx-storm: #a78bfa;
+  --wx-storm-hail: #8b5cf6;
+  --wx-tornado: #6d28d9;
+  --wx-unknown: #94a3b8;
+
   /* Micro-interactions */
   --lift-1: -1px;
   --lift-2: -2px;

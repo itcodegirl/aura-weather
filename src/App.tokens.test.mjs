@@ -875,24 +875,6 @@ describe("component colour literals are a closed set", () => {
     { file: "src/components/radar/RadarMap.jsx", value: "#6fb7f2", count: 3, why: "location halo/dot over the map basemap" },
     { file: "src/components/radar/RadarMap.jsx", value: "#f8fafc", count: 1, why: "location dot ring over the map basemap" },
     { file: "src/components/radar/RadarMap.jsx", value: "#f2a33c", count: 2, why: "alert boundary over the map basemap" },
-    // WeatherIcon's condition palette: 29 frozen dark-scheme values, 13 of
-    // 16 distinct hues under 3:1 against --bg-well in light, four of them
-    // effectively invisible (1.00-1.22:1). Listed rather than fixed because
-    // the two ways out -- author 29 light values, or drop the inline style
-    // so the glyph inherits a themed ink and the hue coding goes with it --
-    // are materially different products. This is an OPEN defect, parked
-    // here so it stays visible; it is not an exemption on the merits.
-    ...Object.entries({
-      "#0ea5e9": 1, "#2563eb": 2, "#38bdf8": 1, "#3b82f6": 4,
-      "#60a5fa": 4, "#6d28d9": 1, "#7dd3fc": 4, "#8b5cf6": 1,
-      "#94a3b8": 1, "#a78bfa": 1, "#bae6fd": 1, "#cbd5e1": 3,
-      "#dbeafe": 1, "#e0f2fe": 1, "#f8fafc": 1, "#fbbf24": 2,
-    }).map(([value, count]) => ({
-      file: "src/components/WeatherIcon.jsx",
-      value,
-      count,
-      why: "dark-only condition palette -- open design decision, see PR #257",
-    })),
   ];
 
   // Any colour literal at all, anywhere in a .jsx file, after comments are
@@ -1004,6 +986,51 @@ describe("component colour literals are a closed set", () => {
     assertEvery(atmCss, ".atm-compass-cardinal", /fill:\s*var\(--text-muted\)/);
     assertEvery(atmCss, ".atm-vis-bar--filled", /fill:\s*var\(--status-accent\)/);
     assertEvery(atmCss, ".atm-sun-bead", /fill:\s*var\(--accent-warm\)/);
+    // The 50% rule and the legend swatch that stands for it. Both were
+    // white-alpha, which measured 1.03:1 and 1.04:1 in light -- a
+    // reference line and its key, invisible in the scheme.
+    assertEvery(hourlyCss, ".hourly-thresh", /border-top:[^;]*var\(--wire-structural\)/);
+    assertEvery(hourlyCss, ".lg-dash", /border-top:[^;]*var\(--wire-structural\)/);
+  });
+
+  test("every weather-condition colour is a token, defined once", () => {
+    // WeatherIcon's palette is keyed by weather code inside a JSX object,
+    // which is why the literal ledger above had to key on the value rather
+    // than the syntax. Now that it is tokenised the ledger carries no
+    // WeatherIcon row at all, so this is the guard that the values did not
+    // simply move somewhere else unthemed.
+    const iconSource = readFileSync(
+      join(REPO_ROOT, "src/components/WeatherIcon.jsx"),
+      "utf8"
+    );
+    const used = [...iconSource.matchAll(/var\((--wx-[a-z-]+)\)/g)].map(
+      (m) => m[1]
+    );
+    const codeCount = (
+      iconSource
+        .slice(
+          iconSource.indexOf("const iconMap = {"),
+          iconSource.indexOf("const iconColors = {")
+        )
+        .match(/^\s*\d+:/gm) ?? []
+    ).length;
+    assert.equal(
+      used.length,
+      codeCount + 1,
+      "one token per weather code, plus the unknown fallback"
+    );
+
+    const appCss = readFileSync(join(REPO_ROOT, "src/App.css"), "utf8");
+    for (const token of new Set(used)) {
+      const declarations = [...appCss.matchAll(
+        new RegExp(`^\\s*${token}:`, "gm")
+      )];
+      assert.equal(
+        declarations.length,
+        1,
+        `${token} should be declared exactly once -- a second declaration is a scheme override, which is the open design decision, not a refactor`
+      );
+    }
   });
 
   test("the retired chart gradients stay retired", () => {

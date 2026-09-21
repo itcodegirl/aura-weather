@@ -160,10 +160,15 @@
   background: rgba(127, 182, 239, 0.3);
 }
 
+/* The legend swatch and the rule it stands for must be the same colour,
+   so both take --wire-structural, the repo's token for a structural
+   rule. White-alpha measured 5.33:1 in dark but 1.04:1 in light -- the
+   swatch was invisible in the scheme, beside a label naming it. The
+   token is 3.16:1 dark / 3.56:1 light, over the 1.4.11 floor in both. */
 .lg-dash {
   width: 16px;
   height: 0;
-  border-top: 1.5px dashed rgba(255, 255, 255, 0.5);
+  border-top: 1.5px dashed var(--wire-structural);
 }
 
 .lg-arrow {
@@ -386,11 +391,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Same rule, same token as .lg-dash above. 3.25:1 dark / 1.03:1 light
+   before; the light figure made the 50% threshold -- the chart's one
+   reference line -- invisible in that scheme. */
 .hourly-thresh {
   position: absolute;
   left: 0;
   right: 0;
-  border-top: 1.5px dashed rgba(255, 255, 255, 0.36);
+  border-top: 1.5px dashed var(--wire-structural);
 }
 
 .hourly-thresh span {

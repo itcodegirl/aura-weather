@@ -769,3 +769,156 @@ sentences mid-clause. `alertText.js` implements the corrected rule.
 "Assess the situation", `AllClear` → "All clear". `None` and any
 unrecognised value render **no chip**. The chip's `aria-label` is
 "Recommended response: &lt;chip text&gt;".
+
+### Status — updated 2026-09-21
+
+A remediation pass ran on 2026-09-20 against findings that were open in this
+plan but had no register rows of their own — the trust-contract, contrast,
+CLS and PWA items carried in prose rather than as tickets. Two PRs merged.
+Recorded here because nothing else in `docs/` holds them.
+
+| PR | State | What it carried |
+| --- | --- | --- |
+| #256 | **Merged** `9b2a2be` | Nowcast strip vertical scale. `.nowcast-chart-box` was 84px against a 150-unit viewBox — a 0.56 vertical scale — so the whole 0–100% domain rendered into 59px and a 12-point spread between two quarter-hours drew 7px apart. The geometry module's `Math.max(…, 1.5)` minimum bar height, which is only meaningful as a pixel floor, composited to 0.84px. Pinning the box to `NC_SVG_H` makes the scale 1:1 at every width: plot height 59.4 → 106px, 12-point spread 7.1 → 12.7px. **The audit's framing was wrong and is corrected here:** it described the strip as "squashed" with "X scaling ~1.75", but 1.75 is the Y/X *ratio* at a 320px viewport, where Y is *stretched*. Forcing a uniform scale would have made the chart shorter on a phone (51px at 390px wide, against the 84px it already had), not taller. Horizontal scale is deliberately left non-uniform — x is time, y is percent. |
+| #257 | **Merged** `cf8bb31` | Seven commits. Two Data Trust Contract gaps, the non-text contrast sweep, a CLS budget that had never existed, the PWA manifest colours, and four defects the pass itself introduced and then corrected. Detail below. |
+
+**#257, by finding.**
+
+- **`?mock=missing` dated a read it never made.** The route's own notice says
+  live providers are not queried, and its `trustMeta` sets `aqiFetchedAt` and
+  `alertsFetchedAt` to `null` with a comment explaining why — but
+  `weatherFetchedAt` was stamped `Date.now()`. A present, non-cached stamp is
+  what `GlobalUpdateIndicator` reads as LIVE, so an offline reload of the
+  demo route rendered "Updated just now / LIVE" over data no provider had
+  supplied, at 3s/8s/15s/25s, with no offline vocabulary anywhere in the DOM.
+  This **reverses a deliberate earlier decision** ("the forecast is genuinely
+  synthesised and shown, so its own stamp stays"); that rationale is kept
+  verbatim in the test beside the evidence it did not have.
+- **A stalled network hid a saved forecast for 15.2s.** Both existing restore
+  paths need the network to have declared itself — one is gated on
+  `isBrowserOffline()`, the other runs only from the `catch` after the fetch
+  layer burns its whole timeout budget. A captive portal satisfies neither.
+  Measured: 15,183ms of unlabelled skeleton with a valid snapshot in
+  `localStorage` throughout. A cold start now hydrates the strict (≤12h)
+  snapshot after `CACHE_HYDRATE_AFTER_MS`, under its own Saved labels.
+- **The e2e suite could not see either.** `pwa-offline.spec.js` performs the
+  only real offline reload but asserts nothing about the labels, and runs the
+  one route where they cannot exist. Every offline and cached label in the
+  product could have been deleted with the suite staying green.
+- **Contrast sweep.** Six marks moved onto existing tokens, measured in
+  light: hourly temperature line 1.66 → 5.90, gust *reading* 1.13 → 18.45,
+  compass cardinal 1.10 → 11.15, wind needle and visibility meter 2.16 →
+  6.19, sun bead 1.78 → 6.33, `.hourly-wspd` against its track 2.52 → 4.87.
+  **Two audit numbers were wrong.** `.hourly-wspd` was listed at 2.62, a
+  value measured against `--panel-well`, a surface that element never
+  touches. And `.hourly-wspd` is a *legibility* fix, not a 1.4.11 violation —
+  `.hourly-wval` prints the speed above every wind bar, so the reading has a
+  text equivalent. The temperature line is the opposite case: its column
+  holds no text node, so the polyline is the only place the trend is stated.
+  `--chart-rain-top/-bottom` and `--chart-good-top/-bottom` are deleted;
+  outliving their last consumer is how the wind bars kept reaching for them.
+- **CI was asserting nothing about CLS.** `config/lighthouse-budgets.json`
+  held four category minimums and the script only read `lhr.categories`;
+  `lhr.audits` was never touched. Performance sat at 99/100 while no
+  layout-shift number was asserted at all, so every green `lighthouse-budget`
+  on this repo was silent about CLS by construction. A metric ceiling now
+  exists. Separately, `.bento-alerts` carried a `content-visibility` deferral
+  although the banner is the **first element on the page**; removing it took
+  mobile CLS from 0.1987 to 0.0371 for unsupported coverage.
+- **The PWA manifest named a colour the app never uses.** `theme_color`
+  `#0b1c3f` and `background_color` `#081225` — the latter appears in the
+  manifest and nowhere else in the repo. Both are now `#070a10`, the value
+  `index.html` already declares, guarded by a test that reads it out of
+  `index.html` rather than hard-coding it.
+
+**Four defects this pass introduced, caught before merge.** CI was green on
+all eight checks; an adversarial review of the diff found them anyway, and
+each was independently reproduced with a base-build control.
+
+1. **A hydrated snapshot followed the user to another city.** The new cache
+   hydrate was the only `setWeather` path that did not claim
+   `lastFetchedCoordsRef`. Measured through the real city-search UI: load
+   Tokyo live, stall the network, select Kyoto (hydrates Kyoto's snapshot),
+   select Tokyo again — and Kyoto's entire snapshot renders under "Tokyo,
+   Japan" for 15 seconds, wearing a "Saved forecast" badge. A correct
+   freshness label on the wrong city's numbers is worse than a blank screen.
+   The base build does not do this. Fixed; guarded by a render test that
+   walks the real three-phase sequence. **The first version of that test
+   passed with the bug present** — it started cold, so the clear decision had
+   no owner to compare against.
+2. **Light + `prefers-contrast: more` got the dark palette.** Three blocks
+   carried dark-scheme values under a bare `@media (prefers-contrast: more)`;
+   with no scheme condition they matched in light mode and, sitting later
+   than the light+contrast block at equal specificity, won. Measured: compass
+   cardinal 1.10:1 on a white tile, temperature line 2.54:1 — and that line
+   had been 9.02:1 as a literal, so the contrast pass is what regressed it,
+   for exactly the cohort the work is for. Each block is now scoped to dark.
+3. **The colour-literal guard was not the closed set it claimed.** It matched
+   only the JSX attribute form and walked past 35 literals written as object
+   properties. It now keys on the value and counts occurrences (44 across six
+   files), so adding, removing *or reusing* one fails.
+4. **The demo route traded one false claim for another.** `forecastStatus`
+   stayed `"ready"` beside the nulled stamp, which `SourceHealthPanel`
+   resolves to "Pending / Waiting for current conditions" — claiming a live
+   request is in flight on a route that queries nothing.
+
+### Decisions taken 2026-09-21
+
+Six items were left open in #257's body with no home in `docs/`. Resolved by
+Jenna Zawaski on 2026-09-21.
+
+| Item | Decision |
+| --- | --- |
+| Residual CLS 0.1132 on the active-alert path | **Accept.** Full record with measurements, the three declined options and the refuted reserved-slot hypothesis: `docs/decisions/cls-alert-banner-residual.md`. Snapshot priming is a future work package with stated constraints. |
+| Nowcast "Rain likely" label, 65px above its rule | **Fix authorised — gutter label, not a background chip.** Confirmed by measurement that a chip would cover bar pixels: anchored at the rule it overlaps two bars on mobile, including an outlined bar whose top edge (y 70.9) sits above the rule (y 73) — i.e. it would hide the one bar crossing 50%, which is the reading the rule exists to mark. A position sweep found no in-plot slot that is safe for arbitrary data (today's fixture happens to leave the left half free only because it rises left-to-right), so the gutter must be space the bars do not use. Free space right of the last bar today is 1px on mobile, 3.6px on desktop. |
+| `forecastStatus` on the demo route | **"Issue" → "Not queried", on every demo row**, matching the radar card's existing copy ("Radar not queried in this demo", `WeatherDashboard.jsx:254`). "Issue" implies a failure; the demo queries nothing. **Scoping constraint:** the same `SourceHealthPanel` rows serve genuine failures on real routes — alerts "Issue / Provider did not respond" is accurate during an NWS outage — so the copy change must be demo-scoped, not global. `isMissingMock` already exists in `WeatherDashboard` and can reach the panel. |
+| WeatherIcon's 29 condition colours | **Replace the hue coding with tokens.** Authoring 29 light values means 29 more literals to police; tokens work in both schemes and fit the flat Instrument direction. |
+| White-alpha tracks at 1.00:1 | **One track token per scheme**, batched with WeatherIcon as a single light-palette PR. |
+| Favicon vs. touch icon | **Open.** Both marks were examined — `public/favicon.svg` is a masked purple bolt (`#863bff`) with layered glow; the touch icon is a procedurally generated navy ring whose own generator cited a `theme-color` fallback that no longer exists. Not yet decided. |
+
+### NWS heat-stress — blocked, not deferred
+
+Assessed 2026-09-20 against the live Chicago gridpoint. **Not safely doable
+as a narrow change**, and it is a net-new provider rather than a second pass:
+the only `api.weather.gov` endpoint this app touches is `alerts/active`
+(`src/api/openMeteo.js:27`), and a repo-wide grep for `gridpoint` returns
+nothing.
+
+Four blocking reasons, each measured:
+
+- **Shape.** Gridpoint series are run-length-encoded ISO-8601 intervals
+  (`validTime: "<start>/<duration>"`), not the parallel arrays every
+  normaliser in this app assumes.
+- **Units.** The gridpoint declares `wmoUnit:degC` for temperature, dewpoint,
+  apparent temperature, wet-bulb globe temperature and heat index, while
+  `EXPECTED_UNITS` pins °F and *throws* `UnitContractError` on disagreement.
+  `heatRisk` carries no `uom` key at all.
+- **Contradiction.** NWS `apparentTemperature` measured 2.4°F apart from the
+  Open-Meteo value the hero already shows for the same instant, while being
+  byte-identical to dry-bulb temperature on 169 of 180 expanded hours. It
+  would put a second, disagreeing "feels like" on one screen and add almost
+  nothing.
+- **Cost.** 200,007 bytes against the app's entire 19,187-byte forecast
+  request, with no field selection and ~87% of the payload discarded, plus a
+  mandatory `/points` hop.
+
+**Three corrections to the handoff that proposed it.** `mixingHeight` is
+boundary-layer depth — a dispersion quantity with no term in any heat-stress
+index — so including it was a category error. The counts quoted (106 / 117 /
+181) are run-length *segment* counts that change every model run, not field
+counts. And the one field that most directly answers "is this heat
+dangerous", NWS **`heatRisk`** (integer 0–4), was absent from the proposal
+entirely; with `wetBulbGlobeTemperature` (which differs from dry bulb on 173
+of 180 hours, by up to 6°F) it is the only part worth revisiting.
+
+**Station observations** (`/stations/{id}/observations/latest`) is a separate
+and much smaller proposition — measured against modelled, which is the trust
+contract extended rather than a new surface — and is **not yet in this plan**.
+It needs a roadmap decision before anyone builds it.
+
+### Not shipped, unchanged
+
+**WP-3 (AUD-006 → AUD-005) has not started.** `src/domain/` contains no
+`severity.js` and no `precipitation.js`, and `RAIN_LIKELY_PROBABILITY` is
+still declared once, at `src/components/RainCard.jsx:26`. It is the next
+work package.

@@ -95,4 +95,63 @@ describe("SourceHealthPanel", () => {
     assert.ok(screen.getByText("Updated 2m ago"));
     assert.ok(screen.getByText("Updated 3m ago"));
   });
+  test("labels every demo row Not queried, neutral, on ?mock=missing", async () => {
+    // Driven by the demo's own trustMeta rather than a hand-written
+    // literal, so the row copy cannot drift away from what the route
+    // actually renders.
+    const { buildMissingDashboardState } = await import(
+      "../mocks/missingData.js"
+    );
+    const { trustMeta } = buildMissingDashboardState();
+
+    const { container } = render(
+      React.createElement(SourceHealthPanel, {
+        nowMs: 1_778_086_800_000,
+        trustMeta,
+        isMissingMock: true,
+      })
+    );
+
+    assert.equal(screen.getAllByText("Not queried").length, 4);
+    assert.equal(screen.queryAllByText("Issue").length, 0);
+    assert.equal(
+      screen.getAllByText("Not queried in this demo").length,
+      4,
+      "matches the radar card's wording"
+    );
+    // Neutral, not critical-red: nothing here failed.
+    assert.equal(
+      container.querySelectorAll(".source-health-item--idle").length,
+      4
+    );
+    assert.equal(
+      container.querySelectorAll(".source-health-item--unavailable").length,
+      0
+    );
+  });
+
+  test("keeps Issue for a real provider outage outside the demo", () => {
+    // The scope guard: a live NWS outage was asked and did not answer,
+    // so it must not be softened into "Not queried".
+    render(
+      React.createElement(SourceHealthPanel, {
+        nowMs: 1_778_086_800_000,
+        trustMeta: {
+          weatherFetchedAt: 1_778_083_200_000,
+          forecastStatus: "ready",
+          cacheStatus: "idle",
+          aqiFetchedAt: 1_778_083_200_000,
+          aqiStatus: "ready",
+          alertsFetchedAt: null,
+          alertsStatus: "unavailable",
+          climateFetchedAt: 1_778_083_200_000,
+          climateStatus: "ready",
+        },
+      })
+    );
+
+    assert.ok(screen.getByText("Issue"));
+    assert.ok(screen.getByText("Provider did not respond"));
+    assert.equal(screen.queryAllByText("Not queried").length, 0);
+  });
 });

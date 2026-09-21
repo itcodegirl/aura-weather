@@ -127,6 +127,41 @@ describe("WeatherDashboard missing-data demo isolation", () => {
     assert.match(emptyState.textContent, /never contacted/);
   });
 
+  test("passes the demo flag through to the data-sources panel", async () => {
+    // Guards the wiring, not the panel: SourceHealthPanel's own test
+    // covers the copy, but only the dashboard knows it is the demo.
+    const view = render(
+      React.createElement(WeatherDashboard, buildDashboardProps({
+        isMissingMock: true,
+      }))
+    );
+
+    // The panel lives behind a closed disclosure and only mounts once
+    // it has been opened.
+    const disclosure = view.container.querySelector(".data-status-disclosure");
+    assert.notEqual(disclosure, null);
+    await act(async () => {
+      disclosure.open = true;
+      disclosure.dispatchEvent(new window.Event("toggle"));
+    });
+    // Drain macrotasks until the lazy chunk has landed; the number of
+    // turns it takes is an implementation detail of the retry wrapper.
+    for (let i = 0; i < 50; i += 1) {
+      if (view.container.querySelector(".source-health-card")) {
+        break;
+      }
+      await act(async () => {
+        flushTimersUpTo(10_000);
+        await new Promise((resolve) => setImmediate(resolve));
+      });
+    }
+
+    const panel = view.container.querySelector(".source-health-card");
+    assert.notEqual(panel, null);
+    assert.match(panel.textContent, /Not queried in this demo/);
+    assert.doesNotMatch(panel.textContent, /Provider did not respond/);
+  });
+
   test("still schedules the real radar mount without the mock flag", async () => {
     const view = render(
       React.createElement(WeatherDashboard, buildDashboardProps())

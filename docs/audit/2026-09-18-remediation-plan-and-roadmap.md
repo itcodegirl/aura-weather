@@ -870,11 +870,11 @@ Jenna Zawaski on 2026-09-21.
 | Item | Decision |
 | --- | --- |
 | Residual CLS 0.1132 on the active-alert path | **Accept.** Full record with measurements, the three declined options and the refuted reserved-slot hypothesis: `docs/decisions/cls-alert-banner-residual.md`. Snapshot priming is a future work package with stated constraints. |
-| Nowcast "Rain likely" label, 65px above its rule | **Fix authorised — gutter label, not a background chip.** Confirmed by measurement that a chip would cover bar pixels: anchored at the rule it overlaps two bars on mobile, including an outlined bar whose top edge (y 70.9) sits above the rule (y 73) — i.e. it would hide the one bar crossing 50%, which is the reading the rule exists to mark. A position sweep found no in-plot slot that is safe for arbitrary data (today's fixture happens to leave the left half free only because it rises left-to-right), so the gutter must be space the bars do not use. Free space right of the last bar today is 1px on mobile, 3.6px on desktop. |
+| Nowcast "Rain likely" label, 65px above its rule | **Fix authorised — a key below the chart, not a gutter and not a background chip.** A chip was refuted by measurement: anchored at the rule it overlaps two bars on mobile, including an outlined bar whose top edge (y 70.9) sits above the rule (y 73) — it would hide the one bar crossing 50%, which is the reading the rule exists to mark. A position sweep found no in-plot slot safe for arbitrary data (today's fixture leaves the left half free only because it rises left-to-right). A gutter was then declined too: free space right of the last bar is 1px on mobile and 3.6px on desktop, which is not a column. The label moves **out of the plot area entirely**, into a key row beneath it — a dashed swatch matching the 50% rule plus "Rain likely (50%)". **Measured cost before building: +24px of card height** (mobile 576.3 → 600.3, desktop 468.8 → 492.8); the page grows by the same 24px and nothing else reflows. |
 | `forecastStatus` on the demo route | **"Issue" → "Not queried", on every demo row**, matching the radar card's existing copy ("Radar not queried in this demo", `WeatherDashboard.jsx:254`). "Issue" implies a failure; the demo queries nothing. **Scoping constraint:** the same `SourceHealthPanel` rows serve genuine failures on real routes — alerts "Issue / Provider did not respond" is accurate during an NWS outage — so the copy change must be demo-scoped, not global. `isMissingMock` already exists in `WeatherDashboard` and can reach the panel. |
 | WeatherIcon's 29 condition colours | **Replace the hue coding with tokens.** Authoring 29 light values means 29 more literals to police; tokens work in both schemes and fit the flat Instrument direction. |
 | White-alpha tracks at 1.00:1 | **One track token per scheme**, batched with WeatherIcon as a single light-palette PR. |
-| Favicon vs. touch icon | **Open.** Both marks were examined — `public/favicon.svg` is a masked purple bolt (`#863bff`) with layered glow; the touch icon is a procedurally generated navy ring whose own generator cited a `theme-color` fallback that no longer exists. Not yet decided. |
+| Favicon vs. touch icon | **Keep the bolt.** Decided 2026-09-21 from a side-by-side render of both marks. `public/favicon.svg` is a masked purple bolt (`#863bff`) with layered glow; the touch icon is a procedurally generated navy ring whose own generator cited a `theme-color` fallback that no longer exists. The touch icon is regenerated as the bolt on `#070a10`, matching the manifest colours, in a separate PR — it is a binary asset. |
 
 ### NWS heat-stress — blocked, not deferred
 
@@ -915,6 +915,11 @@ of 180 hours, by up to 6°F) it is the only part worth revisiting.
 and much smaller proposition — measured against modelled, which is the trust
 contract extended rather than a new surface — and is **not yet in this plan**.
 It needs a roadmap decision before anyone builds it.
+
+### Backlog
+
+- **`hourly.feelsLike`.** Raised 2026-09-21, unscheduled. Recorded here so it
+  is not rediscovered as a finding; no decision taken on it yet.
 
 ### Not shipped, unchanged
 

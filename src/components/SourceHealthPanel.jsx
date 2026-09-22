@@ -50,9 +50,9 @@ function getForecastSource(trustMeta, nowMs) {
     label: forecastStatus === "unavailable" ? "Issue" : "Pending",
     // "Waiting" is only true of the pending branch. An unavailable forecast
     // is not on its way, so saying it is waiting promises a resolution that
-    // never comes -- visible today on ?mock=missing, which queries no
-    // provider at all. The real hook only ever emits idle/ready/cached, so
-    // this branch is reached from that route.
+    // never comes. The real hook only ever emits idle/ready/cached; the
+    // ?mock=missing demo, which used to be this branch's only caller, now
+    // takes DEMO_NOT_QUERIED_SOURCES below instead.
     detail:
       forecastStatus === "unavailable"
         ? "No forecast reading available"
@@ -214,10 +214,39 @@ function getClimateSource(trustMeta, nowMs) {
   };
 }
 
+// The ?mock=missing portfolio demo queries no provider at all, so every
+// row here describes a request that was never made. The status-derived
+// rows read that as failure -- "Issue / Provider did not respond" on a
+// provider that was never asked, painted critical-red -- which is a
+// different false claim from the one the demo exists to demonstrate.
+// These rows say what actually happened, in the radar card's words, and
+// carry the neutral "idle" modifier so nothing is flagged as broken.
+//
+// Scoped to the demo on purpose: a real NWS outage must keep rendering
+// "Issue / Provider did not respond", because there the provider *was*
+// asked and did not answer.
+const DEMO_NOT_QUERIED_SOURCES = [
+  { key: "forecast", icon: CloudSun, name: "Forecast", provider: "Open-Meteo" },
+  { key: "aqi", icon: Wind, name: "Air Quality", provider: "Open-Meteo AQI" },
+  { key: "alerts", icon: ShieldAlert, name: "Alerts", provider: "NOAA / NWS" },
+  {
+    key: "climate",
+    icon: Database,
+    name: "Historical comparison",
+    provider: "Open-Meteo Archive",
+  },
+].map((source) => ({
+  ...source,
+  status: "idle",
+  label: "Not queried",
+  detail: "Not queried in this demo",
+}));
+
 function SourceHealthPanel({
   trustMeta,
   style,
   isRefreshing = false,
+  isMissingMock = false,
   nowMs: overrideNowMs,
 }) {
   // Subscribe directly so the dashboard does not have to forward
@@ -228,13 +257,16 @@ function SourceHealthPanel({
   const tickNowMs = useTimeNow();
   const nowMs = overrideNowMs ?? tickNowMs;
   const sources = useMemo(
-    () => [
-      getForecastSource(trustMeta, nowMs),
-      getAqiSource(trustMeta, nowMs),
-      getAlertsSource(trustMeta, nowMs),
-      getClimateSource(trustMeta, nowMs),
-    ],
-    [nowMs, trustMeta]
+    () =>
+      isMissingMock
+        ? DEMO_NOT_QUERIED_SOURCES
+        : [
+            getForecastSource(trustMeta, nowMs),
+            getAqiSource(trustMeta, nowMs),
+            getAlertsSource(trustMeta, nowMs),
+            getClimateSource(trustMeta, nowMs),
+          ],
+    [isMissingMock, nowMs, trustMeta]
   );
 
   return (

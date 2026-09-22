@@ -370,6 +370,7 @@ function WeatherDashboard({
                 trustMeta={trustMeta}
                 style={CARD_STYLE_VARIABLES[8]}
                 isRefreshing={isBackgroundLoading}
+                isMissingMock={isMissingMock}
               />
             </Suspense>
           ) : null}

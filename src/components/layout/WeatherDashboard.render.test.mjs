@@ -9,6 +9,13 @@ const WeatherDashboard = (await import("./WeatherDashboard.jsx")).default;
 const { buildMissingDashboardState } = await import(
   "../../mocks/missingData.js"
 );
+// Prime the module cache for the lazily-imported panel. The dashboard
+// reaches it through React.lazy, and a cold dynamic import does real
+// filesystem and compile work that no amount of macrotask draining can
+// hurry along -- under a loaded suite that made the mount race the
+// assertion below. Importing it here means the lazy() call resolves
+// from cache, so the mount is deterministic rather than timing-bound.
+await import("../SourceHealthPanel.jsx");
 
 // useDeferredMount schedules through window.setTimeout (JSDOM provides no
 // requestIdleCallback), so the fakes must be installed on window as well

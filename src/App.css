@@ -260,19 +260,24 @@
    * load-bearing colour outside CSS, and unreachable from a scheme
    * override, so the same 29 values rendered in light as in dark.
    *
-   * The values below are the literals unchanged: this is the move into
-   * CSS, not a repalette. Nothing renders differently today.
+   * The values below are the dark-scheme literals, with one correction:
+   * --wx-tornado was #6d28d9, which measured 2.79:1 against --ground and
+   * so failed WCAG 1.4.11's 3:1 floor for graphical objects. It is now
+   * one step lighter on the same violet ramp (#7c3aed, 3.48:1), still
+   * darker than --wx-storm-hail so the storm rungs keep their order.
    *
-   * DELIBERATELY NO LIGHT OVERRIDE YET. Darkening each value in-hue to
+   * LIGHT SCHEME: hue-coding is dropped. Darkening each value in-hue to
    * the 3:1 non-text floor against the light card was measured and
    * collapses the palette: #e0f2fe, #bae6fd and #0ea5e9 all land within
    * a few points of the same blue, so snow, heavier snow and freezing
    * rain stop being distinguishable, and the near-white #f8fafc becomes
-   * a mid blue-grey it never was. Picking the light values is a design
-   * decision, not a derivation, and it is open. Until it is taken these
-   * tokens resolve to the dark values in both schemes -- exactly what
-   * shipped before -- so this block is a refactor that makes the
-   * decision a one-place edit instead of 29.
+   * a mid blue-grey it never was. Rather than ship near-duplicate blues,
+   * the light block below sets every --wx-* token to a single ink value.
+   * This loses no information: the only place these fills render with a
+   * variable code is ForecastCard, where each icon sits beside its
+   * distinct text label from src/domain/weatherCodes.js and carries a
+   * matching aria-label. RainCard and AppShell only ever render code 0.
+   * No icon-only context exists.
    */
   --wx-clear: #fbbf24;
   --wx-cloud-light: #f8fafc;
@@ -288,7 +293,7 @@
   --wx-snow-grains: #dbeafe;
   --wx-storm: #a78bfa;
   --wx-storm-hail: #8b5cf6;
-  --wx-tornado: #6d28d9;
+  --wx-tornado: #7c3aed;
   --wx-unknown: #94a3b8;
 
   /* Micro-interactions */
@@ -479,6 +484,29 @@
 
     --paper: #000d1e;
     --paper-dim: #00142d;
+
+    /* Weather-condition icon fills: one ink value, no hue-coding. See
+       the base block's note: in-hue darkening to 3:1 collapsed several
+       conditions into the same blue, and every render is paired with a
+       distinct text label, so hue carries nothing here. --ink-muted
+       measures 11.15:1 against --panel-raised and 10.39:1 against
+       --panel, both far past the 3:1 non-text floor. */
+    --wx-clear: var(--ink-muted);
+    --wx-cloud-light: var(--ink-muted);
+    --wx-cloud: var(--ink-muted);
+    --wx-precip-light: var(--ink-muted);
+    --wx-precip: var(--ink-muted);
+    --wx-precip-heavy: var(--ink-muted);
+    --wx-precip-extreme: var(--ink-muted);
+    --wx-freezing-light: var(--ink-muted);
+    --wx-freezing: var(--ink-muted);
+    --wx-snow-light: var(--ink-muted);
+    --wx-snow: var(--ink-muted);
+    --wx-snow-grains: var(--ink-muted);
+    --wx-storm: var(--ink-muted);
+    --wx-storm-hail: var(--ink-muted);
+    --wx-tornado: var(--ink-muted);
+    --wx-unknown: var(--ink-muted);
   }
 
   /* No sky in light: the scene gradient arrives as an inline style on

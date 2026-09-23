@@ -993,19 +993,42 @@ describe("component colour literals are a closed set", () => {
     assertEvery(hourlyCss, ".lg-dash", /border-top:[^;]*var\(--wire-structural\)/);
   });
 
-  test("every weather-condition colour is a token, defined once", () => {
-    // WeatherIcon's palette is keyed by weather code inside a JSX object,
-    // which is why the literal ledger above had to key on the value rather
-    // than the syntax. Now that it is tokenised the ledger carries no
-    // WeatherIcon row at all, so this is the guard that the values did not
-    // simply move somewhere else unthemed.
-    const iconSource = readFileSync(
-      join(REPO_ROOT, "src/components/WeatherIcon.jsx"),
-      "utf8"
-    );
-    const used = [...iconSource.matchAll(/var\((--wx-[a-z-]+)\)/g)].map(
-      (m) => m[1]
-    );
+  // WeatherIcon's palette is keyed by weather code inside a JSX object,
+  // which is why the literal ledger above had to key on the value rather
+  // than the syntax. Now that it is tokenised the ledger carries no
+  // WeatherIcon row at all, so these are the guards that the values did
+  // not simply move somewhere else unthemed, and that each scheme's
+  // values clear WCAG 1.4.11's 3:1 floor for graphical objects.
+  const iconSource = readFileSync(
+    join(REPO_ROOT, "src/components/WeatherIcon.jsx"),
+    "utf8"
+  );
+  const WX_TOKENS = [
+    ...new Set(
+      [...iconSource.matchAll(/var\((--wx-[a-z-]+)\)/g)].map((m) => m[1])
+    ),
+  ];
+  const LIGHT_ROOT = APP_CSS.match(
+    /@media \(prefers-color-scheme: light\)\s*\{\s*:root\s*\{([\s\S]*?)\n\s*\}/
+  )?.[1] ?? "";
+  const lightValue = (name) => {
+    const m = LIGHT_ROOT.match(new RegExp(`(?:^|[;{\\s])${name}\\s*:\\s*([^;]+);`));
+    return m ? m[1].trim().replace(/\s+/g, " ") : null;
+  };
+  const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const channel = (c) => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  const luminance = ([r, g, b]) => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  const contrast = (a, b) => {
+    const [hi, lo] = [luminance(rgb(a)), luminance(rgb(b))].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const hexOf = (read, name) => {
+    const v = read(name);
+    assert.match(v ?? "", /^#[0-9a-f]{6}$/i, `${name} must be a six-digit hex to be measured`);
+    return v;
+  };
+
+  test("every weather-condition colour is a token, defined once per scheme", () => {
     const codeCount = (
       iconSource
         .slice(
@@ -1014,23 +1037,69 @@ describe("component colour literals are a closed set", () => {
         )
         .match(/^\s*\d+:/gm) ?? []
     ).length;
+    const used = [...iconSource.matchAll(/var\((--wx-[a-z-]+)\)/g)];
     assert.equal(
       used.length,
       codeCount + 1,
       "one token per weather code, plus the unknown fallback"
     );
 
-    const appCss = readFileSync(join(REPO_ROOT, "src/App.css"), "utf8");
-    for (const token of new Set(used)) {
-      const declarations = [...appCss.matchAll(
+    // Exactly two declarations each: the dark value in the base :root and
+    // the light override. A third would be a stray copy somewhere unthemed.
+    for (const token of WX_TOKENS) {
+      const declarations = [...APP_CSS.matchAll(
         new RegExp(`^\\s*${token}:`, "gm")
       )];
       assert.equal(
         declarations.length,
-        1,
-        `${token} should be declared exactly once -- a second declaration is a scheme override, which is the open design decision, not a refactor`
+        2,
+        `${token} should be declared exactly twice -- once in the base :root, once in the light-scheme override`
+      );
+      assert.notEqual(
+        declaredValue(token),
+        null,
+        `${token} has no base (dark) declaration`
+      );
+      assert.notEqual(
+        lightValue(token),
+        null,
+        `${token} has no light-scheme override`
       );
     }
+  });
+
+  test("light: every weather-condition fill is the same ink and clears 3:1 on the raised panel", () => {
+    // Hue-coding is dropped in light. In-hue darkening to the 3:1 floor
+    // collapsed snow, heavier snow and freezing rain into near-identical
+    // blues, and every render of a variable-code icon (ForecastCard) sits
+    // beside a distinct text label, so a single ink loses nothing. All 16
+    // tokens must resolve to the same ink role, and that ink must clear
+    // WCAG 1.4.11 against the card the icons are drawn on.
+    const inks = new Set(WX_TOKENS.map((token) => lightValue(token)));
+    assert.equal(
+      inks.size,
+      1,
+      `light --wx-* tokens should share one value, found: ${[...inks].join(", ")}`
+    );
+    const [ink] = inks;
+    const role = ink.match(/^var\((--ink(?:-muted|-dim)?)\)$/)?.[1];
+    assert.ok(role, `light --wx-* value should be an ink role via var(), got ${ink}`);
+    const ratio = contrast(hexOf(lightValue, role), hexOf(lightValue, "--panel-raised"));
+    assert.ok(
+      ratio >= 3,
+      `${role} on --panel-raised in light: ${ratio.toFixed(2)} < 3`
+    );
+  });
+
+  test("dark: every weather-condition fill clears 3:1 against the ground", () => {
+    // --wx-tornado shipped at #6d28d9, which measured 2.79:1 against
+    // --ground. The dark values are hexes, so the whole set is measured
+    // here and a regression on any of them fails by name.
+    const shortfalls = WX_TOKENS
+      .map((token) => [token, contrast(hexOf(declaredValue, token), hexOf(declaredValue, "--ground"))])
+      .filter(([, ratio]) => ratio < 3)
+      .map(([token, ratio]) => `${token} on --ground: ${ratio.toFixed(2)} < 3`);
+    assert.deepEqual(shortfalls, []);
   });
 
   test("the retired chart gradients stay retired", () => {
